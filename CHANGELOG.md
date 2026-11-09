@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.89
+
+- Exalab: «Conectar mi sesión» vuelve a encontrar la sesión abierta en Chrome. Chrome no entregaba la cookie de sesión por la consulta general, y la página respondía «Primero ingresa a Exalab» aunque la persona ya hubiera ingresado. Ahora lee por nombre solo las dos cookies que necesita el puente.
+- Añade una prueba en Chromium real que comprueba que la sesión llega al puente.
+
 ## 0.48.88
 
 - Primera gestión independiente del código, pruebas y publicaciones de la extensión.

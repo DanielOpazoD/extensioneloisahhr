@@ -1,6 +1,6 @@
 {
   "name": "@hhr/eloisa-extension",
-  "version": "0.48.88",
+  "version": "0.48.89",
   "private": true,
   "type": "module",
   "description": "Extensión Eloísa HHR: código, pruebas y releases independientes.",
@@ -25,7 +25,7 @@
     "test": "vitest run",
     "check:release": "node scripts/check-rayen-extension-release.mjs",
     "check:version": "node scripts/check-extension-version-advance.mjs",
-    "test:runtime": "node scripts/smoke-rayen-extension-runtime.mjs",
+    "test:runtime": "node scripts/smoke-rayen-extension-runtime.mjs && node scripts/smoke-exalab-connect-runtime.mjs",
     "test:dau": "node scripts/smoke-urgency-dau-login.mjs",
     "build": "node scripts/build-release.mjs",
     "base:update": "git fetch origin main && git rebase origin/main",
