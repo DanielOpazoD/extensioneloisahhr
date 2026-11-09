@@ -5,12 +5,13 @@ import { describe, expect, it, vi } from 'vitest';
 const source = (name: string) =>
   readFileSync(new URL(`../../../extension/${name}`, import.meta.url), 'utf8');
 const pair = 'a'.repeat(43);
-const page = (origin = 'https://hhr-hospitalizados.app', granted = true) => {
+const page = (origin = 'https://hhr-hospitalizados.app', granted = true, remember = true) => {
   const clickHandlers: Record<string, () => Promise<void>> = {};
   const elements = Object.fromEntries(
-    ['connect', 'status', 'back'].map(id => [
+    ['connect', 'status', 'back', 'auto'].map(id => [
       id,
       {
+        checked: id === 'auto' && remember,
         disabled: false,
         hidden: false,
         textContent: '',
@@ -30,6 +31,7 @@ const page = (origin = 'https://hhr-hospitalizados.app', granted = true) => {
   };
   const cookies = vi.fn(async ({ name }: { url: string; name: string }) => jar[name] ?? null);
   const permission = vi.fn(async () => granted);
+  const store = vi.fn(async (_value: unknown) => undefined);
   const fetchMock = vi.fn(
     async () => new Response(JSON.stringify({ success: true, connected: true }))
   );
@@ -44,12 +46,17 @@ const page = (origin = 'https://hhr-hospitalizados.app', granted = true) => {
     document: { getElementById: (id: string) => elements[id] },
     navigator: { userAgent: 'synthetic-UA' },
     window: { close: vi.fn() },
-    chrome: { permissions: { request: permission }, cookies: { get: cookies } },
+    chrome: {
+      permissions: { request: permission },
+      cookies: { get: cookies },
+      storage: { local: { set: store } },
+    },
     fetch: fetchMock,
   });
   vm.runInContext(source('hhr-origin-policy.js'), context);
+  vm.runInContext(source('exalab-session-transport.js'), context);
   vm.runInContext(source('exalab-connect.js'), context);
-  return { clickHandlers, elements, cookies, permission, fetchMock };
+  return { clickHandlers, elements, cookies, permission, fetchMock, store };
 };
 describe('Exalab personal-session consent', () => {
   it('reads only applicable session cookies after the user gesture and sends them directly to the trusted gateway', async () => {
@@ -72,13 +79,22 @@ describe('Exalab personal-session consent', () => {
     expect(options.body).toContain('synthetic-only');
     expect(JSON.parse(String(options.body)).session.userAgent).toBe('synthetic-UA');
     expect(options.body).not.toContain('must-not-leave-browser');
-    expect(harness.elements.status.textContent).toContain('Sesión conectada');
+    expect(harness.elements.status.textContent).toBe(
+      'Sesión conectada. Puedes cerrar esta pestaña.'
+    );
+    expect(harness.store).toHaveBeenCalledWith({ exalabAutoConnect: true });
+  });
+  it('remembers a declined automatic connection as off', async () => {
+    const harness = page(undefined, true, false);
+    await harness.clickHandlers.connect();
+    expect(harness.store).toHaveBeenCalledWith({ exalabAutoConnect: false });
   });
   it('does not read cookies when permission is denied or the pairing origin is untrusted', async () => {
     const denied = page(undefined, false);
     await denied.clickHandlers.connect();
     expect(denied.cookies).not.toHaveBeenCalled();
     expect(denied.fetchMock).not.toHaveBeenCalled();
+    expect(denied.store).not.toHaveBeenCalled();
     const attacker = page('https://attacker.test');
     expect(attacker.elements.connect.disabled).toBe(true);
     expect(attacker.clickHandlers.connect).toBeUndefined();
