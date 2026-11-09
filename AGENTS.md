@@ -5,7 +5,7 @@
 - Incorporar la última base antes de publicar. No omitir CI ni debilitar la validación de versiones.
 - Conservar las funciones existentes. Una eliminación funcional requiere indicación expresa del responsable, contrato actualizado y pruebas equivalentes.
 - Cada versión debe tener notas. La identidad de un paquete incluye su huella, no solo su número.
-- Solo publicar con CI aprobada del commit exacto y mediante el workflow del propietario.
+- La publicación es automática: al aprobar la CI de `main` un commit con versión nueva, «Publish extension» la publica. No publicar por otra vía ni saltar sus comprobaciones.
 - No incluir datos reales de pacientes, credenciales ni perfiles del navegador. Las pruebas son sintéticas.
 - No modificar vendors sin conservar procedencia, licencia y hashes. No ampliar permisos sin motivo y revisión.
 - Commits en inglés con Conventional Commits; PR, notas e informes al responsable en español.
