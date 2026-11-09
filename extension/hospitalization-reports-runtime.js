@@ -1,0 +1,104 @@
+/** Discover hospitalization episodes and build official Eloisa report navigation. */
+(function (root) {
+  'use strict';
+  const normalizeRun = value => String(value || '').toUpperCase().replace(/[^0-9K]/g, '');
+  const normalizeDate = value => {
+    const match = String(value || '').trim().match(/^(\d{4}-\d{2}-\d{2})(?:T|$)/);
+    return match ? match[1] : '';
+  };
+  const isEncounter = value => /^\d+$/.test(String(value || ''));
+  const isValidRun = value => /^[0-9]{6,8}[0-9K]$/.test(normalizeRun(value));
+  const matchingRows = (rows, patientRun) => {
+    const expectedRun = normalizeRun(patientRun);
+    const rowRuns = row => [row && row.patientIdentifier, row && row.preferredIdentifierCode,
+      row && row.identifier, row && row.patient && row.patient.identifier,
+      row && row.patient && row.patient.preferredIdentifierCode].map(normalizeRun);
+    return rows.filter(row => isEncounter(row && row.encounterId) && rowRuns(row).includes(expectedRun));
+  };
+  const sortRowsNewestFirst = (rows, field = 'startPeriod') => [...rows].sort((left, right) =>
+    normalizeDate(right && (right[field] || right.endPeriod))
+      .localeCompare(normalizeDate(left && (left[field] || left.endPeriod)))
+  );
+  const toEpisode = row => ({
+    encId: String(row.encounterId),
+    startDate: normalizeDate(row.startPeriod),
+    endDate: normalizeDate(row.endPeriod),
+    active: !normalizeDate(row.endPeriod),
+    ...(typeof row.patientName === 'string' && row.patientName.trim()
+      ? { patientName: row.patientName.trim() } : {}),
+    ...([2, 4].includes(Number(row.patientIdentifierTypeId))
+      ? { identifierType: Number(row.patientIdentifierTypeId) } : {}),
+  });
+  const listEpisodes = ({ rows, patientRun }) => ({ ok: true,
+    episodes: sortRowsNewestFirst(matchingRows(rows, patientRun)).map(toEpisode) });
+
+  const selectEncounter = ({ rows, patientRun, encId, censusDate }) => {
+    const candidates = matchingRows(rows, patientRun);
+    const requested = isEncounter(encId) ? String(encId) : '';
+    if (requested) {
+      const selected = candidates.find(row => String(row.encounterId) === requested);
+      return selected ? { encId: requested, row: selected } : {
+        error: 'El episodio seleccionado no aparece entre los informes de este RUN. ' +
+          'Actualiza el censo y vuelve a intentarlo.',
+      };
+    }
+    const cutoff = normalizeDate(censusDate);
+    const eligible = cutoff ? candidates.filter(row => {
+      const endDate = normalizeDate(row && row.endPeriod);
+      return endDate && endDate <= cutoff;
+    }) : candidates;
+    const selected = sortRowsNewestFirst(eligible, 'endPeriod')[0];
+    if (selected) return { encId: String(selected.encounterId), row: selected };
+    return { error: cutoff
+      ? 'No se encontró un informe del paciente hasta la fecha de este censo.'
+      : 'No se encontraron hospitalizaciones para este RUN.' };
+  };
+
+  const resolveRows = request => root.HhrHospitalizationReportSearchRuntime.resolveRows({
+    ...request, normalizeRun, isEncounter, matchingRows,
+  });
+
+  const buildHistoryReportUrl = ({ encId, startPeriod, endPeriod, now }) => {
+    const encounterId = isEncounter(encId) ? String(encId) : '';
+    const startDate = String(startPeriod || '').trim();
+    if (!encounterId || !startDate) return '';
+    const params = JSON.stringify({
+      enc_id: encounterId,
+      start_date: startDate,
+      end_date: String(endPeriod || '').trim() || String(now || '').trim(),
+    });
+    const url = new URL('https://fichamedico.rayensalud.cl/dashboard/reports');
+    url.searchParams.set('isReportServer', 'true');
+    url.searchParams.set('report', 'GetHospitalizedEncounterHistory');
+    url.searchParams.set('params', params);
+    return url.toString();
+  };
+
+  const openHistoryReport = async ({ chrome, now, resolved }) => {
+    const chromeApi = chrome || root.chrome;
+    if (!chromeApi || !chromeApi.tabs || typeof chromeApi.tabs.create !== 'function')
+      return { error: 'No se pudo acceder al navegador para abrir la ficha clínica completa.' };
+    const currentTime = typeof now === 'function' ? now() : Date.now();
+    const url = buildHistoryReportUrl({
+      encId: resolved.encId,
+      startPeriod: resolved.row && resolved.row.startPeriod, endPeriod: resolved.row && resolved.row.endPeriod,
+      now: new Date(currentTime).toISOString(),
+    });
+    if (!url) return { error: 'El episodio no contiene fechas válidas para abrir la ficha completa.' };
+    try {
+      const tab = await chromeApi.tabs.create({ url, active: true });
+      if (tab && tab.windowId != null) {
+        try { await chromeApi.windows.update(tab.windowId, { focused: true }); } catch (_error) {}
+      }
+      return { ok: true, opened: true, encId: resolved.encId };
+    } catch (error) {
+      return { error: 'No se pudo abrir la ficha clínica completa: ' +
+        String((error && error.message) || error) };
+    }
+  };
+
+  root.HhrHospitalizationReportsRuntime = {
+    buildHistoryReportUrl, isValidRun, listEpisodes, normalizeRun,
+    openHistoryReport, resolveRows, selectEncounter,
+  };
+})(typeof globalThis !== 'undefined' ? globalThis : self);

@@ -1,0 +1,36 @@
+/** HHR page bridge for the official Ficha Médico patient-flow PDF. */
+(() => {
+  'use strict';
+
+  const runtimeMessages = globalThis.HhrRayenMessageContract &&
+    globalThis.HhrRayenMessageContract.types;
+  if (!runtimeMessages || !globalThis.HhrAppOrigins?.has(window.location.origin)) return;
+
+  const post = message => chrome.runtime?.id && window.postMessage(message, window.location.origin);
+
+  window.removeEventListener('message', globalThis.__hhrPatientFlowRelayListener);
+  window.addEventListener('message', (globalThis.__hhrPatientFlowRelayListener = event => {
+    if (!chrome.runtime?.id || event.source !== window || event.origin !== window.location.origin) return;
+    const data = event.data;
+    if (!data || data.type !== 'HHR_RAYEN_PATIENT_FLOW_REQUEST') return;
+    const reqId = data.reqId;
+    chrome.runtime
+      .sendMessage({ type: runtimeMessages.PATIENT_FLOW_REPORT_REQUEST, encId: data.encId })
+      .then(response => {
+        post({
+          type: 'HHR_RAYEN_PATIENT_FLOW_RESULT',
+          reqId,
+          base64: response && response.base64 || '',
+          error: response && response.error,
+        });
+      })
+      .catch(error => {
+        post({
+          type: 'HHR_RAYEN_PATIENT_FLOW_RESULT',
+          reqId,
+          base64: '',
+          error: String(error),
+        });
+      });
+  }));
+})();

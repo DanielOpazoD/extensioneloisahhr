@@ -1,0 +1,43 @@
+name: Extension CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: extension-ci-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  extension-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22.22.0
+          cache: npm
+      - name: Check updated base and release number
+        if: github.event_name == 'pull_request'
+        run: npm run check:version
+        env:
+          CI_GIT_ROOT: ${{ github.workspace }}
+          CI_EXTENSION_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CI_EXTENSION_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      - run: npm ci
+      - run: npm test
+      - run: npm run check:release
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:runtime
+      - run: npm run test:dau
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: extension-candidate
+          path: dist/
+          if-no-files-found: error

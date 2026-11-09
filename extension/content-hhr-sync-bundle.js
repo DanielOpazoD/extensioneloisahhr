@@ -1,0 +1,53 @@
+/** HHR page relay for the guarded Ficha Médico + Gestión de Camas capture. */
+(() => {
+  'use strict';
+
+  const runtimeMessages = globalThis.HhrRayenMessageContract?.types;
+  if (!runtimeMessages || !globalThis.HhrAppOrigins?.has(window.location.origin)) return;
+  const post = message => chrome.runtime?.id && window.postMessage(message, window.location.origin);
+
+  window.removeEventListener('message', globalThis.__hhrSyncBundleRelayListener);
+  window.addEventListener('message', (globalThis.__hhrSyncBundleRelayListener = event => {
+    if (!chrome.runtime?.id || event.source !== window || event.origin !== window.location.origin) return;
+    if (event.data?.type === 'HHR_RAYEN_CANCEL_SYNC_BUNDLE') {
+      const requestId = event.data.requestId;
+      if (typeof requestId !== 'string' || !requestId) return;
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.SYNC_BUNDLE_CANCEL, requestId })
+        .catch(() => undefined);
+      return;
+    }
+    if (event.data?.type !== 'HHR_RAYEN_REQUEST_SYNC_BUNDLE') return;
+    const data = event.data;
+    chrome.runtime
+      .sendMessage({
+        type: runtimeMessages.SYNC_BUNDLE_REQUEST,
+        requestId: data.requestId,
+        dateStart: data.dateStart,
+        dateEnd: data.dateEnd,
+      })
+      .then(response => {
+        // A capture HHR already cancelled must not resurface as a late error.
+        if (response?.cancelled === true) return;
+        if (response?.ok === true && response.snapshot && response.bundle) {
+          post({
+            type: 'HHR_RAYEN_CENSUS_SNAPSHOT',
+            requestId: data.requestId,
+            snapshot: response.snapshot,
+            bundle: response.bundle,
+          });
+          return;
+        }
+        post({
+          type: 'HHR_RAYEN_IMPORT_ERROR',
+          requestId: data.requestId,
+          error: response?.error || 'No se pudieron capturar ambas fuentes de Eloísa.', timeoutStage: response?.timeoutStage, captureRetries: response?.captureRetries,
+        });
+      })
+      .catch(error => post({
+        type: 'HHR_RAYEN_IMPORT_ERROR',
+        requestId: data.requestId,
+        error: String(error),
+      }));
+  }));
+})();

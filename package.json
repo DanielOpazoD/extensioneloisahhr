@@ -1,0 +1,45 @@
+{
+  "name": "@hhr/eloisa-extension",
+  "version": "0.48.88",
+  "private": true,
+  "type": "module",
+  "description": "Extensión Eloísa HHR: código, pruebas y releases independientes.",
+  "engines": {
+    "node": "22.x"
+  },
+  "exports": {
+    "./package": {
+      "types": "./scripts/package-extension.d.mts",
+      "import": "./scripts/package-extension.mjs"
+    },
+    "./manifest": "./extension/manifest.json"
+  },
+  "files": [
+    "extension",
+    "scripts",
+    "contracts",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "check:release": "node scripts/check-rayen-extension-release.mjs",
+    "check:version": "node scripts/check-extension-version-advance.mjs",
+    "test:runtime": "node scripts/smoke-rayen-extension-runtime.mjs",
+    "test:dau": "node scripts/smoke-urgency-dau-login.mjs",
+    "build": "node scripts/build-release.mjs",
+    "base:update": "git fetch origin main && git rebase origin/main",
+    "version:next": "node scripts/next-version.mjs",
+    "prepare:publication": "npm run base:update && npm run version:next"
+  },
+  "dependencies": {
+    "fflate": "0.8.2"
+  },
+  "devDependencies": {
+    "playwright": "1.57.0",
+    "vitest": "4.1.12",
+    "vite": "6.4.4",
+    "jsdom": "27.4.0",
+    "pdfjs-dist": "5.5.207"
+  }
+}

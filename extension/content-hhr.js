@@ -1,0 +1,340 @@
+/**
+ * content-hhr.js  (ISOLATED world)
+ *
+ * Runs on the HHR app (the exact origins declared in manifest.json). Bridges the page's
+ * postMessage protocol (the `rayen-import` bridge inside the app) and the background.
+ *
+ * Guarded sync bundle (Ficha Médico + Gestión de Camas):
+ *   Page → us:  { type: 'HHR_RAYEN_REQUEST_SYNC_BUNDLE', dateStart, dateEnd }
+ *   us  → page: { type: 'HHR_RAYEN_CENSUS_SNAPSHOT', snapshot, bundle } | import error
+ * Egreso lookup (Gestión de Camas, for late-sync patients absent from Ficha Médico):
+ *   Page → us:  { type: 'HHR_RAYEN_EGRESO_LOOKUP_REQUEST', reqId, runs }
+ *   us  → page: { type: 'HHR_RAYEN_EGRESO_LOOKUP_RESULT', reqId, results }
+ * Patient navigation (read-only handoff to the exact Ficha Médico encounter):
+ *   Page → us:  { type: 'HHR_RAYEN_OPEN_ENCOUNTER_REQUEST', reqId, encId }
+ *   us  → page: { type: 'HHR_RAYEN_OPEN_ENCOUNTER_RESULT', reqId, ok, reused, error? }
+ *
+ * Capability health (no clinical data or token access):
+ *   Page → us:  { type: 'HHR_RAYEN_EXTENSION_HEALTH_REQUEST', reqId }
+ *   us  → page: { type: 'HHR_RAYEN_EXTENSION_HEALTH_RESULT', reqId, report, error? }
+ *   Page → us:  { type: 'HHR_RAYEN_GC_CONNECT_REQUEST', reqId, renew? }
+ *   us  → page: { type: 'HHR_RAYEN_GC_CONNECT_RESULT', reqId, ok, error? }
+ */
+(() => {
+  'use strict';
+  const runtimeMessages = globalThis.HhrRayenMessageContract &&
+    globalThis.HhrRayenMessageContract.types;
+  if (!runtimeMessages || !globalThis.HhrAppOrigins?.has(window.location.origin)) return;
+  const previousRelay = globalThis.__hhrAppRelayInstalled; try {
+    chrome.runtime.onMessage.removeListener?.(previousRelay?.runtimeListener);
+    window.removeEventListener('message', previousRelay?.pageListener);
+  } catch (_) {}
+  const relayClaim = { runtime: chrome.runtime, runtimeId: chrome.runtime.id };
+  globalThis.__hhrAppRelayInstalled = relayClaim;
+  const ownsRelay = () => globalThis.__hhrAppRelayInstalled === relayClaim;
+  const post = message => chrome.runtime?.id && window.postMessage(message, window.location.origin);
+  const generationRelay = globalThis.HhrBridgeGeneration.createRelay({
+    chromeApi: chrome,
+    runtimeMessages,
+    extensionVersion: chrome.runtime.getManifest().version,
+  });
+  const getRuntimeContext = generationRelay.getContext;
+  const healthPushOrdering = globalThis.HhrHealthPushOrderingRuntime?.createReceiver?.() || { accept: () => false };
+  const onRuntimeMessage = (message, _sender, sendResponse) => {
+    if (!ownsRelay()) return undefined;
+    if (message && message.type === 'RAYEN_EXTENSION_RELAY_PING') return sendResponse({ relayReady: 'hhr' }), false;
+    if (message && message.type === 'RAYEN_EXTENSION_HHR_HEALTH_PING') {
+      getRuntimeContext().then(runtimeContext => {
+        const version = chrome.runtime.getManifest().version;
+        const current = Boolean(
+          runtimeContext &&
+          runtimeContext.runtimeGeneration === message.runtimeGeneration &&
+          runtimeContext.version === version
+        );
+        sendResponse({
+          ready: current,
+          reason: current ? 'connected' : 'outdated_tab',
+          bridgeVersion: version,
+          bridgeGeneration: runtimeContext && runtimeContext.runtimeGeneration,
+          message: current
+            ? 'HHR está enlazado con la extensión vigente.'
+            : 'La pestaña HHR pertenece a una generación anterior de la extensión.',
+        });
+      });
+      return true;
+    }
+    if (message && message.type === 'RAYEN_EXTENSION_HEALTH_PUSH' && message.report &&
+        healthPushOrdering.accept(message)) {
+      post({
+        type: 'HHR_RAYEN_EXTENSION_HEALTH_PUSH',
+        report: message.report,
+        reason: message.reason,
+        publicationSequence: message.publicationSequence,
+      });
+    }
+    return undefined;
+  };
+  chrome.runtime.onMessage.addListener(onRuntimeMessage);
+  const acceptPageMessage = event => {
+    if (!ownsRelay() || !chrome.runtime?.id || event.source !== window || event.origin !== window.location.origin) return false;
+    if (event.data?.type !== 'HHR_RAYEN_SESSION_CHANGED') return true;
+    chrome.runtime.sendMessage({ type: runtimeMessages.HHR_SESSION_CHANGED }).catch(() => undefined); return false;
+  };
+  const postFailure = (type, reqId, error, fallback = {}) => {
+    if (!chrome.runtime?.id) return;
+    console.warn('[Rayen→HHR] ' + type + ' error:', error);
+    post({ type, reqId, ...fallback, error: String(error) });
+  };
+  const reportRoutes = new Map(Object.entries({
+    HHR_RAYEN_MONTHLY_CUDYR_REPORT_REQUEST: {
+      reply: 'HHR_RAYEN_MONTHLY_CUDYR_REPORT_RESULT',
+      request: data => ({ type: runtimeMessages.MONTHLY_CUDYR_REPORT_REQUEST, month: data.month, censusDate: data.censusDate }),
+      result: response => response,
+    },
+    HHR_RAYEN_EGRESO_REPORT_REQUEST: {
+      reply: 'HHR_RAYEN_EGRESO_REPORT_RESULT',
+      request: data => ({ type: runtimeMessages.EGRESO_REPORT_REQUEST, dateStart: data.dateStart, dateEnd: data.dateEnd }),
+      result: response => {
+        const ok = Boolean(response && response.ok === true && Array.isArray(response.rows));
+        return { ok, rows: ok ? response.rows : [] };
+      },
+    },
+  }));
+  const onPageMessage = event => {
+    if (!acceptPageMessage(event)) return;
+    const data = event.data;
+    if (!data) return;
+    if (data.type === 'HHR_RAYEN_EXTENSION_HEALTH_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage(globalThis.HhrHealthRequestRuntime.runtimeRequest(runtimeMessages.EXTENSION_HEALTH_REQUEST, data))
+        .then(report => {
+          post({ type: 'HHR_RAYEN_EXTENSION_HEALTH_RESULT', reqId, report });
+        })
+        .catch(error => {
+          post({
+            type: 'HHR_RAYEN_EXTENSION_HEALTH_RESULT',
+            reqId,
+            error: String(error),
+          });
+        });
+      return;
+    }
+    if (data.type === 'HHR_RAYEN_GC_CONNECT_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.GC_CONNECT_REQUEST, renew: data.renew === true })
+        .then(response => {
+          post({
+            type: 'HHR_RAYEN_GC_CONNECT_RESULT',
+            reqId,
+            ok: Boolean(response && response.ok),
+            error: response && response.error,
+          });
+        })
+        .catch(error => postFailure('HHR_RAYEN_GC_CONNECT_RESULT', reqId, error, { ok: false }));
+      return;
+    }
+    if (data.type === 'HHR_RAYEN_REQUEST_SNAPSHOT') {
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.SNAPSHOT_REQUEST })
+        .then(response => {
+          if (response && response.snapshot) {
+            post({ type: 'HHR_RAYEN_CENSUS_SNAPSHOT', snapshot: response.snapshot });
+          } else {
+            const error = (response && response.error) || 'Error desconocido leyendo Rayen.';
+            console.warn('[Rayen→HHR] Import error:', error);
+            post({ type: 'HHR_RAYEN_IMPORT_ERROR', error });
+          }
+        })
+        .catch(error => {
+          console.warn('[Rayen→HHR] Bridge error:', error);
+          post({ type: 'HHR_RAYEN_IMPORT_ERROR', error: String(error) });
+        });
+      return;
+    }
+
+    if (data.type === 'HHR_RAYEN_OPEN_ENCOUNTER_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.OPEN_ENCOUNTER_REQUEST, encId: data.encId, routeHint: data.routeHint })
+        .then(response => {
+          post({
+            type: 'HHR_RAYEN_OPEN_ENCOUNTER_RESULT',
+            reqId,
+            ok: response && response.ok === true,
+            reused: response && response.reused === true,
+            error: response && response.error,
+          });
+        })
+        .catch(error => postFailure('HHR_RAYEN_OPEN_ENCOUNTER_RESULT', reqId, error, {
+          ok: false, reused: false,
+        }));
+      return;
+    }
+    if (data.type === 'HHR_RAYEN_EGRESO_LOOKUP_REQUEST') {
+      const reqId = data.reqId;
+      const runs = Array.isArray(data.runs) ? data.runs : [];
+      const targets = Array.isArray(data.targets) ? data.targets : [];
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.EGRESO_LOOKUP_REQUEST, reqId, runs, targets })
+        .then(response => {
+          const results = response && response.reqId === reqId && Array.isArray(response.results) ? response.results : [];
+          post({ type: 'HHR_RAYEN_EGRESO_LOOKUP_RESULT', reqId, results });
+        })
+        .catch(error => {
+          // Degrade gracefully: no egresos recovered → the sync keeps the inferred discharges.
+          console.warn('[Rayen→HHR] Egreso lookup error:', error);
+          post({ type: 'HHR_RAYEN_EGRESO_LOOKUP_RESULT', reqId, results: [] });
+        });
+      return;
+    }
+
+    const reportRoute = reportRoutes.get(data.type);
+    if (reportRoute) {
+      const reqId = data.reqId;
+      chrome.runtime.sendMessage(reportRoute.request(data))
+        .then(response => post({ ...reportRoute.result(response), type: reportRoute.reply, reqId }))
+        .catch(() => post({ ...reportRoute.result(null), type: reportRoute.reply, reqId, error: 'Extensión no disponible.' }));
+      return;
+    }
+
+    if (data.type === 'HHR_RAYEN_DEVICE_REPORT_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.DEVICE_REPORT_REQUEST, encId: data.encId, fecha: data.fecha, acceptEntries: data.acceptEntries === true })
+        .then(response => {
+          post({
+            type: 'HHR_RAYEN_DEVICE_REPORT_RESULT',
+            reqId,
+            entries: response && Array.isArray(response.entries) ? response.entries : undefined,
+            base64: (response && response.base64) || '',
+            source: response && response.source,
+            error: response && response.error,
+          });
+        })
+        .catch(error => {
+          console.warn('[Rayen→HHR] Device report error:', error); post({ type: 'HHR_RAYEN_DEVICE_REPORT_RESULT', reqId, base64: '', error: String(error) });
+        });
+      return;
+    }
+
+    if (data.type === 'HHR_RAYEN_SCALES_REPORT_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.SCALES_REPORT_REQUEST, encId: data.encId })
+        .then(response => {
+          post({
+            type: 'HHR_RAYEN_SCALES_REPORT_RESULT',
+            reqId,
+            forms: (response && Array.isArray(response.forms) && response.forms) || [],
+            error: response && response.error,
+            errorCode: response && response.errorCode,
+          });
+        })
+        .catch(error => {
+          // Degrade gracefully: no forms → no scales synced for this patient.
+          console.warn('[Rayen→HHR] Scales report error:', error);
+          post({ type: 'HHR_RAYEN_SCALES_REPORT_RESULT', reqId, forms: [], error: String(error), errorCode: 'source_unavailable' });
+        });
+      return;
+    }
+    if (data.type === 'HHR_RAYEN_HISTORY_SCALES_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.HISTORY_SCALES_REQUEST, encId: data.encId, censusDate: data.censusDate, lookbackDays: data.lookbackDays })
+        .then(response => {
+          post({
+            type: 'HHR_RAYEN_HISTORY_SCALES_RESULT',
+            reqId,
+            events: (response && Array.isArray(response.events) && response.events) || [],
+            nursingActivity: (response && Array.isArray(response.nursingActivity) && response.nursingActivity) || [],
+            effectiveLookbackDays: response && response.effectiveLookbackDays,
+            coverageWindowStartIsoDay: response && response.coverageWindowStartIsoDay,
+            coverageWindowEndIsoDay: response && response.coverageWindowEndIsoDay,
+            error: response && response.error,
+          });
+        })
+        .catch(error => {
+          // Degrade gracefully: no events → no scales synced for this patient.
+          console.warn('[Rayen→HHR] History scales error:', error);
+          post({ type: 'HHR_RAYEN_HISTORY_SCALES_RESULT', reqId, events: [], nursingActivity: [], error: String(error) });
+        });
+      return;
+    }
+    if (data.type === 'HHR_RAYEN_PATIENT_CLINICAL_BUNDLE_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage({
+          type: runtimeMessages.PATIENT_CLINICAL_BUNDLE_REQUEST,
+          encId: data.encId,
+          fecha: data.fecha,
+          acceptEntries: data.acceptEntries === true,
+          censusDate: data.censusDate,
+          lookbackDays: data.lookbackDays,
+        })
+        .then(response => {
+          post({
+            type: 'HHR_RAYEN_PATIENT_CLINICAL_BUNDLE_RESULT',
+            reqId,
+            devices: response && response.devices,
+            history: response && response.history,
+            forms: response && response.forms, alerts: response && response.alerts,
+            error: response && response.error,
+          });
+        })
+        .catch(error => {
+          // Degrade gracefully: HHR falls back to the three individual channels.
+          console.warn('[Rayen→HHR] Patient clinical bundle error:', error);
+          post({ type: 'HHR_RAYEN_PATIENT_CLINICAL_BUNDLE_RESULT', reqId, error: String(error) });
+        });
+      return;
+    }
+    if (data.type === 'HHR_RAYEN_CLINICAL_PANEL_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.CLINICAL_PANEL_REQUEST, encId: data.encId, historyFrom: data.historyFrom })
+        .then(response => {
+          post({
+            type: 'HHR_RAYEN_CLINICAL_PANEL_RESULT', reqId,
+            historyFrom: response && response.historyFrom, forms: response && response.forms, formError: response && response.formError,
+            events: (response && Array.isArray(response.events) && response.events) || [],
+            carePlan: (response && response.carePlan) || {
+              carePlanHeaders: [],
+              medicationStates: [],
+            },
+            documents: response && Array.isArray(response.documents) ? response.documents : undefined,
+            documentError: response && response.documentError,
+            error: response && response.error,
+          });
+        })
+        // Degrade gracefully: preserve the panel's empty/error fallback.
+        .catch(error => postFailure('HHR_RAYEN_CLINICAL_PANEL_RESULT', reqId, error, {
+          events: [], carePlan: { carePlanHeaders: [], medicationStates: [] },
+        }));
+      return;
+    }
+    if (data.type === 'HHR_RAYEN_CUDYR_CATEGORIES_REQUEST') {
+      const reqId = data.reqId;
+      chrome.runtime
+        .sendMessage({ type: runtimeMessages.CUDYR_CATEGORIES_REQUEST })
+        .then(response => {
+          const { source, historyAvailable, captureContract, observedEpisodeIds, metadataStatus, warning, error } = response || {};
+          post({
+            type: 'HHR_RAYEN_CUDYR_CATEGORIES_RESULT',
+            reqId,
+            items: (response && Array.isArray(response.items) && response.items) || [],
+            source, historyAvailable, captureContract, observedEpisodeIds, metadataStatus, warning, error,
+          });
+        })
+        .catch(error => {
+          // Degrade gracefully: no categories → no CUDYR synced.
+          console.warn('[Rayen→HHR] CUDYR categories error:', error);
+          post({ type: 'HHR_RAYEN_CUDYR_CATEGORIES_RESULT', reqId, items: [], error: String(error) });
+        });
+      return;
+    }
+  };
+  window.addEventListener('message', onPageMessage);
+  Object.assign(relayClaim, { runtimeListener: onRuntimeMessage, pageListener: onPageMessage });
+})();

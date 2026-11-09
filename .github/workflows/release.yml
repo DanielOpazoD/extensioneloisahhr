@@ -1,0 +1,37 @@
+name: Publish extension
+on:
+  workflow_dispatch:
+concurrency:
+  group: extension-publication
+  cancel-in-progress: false
+permissions:
+  contents: write
+  checks: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22.22.0
+          cache: npm
+      - run: npm ci
+      - name: Verify owner, exact CI and latest published base
+        run: node scripts/release-preflight.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: npm run build
+      - name: Publish checked artifact and release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "JSON.parse(require('fs').readFileSync('dist/release.json')).version")
+          asset=$(node -p "JSON.parse(require('fs').readFileSync('dist/release.json')).assetName")
+          current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          test "$current" = "$GITHUB_SHA" || { echo "main avanzó; vuelve a ejecutar la publicación."; exit 1; }
+          gh release create "v${version}" "dist/${asset}" dist/release.json --target "$GITHUB_SHA" --title "Puente Eloísa HHR ${version}" --notes-file dist/NOTES.md

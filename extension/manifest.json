@@ -1,0 +1,352 @@
+{
+  "manifest_version": 3,
+  "minimum_chrome_version": "118",
+  "name": "Rayen → HHR · Puente de censo",
+  "version": "0.48.88",
+  "description": "Conecta Eloísa con HHR y ofrece herramientas de recetas y exámenes.",
+  "permissions": [
+    "tabs",
+    "downloads",
+    "storage",
+    "offscreen",
+    "clipboardWrite",
+    "alarms",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://fichamedico.rayensalud.cl/*",
+    "https://urgencia.saludenred.cl/*",
+    "https://api.saludenred.cl/*",
+    "https://fichamedicoback.rayensalud.cl/*",
+    "https://saludteintegrachileapi.rayensalud.cl/*",
+    "https://formulariosclinicosback.rayensalud.cl/*",
+    "https://hospitalizado.rayensalud.cl/*",
+    "https://hospbackend.rayensalud.cl/*",
+    "http://10.4.69.90/syslab/*",
+    "http://localhost:3000/*",
+    "http://localhost:3001/*",
+    "http://localhost:3002/*",
+    "http://localhost:3003/*",
+    "http://localhost:3004/*",
+    "http://localhost:3005/*",
+    "http://localhost:3006/*",
+    "http://localhost:3007/*",
+    "http://localhost:3008/*",
+    "http://localhost:3009/*",
+    "http://localhost:3010/*",
+    "http://localhost:3011/*",
+    "http://localhost:3012/*",
+    "http://localhost:3013/*",
+    "http://localhost:3014/*",
+    "http://localhost:3015/*",
+    "http://localhost:3016/*",
+    "http://localhost:3017/*",
+    "http://localhost:3018/*",
+    "http://localhost:3019/*",
+    "http://localhost:3020/*",
+    "http://127.0.0.1:3000/*",
+    "http://127.0.0.1:3001/*",
+    "http://127.0.0.1:3002/*",
+    "http://127.0.0.1:3003/*",
+    "http://127.0.0.1:3004/*",
+    "http://127.0.0.1:3005/*",
+    "http://127.0.0.1:3006/*",
+    "http://127.0.0.1:3007/*",
+    "http://127.0.0.1:3008/*",
+    "http://127.0.0.1:3009/*",
+    "http://127.0.0.1:3010/*",
+    "http://127.0.0.1:3011/*",
+    "http://127.0.0.1:3012/*",
+    "http://127.0.0.1:3013/*",
+    "http://127.0.0.1:3014/*",
+    "http://127.0.0.1:3015/*",
+    "http://127.0.0.1:3016/*",
+    "http://127.0.0.1:3017/*",
+    "http://127.0.0.1:3018/*",
+    "http://127.0.0.1:3019/*",
+    "http://127.0.0.1:3020/*",
+    "https://hhr-hospitalizados.app/*",
+    "https://testinghhr.netlify.app/*",
+    "https://hhr-entorno-prueba.netlify.app/*",
+    "https://*.netlify.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Ver versión del puente Eloísa → HHR",
+    "default_popup": "extension-status.html"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "hhr-logo.svg",
+        "message-contract.js",
+        "fichamedico-manual-patient-copy.js",
+        "syslab-login.html",
+        "syslab-login.js",
+        "forms/consentimiento.pdf",
+        "forms/consentimiento.png",
+        "forms/encuesta-contraste.pdf",
+        "forms/encuesta_imagenologia.png",
+        "forms/solicitud-imagen.pdf",
+        "forms/solicitud_imagenologia.png"
+      ],
+      "matches": [
+        "https://fichamedico.rayensalud.cl/*",
+        "https://hospitalizado.rayensalud.cl/*"
+      ]
+    },
+    {
+      "resources": [
+        "pdf.min.mjs",
+        "pdf.worker.min.mjs"
+      ],
+      "matches": [
+        "http://10.4.69.90/*"
+      ]
+    },
+    {
+      "resources": [
+        "urgency-login.html",
+        "urgency-login.css"
+      ],
+      "matches": [
+        "http://localhost:3000/*",
+        "http://localhost:3001/*",
+        "http://localhost:3002/*",
+        "http://localhost:3003/*",
+        "http://localhost:3004/*",
+        "http://localhost:3005/*",
+        "http://localhost:3006/*",
+        "http://localhost:3007/*",
+        "http://localhost:3008/*",
+        "http://localhost:3009/*",
+        "http://localhost:3010/*",
+        "http://localhost:3011/*",
+        "http://localhost:3012/*",
+        "http://localhost:3013/*",
+        "http://localhost:3014/*",
+        "http://localhost:3015/*",
+        "http://localhost:3016/*",
+        "http://localhost:3017/*",
+        "http://localhost:3018/*",
+        "http://localhost:3019/*",
+        "http://localhost:3020/*",
+        "http://127.0.0.1:3000/*",
+        "http://127.0.0.1:3001/*",
+        "http://127.0.0.1:3002/*",
+        "http://127.0.0.1:3003/*",
+        "http://127.0.0.1:3004/*",
+        "http://127.0.0.1:3005/*",
+        "http://127.0.0.1:3006/*",
+        "http://127.0.0.1:3007/*",
+        "http://127.0.0.1:3008/*",
+        "http://127.0.0.1:3009/*",
+        "http://127.0.0.1:3010/*",
+        "http://127.0.0.1:3011/*",
+        "http://127.0.0.1:3012/*",
+        "http://127.0.0.1:3013/*",
+        "http://127.0.0.1:3014/*",
+        "http://127.0.0.1:3015/*",
+        "http://127.0.0.1:3016/*",
+        "http://127.0.0.1:3017/*",
+        "http://127.0.0.1:3018/*",
+        "http://127.0.0.1:3019/*",
+        "http://127.0.0.1:3020/*",
+        "https://hhr-hospitalizados.app/*",
+        "https://testinghhr.netlify.app/*",
+        "https://hhr-entorno-prueba.netlify.app/*",
+        "https://*.netlify.app/*"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://fichamedico.rayensalud.cl/*"
+      ],
+      "js": [
+        "fichamedico-isolation-normalization.js",
+        "fichamedico-treating-physician-dom.js",
+        "fichamedico-treating-physician-sources.js",
+        "fichamedico-treating-physician-normalization.js",
+        "fichamedico-diagnosis-coding.js",
+        "fichamedico-normalization.js",
+        "fichamedico-read-resilience.js",
+        "fichamedico-capture-cache.js",
+        "fichamedico-census-runtime.js",
+        "bridge-generation-main.js",
+        "connection-relay-recovery.js",
+        "inject-fichamedico.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://fichamedico.rayensalud.cl/*"
+      ],
+      "js": [
+        "message-contract.js",
+        "bridge-generation.js",
+        "content-fichamedico.js",
+        "runtime-message-client.js",
+        "fichamedico-manual-patient-copy.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://fichamedico.rayensalud.cl/*"
+      ],
+      "js": [
+        "message-contract.js",
+        "health-push-ordering-runtime.js",
+        "hhr-ui.js",
+        "hhr-lab-request-styles.js",
+        "hhr-center-styles.js",
+        "hhr-center-shell-runtime.js",
+        "hhr-prescription-center.js",
+        "hhr-hospitalized-documents-center.js",
+        "hhr-clinical-write-client-runtime.js",
+        "hhr-lab-request-patient.js",
+        "hhr-lab-center.js",
+        "hhr-request-forms.js",
+        "hhr-imaging-center.js",
+        "hhr-discharge-actions-runtime.js",
+        "hhr-medication-actions-runtime.js",
+        "hhr-connection-action-model.js",
+        "hhr-connection-repair-controls.js",
+        "hhr-connection-presentation.js",
+        "hhr-connection-center-runtime.js",
+        "prescription-print.js",
+        "lab-result-parser.js",
+        "lab-viewer.js",
+        "exam-request-print.js",
+        "content-exam-request-print.js",
+        "hhr-prescription-content-runtime.js",
+        "hhr-prescription-ui-lifecycle.js",
+        "content-prescription-print.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://hospitalizado.rayensalud.cl/*"
+      ],
+      "js": [
+        "bridge-generation-main.js",
+        "connection-relay-recovery.js",
+        "inject-gestioncamas.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://hospitalizado.rayensalud.cl/*"
+      ],
+      "js": [
+        "message-contract.js",
+        "bridge-generation.js",
+        "gestion-camas-bridge-health.js",
+        "health-push-ordering-runtime.js",
+        "hhr-connection-action-model.js",
+        "hhr-connection-presentation.js",
+        "gestion-camas-connection-indicator.js",
+        "gestion-camas-connection-indicator-bootstrap.js",
+        "content-gestioncamas.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "http://10.4.69.90/syslab/*"
+      ],
+      "js": [
+        "lab-result-parser.js",
+        "lab-viewer.js",
+        "syslab-network-probe.js",
+        "syslab-bridge.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "http://localhost:3001/*",
+        "http://localhost:3002/*",
+        "http://localhost:3003/*",
+        "http://localhost:3004/*",
+        "http://localhost:3005/*",
+        "http://localhost:3006/*",
+        "http://localhost:3007/*",
+        "http://localhost:3008/*",
+        "http://localhost:3009/*",
+        "http://localhost:3010/*",
+        "http://localhost:3011/*",
+        "http://localhost:3012/*",
+        "http://localhost:3013/*",
+        "http://localhost:3014/*",
+        "http://localhost:3015/*",
+        "http://localhost:3016/*",
+        "http://localhost:3017/*",
+        "http://localhost:3018/*",
+        "http://localhost:3019/*",
+        "http://localhost:3020/*",
+        "http://127.0.0.1:3000/*",
+        "http://127.0.0.1:3001/*",
+        "http://127.0.0.1:3002/*",
+        "http://127.0.0.1:3003/*",
+        "http://127.0.0.1:3004/*",
+        "http://127.0.0.1:3005/*",
+        "http://127.0.0.1:3006/*",
+        "http://127.0.0.1:3007/*",
+        "http://127.0.0.1:3008/*",
+        "http://127.0.0.1:3009/*",
+        "http://127.0.0.1:3010/*",
+        "http://127.0.0.1:3011/*",
+        "http://127.0.0.1:3012/*",
+        "http://127.0.0.1:3013/*",
+        "http://127.0.0.1:3014/*",
+        "http://127.0.0.1:3015/*",
+        "http://127.0.0.1:3016/*",
+        "http://127.0.0.1:3017/*",
+        "http://127.0.0.1:3018/*",
+        "http://127.0.0.1:3019/*",
+        "http://127.0.0.1:3020/*",
+        "https://hhr-hospitalizados.app/*",
+        "https://testinghhr.netlify.app/*",
+        "https://hhr-entorno-prueba.netlify.app/*",
+        "https://*.netlify.app/*"
+      ],
+      "js": [
+        "message-contract.js",
+        "hhr-origin-policy.js",
+        "bridge-generation.js",
+        "health-push-ordering-runtime.js",
+        "content-hhr-sync-bundle.js",
+        "content-hhr-connection-repair.js",
+        "health-request-runtime.js",
+        "content-hhr.js",
+        "content-hhr-patient-flow.js",
+        "content-hhr-epicrisis.js",
+        "content-hhr-audit-documents.js",
+        "content-hhr-patient-documents.js",
+        "content-hhr-statistical-discharge.js",
+        "content-hhr-statistical-evidence.js",
+        "content-hhr-syslab.js",
+        "content-hhr-exalab.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "optional_permissions": [
+    "cookies"
+  ],
+  "optional_host_permissions": [
+    "https://exalab.saludoriente.cl/*"
+  ]
+}

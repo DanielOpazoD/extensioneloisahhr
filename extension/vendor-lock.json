@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "vendors": [
+    {
+      "file": "jspdf.umd.min.js",
+      "package": "jspdf",
+      "version": "4.2.1",
+      "license": "MIT",
+      "sha256": "e6551fcdc32f09d6853b2c5126d18d01d9447e0da618a41a11ebeee0f6c20d54"
+    },
+    {
+      "file": "pdf-lib.min.js",
+      "package": "pdf-lib",
+      "version": "1.17.1",
+      "license": "MIT",
+      "sha256": "0f9a5cad07941f0826586c94e089d89b918c46e5c17cf2d5a3c6f666e3bc694f"
+    },
+    {
+      "file": "xlsx.full.min.js",
+      "package": "xlsx",
+      "version": "0.20.3",
+      "license": "Apache-2.0",
+      "sha256": "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41"
+    },
+    {
+      "file": "pdf.min.mjs",
+      "package": "pdfjs-dist",
+      "version": "5.5.207",
+      "variant": "legacy",
+      "source": "pdfjs-dist/legacy/build/pdf.min.mjs",
+      "license": "Apache-2.0",
+      "sha256": "933c8f40b1ab5b7f94ebb1cc2a75d0be84c9ffa238f739c398872a6bb65a862e"
+    },
+    {
+      "file": "pdf.worker.min.mjs",
+      "package": "pdfjs-dist",
+      "version": "5.5.207",
+      "variant": "legacy",
+      "source": "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+      "license": "Apache-2.0",
+      "sha256": "c4b8db209aa0b3f4e738b2b37cba110fb6b4b0d0f4cee7cf62be974b884169f5"
+    }
+  ]
+}
