@@ -32,6 +32,7 @@ await writeFile(manifestPath, JSON.stringify(manifest));
 // Silent reconnection is bound to a published HHR site, so the routed HHR uses one.
 const hhrOrigin = "https://hhr-hospitalizados.app";
 const owner = "0123456789abcdef";
+const exalabUser = "fedcba9876543210";
 const pair = "S".repeat(43);
 const context = await chromium.launchPersistentContext("", {
   channel: "chromium",
@@ -65,7 +66,7 @@ try {
     return route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, connected: true, owner }),
+      body: JSON.stringify({ success: true, connected: true, owner, exalabUser }),
     });
   });
   const exalab = await context.newPage();
@@ -126,6 +127,7 @@ try {
   assert.equal(connectRequests.length, 2, "The silent reconnection never reached the gateway");
   assert.equal(connectRequests[1].pair, "A".repeat(43));
   assert.equal(connectRequests[1].expectedOwner, owner, "The reconnection must name the consenting account");
+  assert.equal(connectRequests[1].expectedExalabUser, exalabUser, "The reconnection must name the consenting Exalab user");
   assert.deepEqual(connectRequests[1].session.cookies, connectRequests[0].session.cookies);
   console.log("Exalab consent runtime smoke passed (session cookie reaches the gateway; silent reconnection works).");
 } finally {

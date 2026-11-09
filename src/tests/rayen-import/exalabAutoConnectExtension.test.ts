@@ -9,6 +9,7 @@ const hhr = { frameId: 0, tab: { url: 'https://hhr-hospitalizados.app/censo', id
 type Listener = (message: unknown, sender: unknown, respond: (value: unknown) => void) => unknown;
 type CookieListener = (change: { removed: boolean; cookie: { name: string; domain: string } }) => void;
 const OWNER = '0123456789abcdef';
+const USER = 'fedcba9876543210';
 const worker = ({
   granted = true,
   remember = true,
@@ -16,6 +17,8 @@ const worker = ({
   connected = true,
   origin = 'https://hhr-hospitalizados.app',
   owner = OWNER as string | null,
+  user = USER as string | null,
+  code = null as string | null,
 } = {}) => {
   let listener: Listener = () => undefined;
   let cookieListener: CookieListener = () => undefined;
@@ -23,7 +26,10 @@ const worker = ({
     ? { PHPSESSID: { name: 'PHPSESSID', value: 'synthetic-only', domain: 'exalab.saludoriente.cl' } }
     : {};
   const fetchMock = vi.fn(
-    async () => new Response(JSON.stringify({ success: connected, connected }), { status: connected ? 200 : 409 })
+    async () =>
+      new Response(JSON.stringify({ success: connected, connected, ...(code ? { code } : {}) }), {
+        status: connected ? 200 : 403,
+      })
   );
   const sendMessage = vi.fn(async () => undefined);
   const remove = vi.fn(async () => undefined);
@@ -43,6 +49,7 @@ const worker = ({
             exalabAutoConnect: remember,
             exalabAutoConnectOrigin: origin,
             exalabAutoConnectOwner: owner,
+            exalabAutoConnectUser: user,
           })),
           remove,
         },
@@ -97,6 +104,7 @@ describe('Exalab silent reconnection', () => {
         userAgent: 'synthetic-UA',
       },
       expectedOwner: OWNER,
+      expectedExalabUser: USER,
     });
   });
   it.each([
@@ -106,6 +114,9 @@ describe('Exalab silent reconnection', () => {
     [{ connected: false }, 'rejected'],
     [{ owner: null }, 'needs_consent'],
     [{ owner: 'not-a-fingerprint' }, 'needs_consent'],
+    [{ user: null }, 'needs_consent'],
+    [{ connected: false, code: 'EXALAB_USER_MISMATCH' }, 'needs_consent'],
+    [{ connected: false, code: 'OWNER_MISMATCH' }, 'rejected'],
     [{ origin: 'https://testinghhr.netlify.app' }, 'needs_consent'],
   ])('does not pretend to connect (%o → %s)', async (options, reason) => {
     const harness = worker(options);
@@ -113,7 +124,9 @@ describe('Exalab silent reconnection', () => {
       connected: false,
       reason,
     });
-    if (reason !== 'rejected') expect(harness.fetchMock).not.toHaveBeenCalled();
+    if (!('connected' in options)) expect(harness.fetchMock).not.toHaveBeenCalled();
+    // Another person's Exalab session never erases this PC's consent.
+    expect(harness.remove).not.toHaveBeenCalled();
   });
   it('answers nothing to untrusted senders or subframes and forgets consent on request', async () => {
     const harness = worker();
@@ -129,6 +142,7 @@ describe('Exalab silent reconnection', () => {
       'exalabAutoConnect',
       'exalabAutoConnectOrigin',
       'exalabAutoConnectOwner',
+      'exalabAutoConnectUser',
     ]);
   });
   it('tells open HHR tabs, once and without values, when Exalab gets a new session', async () => {
