@@ -33,7 +33,8 @@ const page = (origin = 'https://hhr-hospitalizados.app', granted = true, remembe
   const permission = vi.fn(async () => granted);
   const store = vi.fn(async (_value: unknown) => undefined);
   const fetchMock = vi.fn(
-    async () => new Response(JSON.stringify({ success: true, connected: true }))
+    async () =>
+      new Response(JSON.stringify({ success: true, connected: true, owner: '0123456789abcdef' }))
   );
   const context = vm.createContext({
     URLSearchParams,
@@ -82,12 +83,26 @@ describe('Exalab personal-session consent', () => {
     expect(harness.elements.status.textContent).toBe(
       'Sesión conectada. Puedes cerrar esta pestaña.'
     );
-    expect(harness.store).toHaveBeenCalledWith({ exalabAutoConnect: true });
+    expect(harness.store).toHaveBeenCalledWith({
+      exalabAutoConnect: true,
+      exalabAutoConnectOrigin: 'https://hhr-hospitalizados.app',
+      exalabAutoConnectOwner: '0123456789abcdef',
+    });
+    expect(JSON.parse(String(options.body))).not.toHaveProperty('expectedOwner');
   });
-  it('remembers a declined automatic connection as off', async () => {
-    const harness = page(undefined, true, false);
+  it.each([
+    ['declined by the user', 'https://hhr-hospitalizados.app', false],
+    ['a local HHR', 'http://localhost:3001', true],
+    ['a deploy preview', 'https://deploy-preview-12--testinghhr.netlify.app', true],
+  ])('connects but does not remember automatic reconnection when %s', async (_case, origin, remember) => {
+    const harness = page(origin, true, remember);
     await harness.clickHandlers.connect();
-    expect(harness.store).toHaveBeenCalledWith({ exalabAutoConnect: false });
+    expect(harness.fetchMock).toHaveBeenCalledTimes(1);
+    expect(harness.store).toHaveBeenCalledWith({
+      exalabAutoConnect: false,
+      exalabAutoConnectOrigin: null,
+      exalabAutoConnectOwner: null,
+    });
   });
   it('does not read cookies when permission is denied or the pairing origin is untrusted', async () => {
     const denied = page(undefined, false);

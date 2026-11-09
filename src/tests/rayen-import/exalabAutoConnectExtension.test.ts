@@ -8,7 +8,15 @@ const pair = 'a'.repeat(43);
 const hhr = { frameId: 0, tab: { url: 'https://hhr-hospitalizados.app/censo', id: 7 } };
 type Listener = (message: unknown, sender: unknown, respond: (value: unknown) => void) => unknown;
 type CookieListener = (change: { removed: boolean; cookie: { name: string; domain: string } }) => void;
-const worker = ({ granted = true, remember = true, signedIn = true, connected = true } = {}) => {
+const OWNER = '0123456789abcdef';
+const worker = ({
+  granted = true,
+  remember = true,
+  signedIn = true,
+  connected = true,
+  origin = 'https://hhr-hospitalizados.app',
+  owner = OWNER as string | null,
+} = {}) => {
   let listener: Listener = () => undefined;
   let cookieListener: CookieListener = () => undefined;
   const jar: Record<string, { name: string; value: string; domain: string }> = signedIn
@@ -29,7 +37,16 @@ const worker = ({ granted = true, remember = true, signedIn = true, connected = 
     chrome: {
       runtime: { onMessage: { addListener: (value: Listener) => (listener = value) } },
       permissions: { contains: vi.fn(async () => granted), onAdded: { addListener: vi.fn() } },
-      storage: { local: { get: vi.fn(async () => ({ exalabAutoConnect: remember })), remove } },
+      storage: {
+        local: {
+          get: vi.fn(async () => ({
+            exalabAutoConnect: remember,
+            exalabAutoConnectOrigin: origin,
+            exalabAutoConnectOwner: owner,
+          })),
+          remove,
+        },
+      },
       cookies: {
         get: vi.fn(async ({ name }: { name: string }) => jar[name] ?? null),
         onChanged: { addListener: (value: CookieListener) => (cookieListener = value) },
@@ -58,6 +75,11 @@ describe('Exalab silent reconnection', () => {
     const status = await worker().ask({ type: 'HHR_EXALAB_SESSION_STATUS' });
     expect(status).toEqual({ permission: true, autoConnect: true, session: true });
     expect(JSON.stringify(status)).not.toContain('synthetic-only');
+    expect(JSON.stringify(status)).not.toContain(OWNER);
+    const elsewhere = await worker({ origin: 'https://testinghhr.netlify.app' }).ask({
+      type: 'HHR_EXALAB_SESSION_STATUS',
+    });
+    expect(elsewhere).toMatchObject({ autoConnect: false });
   });
   it('connects through the same gateway as the consent page once consent is remembered', async () => {
     const harness = worker();
@@ -74,6 +96,7 @@ describe('Exalab silent reconnection', () => {
         cookies: [{ name: 'PHPSESSID', value: 'synthetic-only', domain: 'exalab.saludoriente.cl' }],
         userAgent: 'synthetic-UA',
       },
+      expectedOwner: OWNER,
     });
   });
   it.each([
@@ -81,6 +104,9 @@ describe('Exalab silent reconnection', () => {
     [{ remember: false }, 'needs_consent'],
     [{ signedIn: false }, 'no_session'],
     [{ connected: false }, 'rejected'],
+    [{ owner: null }, 'needs_consent'],
+    [{ owner: 'not-a-fingerprint' }, 'needs_consent'],
+    [{ origin: 'https://testinghhr.netlify.app' }, 'needs_consent'],
   ])('does not pretend to connect (%o → %s)', async (options, reason) => {
     const harness = worker(options);
     await expect(harness.ask({ type: 'HHR_EXALAB_AUTO_CONNECT', pair })).resolves.toEqual({
@@ -99,7 +125,11 @@ describe('Exalab silent reconnection', () => {
     ).resolves.toBeNull();
     expect(harness.fetchMock).not.toHaveBeenCalled();
     await expect(harness.ask({ type: 'HHR_EXALAB_FORGET' })).resolves.toEqual({ forgotten: true });
-    expect(harness.remove).toHaveBeenCalledWith('exalabAutoConnect');
+    expect(harness.remove).toHaveBeenCalledWith([
+      'exalabAutoConnect',
+      'exalabAutoConnectOrigin',
+      'exalabAutoConnectOwner',
+    ]);
   });
   it('tells open HHR tabs, once and without values, when Exalab gets a new session', async () => {
     vi.useFakeTimers();

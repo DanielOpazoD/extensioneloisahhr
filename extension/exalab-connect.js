@@ -22,11 +22,13 @@
         status.textContent = 'Primero ingresa a Exalab con tu cuenta personal. Luego vuelve a conectar.'; return;
       }
       status.textContent = 'Comprobando la sesión desde el puente del Mac mini…';
-      if (!await session.connect(origin, pair, cookies, navigator.userAgent)) {
+      const linked = await session.connect(origin, pair, cookies, navigator.userAgent);
+      if (!linked.connected) {
         status.textContent = 'No se pudo vincular la sesión. Renueva el ingreso a Exalab desde este PC y abre una conexión nueva desde HHR.'; return;
       }
-      // With consent remembered, HHR reconnects by itself whenever Exalab has a session in this browser.
-      await chrome.storage.local.set({ exalabAutoConnect: auto?.checked === true });
+      // Remembered consent names this HHR site and account; only they may reconnect silently later.
+      const remember = auto?.checked === true && Boolean(linked.owner) && session.autoOrigin(origin);
+      await chrome.storage.local.set({ exalabAutoConnect: remember, exalabAutoConnectOrigin: remember ? origin : null, exalabAutoConnectOwner: remember ? linked.owner : null });
       status.textContent = 'Sesión conectada. Puedes cerrar esta pestaña.';
       button.hidden = true;
     } catch { status.textContent = 'No se pudo conectar. Revisa la conexión y abre una conexión nueva desde HHR.'; }

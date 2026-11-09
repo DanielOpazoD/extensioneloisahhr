@@ -5,28 +5,38 @@
   const PAIR = /^[A-Za-z0-9_-]{43}$/;
   const trusted = sender => self.HhrAppOrigins.matchesUrl(sender?.tab?.url) && sender.frameId === 0;
   const granted = () => chrome.permissions.contains(session.GRANT);
-  const autoEnabled = async () => (await chrome.storage.local.get('exalabAutoConnect')).exalabAutoConnect === true;
-  const status = async () => {
+  // Consent covers one published HHR site and one HHR account (the bridge's owner fingerprint).
+  const consentedOwner = async origin => {
+    const stored = await chrome.storage.local.get(['exalabAutoConnect', 'exalabAutoConnectOrigin', 'exalabAutoConnectOwner']);
+    return stored.exalabAutoConnect === true && stored.exalabAutoConnectOrigin === origin && session.autoOrigin(origin) &&
+      session.OWNER.test(stored.exalabAutoConnectOwner || '') ? stored.exalabAutoConnectOwner : null;
+  };
+  const status = async origin => {
     const permission = await granted();
     return {
       permission,
-      autoConnect: await autoEnabled(),
+      autoConnect: Boolean(await consentedOwner(origin)),
       session: permission && session.hasSession(await session.readCookies()),
     };
   };
   const autoConnect = async (origin, pair) => {
-    if (!PAIR.test(pair || '') || !await granted() || !await autoEnabled()) return { connected: false, reason: 'needs_consent' };
+    const owner = PAIR.test(pair || '') && await granted() ? await consentedOwner(origin) : null;
+    if (!owner) return { connected: false, reason: 'needs_consent' };
     const cookies = await session.readCookies();
     if (!session.hasSession(cookies)) return { connected: false, reason: 'no_session' };
     try {
-      return await session.connect(origin, pair, cookies, navigator.userAgent)
+      // expectedOwner makes the bridge refuse a pair minted for another HHR account.
+      return (await session.connect(origin, pair, cookies, navigator.userAgent, owner)).connected
         ? { connected: true, reason: 'connected' } : { connected: false, reason: 'rejected' };
     } catch { return { connected: false, reason: 'network' }; }
   };
   const handlers = {
-    HHR_EXALAB_SESSION_STATUS: () => status(),
+    HHR_EXALAB_SESSION_STATUS: (_message, origin) => status(origin),
     HHR_EXALAB_AUTO_CONNECT: (message, origin) => autoConnect(origin, message.pair),
-    HHR_EXALAB_FORGET: async () => { await chrome.storage.local.remove('exalabAutoConnect'); return { forgotten: true }; },
+    HHR_EXALAB_FORGET: async () => {
+      await chrome.storage.local.remove(['exalabAutoConnect', 'exalabAutoConnectOrigin', 'exalabAutoConnectOwner']);
+      return { forgotten: true };
+    },
   };
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const handler = handlers[message?.type];
