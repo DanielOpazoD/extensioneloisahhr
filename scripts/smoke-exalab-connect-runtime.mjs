@@ -29,7 +29,9 @@ manifest.permissions.push(...manifest.optional_permissions);
 manifest.host_permissions.push(...manifest.optional_host_permissions);
 await writeFile(manifestPath, JSON.stringify(manifest));
 
-const hhrOrigin = "http://localhost:3001";
+// Silent reconnection is bound to a published HHR site, so the routed HHR uses one.
+const hhrOrigin = "https://hhr-hospitalizados.app";
+const owner = "0123456789abcdef";
 const pair = "S".repeat(43);
 const context = await chromium.launchPersistentContext("", {
   channel: "chromium",
@@ -63,7 +65,7 @@ try {
     return route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, connected: true }),
+      body: JSON.stringify({ success: true, connected: true, owner }),
     });
   });
   const exalab = await context.newPage();
@@ -80,7 +82,7 @@ try {
 
   assert.equal(
     (await consent.textContent("#status")).trim(),
-    "Sesión conectada. Vuelve a HHR y pulsa Comprobar sesión.",
+    "Sesión conectada. Puedes cerrar esta pestaña.",
   );
   assert.equal(connectRequests.length, 1, "The gateway never received the session");
   assert.equal(connectRequests[0].pair, pair);
@@ -91,7 +93,41 @@ try {
       domain: "exalab.saludoriente.cl",
     },
   ]);
-  console.log("Exalab consent runtime smoke passed (session cookie reaches the gateway).");
+  // Consent is remembered: an HHR tab now reconnects through the worker with no consent page.
+  await context.route(`${hhrOrigin}/`, (route) =>
+    route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>HHR</title>" }),
+  );
+  const hhr = await context.newPage();
+  await hhr.goto(`${hhrOrigin}/`);
+  const ask = (type, extra = {}) =>
+    hhr.evaluate(
+      ({ type, extra }) =>
+        new Promise((resolve, reject) => {
+          const reqId = crypto.randomUUID();
+          const timer = setTimeout(() => reject(new Error("no relay answer for " + type)), 10_000);
+          window.addEventListener("message", (event) => {
+            if (event.data?.type === type + "_RESULT" && event.data.reqId === reqId) {
+              clearTimeout(timer);
+              resolve(event.data.result);
+            }
+          });
+          window.postMessage({ type, reqId, ...extra }, window.location.origin);
+        }),
+      { type, extra },
+    );
+  // The content script may need a moment after load before it listens.
+  let status = null;
+  for (let attempt = 0; attempt < 20 && !status; attempt += 1) {
+    status = await ask("HHR_EXALAB_SESSION_STATUS").catch(() => null);
+  }
+  assert.deepEqual(status, { permission: true, autoConnect: true, session: true });
+  const automatic = await ask("HHR_EXALAB_AUTO_CONNECT", { pair: "A".repeat(43) });
+  assert.deepEqual(automatic, { connected: true, reason: "connected" });
+  assert.equal(connectRequests.length, 2, "The silent reconnection never reached the gateway");
+  assert.equal(connectRequests[1].pair, "A".repeat(43));
+  assert.equal(connectRequests[1].expectedOwner, owner, "The reconnection must name the consenting account");
+  assert.deepEqual(connectRequests[1].session.cookies, connectRequests[0].session.cookies);
+  console.log("Exalab consent runtime smoke passed (session cookie reaches the gateway; silent reconnection works).");
 } finally {
   await context.close();
   await rm(packageDirectory, { recursive: true, force: true });
