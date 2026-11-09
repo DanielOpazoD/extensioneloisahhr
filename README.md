@@ -33,8 +33,10 @@ a empaquetar y recargar Chrome. Una carpeta fuente sin empaquetar no afirma una 
 
 ## Publicar
 
-Solo el propietario puede ejecutar **Publish extension** desde `main`, con CI aprobada para
-ese commit. El trabajo de publicación se serializa y comprueba la última release antes de crear
+**Publish extension** corre solo cuando la CI de `main` aprueba un commit cuya versión aún no
+está publicada; un commit sin versión nueva (documentación, CI) no publica nada. También puede
+lanzarse a mano desde `main`. En ambos casos publica solo si el autor del cambio es el
+propietario y la CI aprobó ese commit exacto. El trabajo de publicación se serializa y comprueba la última release antes de crear
 otra: exige una versión superior y una base que la contenga. No sobrescribe releases ni assets.
 Cada release incluye ZIP, `release.json` y notas. Nadie necesita introducir manualmente la huella
 de la base: se obtiene de la publicación anterior.

@@ -1,6 +1,11 @@
 name: Publish extension
 on:
   workflow_dispatch:
+  # Publish on its own once main's CI passes for a commit that carries a new version.
+  workflow_run:
+    workflows: [Extension CI]
+    types: [completed]
+    branches: [main]
 concurrency:
   group: extension-publication
   cancel-in-progress: false
@@ -9,6 +14,13 @@ permissions:
   checks: read
 jobs:
   release:
+    # Only a push to main whose CI passed, and only while that commit is still main's head;
+    # a newer commit triggers its own run after its CI.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_sha == github.sha)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -20,13 +32,29 @@ jobs:
         with:
           node-version: 22.22.0
           cache: npm
-      - run: npm ci
+      - name: Skip a version that is already published
+        id: pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./extension/manifest.json').version")
+          if gh release view "v${version}" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "v${version} ya está publicada; no hay nada nuevo que publicar."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.pending.outputs.publish == 'true'
+        run: npm ci
       - name: Verify owner, exact CI and latest published base
+        if: steps.pending.outputs.publish == 'true'
         run: node scripts/release-preflight.mjs
         env:
           GH_TOKEN: ${{ github.token }}
-      - run: npm run build
+      - if: steps.pending.outputs.publish == 'true'
+        run: npm run build
       - name: Publish checked artifact and release notes
+        if: steps.pending.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
