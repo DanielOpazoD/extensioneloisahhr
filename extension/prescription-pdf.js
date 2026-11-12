@@ -103,7 +103,7 @@
     doc.text('Servicio de salud', layout.margin, layout.y);
     doc.text('Servicio de Salud Metropolitano Oriente', layout.margin + 88, layout.y);
     if (!continuation) {
-      doc.text('Fecha emisión', layout.pageWidth - layout.margin - 190, layout.y);
+      doc.text(data && data.isBackup ? 'Generado' : 'Fecha emisión', layout.pageWidth - layout.margin - 190, layout.y);
       doc.text(text(data && data.emissionDateTime, '-'), layout.pageWidth - layout.margin, layout.y, { align: 'right' });
     }
     layout.y += layout.headerLineHeight;
@@ -119,7 +119,8 @@
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(layout.titleFontSize);
     doc.text(
-      layout.isExternalPrescription ? 'Receta médica externa' : 'Receta médica',
+      data && data.isBackup ? 'Receta médica - Respaldo HHR' :
+        layout.isExternalPrescription ? 'Receta médica externa' : 'Receta médica',
       layout.pageWidth / 2,
       layout.y,
       { align: 'center' }
@@ -353,6 +354,10 @@
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(layout.isLongCompact ? 6.2 : layout.isCompact ? 6.5 : 7.5);
       doc.setTextColor(80, 80, 80);
+      if (layout.data && layout.data.isBackup) {
+        doc.text('Respaldo HHR: revisar y firmar. No es el PDF oficial de Eloísa.',
+          layout.margin, layout.pageHeight - (layout.isLongCompact ? 16 : layout.isCompact ? 20 : 28));
+      }
       if (layout.officialEquivalent && text(layout.data && layout.data.printedBy)) {
         doc.text(
           'Impreso por ' + text(layout.data.printedBy),

@@ -153,9 +153,9 @@
         let status = body.querySelector('.hhr-rx-print-feedback');
         if (!status) {
           status = document.createElement('div');
-          status.className = 'hhr-rx-status hhr-rx-print-feedback';
           body.prepend(status);
         }
+        status.className = 'hhr-rx-status hhr-rx-print-feedback';
         setLiveRegion(status, message);
         cancel.disabled = false;
         cancel.textContent = 'Cerrar';
@@ -268,6 +268,8 @@
           medications: groups.flatMap(group => Array.isArray(group.medications) ? group.medications : []), // externalGroups only projects a printable subset of these rows.
           checked: true,
         });
+        addOption({ key: 'backup', title: 'Respaldo HHR de fármacos activos', meta:
+          'Si falla el PDF oficial: genera desde la ficha, separado por prescriptor. Requiere revisión y firma; no es el PDF oficial de Eloísa.' });
         if (externalGroups.length) {
           const externalTitle = document.createElement('div');
           externalTitle.className = 'hhr-rx-format-title';
@@ -344,6 +346,9 @@
           const selectedFormat = formats.querySelector('input:checked');
           const group = selectableGroups.find(item => item.key === selected?.value);
           const compact = selectedFormat?.value === 'compact';
+          if (selected?.value === 'backup') {
+            submit.textContent = 'Generar respaldo HHR' + (compact ? ' compacto' : ''); return;
+          }
           submit.textContent = group
             ? group.external
               ? 'Imprimir receta externa' + (compact ? ' compacta' : '')
@@ -371,12 +376,16 @@
           if (!result || result.error) {
             cancel.disabled = false;
             submit.textContent = 'Reintentar impresión';
-            renderError((result && result.error) || 'No se pudo abrir la receta para imprimir.');
+            let error = body.querySelector('.hhr-rx-print-feedback');
+            if (!error) { error = document.createElement('div'); body.prepend(error); }
+            error.className = 'hhr-rx-error hhr-rx-print-feedback';
+            setLiveRegion(error, (result && result.error) || 'No se pudo abrir la receta para imprimir.');
             submit.disabled = false;
             return;
           }
           showSuccess(
-            'La receta se abrió en una pestaña nueva con el diálogo de impresión. Puedes imprimir otra sin cerrar este panel.',
+            result.backup ? 'Se abrió el respaldo HHR con ' + result.medicationCount + ' fármacos activos. Revisa el contenido y solicita la firma de cada prescriptor.'
+              : 'La receta se abrió en una pestaña nueva con el diálogo de impresión. Puedes imprimir otra sin cerrar este panel.',
             updateSubmitText
           );
         };

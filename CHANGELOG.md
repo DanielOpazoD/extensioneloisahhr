@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.94
+
+- Recetas: añade «Respaldo HHR de fármacos activos» en Centro HHR, independiente del servidor de PDF oficial. Lee nuevamente el tratamiento y la autoría, excluye suspendidos, archivados, finalizados y eliminados, y separa cada prescriptor y fecha en su propia receta para revisar y firmar. El documento se identifica como respaldo, sin folio ni validación oficial inventados.
+- El respaldo se detiene si falta cobertura de algún fármaco, su identidad, posología, vía, autor o fecha; también si cambia el tratamiento o la sesión durante la preparación. No amplía permisos ni escribe en la ficha.
+- Un error al imprimir la receta oficial conserva las opciones del panel, permitiendo elegir el respaldo sin cerrarlo.
+
 ## 0.48.93
 
 - Exalab, computadores compartidos: la reconexión automática queda ligada también a la persona que ingresó a Exalab. El puente informa una huella corta de esa persona, nunca su nombre. Si en el mismo PC otra persona ingresa a Exalab mientras sigue abierta la sesión HHR de quien autorizó, su sesión ya no se vincula sola: HHR vuelve a pedir la conexión manual y la autorización guardada no se borra.
