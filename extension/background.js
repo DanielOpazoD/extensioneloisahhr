@@ -34,6 +34,7 @@ importScripts(
   'zip-store-writer.js', 'audit-history-segments.js', 'audit-day-annex.js', 'audit-history-reconstruction.js', 'audit-documents-runtime.js',
   'clinical-report-runtime.js',
   'clinical-batch-print-runtime.js',
+  'prescription-backup-runtime.js',
   'prescription-print.js',
   'lab-result-parser.js', 'lab-viewer.js',
   'offscreen-contract.js', 'offscreen-coordinator.js',
@@ -1058,8 +1059,20 @@ const {
 // for emission metadata. Every resulting PDF is opened with the standard /Print OpenAction.
 // The native report accepts encounter, practitioner and patient identifiers; it has no historical
 // date parameter, so the extension does not claim to produce past versions.
-const handlePrescriptionPrintRequest = async ({ encId, selectionKey, printFormat }) => {
+const prescriptionBackupRuntime = self.HhrPrescriptionBackupRuntime.create({
+  resolveSession: resolveFichaClinicalSession,
+  sessionKey: fichaSessionCacheKey,
+  authorize: async (sender, encId) => {
+    await patientFlowRuntime.authorizationReady;
+    return patientFlowRuntime.canRequestClinicalEpisode(sender, encId);
+  },
+  fetchCurrentMedicationEntries, fetchPrescriptionEvents, getClinicalReportContext,
+  prescriptionPrint: self.HhrPrescriptionPrint, prescriptionPdf: self.HhrPrescriptionPdf,
+  pdfPrint: self.HhrPdfPrint, openPdfPrintDialog,
+});
+const handlePrescriptionPrintRequest = async ({ encId, selectionKey, printFormat, sender }) => {
   self.HhrExtensionRuntime.ensurePdf();
+  if (selectionKey === 'backup') return prescriptionBackupRuntime.handle({ encId, printFormat, sender });
   const format = printFormat === 'compact' ? 'compact' : 'standard';
   if (!selectionKey || selectionKey === 'complete') {
     const complete = await createCompletePrescriptionPdf({ encId, printFormat: format });
@@ -1345,11 +1358,12 @@ const runtimeMessageRoutes = Object.freeze({
     'No se pudieron preparar las opciones de receta.'
   ),
   [RUNTIME_MESSAGES.PRESCRIPTION_PRINT_REQUEST]: runtimeRoute(
-    message =>
+    (message, sender) =>
       handlePrescriptionPrintRequest({
         encId: message.encId,
         selectionKey: message.selectionKey,
         printFormat: message.printFormat,
+        sender,
       }),
     'No se pudo generar la receta.'
   ),

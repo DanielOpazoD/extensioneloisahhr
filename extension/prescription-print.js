@@ -291,6 +291,8 @@
             id: stableId || identity,
             author: author,
             authorVerified: Boolean(sourceAuthor),
+            professionalId: /^\d+$/.test(String(row.HCP_ID || row.authorHealthCarePractitionerId || ''))
+              ? String(row.HCP_ID || row.authorHealthCarePractitionerId) : '',
             professionalRun: formatRun(
               row.PREFERRED_IDENTIFIER_CODE || row.HCP_IDENTIFIER_CODE || ''
             ),
@@ -340,6 +342,7 @@
         note: row.note,
         date: row.date,
         dateTime: row.dateTime,
+        professionalId: row.professionalId,
         external: row.external,
       });
       if (row.date > group.latestDate) group.latestDate = row.date;

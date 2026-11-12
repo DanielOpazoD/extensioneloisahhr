@@ -19,6 +19,15 @@ resolución y nuevas pruebas; no se mezclan ZIP a ciegas.
 
 ## Comprobar y empaquetar
 
+En **Centro HHR → Recetas → Paciente actual**, «Respaldo HHR de fármacos activos»
+permite preparar una receta cuando falla el servidor de PDF de Eloísa. Consulta la ficha
+nuevamente y conserva solo los medicamentos activos con autor y fecha verificables;
+cada prescriptor y fecha tiene su propia hoja. Requiere revisión y firma, y el PDF
+indica que es un respaldo. No sustituye el PDF oficial ni cambia las indicaciones.
+Si falta información o cambia la sesión o el tratamiento, no imprime una lista parcial.
+Los esquemas de insulina adjuntos requieren la receta oficial: el respaldo los bloquea
+porque no puede reproducir sus instrucciones completas.
+
 - `npm test`: pruebas aisladas de los módulos de la extensión, sin pacientes reales.
 - `npm run check:release`: dependencias, permisos, sintaxis y funciones obligatorias.
 - `npm run test:runtime`: ZIP real en Chromium con fuentes sintéticas.
