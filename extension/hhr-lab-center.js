@@ -569,8 +569,10 @@
             <button class="hhr-rx-tab" type="button" role="tab" data-flow="results" aria-selected="false">Ver resultados</button>
             <button class="hhr-rx-tab" type="button" role="tab" data-flow="request" aria-selected="true">Solicitar exámenes</button>
           </div>
-          <span class="hhr-labreq-count">0 exámenes seleccionados</span>
-          <button class="hhr-center-action hhr-center-action-primary hhr-labreq-print" type="button" disabled>Imprimir solicitud</button>
+          <div class="hhr-center-toolbar-actions">
+            <span class="hhr-labreq-count">0 exámenes seleccionados</span>
+            <button class="hhr-center-action hhr-center-action-primary hhr-labreq-print" type="button" disabled>Imprimir solicitud</button>
+          </div>
         </div>
         <div class="hhr-center-content hhr-labreq-content">
           ${labRequestPatient.sectionHtml(encId)}

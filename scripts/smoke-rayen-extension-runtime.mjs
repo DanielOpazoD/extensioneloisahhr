@@ -6,6 +6,7 @@ import path from "node:path";
 import { chromium } from "playwright";
 import { unzipSync } from "fflate";
 import { packageRayenExtension } from "./package-extension.mjs";
+import { verifyHistoryNavigation, verifyLabActionLayout, verifyPrescriptionFormats } from "./smoke-extension-visual.mjs";
 
 const packageDirectory = await mkdtemp(
   path.join(os.tmpdir(), "hhr-extension-runtime-"),
@@ -38,7 +39,7 @@ const syntheticSession = {
 const fixtureHtml = `<!doctype html>
 <html lang="es">
   <head><meta charset="utf-8"><title>Ficha clinica sintetica</title></head>
-  <body><main><h2>Farmacos</h2></main></body>
+  <body><main><h2>Farmacos</h2><button id="native-validate">VALIDAR TRATAMIENTO</button><button id="native-print">Imprimir nativo</button></main></body>
 </html>`;
 const minimalFixtureHtml = (title) => `<!doctype html>
 <html lang="es">
@@ -469,6 +470,8 @@ try {
       prescriptionButtons: document.querySelectorAll(
         "#hhr-prescription-print-button",
       ).length,
+      indicationsButtons: document.querySelectorAll("#hhr-indications-print-button").length,
+      nativeActions: document.querySelectorAll("#native-validate, #native-print").length,
       encounterId: bar?.dataset.encounterId,
       expectedModulesReady: [".hhr-ops-recipes", ".hhr-ops-exams"].every(
         (selector) => bar?.shadowRoot?.querySelector(selector),
@@ -483,11 +486,15 @@ try {
   assert.deepEqual(initialRuntime, {
     extensionVersion: manifest.version,
     operationBars: 1,
-    prescriptionButtons: 1,
+    prescriptionButtons: 0,
+    indicationsButtons: 0,
+    nativeActions: 2,
     encounterId: "141121",
     expectedModulesReady: true,
     retiredModulesAbsent: true,
   });
+
+  await verifyHistoryNavigation(page);
 
   await page.locator("#hhr-clinical-operations-bar .brand").click();
   const home = page.locator("#hhr-prescription-print-modal");
@@ -513,6 +520,7 @@ try {
     true,
   );
   await home.locator(".hhr-rx-close").click();
+  await verifyPrescriptionFormats(page, extensionPath);
 
   // Mutation-heavy React screens must not duplicate controls or destabilize reinjection.
   await page.evaluate(() => {
@@ -526,7 +534,7 @@ try {
   });
   await page.waitForTimeout(250);
   assert.equal(await page.locator("#hhr-clinical-operations-bar").count(), 1);
-  assert.equal(await page.locator("#hhr-prescription-print-button").count(), 1);
+  assert.equal(await page.locator("#hhr-prescription-print-button").count(), 0);
 
   await page.evaluate(() => {
     const bar = document.querySelector("#hhr-clinical-operations-bar");
@@ -536,6 +544,8 @@ try {
   await page
     .locator("#hhr-prescription-print-modal .hhr-labreq-print")
     .waitFor();
+
+  await verifyLabActionLayout(page);
 
   const manualPatient = page.locator(
     '#hhr-prescription-print-modal input[name="hhr-labreq-patient-source"][value="manual"]',

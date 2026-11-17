@@ -31,6 +31,18 @@ nativo de DAU; HHR verifica además su configuración actual.
 La huella identifica una compilación; tras editar una carpeta descomprimida hay que volver
 a empaquetar y recargar Chrome. Una carpeta fuente sin empaquetar no afirma una identidad.
 
+## Controles de la interfaz
+
+Las recetas y las indicaciones se abren desde Centro HHR; la extensión no agrega iconos
+junto a «Validar tratamiento». El selector Estándar/Compacta está sobre el contenido
+desplazable, tanto para un paciente como para el censo.
+
+En Historial, el navegador mantiene visible la fecha y permite saltar entre los grupos
+que Eloísa ya cargó. Al cambiar los filtros se actualizan las fechas disponibles. No consulta
+otros días ni cambia el rango del filtro nativo; «Hoy» y «Ayer» muestran además su fecha
+en `Pacific/Easter`. La prueba del ZIP cubre scroll de página y de un contenedor, filtros,
+salida del historial y distribución del panel a 1280, 840 y 390 píxeles.
+
 ## Publicar
 
 **Publish extension** corre solo cuando la CI de `main` aprueba un commit cuya versión aún no

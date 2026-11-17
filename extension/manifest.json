@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "118",
   "name": "Rayen → HHR · Puente de censo",
-  "version": "0.48.93",
+  "version": "0.48.94",
   "description": "Conecta Eloísa con HHR y ofrece herramientas de recetas y exámenes.",
   "permissions": [
     "tabs",
@@ -227,6 +227,7 @@
         "content-exam-request-print.js",
         "hhr-prescription-content-runtime.js",
         "hhr-prescription-ui-lifecycle.js",
+        "hhr-history-date-navigation.js",
         "content-prescription-print.js"
       ],
       "run_at": "document_idle"
