@@ -44,13 +44,24 @@ export const verifyHistoryNavigation = async page => {
       return shadow?.querySelector('select')?.value === '2' && shadow.querySelector('[data-step="1"]')?.disabled;
     });
     assert.equal(await nav.getByRole('button', { name: 'Fecha anterior', exact: true }).isDisabled(), true);
-    const stickyTop = await nav.evaluate(node => node.getBoundingClientRect().top);
     await page.evaluate(nested => {
       const target = nested ? document.querySelector('#fixture-scroll') : window;
+      document.querySelector('[role="tablist"]').style.height = '90px';
+      window.dispatchEvent(new Event('resize'));
       target.scrollBy(0, 300);
     }, nested);
-    await page.waitForTimeout(100);
-    assert.ok(Math.abs((await nav.evaluate(node => node.getBoundingClientRect().top)) - stickyTop) < 2, 'Date navigation must remain visible within a long day');
+    // Header reflow may move both toolbars. Assert visibility and no obstruction,
+    // rather than requiring the previous pixel coordinate to stay unchanged.
+    await page.waitForFunction(nested => {
+      const rect = document.querySelector('#hhr-history-date-navigation').getBoundingClientRect();
+      const bounds = nested ? document.querySelector('#fixture-scroll').getBoundingClientRect() : { top: 0, bottom: innerHeight };
+      const tabs = document.querySelector('[role="tablist"]').getBoundingClientRect();
+      const operations = document.querySelector('#hhr-clinical-operations-bar').getBoundingClientRect();
+      const overlaps = rect.left < operations.right && rect.right > operations.left;
+      return rect.height > 0 && rect.top >= Math.max(bounds.top, tabs.bottom, overlaps ? operations.bottom : 0) - 1 &&
+        rect.bottom <= Math.min(innerHeight, bounds.bottom) + 1;
+    }, nested, { timeout: 10000 });
+    assert.equal(await select.inputValue(), '2');
     if (!nested) await screenshot(page, 'historial');
     await select.selectOption('0');
     await page.waitForFunction(() => document.querySelector('#hhr-history-date-navigation')?.shadowRoot?.querySelector('select')?.value === '0');
