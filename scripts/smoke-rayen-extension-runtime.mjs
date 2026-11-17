@@ -8,6 +8,7 @@ import { unzipSync } from "fflate";
 import { packageRayenExtension } from "./package-extension.mjs";
 import { verifyDockedPanel, verifyLabWorkspace } from "./smoke-center-workspace.mjs";
 import { verifyHistoryNavigation, verifyLabActionLayout, verifyPrescriptionFormats } from "./smoke-extension-visual.mjs";
+import { verifyNativeFicha } from "./smoke-native-ficha.mjs";
 
 const packageDirectory = await mkdtemp(
   path.join(os.tmpdir(), "hhr-extension-runtime-"),
@@ -497,6 +498,7 @@ try {
   });
 
   await verifyHistoryNavigation(page);
+  await verifyNativeFicha(page);
 
   await page.locator("#hhr-clinical-operations-bar .brand").click();
   const home = page.locator("#hhr-prescription-print-modal");

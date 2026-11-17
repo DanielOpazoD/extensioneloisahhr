@@ -66,6 +66,17 @@ otros días ni cambia el rango del filtro nativo; «Hoy» y «Ayer» muestran ad
 en `Pacific/Easter`. La prueba del ZIP cubre scroll de página y de un contenedor, filtros,
 salida del historial y distribución del panel a 1280, 840 y 390 píxeles.
 
+Los filtros rápidos del historial permiten combinar Evoluciones médicas, Enfermería,
+Medicamentos y Procedimientos. Cada selección se quita por separado; la combinación muestra
+eventos que coinciden con cualquiera de ellas. El contador y las fechas consideran los eventos
+cargados por Eloísa y se actualizan al cambiar los filtros nativos. Al salir del historial o
+cambiar de episodio se restablece la vista completa de esos eventos.
+
+La navegación principal conserva las pestañas nativas con una selección más clara. Los
+accesos a los apartados de Resumen permanecen visibles, permiten navegar con teclado y
+resaltan el apartado que se está leyendo. Las evoluciones de lectura aprovechan el ancho
+de su contenedor; sus etiquetas quedan disponibles junto al texto ampliado.
+
 ## Publicar
 
 **Publish extension** corre solo cuando la CI de `main` aprueba un commit cuya versión aún no

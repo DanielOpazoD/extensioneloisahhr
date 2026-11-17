@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.96
+
+- Historial: agrega filtros rápidos de Evoluciones médicas, Enfermería, Medicamentos y Procedimientos. Permite combinarlos, quitar cada selección o restablecer todas; muestra cuántos eventos cargados coinciden y ajusta las fechas disponibles.
+- Ficha original: aclara la selección de las cinco pestañas nativas. Los accesos a los apartados de Resumen permanecen fijos, funcionan con teclado y resaltan el apartado visible; su ancho se adapta al espacio disponible.
+- Evoluciones: el bloque de lectura de Resumen usa todo el ancho de su contenedor; en Historial el texto ocupa la fila y las etiquetas pasan debajo. Conserva los campos de edición.
+- Móvil: mantiene visible la barra del historial cuando Centro HHR muestra su botón flotante en la parte inferior.
+
 ## 0.48.95
 
 - Centro HHR: panel lateral acoplable y redimensionable que deja disponible la ficha, con ampliación, minimización sin perder el formulario y paciente/episodio visibles.
