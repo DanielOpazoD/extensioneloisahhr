@@ -42,7 +42,8 @@ afterEach(() => {
 
 describe('Centro HHR workspace', () => {
   it('preserves the form while minimizing, resizing and restoring, then releases page space', async () => {
-    setupPreferences();
+    const { preferences } = setupPreferences();
+    await preferences.save({ mode: 'docked' });
     vi.stubGlobal('innerWidth', 1280);
     const root = rootWithShell();
     const form = root.querySelector('input');
@@ -64,6 +65,25 @@ describe('Centro HHR workspace', () => {
     expect(form.value).toBe('Trabajo en curso');
     root.remove();
     await vi.waitFor(() => expect(document.documentElement.dataset.hhrCenterDocked).toBeUndefined());
+  });
+
+  it('opens centrally after the previous docked default and remembers a new manual choice', async () => {
+    const { storage, stored } = setupPreferences();
+    stored['hhr-center-presentation-v1-mode'] = 'docked';
+    stored['hhr-center-presentation-v1-density'] = 'compact';
+    const preferences = preferencesOwner.create(storage);
+    vi.stubGlobal('HhrCenterPreferences', preferences);
+    vi.stubGlobal('innerWidth', 1280);
+    const root = rootWithShell();
+    globalThis.HhrCenterPanelRuntime.attach(root);
+    await preferences.load();
+    expect(root.dataset.panelMode).toBe('floating');
+    expect(root.querySelector('.hhr-center-dialog').getAttribute('aria-modal')).toBe('true');
+    expect(preferences.get().density).toBe('compact');
+    expect(document.documentElement.dataset.hhrCenterDocked).toBeUndefined();
+    await preferences.save({ mode: 'docked' });
+    expect(root.dataset.panelMode).toBe('docked');
+    expect((await preferencesOwner.create(storage).load()).mode).toBe('docked');
   });
 
   it('saves presentation keys and exam groups, while discarding unrelated values', async () => {

@@ -110,7 +110,7 @@
         });
       }
       document.querySelectorAll('.MuiCard-root > .MuiCardContent-root').forEach(body => {
-        if ((!body.getClientRects().length && !body.closest('[data-hhr-history-filtered]')) || body.closest('#hhr-prescription-print-modal') ||
+        if (!body.getClientRects().length || body.closest('#hhr-prescription-print-modal') ||
             !Array.from(body.children).some(child => child.matches('p.MuiTypography-root') && normalize(child.textContent) === 'evolucion')) return;
         body.querySelectorAll(':scope > .MuiStack-root > .MuiStack-root').forEach(stack => {
           const text = stack.firstElementChild;

@@ -91,41 +91,32 @@ export const verifyNativeFicha = async page => {
     await screenshot(page,'ficha-evolucion-'+width);
     await page.getByRole('tab',{name:'Historial',exact:true}).click();
     const toolbar=page.locator('#hhr-history-date-navigation');
-    await toolbar.getByRole('button',{name:'Filtrar: Evoluciones médicas',exact:true}).click();
-    await page.waitForFunction(()=>document.querySelectorAll('#native-timeline .MuiCard-root:not([data-hhr-history-filtered])').length===2);
-    assert.equal(await toolbar.getByRole('combobox',{name:'Fecha del historial'}).locator('option').count(),2);
-    assert.equal(await page.locator('#medical-today').isVisible(),true);
-    assert.equal(await page.locator('#nurse').isVisible(),false);
-    await toolbar.getByRole('button',{name:'Filtrar: Medicamentos',exact:true}).click();
-    assert.equal(await page.locator('#medication').isVisible(),true);
-    assert.equal(await page.locator('#administration').isVisible(),true);
-    await toolbar.getByRole('button',{name:'Quitar filtro: Evoluciones médicas',exact:true}).click();
-    assert.equal(await page.locator('#medical-today').isVisible(),false);
-    assert.equal(await toolbar.getByRole('button',{name:'Quitar filtro: Medicamentos',exact:true}).getAttribute('aria-pressed'),'true');
-    await toolbar.getByRole('button',{name:'Quitar todos',exact:true}).click();
-    await toolbar.getByRole('button',{name:'Filtrar: Enfermería',exact:true}).click();
-    assert.equal(await page.locator('#nurse').isVisible(),true);
-    assert.equal(await page.locator('#administration').isVisible(),true);
-    assert.equal(await page.locator('#medical-today').isVisible(),false);
-    await toolbar.getByRole('button',{name:'Quitar todos',exact:true}).click();
-    await toolbar.getByRole('button',{name:'Filtrar: Procedimientos',exact:true}).click();
-    assert.equal(await page.locator('#procedure-yesterday').isVisible(),true);
+    const date=toolbar.getByRole('combobox',{name:'Fecha del historial'});
+    await date.waitFor();
+    assert.equal(await date.locator('option').count(),3);
+    assert.equal(await toolbar.getByRole('button').count(),2);
+    assert.equal(await toolbar.locator('[data-filter],[role="status"]').count(),0);
+    assert.equal(await page.locator('#native-timeline .MuiCard-root').count(),7);
+    await date.selectOption('2');
+    await page.waitForFunction(()=>document.querySelector('#hhr-history-date-navigation')?.shadowRoot?.querySelector('select')?.value==='2').catch(async error=>{
+      const geometry=await page.evaluate(()=>({ width:innerWidth,height:innerHeight,scrollY,scrollHeight:document.scrollingElement.scrollHeight,
+        selected:document.querySelector('#hhr-history-date-navigation')?.shadowRoot?.querySelector('select')?.value,
+        groups:[...document.querySelectorAll('#native-timeline > .MuiBox-root')].map(e=>({top:e.getBoundingClientRect().top,height:e.getBoundingClientRect().height})),
+        toolbar:document.querySelector('#hhr-history-date-navigation')?.getBoundingClientRect().toJSON() }));
+      throw new Error('Date jump did not settle: '+JSON.stringify(geometry),{cause:error});
+    });
     await page.waitForFunction(()=>{
       const host=document.querySelector('#hhr-history-date-navigation'),r=host.getBoundingClientRect();
-      return r.top>=0 && r.bottom<=innerHeight && host.scrollWidth<=host.clientWidth+1;
+      return r.top>=0 && r.bottom<=innerHeight && r.height<=44 && r.width<=270 && host.scrollWidth<=host.clientWidth+1;
     });
     await screenshot(page,'ficha-historial-'+width);
-    await toolbar.getByRole('button',{name:'Quitar todos',exact:true}).click();
     const text=page.locator('#medical-today [data-hhr-evolution-text]');
     assert.ok(await text.evaluate(e=>Math.abs(e.getBoundingClientRect().width-e.parentElement.getBoundingClientRect().width)<2));
   }
-  // The native controls can replace all results, including while a quick filter is active.
+  // Native filtering still controls the available dates and events.
   const toolbar=page.locator('#hhr-history-date-navigation');
-  await toolbar.getByRole('button',{name:'Filtrar: Evoluciones médicas',exact:true}).click();
   await page.locator('#native-timeline').evaluate((node,html)=>{node.innerHTML=html;},group('Hoy',event('only-procedure','Médico','Procedimientos')));
-  await page.waitForFunction(()=>document.querySelector('#hhr-history-date-navigation')?.shadowRoot?.querySelector('[role="status"]')?.textContent.includes('Mostrando 0 de 1'));
-  assert.equal(await toolbar.getByRole('combobox',{name:'Fecha del historial'}).isDisabled(),true);
-  await toolbar.getByRole('button',{name:'Quitar todos',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('#hhr-history-date-navigation')?.shadowRoot?.querySelector('select')?.options.length===1);
   assert.equal(await page.locator('#only-procedure').isVisible(),true);
   await page.getByRole('tab',{name:'Resumen',exact:true}).click();
   await toolbar.waitFor({state:'detached'});

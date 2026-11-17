@@ -21,59 +21,37 @@ afterEach(() => {
   document.body.replaceChildren(); vi.unstubAllGlobals();
 });
 
-describe('Native history filters', () => {
-  it.each([
-    ['Médico', 'Evolución', ['medical']], ['Enfermera(o)', 'Evolución', ['nursing']],
-    ['Paramédico', 'Administrador de medicamentos', ['nursing', 'medication']],
-    ['Médico', 'Fármacos', ['medication']], ['Médico', 'Procedimientos', ['procedure']],
-    ['Kinesiólogo', 'Evolución', []], ['Médico', 'Diagnóstico', []],
-  ])('classifies category headings and professional roles: %s / %s', (role, category, expected) => {
-    document.body.innerHTML = event(role, category, 'Evolución. Fármacos. Procedimientos.');
-    expect(globalThis.HhrHistoryDateNavigation.categoriesOf(document.querySelector('.MuiCard-root'))).toEqual(expected);
-  });
-
-  it('combines removable filters, updates date choices and restores all events on episode change', () => {
+describe('Compact native history dates', () => {
+  it('shows only date navigation while keeping every native event available', () => {
     document.body.innerHTML = '<button role="tab" aria-selected="true">Historial</button><div id="timeline">' +
       group('Hoy', event('Médico', 'Evolución') + event('Médico', 'Fármacos')) +
       group('Ayer', event('Enfermera(o)', 'Evolución')) + '</div>';
     history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
     const shadow = document.querySelector('#hhr-history-date-navigation').shadowRoot;
-    shadow.querySelector('[data-filter="medical"]').click(); history.refresh('1');
-    expect(document.querySelectorAll('.MuiCard-root:not([data-hhr-history-filtered])')).toHaveLength(1);
-    expect(shadow.querySelectorAll('option')).toHaveLength(1);
-    shadow.querySelector('[data-filter="nursing"]').click();
-    expect(document.querySelectorAll('.MuiCard-root:not([data-hhr-history-filtered])')).toHaveLength(2);
+    expect(shadow.querySelectorAll('button')).toHaveLength(2);
     expect(shadow.querySelectorAll('option')).toHaveLength(2);
-    shadow.querySelector('[data-filter="medical"]').click();
-    expect(shadow.querySelector('[data-filter="nursing"]').getAttribute('aria-pressed')).toBe('true');
-    expect(shadow.querySelector('select').textContent).toMatch(/^Ayer/);
-    history.refresh('2');
+    expect(shadow.querySelector('[data-filter],[role="status"]')).toBeNull();
+    expect(document.querySelectorAll('.MuiCard-root')).toHaveLength(3);
     expect(document.querySelectorAll('[data-hhr-history-filtered]')).toHaveLength(0);
-    expect(document.querySelector('#hhr-history-date-navigation').shadowRoot.querySelector('[data-clear]').hidden).toBe(true);
   });
 
-  it('keeps controls available with zero matches and retains filters when native results are replaced', () => {
+  it('updates loaded dates after native filtering and clears old episode dates', () => {
     document.body.innerHTML = '<button role="tab" aria-selected="true">Historial</button><div id="timeline">' + group('Hoy', event('Médico', 'Evolución')) + '</div>';
     history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
-    document.querySelector('#hhr-history-date-navigation').shadowRoot.querySelector('[data-filter="medical"]').click();
-    document.querySelector('#timeline').innerHTML = group('Ayer', event('Médico', 'Procedimientos'));
-    history.refresh('1');
+    document.querySelector('#timeline').innerHTML = group('01-01-2025', event('Médico', 'Procedimientos'));
+    history.refresh('2');
     const shadow = document.querySelector('#hhr-history-date-navigation').shadowRoot;
-    expect(shadow.querySelector('[role="status"]').textContent).toContain('Mostrando 0 de 1');
-    expect(shadow.querySelector('select').disabled).toBe(true);
-    expect(shadow.querySelector('[data-filter="medical"]').getAttribute('aria-pressed')).toBe('true');
-    shadow.querySelector('[data-clear]').click();
-    expect(document.querySelectorAll('[data-hhr-history-filtered]')).toHaveLength(0);
-    expect(shadow.querySelector('select').disabled).toBe(false);
+    expect(shadow.querySelector('select').textContent).toBe('01-01-2025');
+    document.querySelector('#timeline').replaceChildren(); history.refresh('2');
+    expect(document.querySelector('#hhr-history-date-navigation')).toBeNull();
   });
 
-  it('restores native events and releases its UI on leaving history', () => {
+  it('releases date navigation on leaving history', () => {
     document.body.innerHTML = '<button role="tab" aria-selected="true">Historial</button><div>' + group('Hoy', event('Médico', 'Evolución')) + '</div>';
     history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
-    document.querySelector('#hhr-history-date-navigation').shadowRoot.querySelector('[data-filter="procedure"]').click();
     document.querySelector('[role="tab"]').setAttribute('aria-selected', 'false'); history.refresh('1');
     expect(document.querySelector('#hhr-history-date-navigation')).toBeNull();
-    expect(document.querySelectorAll('[data-hhr-history-filtered]')).toHaveLength(0);
+    expect(document.querySelectorAll('.MuiCard-root')).toHaveLength(1);
   });
 });
 

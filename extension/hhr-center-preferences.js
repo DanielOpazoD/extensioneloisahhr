@@ -3,7 +3,7 @@
   'use strict';
   const KEY = 'hhr-center-presentation-v1';
   const normalize = value => ({
-    mode: value?.mode === 'floating' ? 'floating' : 'docked',
+    mode: value?.mode === 'docked' ? 'docked' : 'floating',
     width: Math.max(400, Math.min(900, Number(value?.width) || 560)),
     density: value?.density === 'compact' ? 'compact' : 'normal',
     printFormat: value?.printFormat === 'compact' ? 'compact' : 'standard',
@@ -14,6 +14,8 @@
       .filter(group => group.name && group.keys.length),
   });
   const FIELDS = ['mode', 'width', 'density', 'printFormat'];
+  // Reset the previous docked default once, preserving all other preferences.
+  const fieldKey = key => key === 'mode' ? 'hhr-center-presentation-v2-mode' : KEY + '-' + key;
   const GROUP_PREFIX = 'hhr-center-lab-group-v1:';
   const groupId = name => GROUP_PREFIX + encodeURIComponent(String(name || '').trim().normalize('NFC').toLocaleLowerCase('es'));
   const create = storage => {
@@ -35,7 +37,7 @@
     const load = () => loading || (loading = Promise.resolve().then(async () => {
       if (!storage?.get) return get();
       const stored = await storage.get(null);
-      const storedState = normalize(Object.fromEntries(FIELDS.map(key => [key, stored[KEY + '-' + key]])));
+      const storedState = normalize(Object.fromEntries(FIELDS.map(key => [key, stored[fieldKey(key)]])));
       loaded = true;
       FIELDS.forEach(key => { if (!dirty.has(key)) state[key] = storedState[key]; });
       state.labGroups = groupsFrom(stored);
@@ -56,7 +58,7 @@
         await load();
         if (!loaded || !storage?.set) return false;
         try {
-          await storage.set(Object.fromEntries(keys.map(key => [KEY + '-' + key, state[key]])));
+          await storage.set(Object.fromEntries(keys.map(key => [fieldKey(key), state[key]])));
           return true;
         } catch (_error) { return false; }
       });

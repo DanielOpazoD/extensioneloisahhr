@@ -76,10 +76,6 @@
     button.querySelector('.hhr-ops-avatar').textContent = connectionInitials(name);
     const sessionName = button.querySelector('.session-name');
     if (sessionName) sessionName.textContent = name;
-    const sessionState = button.querySelector('.session-state');
-    if (sessionState) {
-      sessionState.textContent = capabilities(report).summary;
-    }
     const details = [
       ficha.status === 'ready' ? 'Ficha Médico conectada' : 'Ficha Médico no conectada',
       camas.status === 'ready'
@@ -97,7 +93,6 @@
     button.classList.remove('is-ready', 'is-degraded');
     button.classList.add('is-offline');
     const label = transportFailed ? 'Extensión sin respuesta' : 'Estado no disponible';
-    button.querySelector('.session-state').textContent = label;
     button.dataset.tip = label;
     button.dataset.tipNote = 'Comprueba la extensión en Chrome y reintenta.';
     button.setAttribute('aria-label', label + '. ' + button.dataset.tipNote);
