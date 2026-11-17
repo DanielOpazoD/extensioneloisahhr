@@ -87,6 +87,7 @@
 
   // --- Operations-bar stylesheet (lives inside its Shadow DOM) ---
   const barCss = `
+    .session-state{max-width:205px!important;}
     :host {${tokenVars} position:fixed;top:var(--hhr-ops-top,70px);right:18px;z-index:2147483000;display:flex;align-items:center;gap:6px;height:46px;padding:5px 7px;border:1px solid rgba(16,42,67,.14);border-radius:13px;background:rgba(255,255,255,.98);box-shadow:0 1px 2px rgba(16,42,67,.08),0 9px 24px rgba(16,42,67,.14);color:var(--hhr-ink-700);font-family:var(--hhr-font);line-height:1.2;contain:layout style;transition:opacity .22s ease,filter .22s ease,box-shadow .22s ease;animation:hhr-bar-enter .24s cubic-bezier(.2,.8,.3,1)}
     :host(.is-idle){opacity:.45;filter:saturate(.6);box-shadow:0 1px 2px rgba(16,42,67,.08),0 5px 14px rgba(16,42,67,.08)}
     :host(.is-collapsed){height:44px;padding:5px;border-radius:999px}:host(.is-collapsed) .modules,:host(.is-collapsed) .divider,:host(.is-collapsed) .session,:host(.is-collapsed) .collapse,:host(.is-collapsed) .exams-menu{display:none}

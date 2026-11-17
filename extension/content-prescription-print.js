@@ -167,7 +167,7 @@
   const focusableElements = root => Array.from(root.querySelectorAll(
     'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), ' +
       'a[href], [tabindex]:not([tabindex="-1"])'
-  )).filter(element => element.getAttribute('aria-hidden') !== 'true' &&
+  )).filter(element => !element.closest('[inert]') && element.getAttribute('aria-hidden') !== 'true' &&
     (element.offsetParent !== null || element === document.activeElement));
 
   const trapModalFocus = (root, event) => {
@@ -696,6 +696,7 @@
         closeModal(true);
       }
     }
+    if (modal?.isConnected) globalThis.HhrCenterPatientContext?.refreshRoute(modal, encId);
     ensureOperationsBar(encId);
     ensureCorrectedDischargePrintItems();
     ensureNursingMedicalEpicrisisPrintItem(nursingContext);
@@ -752,6 +753,8 @@
       try { chrome.runtime.onMessage?.removeListener?.(onRuntimeMessage); } catch (_error) {}
       connectionCenterRuntime.dispose();
       historyNavigation?.dispose();
+      modal?.__hhrDocumentPreview?.dispose();
+      modal?.__hhrPanel?.dispose();
       [BUTTON_ID, INDICATIONS_BUTTON_ID, OPERATIONS_BAR_ID, MODAL_ID, NOTICE_HOST_ID]
         .forEach(id => document.getElementById(id)?.remove());
       return true;

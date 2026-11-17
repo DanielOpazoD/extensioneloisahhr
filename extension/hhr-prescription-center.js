@@ -81,6 +81,7 @@
       </footer>
     `;
       const body = root.querySelector('.hhr-rx-body');
+      const preferencesReady = globalThis.HhrCenterPreferences?.load() || Promise.resolve();
       const formatBar = root.querySelector('.hhr-rx-format-bar');
       const submit = root.querySelector('.hhr-rx-submit');
       const cancel = root.querySelector('.hhr-rx-cancel');
@@ -113,47 +114,7 @@
         body.appendChild(error);
         submit.disabled = true;
       };
-      const renderFormats = (name, checkedFormat = 'standard') => {
-        const formatTitle = document.createElement('div');
-        formatTitle.className = 'hhr-rx-format-title';
-        formatTitle.textContent = 'Formato de impresión';
-        const formats = document.createElement('div');
-        formats.className = 'hhr-rx-formats';
-        const addFormat = ({ value, title, meta }) => {
-          const label = document.createElement('label');
-          label.className = 'hhr-rx-format-option';
-          const input = document.createElement('input');
-          input.type = 'radio';
-          input.name = name;
-          input.value = value;
-          input.checked = value === checkedFormat;
-          const details = document.createElement('span');
-          const optionTitle = document.createElement('span');
-          optionTitle.className = 'hhr-rx-date';
-          optionTitle.textContent = title;
-          const optionMeta = document.createElement('span');
-          optionMeta.className = 'hhr-rx-meta';
-          optionMeta.textContent = meta;
-          details.append(optionTitle, optionMeta);
-          label.append(input, details);
-          formats.appendChild(label);
-        };
-        addFormat({
-          value: 'standard',
-          title: 'Estándar',
-          meta: 'Documento oficial con lectura amplia',
-        });
-        addFormat({
-          value: 'compact',
-          title: 'Compacta',
-          meta: 'Mismo contenido, hasta 22 fármacos por hoja',
-        });
-        formats.setAttribute('role', 'radiogroup');
-        formats.setAttribute('aria-label', 'Formato de impresión');
-        formatBar.replaceChildren(formatTitle, formats);
-        formatBar.hidden = false;
-        return formats;
-      };
+      const renderFormats = name => globalThis.HhrDocumentPreviewRuntime.renderFormats({ host: formatBar, name });
       const showSuccess = (message, restoreSubmitState) => {
         let status = body.querySelector('.hhr-rx-print-feedback');
         if (!status) {
@@ -169,6 +130,8 @@
         else submit.textContent = 'Imprimir nuevamente';
       };
       const renderCurrentPatient = async generation => {
+        await preferencesReady;
+        if (!body.isConnected || generation !== viewGeneration) return;
         body.innerHTML = '<div class="hhr-rx-status">Buscando recetas disponibles…</div>';
         submit.disabled = true;
         submit.textContent = 'Imprimir receta completa';
@@ -176,7 +139,7 @@
           type: runtimeMessages.PRESCRIPTION_OPTIONS_REQUEST,
           encId,
         });
-        if (!root.isConnected || generation !== viewGeneration) return;
+        if (!body.isConnected || generation !== viewGeneration) return;
         if (!response || response.error) {
           renderError((response && response.error) || 'No se encontraron recetas disponibles.');
           return;
@@ -193,6 +156,7 @@
         body.innerHTML = '';
         const patient =
           response.patient && typeof response.patient === 'object' ? response.patient : null;
+        globalThis.HhrCenterPatientContext?.set(root, { encId, patient });
         const patientContext = document.createElement('div');
         patientContext.className = 'hhr-rx-patient-context';
         patientContext.setAttribute('aria-label', 'Paciente de la receta');
@@ -349,6 +313,10 @@
           const selectedFormat = formats.querySelector('input:checked');
           const group = selectableGroups.find(item => item.key === selected?.value);
           const compact = selectedFormat?.value === 'compact';
+          if (globalThis.HhrDocumentPreviewRuntime) {
+            submit.textContent = compact ? 'Vista previa compacta' : 'Vista previa';
+            return;
+          }
           submit.textContent = group
             ? group.external
               ? 'Imprimir receta externa' + (compact ? ' compacta' : '')
@@ -363,6 +331,14 @@
           const selected = list.querySelector('input:checked');
           const selectedFormat = formats.querySelector('input:checked');
           if (!selected || !selectedFormat) return;
+          if (globalThis.HhrDocumentPreviewRuntime) {
+            globalThis.HhrDocumentPreviewRuntime.prescription({
+              root, title: 'Receta médica', sendMessage, runtimeMessages,
+              formatRadios: formats, onFormat: updateSubmitText,
+              request: { type: runtimeMessages.PRESCRIPTION_PRINT_REQUEST, encId, selectionKey: selected.value },
+            });
+            return;
+          }
           submit.disabled = true;
           cancel.disabled = true;
           submit.textContent = 'Generando receta…';
@@ -372,7 +348,7 @@
             selectionKey: selected.value,
             printFormat: selectedFormat.value,
           });
-          if (!root.isConnected) return;
+          if (!body.isConnected) return;
           if (!result || result.error) {
             cancel.disabled = false;
             submit.textContent = 'Reintentar impresión';
@@ -388,6 +364,8 @@
       };
 
       const renderHospitalized = async generation => {
+        await preferencesReady;
+        if (!body.isConnected || generation !== viewGeneration) return;
         submit.disabled = true;
         submit.textContent = 'Selecciona pacientes';
         if (!hospitalizedResponse) {
@@ -400,11 +378,11 @@
             });
           }
           const requestedResponse = await hospitalizedRequest;
-          if (!root.isConnected || generation !== viewGeneration) return;
+          if (!body.isConnected || generation !== viewGeneration) return;
           hospitalizedRequest = null;
           hospitalizedResponse = requestedResponse;
         }
-        if (!root.isConnected || generation !== viewGeneration) return;
+        if (!body.isConnected || generation !== viewGeneration) return;
         if (!hospitalizedResponse || hospitalizedResponse.error) {
           const message = hospitalizedResponse && hospitalizedResponse.error;
           hospitalizedResponse = null;
@@ -566,7 +544,8 @@
           selectedText.textContent =
             count === 1 ? '1 paciente seleccionado' : count + ' pacientes seleccionados';
           submit.disabled = count === 0;
-          submit.textContent = count === 1 ? 'Imprimir 1 receta' : 'Imprimir ' + count + ' recetas';
+          submit.textContent = globalThis.HhrDocumentPreviewRuntime ? 'Vista previa de recetas' :
+            count === 1 ? 'Imprimir 1 receta' : 'Imprimir ' + count + ' recetas';
         };
         attachPatientListFilter({
           toolbar,
@@ -593,6 +572,14 @@
           const selected = selectedCheckboxes();
           const selectedFormat = formats.querySelector('input:checked');
           if (!selected.length || !selectedFormat) return;
+          if (globalThis.HhrDocumentPreviewRuntime) {
+            globalThis.HhrDocumentPreviewRuntime.prescription({
+              root, title: 'Recetas de hospitalizados', sendMessage, runtimeMessages, formatRadios: formats,
+              request: { type: runtimeMessages.HOSPITALIZED_PRESCRIPTION_PRINT_REQUEST,
+                batchId: hospitalizedResponse.batchId, encIds: selected.map(input => input.value) },
+            });
+            return;
+          }
           submit.disabled = true;
           cancel.disabled = true;
           submit.textContent =
@@ -603,7 +590,7 @@
             encIds: selected.map(input => input.value),
             printFormat: selectedFormat.value,
           });
-          if (!root.isConnected) return;
+          if (!body.isConnected) return;
           if (!result || result.error) {
             cancel.disabled = false;
             renderError(
@@ -643,6 +630,7 @@
         const requestedTab = tabs.find(tab => tab.dataset.tab === tabName);
         if (!requestedTab || requestedTab.disabled) return;
         activeTab = tabName;
+        globalThis.HhrCenterPatientContext?.set(root, { encId, bulk: tabName === 'hospitalized' });
         viewGeneration += 1;
         const generation = viewGeneration;
         tabs.forEach(tab => {

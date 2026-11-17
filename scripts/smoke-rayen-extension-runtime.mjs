@@ -6,6 +6,7 @@ import path from "node:path";
 import { chromium } from "playwright";
 import { unzipSync } from "fflate";
 import { packageRayenExtension } from "./package-extension.mjs";
+import { verifyDockedPanel, verifyLabWorkspace } from "./smoke-center-workspace.mjs";
 import { verifyHistoryNavigation, verifyLabActionLayout, verifyPrescriptionFormats } from "./smoke-extension-visual.mjs";
 
 const packageDirectory = await mkdtemp(
@@ -411,6 +412,7 @@ try {
       return route.fulfill({
         status: 200,
         contentType: "text/html",
+        headers: { "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://fichamedicoback.rayensalud.cl https://formulariosclinicosback.rayensalud.cl; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'" },
         body: fixtureHtml,
       });
     }
@@ -519,6 +521,7 @@ try {
       .evaluate((element) => element.scrollHeight <= element.clientHeight),
     true,
   );
+  await verifyDockedPanel(page);
   await home.locator(".hhr-rx-close").click();
   await verifyPrescriptionFormats(page, extensionPath);
 
@@ -546,6 +549,7 @@ try {
     .waitFor();
 
   await verifyLabActionLayout(page);
+  await verifyLabWorkspace(page, serviceWorker);
 
   const manualPatient = page.locator(
     '#hhr-prescription-print-modal input[name="hhr-labreq-patient-source"][value="manual"]',

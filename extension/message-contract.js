@@ -35,6 +35,7 @@
     LAB_DETAILS_REQUEST: 'RAYEN_LAB_DETAILS_REQUEST',
     LAB_PDF_OPEN_REQUEST: 'RAYEN_LAB_PDF_OPEN_REQUEST',
     LAB_PDF_BUNDLE_DOWNLOAD_REQUEST: 'RAYEN_LAB_PDF_BUNDLE_DOWNLOAD_REQUEST', LAB_PDF_BUNDLE_PROGRESS: 'RAYEN_LAB_PDF_BUNDLE_PROGRESS',
+    DOCUMENT_PREVIEW_REQUEST: 'RAYEN_DOCUMENT_PREVIEW_REQUEST',
     PRESCRIPTION_OPTIONS_REQUEST: 'RAYEN_PRESCRIPTION_OPTIONS_REQUEST',
     PRESCRIPTION_PRINT_REQUEST: 'RAYEN_PRESCRIPTION_PRINT_REQUEST',
     EPICRISIS_CORRECTED_PRINT_REQUEST: 'RAYEN_EPICRISIS_CORRECTED_PRINT_REQUEST',
@@ -81,7 +82,9 @@
     [types.PATIENT_HEADER_REQUEST]: { encId: 'id' }, [types.MANUAL_PATIENT_CODE_REQUEST]: { encId: 'id' },
     [types.CENSUS_LIST_REQUEST]: { currentEncId: 'id?' },
     [types.VITALS_CENSUS_REQUEST]: { currentEncId: 'id?' },
+    [types.DOCUMENT_PREVIEW_REQUEST]: { jobId: 'string', operation: 'string' },
     [types.IMAGING_FORM_PRINT_REQUEST]: {
+      preview: 'boolean?',
       encId: 'id',
       doc: 'string',
       physician: 'string?',
@@ -105,7 +108,7 @@
     [types.PRESCRIPTION_PRINT_REQUEST]: {
       encId: 'id',
       selectionKey: 'string',
-      printFormat: 'string?',
+      printFormat: 'string?', preview: 'boolean?',
     },
     [types.EPICRISIS_CORRECTED_PRINT_REQUEST]: {
       pdfBase64: 'string',
@@ -123,7 +126,7 @@
     [types.HOSPITALIZED_PRESCRIPTION_PRINT_REQUEST]: {
       batchId: 'string',
       encIds: 'array',
-      printFormat: 'string?',
+      printFormat: 'string?', preview: 'boolean?',
     },
     [types.INDICATIONS_PRINT_REQUEST]: { encId: 'id' },
     [types.HOSPITALIZED_INDICATIONS_OPTIONS_REQUEST]: { currentEncId: 'id?' },

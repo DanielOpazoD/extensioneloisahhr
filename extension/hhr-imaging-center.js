@@ -57,7 +57,7 @@
               <button class="hhr-center-action hhr-imaging-tool" type="button" data-tool="text" aria-pressed="false">T Texto</button>
               <button class="hhr-center-action hhr-imaging-undo" type="button">Deshacer</button>
             </div>
-            <button class="hhr-center-action hhr-center-action-primary hhr-imaging-print" type="button" disabled>Imprimir</button>
+            <button class="hhr-center-action hhr-center-action-primary hhr-imaging-print" type="button" disabled>Vista previa</button>
           </div>
           <p class="hhr-imaging-hint" id="hhr-imaging-keyboard-hint">Los datos del paciente se completan solos. Haz clic sobre el formulario o usa las flechas para mover el cursor y Enter para marcar; lo que agregues se imprime en el PDF oficial.</p>
           <div class="hhr-imaging-stage">
@@ -268,6 +268,14 @@
       });
 
       printButton.addEventListener('click', async () => {
+        if (globalThis.HhrDocumentPreviewRuntime) {
+          const message = { type: runtimeMessages.IMAGING_FORM_PRINT_REQUEST,
+            encId, doc: selectedDoc, physician: physicianInput.value.trim(),
+            marks: structuredClone(marksByDoc[selectedDoc]), preview: true };
+          globalThis.HhrDocumentPreviewRuntime.open({ root, title: documents[selectedDoc].title,
+            load: () => sendMessage(message), printDirect: () => sendMessage({ ...message, preview: false }), sendMessage, runtimeMessages });
+          return;
+        }
         printButton.disabled = true;
         printButton.textContent = 'Generando PDF…';
         setFeedback('Rellenando la plantilla oficial…');
@@ -290,7 +298,7 @@
 
       renderDocument();
       fetchPatientHeaderView(encId).then(result => {
-        if (!root.isConnected || root.dataset.activeModule !== 'imaging') return;
+        if (!printButton.isConnected || root.dataset.activeModule !== 'imaging') return;
         if (result.error) {
           setFeedback(result.error, true);
           return;

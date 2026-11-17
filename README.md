@@ -37,6 +37,29 @@ Las recetas y las indicaciones se abren desde Centro HHR; la extensión no agreg
 junto a «Validar tratamiento». El selector Estándar/Compacta está sobre el contenido
 desplazable, tanto para un paciente como para el censo.
 
+En pantallas amplias, Centro HHR se acopla al lado derecho y deja espacio para la ficha.
+El borde permite ajustar su ancho con el mouse o las flechas del teclado. El encabezado
+incluye desacoplar, ampliar, minimizar y densidad compacta. Minimizar conserva el formulario;
+cerrar libera el espacio de la página. Paciente y episodio permanecen visibles, y las
+solicitudes manuales identifican al paciente nuevo en la misma franja.
+
+La solicitud de laboratorio permite buscar nombres y abreviaturas, quitar seleccionados
+desde sus etiquetas y guardar hasta 20 grupos propios. Añadir un grupo conserva los exámenes
+ya seleccionados. Chrome guarda sólo preferencias de presentación y nombres/claves de esos
+grupos; los campos del paciente y la solicitud no forman parte de esas preferencias.
+
+Recetas e imágenes preparan una vista previa del PDF dentro del panel. La impresión usa
+exactamente los bytes preparados, vinculados a la pestaña y ruta que los solicitaron, con
+caducidad de diez minutos y un límite de 5 MB por vista previa. Los documentos mayores
+conservan la opción de impresión directa. Al cambiar formato o cerrar
+se libera el documento anterior. Laboratorio muestra el mismo HTML de la solicitud impresa;
+su pestaña de impresión se abre sólo al pulsar Imprimir. El visor PDF carga su código bajo
+demanda y muestra una página a la vez. No se amplían permisos ni se escriben datos en Eloísa.
+
+El indicador de conexión explica el acceso a recetas y egresos; el panel de conexiones
+muestra las dependencias de cada herramienta y sus acciones de reconexión. Syslab se
+comprueba al abrir resultados de laboratorio; no se deduce su estado de las otras sesiones.
+
 En Historial, el navegador mantiene visible la fecha y permite saltar entre los grupos
 que Eloísa ya cargó. Al cambiar los filtros se actualizan las fechas disponibles. No consulta
 otros días ni cambia el rango del filtro nativo; «Hoy» y «Ayer» muestran además su fecha

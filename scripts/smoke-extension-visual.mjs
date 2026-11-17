@@ -105,7 +105,7 @@ export const verifyLabActionLayout = async page => {
 };
 
 export const verifyPrescriptionFormats = async (page, extensionPath) => {
-  for (const file of ['hhr-center-shell-runtime.js', 'hhr-prescription-center.js']) {
+  for (const file of ['hhr-document-preview-runtime.js', 'hhr-center-shell-runtime.js', 'hhr-prescription-center.js']) {
     await page.addScriptTag({ path: path.join(extensionPath, file) });
   }
   await page.evaluate(() => {

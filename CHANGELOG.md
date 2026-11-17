@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.95
+
+- Centro HHR: panel lateral acoplable y redimensionable que deja disponible la ficha, con ampliación, minimización sin perder el formulario y paciente/episodio visibles.
+- Laboratorio: búsqueda por nombre o abreviatura, etiquetas para quitar seleccionados y grupos propios guardados en el navegador, sin guardar campos del paciente en las preferencias.
+- Documentos: vista previa integrada para recetas, laboratorio e imágenes. Recetas permite alternar Estándar/Compacta; los PDF se imprimen con los mismos bytes preparados. Si el tamaño o el espacio temporal impiden la vista previa, se conserva la impresión directa.
+- Conexiones: el estado explica qué herramientas están disponibles y muestra acciones para las fuentes pendientes.
+- Presentación: barras adaptables, densidad normal/compacta y preferencias de ancho, posición y formato recordadas en este navegador.
+
 ## 0.48.94
 
 - Recetas: el selector Estándar/Compacta queda en la parte superior y permanece visible al recorrer la lista, tanto para un paciente como para hospitalizados.
