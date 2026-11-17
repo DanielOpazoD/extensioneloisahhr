@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.97
+
+- Barra principal: reduce su altura y ancho. Recetas usa un icono de receta y Exámenes uno de laboratorio, sin rótulos; retira el subtítulo de conexión bajo el nombre. Conserva los nombres accesibles, las ayudas y el estado de color.
+- Historial: compacta la barra a selector de fecha y flechas. Retira los filtros rápidos por categoría y el contador de eventos; conserva los filtros nativos de Eloísa y el salto entre fechas cargadas.
+- Centro HHR: vuelve al cuadro de diálogo centrado por defecto, también al actualizar desde el modo lateral anterior. Conserva las demás preferencias y permite elegir después el panel lateral manualmente.
+- Historial: reconoce la última fecha al llegar al final de la página aunque su contenido sea breve.
+
 ## 0.48.96
 
 - Historial: agrega filtros rápidos de Evoluciones médicas, Enfermería, Medicamentos y Procedimientos. Permite combinarlos, quitar cada selección o restablecer todas; muestra cuántos eventos cargados coinciden y ajusta las fechas disponibles.
