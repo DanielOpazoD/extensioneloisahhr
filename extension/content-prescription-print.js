@@ -56,6 +56,7 @@
   globalThis.__hhrPrescriptionPrintInjected = true;
   let active = true;
   const historyNavigation = globalThis.HhrHistoryDateNavigation?.create();
+  const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
 
   const BUTTON_ID = 'hhr-prescription-print-button';
   const INDICATIONS_BUTTON_ID = 'hhr-indications-print-button';
@@ -704,6 +705,7 @@
     existing?.remove();
     existingIndications?.remove();
     historyNavigation?.refresh(encId);
+    nativePresentation?.refresh(encId);
     document.documentElement.setAttribute(
       'data-hhr-prescription-print-state', encId ? 'ready' : 'operations-ready'
     );
@@ -753,6 +755,7 @@
       try { chrome.runtime.onMessage?.removeListener?.(onRuntimeMessage); } catch (_error) {}
       connectionCenterRuntime.dispose();
       historyNavigation?.dispose();
+      nativePresentation?.dispose();
       modal?.__hhrDocumentPreview?.dispose();
       modal?.__hhrPanel?.dispose();
       [BUTTON_ID, INDICATIONS_BUTTON_ID, OPERATIONS_BAR_ID, MODAL_ID, NOTICE_HOST_ID]
