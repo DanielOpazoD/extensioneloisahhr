@@ -83,6 +83,7 @@
           <a class="hhr-center-app-link" href="https://hhr-hospitalizados.app/" target="_blank" rel="noopener noreferrer">Abrir HHR <span aria-hidden="true">↗</span></a>
         </header>
         <div class="hhr-center-patientbar" hidden>
+          <span class="hhr-patientbar-episode"></span>
           <span class="hhr-patientbar-tag">Paciente</span>
           <strong class="hhr-patientbar-name">—</strong>
           <span class="hhr-patientbar-meta"></span>
@@ -144,6 +145,7 @@
 
     const prepareCenterModalRoot = ({ existingRoot = null, activeModule, encId, focusReturnTarget }) => {
       if (!existingRoot && !closeModal()) return null;
+      existingRoot?.__hhrDocumentPreview?.dispose();
       ensureStyles();
       const root = existingRoot || document.createElement('div');
       const isNew = !existingRoot;
@@ -167,7 +169,7 @@
             root.__hhrDismiss();
             return;
           }
-          trapModalFocus(root, event);
+          if (root.dataset.panelMode !== 'docked' && root.dataset.minimized !== 'true') trapModalFocus(root, event);
         });
       }
       if (isNew) root.dataset.encounterId = /^\d+$/.test(String(encId || '')) ? String(encId) : '';
@@ -175,6 +177,10 @@
       if (typeof onCenterModuleChange === 'function') onCenterModuleChange(activeModule);
       root.innerHTML = centerShellMarkup(activeModule);
       applyCenterShellLogo(root);
+      globalThis.HhrCenterPanelRuntime?.attach(root);
+      globalThis.HhrCenterPatientContext?.prepare(root, {
+        encId, activeModule, currentRouteEncounterId, sendMessage, runtimeMessages,
+      });
       getClinicalGuard(root);
       root.querySelector('.hhr-rx-close').addEventListener('click', root.__hhrDismiss);
       root.querySelector('.hhr-rx-backdrop').addEventListener('click', root.__hhrDismiss);
@@ -198,6 +204,8 @@
       const picker = bar.querySelector('.hhr-patientbar-picker');
       const search = bar.querySelector('.hhr-patientbar-search');
       const list = bar.querySelector('.hhr-patientbar-list');
+      const episode = bar.querySelector('.hhr-patientbar-episode');
+      if (episode) episode.textContent = initialEncId ? 'Episodio ' + initialEncId : '';
       if (module === 'connection' || module === 'home') return;
       bar.hidden = false;
       if (!PATIENT_BOUND_MODULES.has(module)) {
@@ -214,6 +222,7 @@
 
       const refreshIdentity = async () => {
         const requestedEncId = selected;
+        if (episode) episode.textContent = requestedEncId ? 'Episodio ' + requestedEncId : '';
         const routeEncId = currentRouteEncounterId();
         routeBadge.hidden = !requestedEncId || !routeEncId || requestedEncId === routeEncId;
         if (!requestedEncId) {

@@ -32,7 +32,7 @@ importScripts(
   'hospitalization-report-search-runtime.js', 'hospitalization-reports-runtime.js',
   'epicrisis-pdf-download.js', 'epicrisis-download-runtime.js',
   'zip-store-writer.js', 'audit-history-segments.js', 'audit-day-annex.js', 'audit-history-reconstruction.js', 'audit-documents-runtime.js',
-  'clinical-report-runtime.js',
+  'clinical-report-runtime.js', 'document-preview-jobs.js',
   'clinical-batch-print-runtime.js',
   'prescription-print.js',
   'lab-result-parser.js', 'lab-viewer.js',
@@ -454,7 +454,7 @@ const handleScalesReportRequest = async ({ encId, sender }) => {
 // with the patient header, the requesting physician and the user's interactive marks, then open
 // the standard print tab. Ported from HHR's imagingRequestPdfService (pdf-lib, Helvetica 10,
 // uppercase, % marks converted to bottom-left PDF coordinates).
-const handleImagingFormPrintRequest = async ({ encId, doc, physician, marks, sender }) => {
+const handleImagingFormPrintRequest = async ({ encId, doc, physician, marks, sender, preview = false }) => {
   const template = self.HhrRequestForms && self.HhrRequestForms.IMAGING_DOCUMENTS[String(doc || '')];
   if (!template) return { error: 'Documento de imagenología desconocido.' };
   const context = await getClinicalReportContext(encId, null, null, sender);
@@ -503,6 +503,7 @@ const handleImagingFormPrintRequest = async ({ encId, doc, physician, marks, sen
     const bytes = await pdfDoc.save();
     return openPdfPrintDialog({
       buffer: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+      preview, sender,
       filename: template.id + '-imagenologia.pdf',
     });
   } catch (error) {
@@ -740,6 +741,7 @@ const clinicalReportRuntime = self.HhrClinicalReportRuntime.create({
   prescriptionPdf: self.HhrPrescriptionPdf,
   epicrisisPdf: self.HhrEpicrisisPdf,
   pdfLib: self.PDFLib,
+  prepareDocumentPreview: options => documentPreviewJobs.prepare(options),
   now: () => Date.now(),
 });
 
@@ -761,6 +763,10 @@ const {
   handleNursingMedicalEpicrisisPrintRequest,
   createCompletePrescriptionPdf,
 } = clinicalReportRuntime;
+const documentPreviewJobs = self.HhrDocumentPreviewJobs.create({
+  chromeApi: chrome, cryptoApi: crypto, bufferToBase64, base64ToArrayBuffer,
+  openPdfPrintDialog, now: () => Date.now(),
+});
 
 const auditDocumentsRuntime = self.HhrAuditDocumentsRuntime.create({
   chromeApi: chrome, getFetchInfo: () => getFichaFetchInfo(), fetchWithTimeout, fetchOfficialPdf,
@@ -1058,14 +1064,14 @@ const {
 // for emission metadata. Every resulting PDF is opened with the standard /Print OpenAction.
 // The native report accepts encounter, practitioner and patient identifiers; it has no historical
 // date parameter, so the extension does not claim to produce past versions.
-const handlePrescriptionPrintRequest = async ({ encId, selectionKey, printFormat }) => {
+const handlePrescriptionPrintRequest = async ({ encId, selectionKey, printFormat, preview = false, sender }) => {
   self.HhrExtensionRuntime.ensurePdf();
   const format = printFormat === 'compact' ? 'compact' : 'standard';
   if (!selectionKey || selectionKey === 'complete') {
     const complete = await createCompletePrescriptionPdf({ encId, printFormat: format });
     if (complete.error) return complete;
     return openPdfPrintDialog({
-      buffer: complete.buffer,
+      buffer: complete.buffer, preview, sender,
       filename: complete.filename,
     });
   }
@@ -1143,7 +1149,7 @@ const handlePrescriptionPrintRequest = async ({ encId, selectionKey, printFormat
     return { error: 'No se pudo generar la receta: ' + String((error && error.message) || error) };
   }
   return openPdfPrintDialog({
-    buffer,
+    buffer, preview, sender,
     filename: self.HhrPrescriptionPrint.buildPrescriptionFilename(
       encId,
       group.external ? 'externa-' + group.medication + '-' + group.professional :
@@ -1282,6 +1288,10 @@ const runtimeMessageRoutes = Object.freeze({
       handleVitalsCensusRequest({ currentEncId: message.currentEncId, sender }),
     'No se pudieron leer los signos vitales del censo.'
   ),
+  [RUNTIME_MESSAGES.DOCUMENT_PREVIEW_REQUEST]: runtimeRoute(
+    (message, sender) => documentPreviewJobs.handle(message, sender),
+    'No se pudo abrir el documento preparado.'
+  ),
   [RUNTIME_MESSAGES.IMAGING_FORM_PRINT_REQUEST]: runtimeRoute(
     (message, sender) =>
       handleImagingFormPrintRequest({
@@ -1289,7 +1299,7 @@ const runtimeMessageRoutes = Object.freeze({
         doc: message.doc,
         physician: message.physician,
         marks: message.marks,
-        sender,
+        sender, preview: message.preview,
       }),
     'No se pudo imprimir el formulario de imagenología.'
   ),
@@ -1345,11 +1355,12 @@ const runtimeMessageRoutes = Object.freeze({
     'No se pudieron preparar las opciones de receta.'
   ),
   [RUNTIME_MESSAGES.PRESCRIPTION_PRINT_REQUEST]: runtimeRoute(
-    message =>
+    (message, sender) =>
       handlePrescriptionPrintRequest({
         encId: message.encId,
         selectionKey: message.selectionKey,
         printFormat: message.printFormat,
+        preview: message.preview, sender,
       }),
     'No se pudo generar la receta.'
   ),
@@ -1398,6 +1409,7 @@ const runtimeMessageRoutes = Object.freeze({
         batchId: message.batchId,
         encIds: message.encIds,
         printFormat: message.printFormat,
+        preview: message.preview,
         sender,
       }),
     'No se pudo generar la impresión de pacientes hospitalizados.'

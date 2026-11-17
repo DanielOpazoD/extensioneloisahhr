@@ -103,7 +103,8 @@
         "pdf.worker.min.mjs"
       ],
       "matches": [
-        "http://10.4.69.90/*"
+        "http://10.4.69.90/*",
+        "https://fichamedico.rayensalud.cl/*"
       ]
     },
     {
@@ -206,11 +207,17 @@
         "hhr-ui.js",
         "hhr-lab-request-styles.js",
         "hhr-center-styles.js",
+        "hhr-center-preferences.js",
+        "hhr-center-panel-runtime.js",
+        "hhr-center-workspace-styles.js",
+        "hhr-center-patient-context.js",
         "hhr-center-shell-runtime.js",
+        "hhr-document-preview-runtime.js",
         "hhr-prescription-center.js",
         "hhr-hospitalized-documents-center.js",
         "hhr-clinical-write-client-runtime.js",
         "hhr-lab-request-patient.js",
+        "hhr-lab-selection-runtime.js",
         "hhr-lab-center.js",
         "hhr-request-forms.js",
         "hhr-imaging-center.js",

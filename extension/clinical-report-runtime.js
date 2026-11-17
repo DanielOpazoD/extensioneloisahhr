@@ -32,7 +32,7 @@
       prescriptionPdf,
       epicrisisPdf,
       pdfLib,
-      now,
+      now, prepareDocumentPreview,
     } = dependencies || {};
 
     if (
@@ -162,8 +162,12 @@
       }
     };
 
-    const openPdfPrintDialog = async ({ buffer, filename }) => {
+    const openPdfPrintDialog = async ({ buffer, filename, preview = false, sender }) => {
       try {
+        if (preview) {
+          if (typeof prepareDocumentPreview !== 'function') return { error: 'La vista previa no quedó disponible. Recarga la extensión.' };
+          return await prepareDocumentPreview({ buffer, filename, sender });
+        }
         extensionRuntime.ensurePdf();
         const printableBuffer = await pdfPrint.preparePdfForBrowserPrint(buffer);
         const jobId = cryptoApi.randomUUID();

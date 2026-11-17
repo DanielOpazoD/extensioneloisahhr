@@ -49,6 +49,8 @@ type RuntimeApi = {
   openPdfPrintDialog: (request: {
     buffer: ArrayBuffer;
     filename: string;
+    preview?: boolean;
+    sender?: unknown;
   }) => Promise<{ ok?: boolean; printTabId?: number; error?: string }>;
   handleNursingMedicalEpicrisisPrintRequest: (request: {
     encId?: string;
@@ -102,6 +104,19 @@ const createDependencies = (overrides: RuntimeDependencies = {}) => ({
 });
 
 describe('clinical report runtime direct episodes and history', () => {
+  it('returns prepared preview bytes without opening a print tab or adding a print action', async () => {
+    const sender = { tab: { id: 10 }, url: 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse/1' };
+    const buffer = new Uint8Array([37, 80, 68, 70]).buffer;
+    const prepared = { ok: true, jobId: 'synthetic-job', pdfBase64: 'JVBERg==' };
+    const prepareDocumentPreview = vi.fn(async () => prepared);
+    const dependencies = createDependencies({ prepareDocumentPreview });
+    const runtime = loadFactory().create(dependencies);
+    expect(await runtime.openPdfPrintDialog({ buffer, filename: 'synthetic.pdf', preview: true, sender })).toEqual(prepared);
+    expect(prepareDocumentPreview).toHaveBeenCalledWith({ buffer, filename: 'synthetic.pdf', sender });
+    expect(dependencies.chrome.tabs.create).not.toHaveBeenCalled();
+    expect(dependencies.pdfPrint.preparePdfForBrowserPrint).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['list', 'epicrisis'],
     ['download', 'epicrisis'],

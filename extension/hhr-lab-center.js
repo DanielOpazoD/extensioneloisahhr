@@ -571,7 +571,7 @@
           </div>
           <div class="hhr-center-toolbar-actions">
             <span class="hhr-labreq-count">0 exámenes seleccionados</span>
-            <button class="hhr-center-action hhr-center-action-primary hhr-labreq-print" type="button" disabled>Imprimir solicitud</button>
+            <button class="hhr-center-action hhr-center-action-primary hhr-labreq-print" type="button" disabled>Vista previa de solicitud</button>
           </div>
         </div>
         <div class="hhr-center-content hhr-labreq-content">
@@ -631,10 +631,18 @@
       });
       const printablePatient = () => patientSection.printablePatient();
       const updateCount = () => {
+        const manual = patientSection.usesManualPatient();
+        globalThis.HhrCenterPatientContext?.set(root, {
+          encId: manual ? '' : encId,
+          patient: manual ? { ...printablePatient(), name: printablePatient()?.name || 'Paciente nuevo' } : episodePatient?.patient,
+        });
+        globalThis.HhrCenterPatientContext?.refreshRoute(root,
+          globalThis.HhrPrescriptionPrint?.resolveEncounterId(window.location.href) || '');
         const count = selectedKeys().length + (othersInput.value.trim() ? 1 : 0);
         counter.textContent = count === 1 ? '1 examen seleccionado' : count + ' exámenes seleccionados';
         printButton.disabled = !printablePatient();
       };
+      globalThis.HhrLabSelectionRuntime?.attach(main, updateCount);
       main.querySelector('.hhr-center-content').addEventListener('change', updateCount);
       main.querySelector('.hhr-center-content').addEventListener('input', updateCount);
       printButton.addEventListener('click', () => {
@@ -656,6 +664,11 @@
           medico: main.querySelector('.hhr-labreq-medico').value.trim(),
           logoUrl,
         });
+        if (globalThis.HhrDocumentPreviewRuntime) {
+          globalThis.HhrDocumentPreviewRuntime.open({ root, title: 'Solicitud de laboratorio',
+            load: async () => ({ html }), sendMessage, runtimeMessages });
+          return;
+        }
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
           setLiveRegion(feedback, 'El navegador bloqueó la pestaña de impresión. Permite ventanas emergentes.', 'error');
@@ -682,7 +695,7 @@
         return;
       }
       fetchPatientHeaderView(encId).then(result => {
-        if (!root.isConnected) return;
+        if (!printButton.isConnected) return;
         if (result.error) {
           setLiveRegion(feedback, result.error, 'error');
           return;

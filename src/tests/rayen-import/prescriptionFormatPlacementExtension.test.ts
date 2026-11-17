@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import '../../../extension/hhr-document-preview-runtime.js';
 import '../../../extension/hhr-prescription-center.js';
 
 const messages = {
@@ -76,6 +77,7 @@ describe('Prescription format in the upper toolbar', () => {
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
       type: 'bulk-print', encIds: ['2'], printFormat: 'compact',
     })));
+    click(root, '[data-preview="back"]');
     click(root, '[data-tab="current"]');
     await vi.waitFor(() => expect(root.querySelectorAll('[name="hhr-prescription-format"]')).toHaveLength(2));
     expect(root.querySelectorAll('[name="hhr-bulk-prescription-format"]')).toHaveLength(0);
