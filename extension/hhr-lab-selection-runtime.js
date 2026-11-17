@@ -75,7 +75,7 @@
         button.type = 'button';
         button.textContent = item.label + ' ×';
         button.setAttribute('aria-label', 'Quitar ' + item.label);
-        button.addEventListener('click', () => { item.input.checked = false; render(); onChange(); });
+        button.addEventListener('click', () => { item.input.checked = false; render(); onChange([item.input.dataset.key]); });
         return button;
       }));
       host.querySelector('[data-group="save"]').disabled = !selected().length;
@@ -95,7 +95,7 @@
         const group = groups.find(item => preferences.groupId(item.name) === select.value);
         if (!select.value || !group) return;
         group.keys.forEach(key => { const item = known.get(key); if (item) item.input.checked = true; });
-        render(); onChange();
+        render(); onChange(group.keys);
       } else if (action === 'save') {
         editor.hidden = false; name.value = ''; name.focus();
       } else if (action === 'cancel') editor.hidden = true;

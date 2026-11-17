@@ -9,6 +9,7 @@ import { packageRayenExtension } from "./package-extension.mjs";
 import { verifyCompactOperationsBar, verifyDockedPanel, verifyLabWorkspace } from "./smoke-center-workspace.mjs";
 import { verifyHistoryNavigation, verifyLabActionLayout, verifyPrescriptionFormats } from "./smoke-extension-visual.mjs";
 import { verifyNativeFicha } from "./smoke-native-ficha.mjs";
+import { verifyDirectWorkflows } from "./smoke-direct-workflows.mjs";
 
 const packageDirectory = await mkdtemp(
   path.join(os.tmpdir(), "hhr-extension-runtime-"),
@@ -507,7 +508,7 @@ try {
     await home
       .locator(".hhr-center-nav-button")
       .evaluateAll((buttons) => buttons.map((button) => button.dataset.module)),
-    ["home", "recipes", "lab", "imaging", "connection"],
+    ["home", "recipes", "lab", "imaging", "settings", "connection"],
   );
   assert.equal(await home.locator(".hhr-home-card").count(), 3);
   assert.doesNotMatch(
@@ -553,6 +554,7 @@ try {
 
   await verifyLabActionLayout(page);
   await verifyLabWorkspace(page, serviceWorker);
+  await verifyDirectWorkflows(page, serviceWorker);
 
   const manualPatient = page.locator(
     '#hhr-prescription-print-modal input[name="hhr-labreq-patient-source"][value="manual"]',

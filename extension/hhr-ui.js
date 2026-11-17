@@ -103,7 +103,7 @@
     .tip{position:absolute;top:calc(100% + 9px);left:0;z-index:7;max-width:264px;padding:8px 11px 9px;border-radius:9px;background:var(--hhr-navy-900);color:#eaf3f7;font-size:11px;line-height:1.45;box-shadow:0 12px 30px rgba(7,27,49,.35);opacity:0;transform:translateY(-3px);pointer-events:none;transition:opacity .14s ease,transform .14s ease}.tip.is-above{top:auto;bottom:calc(100% + 9px);transform:translateY(3px)}.tip.is-visible{opacity:1;transform:none}.tip strong{display:block;color:#fff;font-size:11.5px}.tip span{display:block;margin-top:2px;color:#b8cdd9;font-size:10.5px}.tip span:empty{display:none}
     @media(max-width:1280px){.session-copy{display:none}.session{padding-right:5px}}
     @media(max-width:820px){:host{right:10px}}
-    @media(max-width:560px){:host{top:auto;right:auto;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 32px)}.session,.hhr-ops-favorites{display:none}.exams-menu{top:auto;bottom:calc(100% + 8px)}.tip{display:none}}
+    @media(max-width:560px){:host{top:auto;right:auto;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 32px)}.exams-menu{top:auto;bottom:calc(100% + 8px)}.tip{display:none}}
     @media(max-width:340px){:host{gap:3px;padding:3px}.divider,.collapse{display:none}.brand{min-width:34px;padding-inline:2px}.modules{gap:1px;padding:2px}.module{width:28px;padding:0 5px}.module svg{width:17px;height:17px}}
     @media(prefers-reduced-motion:reduce){:host,.module,.collapse,.session,.tip{animation:none;transition:none}}
     @media(forced-colors:active){:host,.exams-menu{border:1px solid CanvasText;background:Canvas}:host(.is-idle){opacity:1;filter:none}.module.is-active,.session.is-active{outline:2px solid Highlight;box-shadow:none}button:focus-visible{outline:2px solid Highlight;outline-offset:2px;box-shadow:none}}
@@ -239,7 +239,7 @@
       items[next].focus();
     };
     const activateBrand = () => host.classList.contains('is-collapsed') ? setCollapsed(false) : onOpenBrand();
-    collapse.addEventListener('click', () => setCollapsed(true));
+    collapse?.addEventListener('click', () => setCollapsed(true));
     brand.addEventListener('click', () => { if (!preferenceReady) { queuedBrandOpen = true; return; } activateBrand(); });
     exams.addEventListener('click', event => menu.hidden ? openMenu(event.detail === 0) : closeMenu());
     exams.addEventListener('keydown', event => {
@@ -255,7 +255,8 @@
       const item = event.target.closest('[role="menuitem"]');
       if (!item || item.getAttribute('aria-disabled') === 'true') return;
       closeMenu();
-      onExamSelect(item.dataset.module, exams);
+      if (item.dataset.flow) onExamSelect(item.dataset.module, exams, item.dataset.flow);
+      else onExamSelect(item.dataset.module, exams);
     });
     root.addEventListener('click', event => { if (!event.target.closest('.hhr-ops-exams, .exams-menu')) closeMenu(); });
     document.addEventListener('pointerdown', event => {

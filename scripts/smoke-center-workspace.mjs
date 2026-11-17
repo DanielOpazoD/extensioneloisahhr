@@ -22,6 +22,8 @@ export const verifyCompactOperationsBar = async page => {
     });
     assert.ok(geometry.width <= 320 && geometry.height <= 40);
     assert.deepEqual(geometry.labels, ['', '']); assert.equal(geometry.icons, true); assert.equal(geometry.subtitle, false);
+    assert.equal(await bar.locator('.brand,.hhr-ops-recipes,.hhr-ops-exams,.hhr-ops-session').filter({ visible: true }).count(), 4);
+    assert.equal(await bar.locator('.hhr-ops-favorites,.collapse').count(), 0);
     await bar.getByRole('button', { name: 'Exámenes: laboratorio e imágenes', exact: true }).click();
     await bar.getByRole('menuitem', { name: /Laboratorio/ }).waitFor();
     await page.keyboard.press('Escape');
