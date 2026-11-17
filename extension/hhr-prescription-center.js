@@ -68,6 +68,7 @@
           <button class="hhr-rx-tab" id="hhr-rx-tab-hospitalized" type="button" role="tab" data-tab="hospitalized" aria-controls="hhr-rx-tabpanel" aria-selected="false">Hospitalizados</button>
         </div>
       </div>
+      <div class="hhr-rx-format-bar" hidden></div>
       <div class="hhr-center-content hhr-center-embed">
         <p class="hhr-rx-subtitle">Elige qué recetas necesitas y abre un único diálogo de impresión.</p>
         <div class="hhr-rx-body" id="hhr-rx-tabpanel" role="tabpanel" aria-labelledby="hhr-rx-tab-current"><div class="hhr-rx-status">Buscando recetas disponibles…</div></div>
@@ -80,6 +81,7 @@
       </footer>
     `;
       const body = root.querySelector('.hhr-rx-body');
+      const formatBar = root.querySelector('.hhr-rx-format-bar');
       const submit = root.querySelector('.hhr-rx-submit');
       const cancel = root.querySelector('.hhr-rx-cancel');
       const subtitle = root.querySelector('.hhr-rx-subtitle');
@@ -146,7 +148,10 @@
           title: 'Compacta',
           meta: 'Mismo contenido, hasta 22 fármacos por hoja',
         });
-        body.append(formatTitle, formats);
+        formats.setAttribute('role', 'radiogroup');
+        formats.setAttribute('aria-label', 'Formato de impresión');
+        formatBar.replaceChildren(formatTitle, formats);
+        formatBar.hidden = false;
         return formats;
       };
       const showSuccess = (message, restoreSubmitState) => {
@@ -645,6 +650,8 @@
           tab.setAttribute('aria-selected', String(selected));
           tab.tabIndex = selected ? 0 : -1;
         });
+        formatBar.replaceChildren();
+        formatBar.hidden = true;
         body.setAttribute('aria-labelledby', requestedTab.id || '');
         subtitle.textContent =
           tabName === 'current'

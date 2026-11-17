@@ -227,6 +227,7 @@
         "content-exam-request-print.js",
         "hhr-prescription-content-runtime.js",
         "hhr-prescription-ui-lifecycle.js",
+        "hhr-history-date-navigation.js",
         "content-prescription-print.js"
       ],
       "run_at": "document_idle"

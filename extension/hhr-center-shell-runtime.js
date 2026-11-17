@@ -87,7 +87,7 @@
           <strong class="hhr-patientbar-name">—</strong>
           <span class="hhr-patientbar-meta"></span>
           <span class="hhr-patientbar-route" hidden>Distinto al episodio abierto en Eloísa</span>
-          <button class="hhr-center-action hhr-center-action-primary hhr-patientbar-change" type="button" aria-expanded="false">Cambiar paciente ▾</button>
+          <button class="hhr-center-action hhr-patientbar-change" type="button" aria-expanded="false">Cambiar paciente ▾</button>
           <div class="hhr-patientbar-picker" hidden>
             <input class="hhr-rx-search hhr-patientbar-search" type="search"
               placeholder="Buscar por paciente, RUN o cama" aria-label="Buscar paciente en el censo">

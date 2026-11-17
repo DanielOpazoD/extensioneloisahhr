@@ -9,7 +9,7 @@
     const modal = () => root.document?.getElementById(MODAL_ID);
     const removeOrphans = () => {
       ['hhr-prescription-print-button', 'hhr-indications-print-button',
-        'hhr-clinical-operations-bar', 'hhr-clinical-page-notices']
+        'hhr-clinical-operations-bar', 'hhr-clinical-page-notices', 'hhr-history-date-navigation']
         .forEach(name => root.document?.getElementById(name)?.remove());
       root.__hhrPrescriptionPrintInjected = false;
     };

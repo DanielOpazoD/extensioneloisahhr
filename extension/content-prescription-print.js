@@ -1,9 +1,9 @@
 /**
  * content-prescription-print.js (ISOLATED world)
  *
- * Adds compact prescription and examination tools across Ficha Médico. Prescription and
- * indications shortcuts remain contextual to the nursing medication view. The panel asks the
- * service worker for official Eloisa reports and verified nursing workflows. Clinical writes are
+ * Adds compact prescription and examination tools across Ficha Médico through Centro HHR.
+ * The panel asks the service worker for official Eloisa reports and verified nursing workflows.
+ * Clinical writes are
  * delegated to the service worker and shown as synchronized only after a read-back succeeds.
  */
 (() => {
@@ -55,6 +55,7 @@
   uiLifecycle.claim();
   globalThis.__hhrPrescriptionPrintInjected = true;
   let active = true;
+  const historyNavigation = globalThis.HhrHistoryDateNavigation?.create();
 
   const BUTTON_ID = 'hhr-prescription-print-button';
   const INDICATIONS_BUTTON_ID = 'hhr-indications-print-button';
@@ -318,10 +319,7 @@
     setLiveRegion,
   });
   const {
-    findPharmaHeading,
-    downloadIndications,
     hasVisibleNursingRole,
-    findToolbarAnchor,
     createFavoritesDialog,
   } = medicationActionsRuntime;
 
@@ -701,63 +699,13 @@
     ensureOperationsBar(encId);
     ensureCorrectedDischargePrintItems();
     ensureNursingMedicalEpicrisisPrintItem(nursingContext);
-    if (!encId || !nursingContext) {
-      document.documentElement.setAttribute(
-        'data-hhr-prescription-print-state',
-        !encId ? 'operations-ready' : 'operations-ready-no-context-actions'
-      );
-      if (existing) existing.remove();
-      if (existingIndications) existingIndications.remove();
-      return;
-    }
-    if (existing && existingIndications) {
-      existing.dataset.encounterId = encId;
-      existingIndications.dataset.encounterId = encId;
-      return;
-    }
-    const heading = findPharmaHeading();
-    if (!heading) {
-      document.documentElement.setAttribute('data-hhr-prescription-print-state', 'waiting-pharma');
-      return;
-    }
-    const anchor = findToolbarAnchor(heading);
-    ensureStyles();
-    let indicationsButton = existingIndications;
-    if (!indicationsButton) {
-      indicationsButton = document.createElement('button');
-      indicationsButton.id = INDICATIONS_BUTTON_ID;
-      indicationsButton.type = 'button';
-      indicationsButton.title = 'Indicaciones';
-      indicationsButton.setAttribute('aria-label', 'Descargar indicaciones');
-      indicationsButton.innerHTML = `
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6Zm1 7V3.5L20.5 9H15ZM8 13h8v2H8v-2Zm0 4h8v2H8v-2Zm0-8h4v2H8V9Z"/>
-        </svg>
-      `;
-      indicationsButton.addEventListener('click', () =>
-        downloadIndications(indicationsButton.dataset.encounterId, indicationsButton)
-      );
-      anchor.insertAdjacentElement('afterend', indicationsButton);
-    }
-    indicationsButton.dataset.encounterId = encId;
-
-    let button = existing;
-    if (!button) {
-      button = document.createElement('button');
-      button.id = BUTTON_ID;
-      button.type = 'button';
-      button.title = 'Receta médica';
-      button.setAttribute('aria-label', 'Imprimir receta médica');
-      button.innerHTML = `
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M19 8H5c-1.66 0-3 1.34-3 3v4h4v4h12v-4h4v-4c0-1.66-1.34-3-3-3Zm-3 9H8v-5h8v5Zm3-5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM18 3H6v4h12V3Z"/>
-        </svg>
-      `;
-      button.addEventListener('click', () => createModal(button.dataset.encounterId));
-      indicationsButton.insertAdjacentElement('afterend', button);
-    }
-    button.dataset.encounterId = encId;
-    document.documentElement.setAttribute('data-hhr-prescription-print-state', 'ready');
+    // Remove only extension-owned shortcuts left by an older injected version.
+    existing?.remove();
+    existingIndications?.remove();
+    historyNavigation?.refresh(encId);
+    document.documentElement.setAttribute(
+      'data-hhr-prescription-print-state', encId ? 'ready' : 'operations-ready'
+    );
   };
 
   let scheduled = false;
@@ -772,7 +720,9 @@
   };
 
   const observer = new MutationObserver(scheduleEnsureButton);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  observer.observe(document.documentElement, {
+    childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected', 'hidden'],
+  });
   window.addEventListener('popstate', scheduleEnsureButton);
   window.addEventListener('hashchange', scheduleEnsureButton);
   window.addEventListener('hhr:fichamedico-locationchange', scheduleEnsureButton);
@@ -801,6 +751,7 @@
       document.removeEventListener('visibilitychange', onVisibilityChange);
       try { chrome.runtime.onMessage?.removeListener?.(onRuntimeMessage); } catch (_error) {}
       connectionCenterRuntime.dispose();
+      historyNavigation?.dispose();
       [BUTTON_ID, INDICATIONS_BUTTON_ID, OPERATIONS_BAR_ID, MODAL_ID, NOTICE_HOST_ID]
         .forEach(id => document.getElementById(id)?.remove());
       return true;
