@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.94
+
+- Recetas: el selector Estándar/Compacta queda en la parte superior y permanece visible al recorrer la lista, tanto para un paciente como para hospitalizados.
+- Ficha Médico: retira los dos iconos de la extensión junto a «Validar tratamiento». Recetas e indicaciones siguen disponibles desde Centro HHR.
+- Historial: agrega un navegador persistente con la fecha del grupo visible, selección de día y accesos al día anterior o más reciente entre las fechas cargadas. Se actualiza al filtrar; «Hoy» y «Ayer» incluyen su fecha en Rapa Nui.
+- Centro HHR: separa las acciones del encabezado, paciente y solicitud. «Abrir HHR» y «Cambiar paciente» pasan a un estilo secundario; las barras se distribuyen en varias filas cuando falta espacio.
+
 ## 0.48.93
 
 - Exalab, computadores compartidos: la reconexión automática queda ligada también a la persona que ingresó a Exalab. El puente informa una huella corta de esa persona, nunca su nombre. Si en el mismo PC otra persona ingresa a Exalab mientras sigue abierta la sesión HHR de quien autorizó, su sesión ya no se vincula sola: HHR vuelve a pedir la conexión manual y la autorización guardada no se borra.
