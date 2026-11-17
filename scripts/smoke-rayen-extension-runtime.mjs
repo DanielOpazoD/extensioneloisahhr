@@ -6,7 +6,7 @@ import path from "node:path";
 import { chromium } from "playwright";
 import { unzipSync } from "fflate";
 import { packageRayenExtension } from "./package-extension.mjs";
-import { verifyDockedPanel, verifyLabWorkspace } from "./smoke-center-workspace.mjs";
+import { verifyCompactOperationsBar, verifyDockedPanel, verifyLabWorkspace } from "./smoke-center-workspace.mjs";
 import { verifyHistoryNavigation, verifyLabActionLayout, verifyPrescriptionFormats } from "./smoke-extension-visual.mjs";
 import { verifyNativeFicha } from "./smoke-native-ficha.mjs";
 
@@ -497,6 +497,7 @@ try {
     retiredModulesAbsent: true,
   });
 
+  await verifyCompactOperationsBar(page);
   await verifyHistoryNavigation(page);
   await verifyNativeFicha(page);
 

@@ -8,8 +8,36 @@ const capture = async (page, name) => {
   await page.locator('#hhr-prescription-print-modal .hhr-center-dialog').screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, name + '.png'), animations: 'disabled' });
 };
 
+export const verifyCompactOperationsBar = async page => {
+  const viewport = page.viewportSize();
+  const bar = page.locator('#hhr-clinical-operations-bar');
+  for (const width of [1680, 840, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const geometry = await bar.evaluate(host => {
+      const root = host.shadowRoot, rect = host.getBoundingClientRect();
+      return { width: rect.width, height: rect.height,
+        labels: ['.hhr-ops-recipes', '.hhr-ops-exams'].map(selector => root.querySelector(selector).textContent.trim()),
+        icons: ['.hhr-ops-recipes', '.hhr-ops-exams'].every(selector => root.querySelector(selector).querySelector('svg')),
+        subtitle: Boolean(root.querySelector('.session-state')) };
+    });
+    assert.ok(geometry.width <= 320 && geometry.height <= 40);
+    assert.deepEqual(geometry.labels, ['', '']); assert.equal(geometry.icons, true); assert.equal(geometry.subtitle, false);
+    await bar.getByRole('button', { name: 'Exámenes: laboratorio e imágenes', exact: true }).click();
+    await bar.getByRole('menuitem', { name: /Laboratorio/ }).waitFor();
+    await page.keyboard.press('Escape');
+    assert.equal(await bar.getByRole('menu', { name: 'Tipos de exámenes' }).isVisible(), false);
+  }
+  await page.setViewportSize(viewport);
+};
+
 export const verifyDockedPanel = async page => {
   const root = page.locator('#hhr-prescription-print-modal');
+  assert.equal(await root.getAttribute('data-panel-mode'), 'floating');
+  assert.equal(await root.getByRole('dialog').getAttribute('aria-modal'), 'true');
+  const initial = await root.getByRole('dialog').boundingBox();
+  assert.ok(Math.abs(initial.x + initial.width / 2 - page.viewportSize().width / 2) < 2);
+  await capture(page, 'workspace-default-dialog');
+  await root.locator('[data-panel="dock"]').click();
   assert.equal(await root.getAttribute('data-panel-mode'), 'docked');
   await page.evaluate(() => {
     const style = document.createElement('style'); style.id = 'workspace-native-header-style';

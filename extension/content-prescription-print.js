@@ -549,13 +549,13 @@
 
   const OPERATIONS_MODULES = [
     {
-      key: 'recipes', label: 'Recetas', icon: 'recipes',
+      key: 'recipes', icon: 'recipes',
       tip: 'Recetas médicas',
       note: 'Recetas e indicaciones del paciente o de los hospitalizados.',
       aria: 'Abrir centro de recetas',
     },
     {
-      key: 'exams', label: 'Exámenes', icon: 'lab',
+      key: 'exams', icon: 'lab',
       tip: 'Exámenes', note: 'Laboratorio e imágenes del paciente.',
       aria: 'Exámenes: laboratorio e imágenes', hasMenu: true,
     },
@@ -586,8 +586,6 @@
               aria-label="${module.aria}" data-tip="${module.tip}" data-tip-note="${module.note}"
               ${module.hasMenu ? 'aria-haspopup="menu" aria-expanded="false" aria-controls="hhr-exams-menu"' : ''}>
               ${ui.icons[module.icon]}
-              <span>${module.label}</span>
-              ${module.hasMenu ? `<span class="module-caret">${ui.icons.chevronDown}</span>` : ''}
             </button>
           `).join('')}
           <button class="module module-icon hhr-ops-favorites" type="button" aria-label="Favoritos"
@@ -613,7 +611,6 @@
           </span>
           <span class="session-copy" aria-hidden="true">
             <span class="session-name">Conexiones</span>
-            <span class="session-state">Comprobando…</span>
           </span>
         </button>
         <button class="collapse" type="button" aria-label="Contraer barra HHR"

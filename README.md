@@ -37,7 +37,9 @@ Las recetas y las indicaciones se abren desde Centro HHR; la extensión no agreg
 junto a «Validar tratamiento». El selector Estándar/Compacta está sobre el contenido
 desplazable, tanto para un paciente como para el censo.
 
-En pantallas amplias, Centro HHR se acopla al lado derecho y deja espacio para la ficha.
+Centro HHR se abre por defecto como un cuadro de diálogo centrado. Al actualizar esta
+versión se restablece esa apertura; después puedes elegir y guardar el panel lateral.
+En pantallas amplias, el botón de acoplar deja espacio para la ficha al lado derecho.
 El borde permite ajustar su ancho con el mouse o las flechas del teclado. El encabezado
 incluye desacoplar, ampliar, minimizar y densidad compacta. Minimizar conserva el formulario;
 cerrar libera el espacio de la página. Paciente y episodio permanecen visibles, y las
@@ -56,7 +58,9 @@ se libera el documento anterior. Laboratorio muestra el mismo HTML de la solicit
 su pestaña de impresión se abre sólo al pulsar Imprimir. El visor PDF carga su código bajo
 demanda y muestra una página a la vez. No se amplían permisos ni se escriben datos en Eloísa.
 
-El indicador de conexión explica el acceso a recetas y egresos; el panel de conexiones
+La barra principal usa iconos para recetas y exámenes, sin subtítulo de conexión.
+El estado sigue disponible en el indicador de color, el texto accesible y la ayuda al pasar
+el cursor; el panel de conexiones
 muestra las dependencias de cada herramienta y sus acciones de reconexión. Syslab se
 comprueba al abrir resultados de laboratorio; no se deduce su estado de las otras sesiones.
 
@@ -66,11 +70,9 @@ otros días ni cambia el rango del filtro nativo; «Hoy» y «Ayer» muestran ad
 en `Pacific/Easter`. La prueba del ZIP cubre scroll de página y de un contenedor, filtros,
 salida del historial y distribución del panel a 1280, 840 y 390 píxeles.
 
-Los filtros rápidos del historial permiten combinar Evoluciones médicas, Enfermería,
-Medicamentos y Procedimientos. Cada selección se quita por separado; la combinación muestra
-eventos que coinciden con cualquiera de ellas. El contador y las fechas consideran los eventos
-cargados por Eloísa y se actualizan al cambiar los filtros nativos. Al salir del historial o
-cambiar de episodio se restablece la vista completa de esos eventos.
+La barra del historial es compacta y conserva sólo el selector de fecha y sus dos flechas.
+Los filtros por categoría y el contador de eventos de la extensión se retiran. Los filtros
+nativos de Eloísa siguen determinando los eventos y fechas disponibles.
 
 La navegación principal conserva las pestañas nativas con una selección más clara. Los
 accesos a los apartados de Resumen permanecen visibles, permiten navegar con teclado y
