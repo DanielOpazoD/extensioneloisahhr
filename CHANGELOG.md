@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.98
+
+- Exámenes: abre directamente «Ver resultados», «Solicitar laboratorio» y «Solicitar imágenes» desde el icono de la barra.
+- Barra principal: conserva sólo HHR, Receta, Exámenes y sesión. Favoritos y las preferencias de presentación quedan dentro de Ajustes de Centro HHR.
+- Solicitudes: conserva campos, exámenes y marcas al cambiar de módulo, con borradores temporales por episodio dentro del panel abierto. Verifica paciente y profesional antes de restaurar; combina los cambios nuevos con los campos anteriores que no se tocaron. Cerrar o recargar descarta los borradores.
+- Reconexión: ofrece «Reconectar y continuar» en consultas y vistas previas con sesión vencida. Retoma la lectura o el informe seleccionado después de verificar el acceso, sin imprimir automáticamente ni continuar una vista abandonada.
+
 ## 0.48.97
 
 - Barra principal: reduce su altura y ancho. Recetas usa un icono de receta y Exámenes uno de laboratorio, sin rótulos; retira el subtítulo de conexión bajo el nombre. Conserva los nombres accesibles, las ayudas y el estado de color.
