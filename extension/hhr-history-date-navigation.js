@@ -60,8 +60,15 @@
     const jump = index => {
       const group = groups[index];
       if (!host?.isConnected || !group?.element.isConnected) return;
-      const delta = group.element.getBoundingClientRect().top - host.getBoundingClientRect().bottom - 12;
-      scroller.scrollBy({ top: delta, behavior: 'instant' });
+      const align = () => scroller.scrollBy({
+        top: group.element.getBoundingClientRect().top - host.getBoundingClientRect().bottom - 12,
+        behavior: 'instant',
+      });
+      align();
+      // The first scroll can pin the toolbar. Align again using its settled position.
+      window.cancelAnimationFrame(frame);
+      update();
+      align();
       scheduleUpdate();
     };
     const mount = timeline => {

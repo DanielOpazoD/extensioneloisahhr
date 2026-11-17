@@ -11,13 +11,14 @@ const screenshot = async (page, name) => {
 export const verifyHistoryNavigation = async page => {
   const original = await page.locator('main').innerHTML();
   for (const nested of [false, true]) {
+    // Leave room above the timeline so the first jump also moves the bar into sticky position.
     await page.locator('main').evaluate((main, nested) => {
       main.innerHTML = `
         <div role="tablist" style="position:sticky;top:0;background:white;height:70px;z-index:30">
           <button role="tab" aria-selected="true">Historial</button>
         </div>
         <div id="fixture-scroll" style="${nested ? 'overflow-y:auto;height:550px;' : ''}">
-          <div id="fixture-timeline" style="margin:12px 20px 0 30%;display:flex;flex-direction:column;gap:12px">
+          <div id="fixture-timeline" style="margin:180px 20px 0 30%;display:flex;flex-direction:column;gap:12px">
             ${['Hoy', 'Ayer', '01-01-2025'].map(label => `
               <div class="MuiBox-root" style="flex:none">
                 <div class="MuiStack-root"><div class="MuiChip-root"><span class="MuiChip-label">${label}</span></div></div>
@@ -36,7 +37,7 @@ export const verifyHistoryNavigation = async page => {
     assert.match(await select.locator('option').first().textContent(), /^Hoy · \d{2}-\d{2}-\d{4}$/);
     assert.equal(await nav.getByRole('button', { name: 'Fecha más reciente' }).isDisabled(), true);
     await nav.getByRole('button', { name: 'Fecha anterior', exact: true }).click();
-    await page.waitForFunction(() => document.querySelector('#hhr-history-date-navigation')?.shadowRoot?.querySelector('select')?.value === '1');
+    await page.waitForFunction(() => document.querySelector('#hhr-history-date-navigation')?.shadowRoot?.querySelector('select')?.value === '1', null, { timeout: 10000 });
     await select.selectOption('2');
     await page.waitForFunction(() => {
       const shadow = document.querySelector('#hhr-history-date-navigation')?.shadowRoot;
