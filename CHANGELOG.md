@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.106
+
+- En Gestión de cuidados y Lista de trabajo médico, las pestañas, el buscador y la tabla quedan más juntos. Se ocultan el rótulo «Resultados de búsqueda…» y el icono «Familiar esperando por información». Las interconsultas conservan el nombre de cada servicio.
+
 ## 0.48.105
 
 - El buscador y la lista de pacientes quedan centrados y alineados en las ocho subsecciones de hospitalizados. Los márgenes laterales crecen con el ancho disponible y las pantallas estrechas aprovechan todo el espacio.
