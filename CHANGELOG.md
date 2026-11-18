@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.100
+
+- «Pacientes sin médico» en Lista de trabajo médico y «Pacientes con novedad» en Gestión de cuidados usan filas compactas. Se reduce el espacio dentro de las celdas y entre las líneas para mostrar más pacientes por pantalla.
+- La extensión retira el botón «Copiar para HHR» de Gestión de cuidados.
+
 ## 0.48.99
 
 - Historial muestra el selector de fecha y sus flechas en la barra blanca de pestañas, inmediatamente a la derecha de «Historial». En ventanas angostas la fila admite desplazamiento horizontal para acceder a todas las pestañas.
