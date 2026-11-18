@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.104
+
+- Las ocho subsecciones de Gestión de cuidados y Lista de trabajo médico muestran filas compactas. Desde cada fila puedes imprimir en un clic las indicaciones vigentes o la última receta completa del episodio. Los dos iconos ocupan el lugar de GES. En «Mis pacientes de interconsulta» aparecen junto a «Paciente».
+
 ## 0.48.103
 
 - Las tres listas de hospitalizados mantienen el formato compacto y la lista continua al abrir el panel izquierdo, los menús y el CUDYR, y cuando Eloísa vuelve a dibujar la tabla o sus pestañas.
