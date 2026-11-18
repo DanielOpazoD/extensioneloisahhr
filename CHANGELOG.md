@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.111
+
+- El menú del icono muestra la versión instalada y comprueba la última publicación al abrirse. Si hay una actualización, puedes descargarla desde la misma ventana. Si la consulta falla, ofrece reintentar.
+- La guía de instalación y sus imágenes vienen en el ZIP y se leen dentro de la extensión, también sin conexión.
+
 ## 0.48.110
 
 - La barra de Chrome muestra el símbolo naranjo del Hospital Hanga Roa. Su menú abre la descarga de la última versión en GitHub, la guía ilustrada de instalación y el interruptor de Chrome para deshabilitar el puente.
