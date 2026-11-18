@@ -58,13 +58,9 @@ desde sus etiquetas y guardar hasta 20 grupos propios. Añadir un grupo conserva
 ya seleccionados. Chrome guarda sólo preferencias de presentación y nombres/claves de esos
 grupos; los campos del paciente y la solicitud no forman parte de esas preferencias.
 
-Recetas e imágenes preparan una vista previa del PDF dentro del panel. La impresión usa
-exactamente los bytes preparados, vinculados a la pestaña y ruta que los solicitaron, con
-caducidad de diez minutos y un límite de 5 MB por vista previa. Los documentos mayores
-conservan la opción de impresión directa. Al cambiar formato o cerrar
-se libera el documento anterior. Laboratorio muestra el mismo HTML de la solicitud impresa;
-su pestaña de impresión se abre sólo al pulsar Imprimir. El visor PDF carga su código bajo
-demanda y muestra una página a la vez. No se amplían permisos ni se escriben datos en Eloísa.
+Recetas, laboratorio e imágenes abren directamente el diálogo de impresión de Chrome.
+En Recetas se elige Estándar o Compacta antes de imprimir. En el diálogo de Chrome se puede
+seleccionar una impresora o guardar el documento como PDF.
 
 La barra principal usa iconos para recetas y exámenes, sin subtítulo de conexión.
 Exámenes abre directamente «Ver resultados», «Solicitar laboratorio» o «Solicitar imágenes».
@@ -82,7 +78,7 @@ Las solicitudes de paciente nuevo también se conservan dentro de ese panel. Est
 viven sólo en memoria: cerrar el panel o recargar la página los descarta. No guardan documentos,
 credenciales ni respuestas clínicas en las preferencias del navegador.
 
-Si una consulta o vista previa falla por la sesión, «Reconectar y continuar» mantiene el trabajo
+Si una consulta o impresión falla por la sesión, «Reconectar y continuar» mantiene el trabajo
 y retoma la lectura tras verificar la conexión. Cuando hace falta ingresar en la página oficial,
 se vuelve al panel y se pulsa «Continuar». Syslab conserva su formulario de acceso y retoma la
 consulta, el informe o el análisis seleccionado. La recuperación no imprime ni envía solicitudes automáticamente.

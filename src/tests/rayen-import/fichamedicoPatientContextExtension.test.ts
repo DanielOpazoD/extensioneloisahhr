@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { webcrypto } from 'node:crypto';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -264,7 +265,7 @@ describe('Ficha Médico patient-context owner', () => {
     expect(fromFallback).toMatchObject({
       encounterId: '902',
       run: '33333333-3',
-      firstGivenName: 'Paciente sin cabecera',
+      patientName: 'Paciente sin cabecera',
       room: 'Sala B',
       hasMedicalDischarge: false,
       dischargeDatetime: '2026-07-19T09:00:00Z',
@@ -423,7 +424,8 @@ describe('Ficha Médico patient-context owner', () => {
   it('keeps census and vitals response formats while marking individual read failures', async () => {
     const rows = [
       { id: 901, bedShortName: '12-A', hospitalDepartmentShortName: 'MED' },
-      { id: 902, roomShortName: 'B' },
+      { id: 902, hospitalDepartmentShortName: 'MED', roomShortName: 'B',
+        patient: { firstGivenName: 'Ema', patientName: 'Ema Tuki' } },
     ];
     const headers: Record<string, Record<string, unknown>> = {
       '901': {
@@ -435,8 +437,6 @@ describe('Ficha Médico patient-context owner', () => {
       '902': {
         patID: 72,
         preferredIdentifierCode: '22222222-2',
-        firstGivenName: 'Ema',
-        firstFamilyName: 'Tuki',
         birthDate: '1990-02-03',
       },
     };
@@ -444,7 +444,10 @@ describe('Ficha Médico patient-context owner', () => {
       .fn()
       .mockResolvedValueOnce({ forms: [{ formCodigo: 'VITAL_SIGNS' }] })
       .mockResolvedValueOnce({ error: 'Lectura no disponible.' });
+    const self: Record<string, any> = {};
+    runInNewContext(readFileSync('extension/prescription-print.js', 'utf8'), { self });
     const { context } = createHarness({
+      prescriptionPrint: self.HhrPrescriptionPrint,
       fetchActiveEncounterRows: vi.fn(async () => ({ rows })),
       fetchPatientHeader: vi.fn(async (encId: string) => headers[encId]),
       fetchScalesReportWithInfo,
@@ -455,8 +458,8 @@ describe('Ficha Médico patient-context owner', () => {
     ).resolves.toMatchObject({
       ok: true,
       patients: [
-        { encounterId: '901', bed: '12-A', isCurrent: false },
-        { encounterId: '902', bed: 'B', isCurrent: true },
+        { encounterId: '901', name: 'Ana Rapa', bed: '12-A', isCurrent: false },
+        { encounterId: '902', name: 'Ema Tuki', bed: 'B', isCurrent: true },
       ],
     });
     await expect(
@@ -465,7 +468,7 @@ describe('Ficha Médico patient-context owner', () => {
       ok: true,
       patients: [
         { encounterId: '901', forms: [{ formCodigo: 'VITAL_SIGNS' }], unavailableReason: '' },
-        { encounterId: '902', forms: [], unavailableReason: 'Lectura no disponible.' },
+        { encounterId: '902', name: 'Ema Tuki', forms: [], unavailableReason: 'Lectura no disponible.' },
       ],
     });
   });

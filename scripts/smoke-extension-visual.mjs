@@ -88,10 +88,16 @@ export const verifyLabActionLayout = async page => {
         const rect = node.getBoundingClientRect();
         return { selector, left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width };
       });
+      const rect = selector => root.querySelector(selector).getBoundingClientRect();
+      const search = rect('.hhr-labreq-search'), groups = rect('.hhr-labreq-selection-tools');
       return { controls, left: dialog.left, right: dialog.right,
-        overflowing: [...root.querySelectorAll('.hhr-center-header,.hhr-center-patientbar,.hhr-center-toolbar')].some(node => node.scrollWidth > node.clientWidth + 1) };
+        searchAndGroupsAligned: Math.abs(search.y + search.height / 2 - groups.y - groups.height / 2) <= 2,
+        headerHeight: Math.round(rect('.hhr-labreq-grid').top - rect('.hhr-labreq-patient').top),
+        overflowing: [...root.querySelectorAll('.hhr-center-header,.hhr-center-patientbar,.hhr-center-toolbar,.hhr-labreq-patient,.hhr-labreq-meta,.hhr-labreq-selection')].some(node => node.scrollWidth > node.clientWidth + 1) };
     });
     assert.equal(geometry.overflowing, false, `Toolbar overflow at ${width}px`);
+    if (width === 1280) assert.ok(geometry.searchAndGroupsAligned, 'Search and exam groups share the desktop row');
+    console.info('[laboratorio] ' + width + ' px: ' + geometry.headerHeight + ' px antes del catálogo');
     for (const control of geometry.controls) {
       assert.ok(control.width > 0 && control.left >= geometry.left && control.right <= geometry.right, `${control.selector} outside dialog at ${width}px`);
       for (const other of geometry.controls.filter(other => other !== control)) {

@@ -5,14 +5,11 @@ import path from 'node:path';
 export const verifyDirectWorkflows = async (page, worker) => {
   const url = page.url();
   const tabId = await worker.evaluate(async url => {
-    self.HhrExtensionRuntime.ensurePdf();
-    const pdf = await self.PDFLib.PDFDocument.create(); pdf.addPage([612, 792]).drawText('Vista previa sintetica');
-    const base64 = btoa(String.fromCharCode(...await pdf.save()));
     const [tab] = await chrome.tabs.query({ url });
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, world: 'ISOLATED', args: [base64], func: pdfBase64 => {
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, world: 'ISOLATED', func: () => {
       const original = chrome.runtime.sendMessage;
       const types = globalThis.HhrRayenMessageContract.types;
-      const state = globalThis.__hhrDirectWorkflowFixture = { calls: [], actor: 'synthetic-author', failHeader: false, failPreview: false, pdfBase64, original };
+      const state = globalThis.__hhrDirectWorkflowFixture = { calls: [], actor: 'synthetic-author', failHeader: false, failPrint: false, original };
       chrome.runtime.sendMessage = (message, callback) => {
         let response;
         const patient = id => ({ patientId: 'synthetic-' + id, name: 'Paciente sintético ' + id, run: 'SINTETICO', service: 'Servicio de prueba' });
@@ -23,11 +20,11 @@ export const verifyDirectWorkflows = async (page, worker) => {
         else if (message.type === types.SYSLAB_STATUS_REQUEST) response = { connected: true };
         else if (message.type === types.LAB_SEARCH_REQUEST) response = { patient: patient(message.encId), batchId: 'synthetic-results', exams: [] };
         else if (message.type === types.CONNECTION_REPAIR_REQUEST) {
-          state.failHeader = false; state.failPreview = false;
+          state.failHeader = false; state.failPrint = false;
           response = { report: { fichaMedico: { status: 'ready', reason: 'connected' } } };
-        } else if (message.type === types.IMAGING_FORM_PRINT_REQUEST) response = state.failPreview
+        } else if (message.type === types.IMAGING_FORM_PRINT_REQUEST) response = state.failPrint
           ? { error: 'Sesión vencida.', requiresLogin: true }
-          : { ok: true, jobId: 'synthetic-direct-preview', pdfBase64: state.pdfBase64 };
+          : { ok: true };
         else if (message.type === types.DOCUMENT_PREVIEW_REQUEST) response = { ok: true };
         else return original.call(chrome.runtime, message, callback);
         state.calls.push({ type: message.type, preview: message.preview, operation: message.operation });
@@ -87,10 +84,12 @@ export const verifyDirectWorkflows = async (page, worker) => {
     await root.getByRole('button', { name: 'Reconectar y continuar', exact: true }).click(); await imageReady();
     assert.equal(await root.getByRole('textbox', { name: 'Médico solicitante' }).inputValue(), 'Continuación de prueba');
     assert.equal(await root.locator('.hhr-imaging-feedback').textContent(), '');
-    await setState({ failPreview: true }); await root.locator('.hhr-imaging-print').click();
+    await setState({ failPrint: true }); await root.locator('.hhr-imaging-print').click();
     await root.getByRole('button', { name: 'Reconectar y continuar', exact: true }).click();
-    await root.locator('.hhr-preview-pages canvas').waitFor();
-    await root.getByRole('button', { name: 'Volver', exact: true }).click();
+    await imageReady();
+    await root.getByRole('button', { name: 'Imprimir', exact: true }).click();
+    await root.getByText('Se abrió el PDF', { exact: false }).waitFor();
+    assert.equal(await root.locator('.hhr-document-preview').count(), 0);
     await root.locator('.hhr-rx-close').click();
     for (const [label, selector] of [['Ver resultados', '.hhr-lab-filter'], ['Solicitar laboratorio', '.hhr-labreq-print'], ['Solicitar imágenes', '.hhr-imaging-print']]) {
       await bar.getByRole('button', { name: 'Exámenes: laboratorio e imágenes', exact: true }).click();
@@ -103,7 +102,9 @@ export const verifyDirectWorkflows = async (page, worker) => {
       const [result] = await chrome.scripting.executeScript({ target: { tabId }, world: 'ISOLATED', func: () => globalThis.__hhrDirectWorkflowFixture.calls }); return result.result;
     }, tabId);
     assert.equal(calls.filter(call => call.operation === 'print').length, 0);
-    assert.ok(calls.filter(call => call.type === 'RAYEN_IMAGING_FORM_PRINT_REQUEST').every(call => call.preview === true));
+    const printRequests = calls.filter(call => call.type === 'RAYEN_IMAGING_FORM_PRINT_REQUEST');
+    assert.equal(printRequests.length, 2);
+    assert.ok(printRequests.every(call => !call.preview));
     assert.equal(await bar.locator('.hhr-ops-favorites,.collapse').count(), 0);
     await bar.getByRole('button', { name: 'Abrir Centro HHR', exact: true }).click(); await nav('settings');
     const viewport = page.viewportSize();
