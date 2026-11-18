@@ -33,7 +33,7 @@ a empaquetar y recargar Chrome. Una carpeta fuente sin empaquetar no afirma una 
 
 ## Controles de la interfaz
 
-«Pacientes sin médico», «Pacientes con novedad» y «Pacientes sin novedad» muestran todos los resultados filtrados en una lista compacta con desplazamiento vertical. Cada fila conserva los controles de Eloísa. En Gestión de cuidados, la lista de fondo mantiene esa densidad mientras se completa el CUDYR.
+«Pacientes sin médico», «Pacientes con novedad» y «Pacientes sin novedad» muestran todos los resultados filtrados en una lista compacta con desplazamiento vertical. Cada fila conserva los controles de Eloísa. La tabla mantiene la densidad al abrir el panel lateral de Rayen, desplegar un menú o completar el CUDYR.
 
 Las recetas y las indicaciones se abren desde Centro HHR; la extensión no agrega iconos
 junto a «Validar tratamiento». El selector Estándar/Compacta está sobre el contenido

@@ -4,18 +4,15 @@
   const marked = 'data-hhr-compact-worklist';
   const complete = 'data-hhr-complete-worklist';
   const styleId = 'hhr-native-worklist-styles';
-  const lists = {
-    '/dashboard/encounter-list': /^(pacientes )?sin medico$/,
-    '/dashboard/encounter-list-nurse': /^(pacientes )?(con|sin) novedad$/,
+  // Match the native result heading that belongs to the table. Tabs, menus and
+  // drawers can be hidden or remounted independently of the underlying list.
+  const headings = {
+    '/dashboard/encounter-list': /^Resultados de b[uú]squeda no asignados\s*\((\d+)\)$/i,
+    '/dashboard/encounter-list-nurse': /^Resultados de b[uú]squeda (?:con|sin) novedad\s*\((\d+)\)$/i,
   };
-  const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .trim().toLowerCase().replace(/\s*\(\d+\)$|\s+\d+$/, '').replace(/\s+/g, ' ');
-  // Opening the CUDYR dialog marks the painted background aria-hidden.
-  // Use layout visibility for density and exclude the dialog's own contents.
-  const isWorklistSurface = element => element.getClientRects().length &&
-    !element.closest('[hidden],dialog,[role="dialog"],[role="alertdialog"]') &&
-    getComputedStyle(element).visibility === 'visible';
-  const columns = new Set(['ubicacion', 'cama', 'asignacion', 'medico tratante', 'acciones']);
+  const overlay = 'dialog,[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],.MuiDrawer-root,.MuiPopover-root';
+  const tableSelector = '.MuiTableContainer-root > table';
+  const markedSelector = `table[${marked}],table[${complete}]`;
   const css = `
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }
@@ -33,48 +30,36 @@
     }
   `;
   const create = () => {
-    let table = null;
+    let onWorklist = false;
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = css;
     document.getElementById(styleId)?.remove();
     document.head.append(style);
 
-    const findTable = pathname => {
-      const label = lists[pathname.replace(/\/$/, '')];
-      if (!label) return null;
-      const selected = [...document.querySelectorAll('[role="tablist"] [role="tab"][aria-selected="true"]')]
-        .find(tab => label.test(normalize(tab.textContent)) && isWorklistSurface(tab));
-      if (!selected) return null;
-      const panel = document.getElementById(selected.getAttribute('aria-controls') || '');
-      const scope = panel || document.querySelector('main') || document.body;
-      const tables = [...scope.querySelectorAll('table')].filter(candidate => {
-        if (!candidate.tBodies.length || !isWorklistSurface(candidate)) return false;
-        const headers = [...(candidate.tHead?.querySelectorAll('th') || [])].map(th => normalize(th.textContent));
-        return headers.includes('paciente') && headers.some(header => columns.has(header));
-      });
-      return tables.length === 1 ? tables[0] : null;
-    };
-    // The native footer counts pages independently of the row renderer.
-    // Hide it only when this table contains exactly its advertised result set.
-    const hasAllRows = table => {
-      const container = table.closest('.MuiTableContainer-root');
-      const heading = container?.parentElement?.previousElementSibling;
-      const match = heading?.textContent.trim().match(/^Resultados de b[uú]squeda (?:no asignados|con novedad|sin novedad)\s*\((\d+)\)$/i);
-      return Boolean(match && Number(match[1]) === table.tBodies[0].rows.length);
-    };
     const clear = () => {
-      table?.removeAttribute(marked);
-      table?.removeAttribute(complete);
+      for (const table of document.querySelectorAll(markedSelector)) {
+        table.removeAttribute(marked);
+        table.removeAttribute(complete);
+      }
     };
     const refresh = pathname => {
-      const next = findTable(pathname);
-      if (table !== next) {
-        clear();
-        table = next;
-        table?.setAttribute(marked, '');
+      const heading = headings[pathname.replace(/\/$/, '')];
+      if (!heading) {
+        if (onWorklist) clear();
+        onWorklist = false;
+        return;
       }
-      if (table) table.toggleAttribute(complete, hasAllRows(table));
+      onWorklist = true;
+      if (!style.isConnected) document.head?.append(style);
+      for (const table of document.querySelectorAll(`${tableSelector},${markedSelector}`)) {
+        const container = table.parentElement;
+        const title = container.parentElement?.previousElementSibling;
+        const result = container.matches('.MuiTableContainer-root') && table.tBodies.length &&
+          !table.closest(overlay) && title?.textContent.trim().match(heading);
+        table.toggleAttribute(marked, Boolean(result));
+        table.toggleAttribute(complete, Boolean(result && Number(result[1]) === table.tBodies[0].rows.length));
+      }
     };
     return Object.freeze({
       refresh,
