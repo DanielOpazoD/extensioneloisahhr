@@ -79,11 +79,12 @@ y retoma la lectura tras verificar la conexión. Cuando hace falta ingresar en l
 se vuelve al panel y se pulsa «Continuar». Syslab conserva su formulario de acceso y retoma la
 consulta, el informe o el análisis seleccionado. La recuperación no imprime ni envía solicitudes automáticamente.
 
-En Historial, el navegador mantiene visible la fecha y permite saltar entre los grupos
+El navegador de fechas aparece en la fila de pestañas de Eloísa, junto a «Historial».
+Mantiene visible la fecha y permite saltar entre los grupos
 que Eloísa ya cargó. Al cambiar los filtros se actualizan las fechas disponibles. No consulta
 otros días ni cambia el rango del filtro nativo; «Hoy» y «Ayer» muestran además su fecha
 en `Pacific/Easter`. La prueba del ZIP cubre scroll de página y de un contenedor, filtros,
-salida del historial y distribución del panel a 1280, 840 y 390 píxeles.
+salida del historial y distribución de la fila a 1280, 840, 707 y 390 píxeles.
 
 La barra del historial es compacta y conserva sólo el selector de fecha y sus dos flechas.
 Los filtros por categoría y el contador de eventos de la extensión se retiran. Los filtros
