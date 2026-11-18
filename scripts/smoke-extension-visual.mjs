@@ -11,7 +11,7 @@ const screenshot = async (page, name) => {
 export const verifyHistoryNavigation = async page => {
   const original = await page.locator('main').innerHTML();
   for (const nested of [false, true]) {
-    // Leave room above the timeline so the first jump also moves the bar into sticky position.
+    // Leave room above the timeline to exercise the first jump from the tab row.
     await page.locator('main').evaluate((main, nested) => {
       main.innerHTML = `
         <div role="tablist" style="position:sticky;top:0;background:white;height:70px;z-index:30">
@@ -50,16 +50,16 @@ export const verifyHistoryNavigation = async page => {
       window.dispatchEvent(new Event('resize'));
       target.scrollBy(0, 300);
     }, nested);
-    // Header reflow may move both toolbars. Assert visibility and no obstruction,
-    // rather than requiring the previous pixel coordinate to stay unchanged.
+    // Header reflow keeps the picker in the same row, including when only the timeline scrolls.
     await page.waitForFunction(nested => {
       const rect = document.querySelector('#hhr-history-date-navigation').getBoundingClientRect();
-      const bounds = nested ? document.querySelector('#fixture-scroll').getBoundingClientRect() : { top: 0, bottom: innerHeight };
       const tabs = document.querySelector('[role="tablist"]').getBoundingClientRect();
+      const history = document.querySelector('[role="tab"]').getBoundingClientRect();
       const operations = document.querySelector('#hhr-clinical-operations-bar').getBoundingClientRect();
-      const overlaps = rect.left < operations.right && rect.right > operations.left;
-      return rect.height > 0 && rect.top >= Math.max(bounds.top, tabs.bottom, overlaps ? operations.bottom : 0) - 1 &&
-        rect.bottom <= Math.min(innerHeight, bounds.bottom) + 1;
+      const overlaps = rect.left < operations.right && rect.right > operations.left &&
+        rect.top < operations.bottom && rect.bottom > operations.top;
+      return rect.height > 0 && rect.top >= tabs.top && rect.bottom <= tabs.bottom &&
+        rect.left >= history.right && rect.left - history.right <= 10 && !overlaps;
     }, nested, { timeout: 10000 });
     assert.equal(await select.inputValue(), '2');
     if (!nested) await screenshot(page, 'historial');

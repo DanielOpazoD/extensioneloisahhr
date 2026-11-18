@@ -7,6 +7,7 @@ const event = (role, category, note = '') => `<div class="MuiCard-root">
   <div class="MuiCardHeader-root"><span class="MuiCardHeader-title">Autor de prueba</span><span class="MuiCardHeader-subheader">${role}</span></div>
   <div class="MuiCardContent-root"><div class="MuiStack-root"><p class="MuiTypography-root">${category}</p><div>${note}</div></div></div></div>`;
 const group = (date, cards) => `<div class="MuiBox-root"><div class="MuiStack-root"><div class="MuiChip-root"><span class="MuiChip-label">${date}</span></div></div>${cards}</div>`;
+const historyTab = '<div role="tablist"><button role="tab" aria-selected="true">Historial</button><button role="tab" aria-selected="false">Alta</button></div>';
 let history, presentation;
 beforeEach(() => {
   vi.spyOn(Element.prototype, 'getClientRects').mockImplementation(function () {
@@ -23,11 +24,14 @@ afterEach(() => {
 
 describe('Compact native history dates', () => {
   it('shows only date navigation while keeping every native event available', () => {
-    document.body.innerHTML = '<button role="tab" aria-selected="true">Historial</button><div id="timeline">' +
+    document.body.innerHTML = historyTab + '<div id="timeline">' +
       group('Hoy', event('Médico', 'Evolución') + event('Médico', 'Fármacos')) +
       group('Ayer', event('Enfermera(o)', 'Evolución')) + '</div>';
     history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
-    const shadow = document.querySelector('#hhr-history-date-navigation').shadowRoot;
+    const navigator = document.querySelector('#hhr-history-date-navigation');
+    expect(navigator.parentElement).toBe(document.querySelector('[role="tablist"]'));
+    expect(navigator.previousElementSibling.textContent).toBe('Alta');
+    const shadow = navigator.shadowRoot;
     expect(shadow.querySelectorAll('button')).toHaveLength(2);
     expect(shadow.querySelectorAll('option')).toHaveLength(2);
     expect(shadow.querySelector('[data-filter],[role="status"]')).toBeNull();
@@ -36,7 +40,7 @@ describe('Compact native history dates', () => {
   });
 
   it('updates loaded dates after native filtering and clears old episode dates', () => {
-    document.body.innerHTML = '<button role="tab" aria-selected="true">Historial</button><div id="timeline">' + group('Hoy', event('Médico', 'Evolución')) + '</div>';
+    document.body.innerHTML = historyTab + '<div id="timeline">' + group('Hoy', event('Médico', 'Evolución')) + '</div>';
     history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
     document.querySelector('#timeline').innerHTML = group('01-01-2025', event('Médico', 'Procedimientos'));
     history.refresh('2');
@@ -47,10 +51,11 @@ describe('Compact native history dates', () => {
   });
 
   it('releases date navigation on leaving history', () => {
-    document.body.innerHTML = '<button role="tab" aria-selected="true">Historial</button><div>' + group('Hoy', event('Médico', 'Evolución')) + '</div>';
+    document.body.innerHTML = historyTab + '<div>' + group('Hoy', event('Médico', 'Evolución')) + '</div>';
     history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
     document.querySelector('[role="tab"]').setAttribute('aria-selected', 'false'); history.refresh('1');
     expect(document.querySelector('#hhr-history-date-navigation')).toBeNull();
+    expect(document.querySelector('[data-hhr-history-rail],[data-hhr-history-tab],[data-hhr-history-scroll]')).toBeNull();
     expect(document.querySelectorAll('.MuiCard-root')).toHaveLength(1);
   });
 });

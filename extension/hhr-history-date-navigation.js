@@ -2,6 +2,13 @@
 (() => {
   'use strict';
   const HOST_ID = 'hhr-history-date-navigation';
+  const STYLE_ID = HOST_ID + '-styles';
+  const railCss = `
+    [data-hhr-history-rail] { display:flex; }
+    [data-hhr-history-rail] > [role="tab"] { flex-shrink:0; }
+    [data-hhr-history-rail] > [data-hhr-history-tab] ~ [role="tab"] { order:2; }
+    [data-hhr-history-scroll] { overflow-x:auto !important; scrollbar-width:none; }
+  `;
   const dateLabel = label => {
     if (/^(Hoy|Ayer)$/i.test(label)) {
       const parts = new Intl.DateTimeFormat('en-CA', {
@@ -21,29 +28,33 @@
     let groups = [];
     let encounterId = '';
     let tab = null;
+    let rail = null;
+    let horizontalScroll = null;
+    let timelineRoot = null;
     let selected = -1;
     let frame = 0;
     let scroller = window;
     let disposed = false;
     const clear = () => {
       host?.remove();
+      rail?.removeAttribute('data-hhr-history-rail');
+      tab?.removeAttribute('data-hhr-history-tab');
+      horizontalScroll?.removeAttribute('data-hhr-history-scroll');
       host = null;
+      rail = null;
+      horizontalScroll = null;
+      timelineRoot = null;
       groups = [];
       selected = -1;
+    };
+    const visibleTop = () => {
+      const scrollTop = scroller === window ? 0 : scroller.getBoundingClientRect().top;
+      return Math.max(scrollTop, rail.getBoundingClientRect().bottom);
     };
     const update = () => {
       frame = 0;
       if (!host?.isConnected || !groups.length) return;
-      const scrollTop = scroller === window ? 0 : scroller.getBoundingClientRect().top;
-      const tabs = tab.closest('[role="tablist"]') || tab;
-      const bar = document.getElementById('hhr-clinical-operations-bar');
-      const rect = host.getBoundingClientRect();
-      const barRect = bar?.getBoundingClientRect();
-      const top = Math.max(scrollTop + 8, tabs.getBoundingClientRect().bottom + 8);
-      const barBottom = barRect && barRect.left < rect.right && barRect.right > rect.left &&
-        barRect.top < top + rect.height && barRect.bottom > top ? barRect.bottom + 8 : 0;
-      host.style.top = Math.max(top, barBottom) - scrollTop + 'px';
-      const boundary = host.getBoundingClientRect().bottom + 16;
+      const boundary = visibleTop() + 16;
       let index = 0;
       groups.forEach((group, candidate) => {
         if (group.element.getBoundingClientRect().top <= boundary) index = candidate;
@@ -53,7 +64,7 @@
       const offset = scroller === window ? window.scrollY : scrollElement.scrollTop;
       const bottom = scroller === window ? innerHeight : scrollElement.getBoundingClientRect().top + scrollElement.clientTop + viewportHeight;
       const last = groups[groups.length - 1].element.getBoundingClientRect();
-      if (scrollElement.scrollHeight > viewportHeight + 2 && offset + viewportHeight >= scrollElement.scrollHeight - 2 &&
+      if (scrollElement?.scrollHeight > viewportHeight + 2 && offset + viewportHeight >= scrollElement.scrollHeight - 2 &&
           last.top < bottom && last.bottom > boundary) index = groups.length - 1;
       if (selected !== index) {
         selected = index;
@@ -69,45 +80,67 @@
       const group = groups[index];
       if (!host?.isConnected || !group?.element.isConnected) return;
       const align = () => scroller.scrollBy({
-        top: group.element.getBoundingClientRect().top - host.getBoundingClientRect().bottom - 12,
+        top: group.element.getBoundingClientRect().top - visibleTop() - 12,
         behavior: 'instant',
       });
       align();
-      // The first scroll can pin the toolbar. Align again using its settled position.
+      // A sticky native header can change position during the first scroll.
       window.cancelAnimationFrame(frame);
       update();
       align();
       scheduleUpdate();
     };
-    const mount = timeline => {
+    const revealDates = () => {
+      if (!host?.isConnected) return;
+      const bounds = horizontalScroll.getBoundingClientRect();
+      const dates = host.getBoundingClientRect();
+      const left = tab.getBoundingClientRect().left;
+      if (dates.right > bounds.right) horizontalScroll.scrollLeft += Math.ceil(dates.right - bounds.right + 4);
+      else if (left < bounds.left) horizontalScroll.scrollLeft -= Math.ceil(bounds.left - left + 4);
+    };
+    const resize = () => {
+      revealDates();
+      scheduleUpdate();
+    };
+    const mount = (timeline, tabList) => {
+      rail = tabList;
+      timelineRoot = timeline;
+      horizontalScroll = rail.closest('.MuiTabs-scroller') || rail;
+      if (!document.getElementById(STYLE_ID)) {
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = railCss;
+        document.head.append(style);
+      }
+      rail.setAttribute('data-hhr-history-rail', '');
+      tab.setAttribute('data-hhr-history-tab', '');
+      horizontalScroll.setAttribute('data-hhr-history-scroll', '');
       host = document.createElement('div');
       host.id = HOST_ID;
-      host.style.cssText = 'position:sticky;display:block;width:max-content;max-width:100%;z-index:20;padding-bottom:6px;';
+      host.style.cssText = 'display:flex;align-items:center;flex:none;order:1;margin-inline:6px;';
       const shadow = host.attachShadow({ mode: 'open' });
       shadow.innerHTML = `
         <style>
           :host { color-scheme: light; }
-          nav { display:flex;align-items:center;gap:4px;padding:3px 4px;max-width:100%;border:1px solid #d7e1df;border-radius:8px;background:#fff;box-shadow:0 3px 12px #102a4310;font:12px/1.4 system-ui,sans-serif;color:#22333a; }
-          .dates { display:flex;align-items:center;gap:4px;max-width:100%; }
-          button,select { box-sizing:border-box;height:28px;border:1px solid #d7e1df;border-radius:7px;background:#fff;color:#0b6e66;font:inherit; }
-          button { width:28px;flex:none;cursor:pointer;font-size:20px; }
-          select { width:170px;min-width:0;max-width:calc(100vw - 110px);padding:0 8px;cursor:pointer; }
+          nav { display:flex;align-items:center;gap:3px;white-space:nowrap;font:12px/1.4 system-ui,sans-serif;color:#22333a; }
+          button,select { box-sizing:border-box;height:26px;border:1px solid #d7e1df;border-radius:6px;background:#fff;color:#0b6e66;font:inherit; }
+          button { width:24px;flex:none;cursor:pointer;font-size:18px; }
+          select { width:136px;padding:0 5px;cursor:pointer; }
           button:hover:not(:disabled),select:hover { background:#edf7f4; }
           button:disabled { opacity:.4;cursor:default; }
           :focus-visible { outline:2px solid #0b6e66;outline-offset:2px; }
         </style>
         <nav aria-label="Navegar por fechas del historial">
-          <div class="dates">
             <button type="button" data-step="-1" aria-label="Fecha más reciente">‹</button>
             <select aria-label="Fecha del historial" title="Fechas cargadas en el historial"></select>
             <button type="button" data-step="1" aria-label="Fecha anterior">›</button>
-          </div>
         </nav>`;
       shadow.querySelectorAll('button').forEach(button => {
         button.addEventListener('click', () => jump(selected + Number(button.dataset.step)));
       });
       shadow.querySelector('select').addEventListener('change', event => jump(Number(event.target.value)));
-      timeline.insertBefore(host, groups[0].element);
+      // Append after the native tabs in the DOM so MUI retains its tab indices.
+      rail.append(host);
       scroller = window;
       for (let parent = timeline; parent && parent !== document.body; parent = parent.parentElement) {
         if (/(auto|scroll)/.test(window.getComputedStyle(parent).overflowY)) {
@@ -120,9 +153,10 @@
       if (disposed) return;
       if (encounterId !== nextEncounterId) clear();
       encounterId = nextEncounterId;
-      tab = Array.from(document.querySelectorAll('[role="tab"][aria-selected="true"]'))
+      const nextTab = Array.from(document.querySelectorAll('[role="tab"][aria-selected="true"]'))
         .find(element => element.textContent.trim() === 'Historial' && element.getClientRects().length);
-      if (!nextEncounterId || !tab) { clear(); return; }
+      const tabList = nextTab?.parentElement;
+      if (!nextEncounterId || !tabList?.matches('[role="tablist"]')) { clear(); return; }
       // Native groups: a date Chip in its own Stack, followed by event Cards.
       // Ignore dates inside cards (birth dates, orders, notes) and hidden tab panels.
       const candidates = Array.from(document.querySelectorAll('.MuiChip-label')).flatMap(chip => {
@@ -138,11 +172,13 @@
       const timeline = candidates[0]?.element.parentElement;
       const nextGroups = candidates.filter(group => group.element.parentElement === timeline);
       if (!timeline || !nextGroups.length) { clear(); return; }
-      if (host?.parentElement !== timeline) clear();
+      if (tab !== nextTab || host?.parentElement !== tabList || timelineRoot !== timeline) clear();
+      tab = nextTab;
       const changed = groups.length !== nextGroups.length || nextGroups.some((group, index) =>
         group.element !== groups[index]?.element || group.label !== groups[index]?.label);
       groups = nextGroups;
-      if (!host) mount(timeline);
+      const mounted = !host;
+      if (mounted) mount(timeline, tabList);
       if (changed) {
         const select = host.shadowRoot.querySelector('select');
         select.replaceChildren(...groups.map((group, index) => {
@@ -153,10 +189,11 @@
         }));
         selected = -1;
       }
+      if (mounted) revealDates();
       scheduleUpdate();
     };
     window.addEventListener('scroll', scheduleUpdate, true);
-    window.addEventListener('resize', scheduleUpdate);
+    window.addEventListener('resize', resize);
     return Object.freeze({
       refresh,
       dispose: () => {
@@ -164,7 +201,7 @@
         clear();
         window.cancelAnimationFrame(frame);
         window.removeEventListener('scroll', scheduleUpdate, true);
-        window.removeEventListener('resize', scheduleUpdate);
+        window.removeEventListener('resize', resize);
       },
     });
   };

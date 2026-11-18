@@ -22,10 +22,10 @@ const fixture = `
     @media(max-width:800px) { #native-summary,#native-history-layout { grid-template-columns:minmax(0,1fr); } }
   </style>
   <header class="MuiAppBar-root" style="position:fixed;top:48px;left:0;width:100%;height:48px;z-index:1100;background:white">
-    <div class="MuiTabs-root"><div role="tablist" style="display:flex;overflow-x:auto;white-space:nowrap">
+    <div class="MuiTabs-root"><div class="MuiTabs-scroller" style="overflow:hidden"><div role="tablist" style="display:flex;white-space:nowrap">
       ${[['summary','Resumen'],['antecedents','Antecedentes'],['care-plan','Plan de tratamiento'],['history','Historial'],['discharge','Alta']].map(([id,label])=>
         `<button role="tab" id="encounter-event-tab-${id}" aria-selected="${id==='summary'}">${label}</button>`).join('')}
-    </div></div>
+    </div></div></div>
   </header>
   <div id="native-summary-view" style="padding-top:104px">
     <div><div class="MuiGrid-root MuiGrid-container" style="position:fixed;top:94px;width:1500px;display:flex">
@@ -65,7 +65,7 @@ export const verifyNativeFicha = async page => {
       window.scrollTo(0,0);
     }));
   },fixture);
-  for(const width of [1280,840,390]) {
+  for(const width of [1280,840,707,390]) {
     await page.setViewportSize({width,height:900});
     await page.getByRole('tab',{name:'Resumen',exact:true}).click();
     await page.locator('[data-hhr-ficha-sections]').waitFor();
@@ -93,6 +93,17 @@ export const verifyNativeFicha = async page => {
     const toolbar=page.locator('#hhr-history-date-navigation');
     const date=toolbar.getByRole('combobox',{name:'Fecha del historial'});
     await date.waitFor();
+    const inline = await toolbar.evaluate(host => {
+      const row = host.parentElement;
+      const history = row.querySelector('#encounter-event-tab-history').getBoundingClientRect();
+      const discharge = row.querySelector('#encounter-event-tab-discharge').getBoundingClientRect();
+      const scroller = row.closest('.MuiTabs-scroller').getBoundingClientRect();
+      const dates = host.getBoundingClientRect();
+      return dates.left >= history.right && dates.left - history.right <= 10 && dates.right <= discharge.left &&
+        dates.top >= history.top - 1 && dates.bottom <= history.bottom + 1 &&
+        dates.left >= scroller.left && dates.right <= scroller.right + 1;
+    });
+    assert.ok(inline, `Date controls not visible next to Historial at ${width}px`);
     assert.equal(await date.locator('option').count(),3);
     assert.equal(await toolbar.getByRole('button').count(),2);
     assert.equal(await toolbar.locator('[data-filter],[role="status"]').count(),0);
@@ -107,7 +118,11 @@ export const verifyNativeFicha = async page => {
     });
     await page.waitForFunction(()=>{
       const host=document.querySelector('#hhr-history-date-navigation'),r=host.getBoundingClientRect();
-      return r.top>=0 && r.bottom<=innerHeight && r.height<=44 && r.width<=270 && host.scrollWidth<=host.clientWidth+1;
+      const controls=host.shadowRoot.querySelector('nav').getBoundingClientRect();
+      const operations=document.querySelector('#hhr-clinical-operations-bar').getBoundingClientRect();
+      const overlaps=controls.left<operations.right && controls.right>operations.left &&
+        controls.top<operations.bottom && controls.bottom>operations.top;
+      return r.top>=0 && r.bottom<=innerHeight && r.height<=44 && r.width<=270 && host.scrollWidth<=host.clientWidth+1 && !overlaps;
     });
     await screenshot(page,'ficha-historial-'+width);
     const text=page.locator('#medical-today [data-hhr-evolution-text]');

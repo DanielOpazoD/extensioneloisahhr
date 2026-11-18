@@ -554,7 +554,12 @@
       })
       .sort((a, b) => b.rect.bottom - a.rect.bottom);
     const headerBottom = candidates[0]?.rect.bottom || 64;
-    bar.style.setProperty('--hhr-ops-top', Math.round(headerBottom + 5) + 'px');
+    const dateRect = document.getElementById('hhr-history-date-navigation')?.getBoundingClientRect();
+    const barRect = bar.getBoundingClientRect();
+    const top = headerBottom + 5;
+    const overlapsDates = dateRect && dateRect.left < barRect.right && dateRect.right > barRect.left &&
+      dateRect.bottom > top && dateRect.top < top + barRect.height;
+    bar.style.setProperty('--hhr-ops-top', Math.round(overlapsDates ? dateRect.bottom + 5 : top) + 'px');
   };
 
   const OPERATIONS_MODULES = [
@@ -697,14 +702,14 @@
       }
     }
     if (modal?.isConnected) globalThis.HhrCenterPatientContext?.refreshRoute(modal, encId);
+    nativePresentation?.refresh(encId);
+    historyNavigation?.refresh(encId);
     ensureOperationsBar(encId);
     ensureCorrectedDischargePrintItems();
     ensureNursingMedicalEpicrisisPrintItem(nursingContext);
     // Remove only extension-owned shortcuts left by an older injected version.
     existing?.remove();
     existingIndications?.remove();
-    historyNavigation?.refresh(encId);
-    nativePresentation?.refresh(encId);
     document.documentElement.setAttribute(
       'data-hhr-prescription-print-state', encId ? 'ready' : 'operations-ready'
     );
