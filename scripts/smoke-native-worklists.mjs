@@ -147,7 +147,8 @@ export const nativeWorklistFixture = pathname => {
     .MuiStack-root > * + * { margin-top:3px; }
   </style></head><body><main><div role="tablist">
     ${[route.other, ...route.sections.map(s => s[0])].map((tab, i) => `<button role="tab" aria-selected="${i === 0}" aria-controls="worklist">${tab}</button>`).join('')}
-  </div><label><input type="checkbox">Filtrar estación</label><output></output>
+  </div><div class="MuiPaper-root" id="filters"><label><input type="checkbox">Filtrar estación</label>
+  <input id="search-encounter-list" aria-label="Buscar paciente"><output></output></div>
   <div id="worklist" role="tabpanel"><p class="heading"></p><div><div class="MuiTableContainer-root"><table>
   <thead><tr><th>Ubicación</th><th>Paciente</th><th>Diagnóstico de ingreso</th><th>Médico tratante</th><th>Acciones</th></tr></thead>
   <tbody></tbody><tfoot><tr><td colspan="5"><nav class="MuiPagination-root"><button data-next>Página 2</button></nav></td></tr></tfoot>
@@ -189,6 +190,31 @@ async function printAndCheck(context, worker, button, filename, encId) {
   } finally { await printed.close(); }
 }
 
+async function verifyWorklistWidth(page) {
+  for (const width of [1800, 390, 1100]) {
+    await page.setViewportSize({ width, height: 450 });
+    const bounds = await page.evaluate(() => {
+      const rect = selector => {
+        const { left, right, width } = document.querySelector(selector).getBoundingClientRect();
+        return { left, right, width };
+      };
+      return { main: rect('main'), filters: rect('#filters'), panel: rect('#worklist'), table: rect('#worklist table') };
+    });
+    const left = bounds.panel.left - bounds.main.left;
+    const right = bounds.main.right - bounds.panel.right;
+    assert.ok(Math.abs(left - right) < 1, 'The worklist must stay centered');
+    assert.deepEqual(bounds.filters, bounds.panel);
+    if (width === 390) {
+      const scrollable = await page.locator('.MuiTableContainer-root').evaluate(el => el.scrollWidth > el.clientWidth);
+      assert.ok(scrollable, 'Small screens retain native horizontal scrolling');
+    } else {
+      assert.deepEqual(bounds.table, bounds.panel);
+    }
+    if (width === 1800) assert.ok(left >= 70 && left <= 125, 'Wide worklists need moderate side margins');
+    else assert.ok(Math.abs(left) < 1, 'Narrow worklists need all the available width');
+  }
+}
+
 const verifyLists = async (context, origin, worker) => {
   for (const route of routes) {
     const page = await context.newPage();
@@ -207,6 +233,7 @@ const verifyLists = async (context, origin, worker) => {
       for (const [name, , , , , total] of route.sections) {
         await page.getByRole('tab', { name, exact: true }).click();
         await page.locator('table[data-hhr-complete-worklist]').waitFor();
+        await verifyWorklistWidth(page);
         assert.equal(await rows.count(), total);
         assert.equal(await pager.isVisible(), false);
         assert.equal(await table.evaluate(t => getComputedStyle(t.parentElement).maxHeight), 'none');
