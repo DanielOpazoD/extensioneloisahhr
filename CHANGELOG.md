@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.110
+
+- La barra de Chrome muestra el símbolo naranjo del Hospital Hanga Roa. Su menú abre la descarga de la última versión en GitHub, la guía ilustrada de instalación y el interruptor de Chrome para deshabilitar el puente.
+- La guía explica cómo extraer y cargar la carpeta, fijar el icono y actualizar una instalación existente.
+
 ## 0.48.109
 
 - El calendario de feriados que decide a qué día censal pertenece una captura entre 08:00 y 08:59 (hora de Rapa Nui) coincide con los feriados legales de Chile de 2024 a 2028, igual que en HHR. Pasan a ser hábiles el 30 de junio y el 13 de octubre de 2025, el 2 de noviembre de 2026, el 16 de agosto y el 20 de septiembre de 2027, y el 22 de mayo, el 29 de junio, el 17 de julio, el 12 de octubre y el 31 de octubre de 2028. Pasan a ser feriado el 17 de septiembre de 2027 (Ley 20.983) y el 26 de junio, el 9 de octubre y el 27 de octubre de 2028 (traslados de las leyes 19.668 y 20.299). El Día de los Pueblos Indígenas de 2026 es el domingo 21 de junio (Ley 21.357). Las elecciones cuentan solo cuando votan en Isla de Pascua: se agregan el 24 de noviembre de 2024, el 16 de noviembre y el 14 de diciembre de 2025 y el 29 de octubre de 2028, y se quita la primaria del 9 de junio de 2024, en la que la isla no votó. Todas caen domingo, así que no cambian el turno.

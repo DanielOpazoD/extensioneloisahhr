@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "118",
   "name": "Rayen → HHR · Puente de censo",
-  "version": "0.48.109",
+  "version": "0.48.110",
   "description": "Conecta Eloísa con HHR y ofrece herramientas de recetas y exámenes.",
   "permissions": [
     "tabs",
@@ -74,8 +74,14 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Ver versión del puente Eloísa → HHR",
-    "default_popup": "extension-status.html"
+    "default_title": "Puente Eloísa → HHR",
+    "default_popup": "extension-status.html",
+    "default_icon": {
+      "16": "icons/hanga-roa-16.png",
+      "32": "icons/hanga-roa-32.png",
+      "48": "icons/hanga-roa-48.png",
+      "128": "icons/hanga-roa-128.png"
+    }
   },
   "web_accessible_resources": [
     {
@@ -363,5 +369,11 @@
   ],
   "optional_host_permissions": [
     "https://exalab.saludoriente.cl/*"
-  ]
+  ],
+  "icons": {
+    "16": "icons/hanga-roa-16.png",
+    "32": "icons/hanga-roa-32.png",
+    "48": "icons/hanga-roa-48.png",
+    "128": "icons/hanga-roa-128.png"
+  }
 }

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Versión del puente Eloísa → HHR</title>
+    <title>Puente Eloísa → HHR</title>
     <style>
       :root {
         color-scheme: light;
@@ -95,20 +95,20 @@
         color: #9a3412;
       }
 
-      footer {
-        margin-top: 14px;
-        border-top: 1px solid #e2e8f0;
-        padding-top: 11px;
-        color: #64748b;
-        font-size: 10px;
-        line-height: 1.45;
-      }
+      nav { display:grid; gap:4px; margin-top:16px; }
+      nav a, nav button { box-sizing:border-box; width:100%; padding:9px 10px; line-height:1.35;
+        font-family:inherit; font-size:13px; font-weight:600; text-align:left; text-decoration:none;
+        border:0; border-radius:5px; background:transparent; color:#215b54; cursor:pointer; }
+      nav a:first-child { background:#13665c; color:white; }
+      nav a:first-child:hover { background:#104e47; }
+      nav a:hover, nav button:hover { background:#e4eeeb; }
+      nav :focus-visible { outline:2px solid #bb6203; outline-offset:2px; }
     </style>
   </head>
   <body>
     <main>
       <header>
-        <img src="hhr-logo.svg" alt="" />
+        <img src="icons/hanga-roa-48.png" alt="" />
         <div>
           <h1>Puente Eloísa → HHR</h1>
           <p class="subtitle">Extensión clínica local</p>
@@ -121,12 +121,15 @@
         <p id="extension-build" class="subtitle" aria-live="polite"></p>
       </section>
 
+      <nav aria-label="Acciones del puente">
+        <a href="https://github.com/DanielOpazoD/extensioneloisahhr/releases/latest/download/eloisa-hhr.zip" target="_blank" rel="noreferrer">Descargar actualización (.zip)</a>
+        <a href="https://github.com/DanielOpazoD/extensioneloisahhr/blob/main/docs/instalacion/README.md" target="_blank" rel="noreferrer">Guía ilustrada de instalación y actualización</a>
+        <button type="button" id="manage-extension">Deshabilitar en Chrome…</button>
+      </nav>
+      <p id="manage-error" class="worker-status" role="status" hidden></p>
+
       <p class="capability">Gestor documental incluido</p>
       <p id="worker-status" class="worker-status" role="status" aria-live="polite">Comprobando conexión interna…</p>
-
-      <footer>
-        Pulsa este icono cuando necesites confirmar rápidamente la versión cargada.
-      </footer>
     </main>
     <script src="build-identity.js"></script>
     <script src="extension-status.js"></script>

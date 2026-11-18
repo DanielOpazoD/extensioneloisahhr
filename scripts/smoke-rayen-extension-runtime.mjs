@@ -379,6 +379,23 @@ try {
     `v${manifest.version}`,
     "The loaded extension version differs from manifest.json",
   );
+  const iconSizes = await statusPage.evaluate(async () => {
+    const icons = chrome.runtime.getManifest().action.default_icon;
+    return Promise.all(Object.values(icons).map(async path => {
+      const image = new Image();
+      image.src = chrome.runtime.getURL(path);
+      await image.decode();
+      return [image.naturalWidth, image.naturalHeight];
+    }));
+  });
+  assert.deepEqual(iconSizes, [[16, 16], [32, 32], [48, 48], [128, 128]]);
+  const [extensionDetails] = await Promise.all([
+    context.waitForEvent("page"),
+    statusPage.getByRole("button", { name: "Deshabilitar en Chrome…" }).click(),
+  ]);
+  await extensionDetails.waitForURL(`chrome://extensions/?id=${extensionId}`);
+  await extensionDetails.locator("extensions-detail-view #enableToggle").waitFor();
+  await extensionDetails.close();
   const runtimeContext = await requestRuntimeContext(statusPage);
   const installedName = await statusPage.evaluate(
     () => chrome.runtime.getManifest().version_name,
