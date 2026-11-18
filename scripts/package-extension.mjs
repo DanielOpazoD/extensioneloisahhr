@@ -26,6 +26,10 @@ export function packageRayenExtension(root) {
       .filter((name) => /^(?!\.)[\w.-]+\.(?:js|mjs|html|css)$/.test(name)),
     ...manifest.web_accessible_resources.flatMap((group) => group.resources),
   ]);
+  if (files.has("installation.html")) {
+    files.add("installation/carpeta-extraida.png");
+    files.add("installation/chrome-extensions.png");
+  }
   const entries = {};
   const identity = createHash("sha256");
   for (const name of [...files].sort()) {
