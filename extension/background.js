@@ -741,6 +741,12 @@ const clinicalReportRuntime = self.HhrClinicalReportRuntime.create({
   prescriptionPdf: self.HhrPrescriptionPdf,
   epicrisisPdf: self.HhrEpicrisisPdf,
   pdfLib: self.PDFLib,
+  checkWorklistChartAccess: async info => {
+    const result = await fetchFichaClaims(info);
+    if (result.error) return result;
+    return result.claims.some(item => item.claim === 'Acceso_Ficha_Clinica')
+      ? { ok: true } : { error: 'Eloísa no autorizó el acceso a la ficha clínica.' };
+  },
   prepareDocumentPreview: options => documentPreviewJobs.prepare(options),
   now: () => Date.now(),
 });
@@ -1413,6 +1419,10 @@ const runtimeMessageRoutes = Object.freeze({
         sender,
       }),
     'No se pudo generar la impresión de pacientes hospitalizados.'
+  ),
+  [RUNTIME_MESSAGES.WORKLIST_DOCUMENT_PRINT_REQUEST]: runtimeRoute(
+    (message, sender) => clinicalReportRuntime.printWorklistDocument({ ...message, sender }),
+    'No se pudo imprimir el documento de este episodio.'
   ),
   [RUNTIME_MESSAGES.INDICATIONS_PRINT_REQUEST]: runtimeRoute(
     message => handleIndicationsPrintRequest({ encId: message.encId }),

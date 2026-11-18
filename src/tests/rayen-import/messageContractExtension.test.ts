@@ -40,9 +40,16 @@ describe('shared Rayen runtime-message contract', () => {
   it('registers every service-worker request type once', () => {
     const values = Object.values(contract.types);
 
-    expect(values).toHaveLength(67);
+    expect(values).toHaveLength(68);
     expect(new Set(values).size).toBe(values.length);
     expect(values.every(value => /^RAYEN_[A-Z0-9_]+$/.test(value))).toBe(true);
+  });
+
+  it('requires the document kind and episode for a worklist print', () => {
+    const type = contract.types.WORKLIST_DOCUMENT_PRINT_REQUEST;
+    expect(contract.validateRuntimeMessage({ type, encId: '140', documentKind: 'prescription' }).ok).toBe(true);
+    expect(contract.validateRuntimeMessage({ type, documentKind: 'indications' }).ok).toBe(false);
+    expect(contract.validateRuntimeMessage({ type, encId: '140' }).ok).toBe(false);
   });
 
   it('accepts valid payloads and rejects malformed known messages', () => {

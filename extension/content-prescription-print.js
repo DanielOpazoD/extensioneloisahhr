@@ -166,6 +166,31 @@
     runtimeMessages, chromeApi: chrome, windowRef: window,
   });
 
+  const pendingWorklistPrints = new Set();
+  const onWorklistPrint = async event => {
+    const button = event.target.closest?.('button[data-hhr-print-document]');
+    if (!event.isTrusted || !button || button.disabled || !uiLifecycle.owns() ||
+        !/^\/dashboard\/encounter-list(?:-nurse)?\/?$/.test(location.pathname) ||
+        !button.closest('table[data-hhr-compact-worklist]')) return;
+    const cell = button.closest('td.hhr-worklist-documents');
+    const encId = cell?.dataset.hhrWorklistEpisode;
+    const documentKind = button.dataset.hhrPrintDocument;
+    if (!/^[1-9]\d*$/.test(encId) || !['indications', 'prescription'].includes(documentKind)) return;
+    event.stopPropagation();
+    const key = encId + '/' + documentKind;
+    if (pendingWorklistPrints.has(key)) return;
+    pendingWorklistPrints.add(key);
+    button.setAttribute('aria-busy', 'true');
+    try {
+      const result = await sendMessage({ type: runtimeMessages.WORKLIST_DOCUMENT_PRINT_REQUEST, encId, documentKind, expectedPatientId: cell.dataset.hhrWorklistPatient });
+      if (!result?.ok && active) showPageNotice(result?.error || 'No se pudo abrir la impresión.', { title: 'Imprimir', error: true });
+    } finally {
+      pendingWorklistPrints.delete(key);
+      button.removeAttribute('aria-busy');
+    }
+  };
+  document.addEventListener('click', onWorklistPrint, true);
+
   const focusableElements = root => Array.from(root.querySelectorAll(
     'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), ' +
       'a[href], [tabindex]:not([tabindex="-1"])'
@@ -756,6 +781,7 @@
         if (guard.pending.size || guard.dirty.size) return false;
       }
       active = false;
+      document.removeEventListener('click', onWorklistPrint, true);
       observer.disconnect();
       window.removeEventListener('popstate', scheduleEnsureButton);
       window.removeEventListener('hashchange', scheduleEnsureButton);

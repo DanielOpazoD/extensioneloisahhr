@@ -504,7 +504,7 @@ try {
   await verifyCompactOperationsBar(page);
   await verifyHistoryNavigation(page);
   await verifyNativeFicha(page);
-  await verifyNativeWorklists(context, new URL(fixtureUrl).origin);
+  await verifyNativeWorklists(context, new URL(fixtureUrl).origin, serviceWorker);
 
   await page.locator("#hhr-clinical-operations-bar .brand").click();
   const home = page.locator("#hhr-prescription-print-modal");
