@@ -367,6 +367,16 @@ try {
     "Chrome did not start the declared MV3 service worker",
   );
 
+  const releaseApi = "https://api.github.com/repos/DanielOpazoD/extensioneloisahhr/releases/latest";
+  const releaseFixture = (version) => ({
+    tag_name: "v" + version, draft: false, prerelease: false,
+    assets: [{ state: "uploaded", name: `eloisa-extension-${version}-${artifact.buildId.slice(0, 12)}.zip` }],
+  });
+  let published = manifest.version;
+  let available = true;
+  await context.route(releaseApi, route => route.fulfill({
+    status: available ? 200 : 403, headers: { "access-control-allow-origin": "*" }, json: releaseFixture(published),
+  }));
   const statusPage = await context.newPage();
   statusPage.on("pageerror", (error) =>
     runtimeErrors.push(`status page: ${error.message}`),
@@ -379,6 +389,29 @@ try {
     `v${manifest.version}`,
     "The loaded extension version differs from manifest.json",
   );
+  await statusPage.getByText("Actualizada", { exact: true }).waitFor();
+  assert.equal(await statusPage.locator("#update-download").isVisible(), false);
+  published = "99.0.0";
+  await statusPage.reload();
+  await statusPage.getByText("Disponible v99.0.0").waitFor();
+  assert.match(await statusPage.getByRole("link", { name: "Descargar" }).getAttribute("href"), /releases\/download\/v99\.0\.0\/eloisa-extension-99\.0\.0-/);
+  available = false;
+  await statusPage.reload();
+  await statusPage.getByText("No se pudo comprobar").waitFor();
+  assert.equal(await statusPage.locator("#update-download").isVisible(), false);
+  await statusPage.getByRole("link", { name: "Guía de instalación" }).click();
+  await statusPage.waitForURL(`chrome-extension://${extensionId}/installation.html`);
+  assert.equal(await statusPage.locator("ol li").count(), 6);
+  assert.equal(await statusPage.locator("img").evaluateAll(async images => {
+    await Promise.all(images.map(image => image.decode()));
+    return images.every(image => image.naturalWidth > 0 && new URL(image.src).origin === location.origin);
+  }), true);
+  await statusPage.getByRole("link", { name: "Volver al menú" }).click();
+  await statusPage.getByText("No se pudo comprobar").waitFor();
+  available = true;
+  published = manifest.version;
+  await statusPage.getByRole("button", { name: "Reintentar" }).click();
+  await statusPage.getByText("Actualizada", { exact: true }).waitFor();
   const iconSizes = await statusPage.evaluate(async () => {
     const icons = chrome.runtime.getManifest().action.default_icon;
     return Promise.all(Object.values(icons).map(async path => {
@@ -391,7 +424,7 @@ try {
   assert.deepEqual(iconSizes, [[16, 16], [32, 32], [48, 48], [128, 128]]);
   const [extensionDetails] = await Promise.all([
     context.waitForEvent("page"),
-    statusPage.getByRole("button", { name: "Deshabilitar en Chrome…" }).click(),
+    statusPage.getByRole("button", { name: "Deshabilitar en Chrome" }).click(),
   ]);
   await extensionDetails.waitForURL(`chrome://extensions/?id=${extensionId}`);
   await extensionDetails.locator("extensions-detail-view #enableToggle").waitFor();

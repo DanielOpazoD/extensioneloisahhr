@@ -83,8 +83,8 @@ describe('extension version popup', () => {
         default_icon: manifest.icons,
         default_popup: 'extension-status.html',
       });
-      expect(html).toContain('Versión que Chrome está usando');
-      expect(html).toContain('Gestor documental incluido');
+      expect(html).toContain('href="installation.html"');
+      expect(html).toContain('src="extension-release-status.js"');
       expect(html).toContain('id="worker-status"');
       expect(html).toContain('src="extension-worker-status.js"');
       expect(background).toContain("'patient-document-manager'");
