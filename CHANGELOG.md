@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.102
+
+- Al abrir y cerrar el CUDYR desde la columna CRD, las filas de «Pacientes con novedad» y «Pacientes sin novedad» mantienen su altura compacta.
+
 ## 0.48.101
 
 - «Pacientes sin médico», «Pacientes con novedad» y «Pacientes sin novedad» muestran todos los resultados filtrados en una sola lista compacta. Se conserva el acceso a la ficha y a la asignación desde cada fila.
