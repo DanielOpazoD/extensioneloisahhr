@@ -9,6 +9,7 @@ import { packageRayenExtension } from "./package-extension.mjs";
 import { verifyCompactOperationsBar, verifyDockedPanel, verifyLabWorkspace } from "./smoke-center-workspace.mjs";
 import { verifyHistoryNavigation, verifyLabActionLayout, verifyPrescriptionFormats } from "./smoke-extension-visual.mjs";
 import { verifyNativeFicha } from "./smoke-native-ficha.mjs";
+import { nativeWorklistFixture, verifyNativeWorklists } from "./smoke-native-worklists.mjs";
 import { verifyDirectWorkflows } from "./smoke-direct-workflows.mjs";
 
 const packageDirectory = await mkdtemp(
@@ -16,7 +17,9 @@ const packageDirectory = await mkdtemp(
 );
 const extensionPath = path.join(packageDirectory, "extension");
 const artifact = packageRayenExtension(process.cwd());
-for (const [name, bytes] of Object.entries(unzipSync(artifact.zip))) {
+const files = unzipSync(artifact.zip);
+assert.equal(Object.keys(files).some(name => name.endsWith("fichamedico-manual-patient-copy.js")), false);
+for (const [name, bytes] of Object.entries(files)) {
   const file = path.join(extensionPath, name);
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, bytes);
@@ -415,7 +418,7 @@ try {
         status: 200,
         contentType: "text/html",
         headers: { "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://fichamedicoback.rayensalud.cl https://formulariosclinicosback.rayensalud.cl; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'" },
-        body: fixtureHtml,
+        body: nativeWorklistFixture(new URL(route.request().url()).pathname) || fixtureHtml,
       });
     }
     const staleTab = route.request().frame().url().includes("stale-session=1");
@@ -501,6 +504,7 @@ try {
   await verifyCompactOperationsBar(page);
   await verifyHistoryNavigation(page);
   await verifyNativeFicha(page);
+  await verifyNativeWorklists(context, new URL(fixtureUrl).origin);
 
   await page.locator("#hhr-clinical-operations-bar .brand").click();
   const home = page.locator("#hhr-prescription-print-modal");

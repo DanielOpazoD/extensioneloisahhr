@@ -206,7 +206,7 @@ sin desplazar las acciones ni la tabla al iniciar una lectura.
 | `fichamedico-clinical-client.js` | Cliente read-only: valida la sesión, construye rutas relativas y centraliza GET JSON/PDF autenticados de Ficha Médico |
 | `fichamedico-patient-context.js` | Contexto clínico read-only: caché de cabeceras, modelo normalizado de hospitalizados y revalidación de episodios activos |
 | `eloisa-patient-code-contract.js` | Serializa en UTF-8 y agrega un checksum SHA-256 contra daños accidentales; el código no está cifrado ni autentica criptográficamente su origen |
-| `fichamedico-manual-patient-copy.js` | Inserta una única acción “Copiar para HHR” en las listas dinámicas de Gestión de cuidados |
+| `hhr-native-worklist-presentation.js` | Compacta los listados nativos de pacientes sin médico y con novedad |
 | `fichamedico-manual-patient-code-runtime.js` | Revalida el episodio y reúne cabecera y dispositivos mediante los lectores autenticados existentes |
 | `hhr-ui.js` | Design system de la extensión: tokens (paleta navy/teal), iconos de trazo, estilos de la barra (Shadow DOM), tooltips y foco por teclado |
 | `hhr-center-styles.js` | Estilos light-DOM del Centro HHR y sus avisos; reutiliza los tokens de `hhr-ui.js` |

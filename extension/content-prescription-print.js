@@ -57,6 +57,7 @@
   let active = true;
   const historyNavigation = globalThis.HhrHistoryDateNavigation?.create();
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
+  const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create();
 
   const BUTTON_ID = 'hhr-prescription-print-button';
   const INDICATIONS_BUTTON_ID = 'hhr-indications-print-button';
@@ -704,6 +705,7 @@
     if (modal?.isConnected) globalThis.HhrCenterPatientContext?.refreshRoute(modal, encId);
     nativePresentation?.refresh(encId);
     historyNavigation?.refresh(encId);
+    worklistPresentation?.refresh(window.location.pathname);
     ensureOperationsBar(encId);
     ensureCorrectedDischargePrintItems();
     ensureNursingMedicalEpicrisisPrintItem(nursingContext);
@@ -760,6 +762,7 @@
       connectionCenterRuntime.dispose();
       historyNavigation?.dispose();
       nativePresentation?.dispose();
+      worklistPresentation?.dispose();
       modal?.__hhrDocumentPreview?.dispose();
       modal?.__hhrPanel?.dispose();
       [BUTTON_ID, INDICATIONS_BUTTON_ID, OPERATIONS_BAR_ID, MODAL_ID, NOTICE_HOST_ID]

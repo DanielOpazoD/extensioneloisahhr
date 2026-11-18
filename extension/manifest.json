@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "118",
   "name": "Rayen → HHR · Puente de censo",
-  "version": "0.48.99",
+  "version": "0.48.100",
   "description": "Conecta Eloísa con HHR y ofrece herramientas de recetas y exámenes.",
   "permissions": [
     "tabs",
@@ -82,7 +82,6 @@
       "resources": [
         "hhr-logo.svg",
         "message-contract.js",
-        "fichamedico-manual-patient-copy.js",
         "syslab-login.html",
         "syslab-login.js",
         "forms/consentimiento.pdf",
@@ -191,9 +190,7 @@
       "js": [
         "message-contract.js",
         "bridge-generation.js",
-        "content-fichamedico.js",
-        "runtime-message-client.js",
-        "fichamedico-manual-patient-copy.js"
+        "content-fichamedico.js"
       ],
       "run_at": "document_start"
     },
@@ -239,6 +236,7 @@
         "hhr-prescription-ui-lifecycle.js",
         "hhr-history-date-navigation.js",
         "hhr-native-ficha-presentation.js",
+        "hhr-native-worklist-presentation.js",
         "content-prescription-print.js"
       ],
       "run_at": "document_idle"
