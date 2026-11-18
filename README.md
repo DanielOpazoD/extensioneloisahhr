@@ -59,10 +59,25 @@ su pestaña de impresión se abre sólo al pulsar Imprimir. El visor PDF carga s
 demanda y muestra una página a la vez. No se amplían permisos ni se escriben datos en Eloísa.
 
 La barra principal usa iconos para recetas y exámenes, sin subtítulo de conexión.
+Exámenes abre directamente «Ver resultados», «Solicitar laboratorio» o «Solicitar imágenes».
+La barra conserva HHR, Receta, Exámenes y sesión; Favoritos y las preferencias de presentación
+están dentro de Ajustes de Centro HHR.
 El estado sigue disponible en el indicador de color, el texto accesible y la ayuda al pasar
 el cursor; el panel de conexiones
 muestra las dependencias de cada herramienta y sus acciones de reconexión. Syslab se
 comprueba al abrir resultados de laboratorio; no se deduce su estado de las otras sesiones.
+
+Al cambiar entre módulos, las solicitudes de laboratorio e imágenes conservan su selección,
+campos y marcas mientras Centro HHR siga abierto. Cada episodio tiene su propio borrador;
+antes de restaurarlo se verifica nuevamente el paciente y el profesional de la sesión.
+Las solicitudes de paciente nuevo también se conservan dentro de ese panel. Estos borradores
+viven sólo en memoria: cerrar el panel o recargar la página los descarta. No guardan documentos,
+credenciales ni respuestas clínicas en las preferencias del navegador.
+
+Si una consulta o vista previa falla por la sesión, «Reconectar y continuar» mantiene el trabajo
+y retoma la lectura tras verificar la conexión. Cuando hace falta ingresar en la página oficial,
+se vuelve al panel y se pulsa «Continuar». Syslab conserva su formulario de acceso y retoma la
+consulta, el informe o el análisis seleccionado. La recuperación no imprime ni envía solicitudes automáticamente.
 
 En Historial, el navegador mantiene visible la fecha y permite saltar entre los grupos
 que Eloísa ya cargó. Al cambiar los filtros se actualizan las fechas disponibles. No consulta

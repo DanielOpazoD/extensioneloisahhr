@@ -170,7 +170,9 @@
           status.textContent = result.error + ' Puedes imprimirlo directamente.';
           return;
         }
-        if (!result || result.error) throw new Error(result?.error || 'No se pudo preparar la vista previa.');
+        if (!result || result.error) {
+          const error = new Error(result?.error || 'No se pudo preparar la vista previa.'); error.response = result; throw error;
+        }
         prepared = result;
         if (result.html) {
           frame.hidden = false;
@@ -194,6 +196,8 @@
         if (current() && request === generation) {
           status.textContent = error?.message || 'No se pudo preparar el documento.';
           retry = true; print.disabled = false; print.textContent = 'Reintentar vista previa';
+          globalThis.HhrReadRecovery?.attach({ root, host: status, response: error.response || { error: error.message },
+            isCurrent: () => current() && request === generation, retry: () => prepare(format), sendMessage, runtimeMessages });
         }
       }
     };

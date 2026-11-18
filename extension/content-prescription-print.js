@@ -418,11 +418,14 @@
   const fetchPatientHeaderView = async encId => {
     const response = await sendMessage({ type: runtimeMessages.PATIENT_HEADER_REQUEST, encId });
     if (!response || response.error) {
-      return { error: (response && response.error) || 'No se pudo identificar al paciente.' };
+      return { error: (response && response.error) || 'No se pudo identificar al paciente.',
+        errorCode: response?.errorCode, code: response?.code, requiresLogin: response?.requiresLogin,
+        state: response?.state, status: response?.status };
     }
     const patient = response.patient || {};
     return {
       patient,
+      actorId: response.actorId,
       view: requestForms.buildPatientView(patient, patient.formattedRun),
     };
   };
@@ -488,14 +491,14 @@
     return root ? root.querySelector(selector) : null;
   };
 
-  const createOperationsCenterModal = (module, encId, returnFocusTarget = null, existingRoot = null) => {
+  const createOperationsCenterModal = (module, encId, returnFocusTarget = null, existingRoot = null, flow) => {
     if (existingRoot && typeof existingRoot.__hhrConnectionDispose === 'function') {
       invalidateConnectionState(existingRoot);
     }
     const focusReturnTarget = existingRoot && existingRoot.__hhrFocusReturnTarget
       ? existingRoot.__hhrFocusReturnTarget
       : returnFocusTarget || document.activeElement;
-    const activeModule = ['connection', 'lab', 'imaging', 'home'].includes(module) ? module : 'home';
+    const activeModule = ['connection', 'lab', 'imaging', 'home', 'settings'].includes(module) ? module : 'home';
     const root = prepareCenterModalRoot({
       existingRoot,
       activeModule,
@@ -503,8 +506,12 @@
       focusReturnTarget,
     });
     if (!root) return;
+    if (flow === 'results' || flow === 'request') root.dataset.labFlow = flow;
     const renderModule = targetEncId => {
-      if (activeModule === 'lab') labCenterRuntime.renderLabRequestView(root, targetEncId);
+      if (activeModule === 'lab') {
+        if (root.dataset.labFlow === 'results') labCenterRuntime.renderLabCenter(root, targetEncId);
+        else labCenterRuntime.renderLabRequestView(root, targetEncId);
+      }
       else if (activeModule === 'imaging') {
         if (!imagingCenterRuntime) {
           root.querySelector('.hhr-center-main').innerHTML =
@@ -514,6 +521,9 @@
         }
         imagingCenterRuntime.renderImagingCenter(root, targetEncId);
       }
+      else if (activeModule === 'settings') globalThis.HhrCenterSettings.render({ root,
+        operationsBar: document.getElementById(OPERATIONS_BAR_ID),
+        openFavorites: panel => createFavoritesDialog(panel, () => createOperationsCenterModal('settings', targetEncId, null, panel)) });
       else if (activeModule === 'home') renderHomeCenter(root, targetEncId);
       else renderConnectionCenter(root, targetEncId);
     };
@@ -588,16 +598,15 @@
               ${ui.icons[module.icon]}
             </button>
           `).join('')}
-          <button class="module module-icon hhr-ops-favorites" type="button" aria-label="Favoritos"
-            data-tip="Favoritos" data-tip-note="Tus páginas web frecuentes, siempre a un clic.">
-            ${ui.icons.star}
-          </button>
           <div class="exams-menu" id="hhr-exams-menu" role="menu" aria-label="Tipos de exámenes" hidden>
-            <button class="exam-item hhr-exams-lab" type="button" role="menuitem" tabindex="-1" data-module="lab">
-              ${ui.icons.lab}<strong>Laboratorio</strong><small>Resultados y solicitudes Syslab</small>
+            <button class="exam-item hhr-exams-results" type="button" role="menuitem" tabindex="-1" data-module="lab" data-flow="results">
+              ${ui.icons.lab}<strong>Ver resultados</strong><small>Laboratorio Syslab</small>
+            </button>
+            <button class="exam-item hhr-exams-lab" type="button" role="menuitem" tabindex="-1" data-module="lab" data-flow="request">
+              ${ui.icons.lab}<strong>Solicitar laboratorio</strong>
             </button>
             <button class="exam-item hhr-exams-imaging" type="button" role="menuitem" tabindex="-1" data-module="imaging">
-              ${ui.icons.imaging}<strong>Imágenes</strong><small>Solicitudes y formularios oficiales</small>
+              ${ui.icons.imaging}<strong>Solicitar imágenes</strong>
             </button>
           </div>
         </div>
@@ -613,8 +622,6 @@
             <span class="session-name">Conexiones</span>
           </span>
         </button>
-        <button class="collapse" type="button" aria-label="Contraer barra HHR"
-          data-tip="Contraer" data-tip-note="Deja visible solo el acceso HHR.">${ui.icons.chevronsRight}</button>
         <div class="tip" role="tooltip"><strong></strong><span></span></div>
       `;
       try {
@@ -630,26 +637,21 @@
       sessionButton.addEventListener('click', () =>
         centerShellRuntime.openCenterModule('connection', bar.dataset.encounterId, sessionButton)
       );
-      shadow.querySelector('.hhr-ops-favorites').addEventListener('click', () =>
-        createFavoritesDialog()
-      );
       ui.enableBarTooltips(shadow, bar);
       ui.enableRovingFocus(shadow);
       bar.__hhrUi = ui.createOperationsBarController({
         root: shadow, host: bar, storageArea: chrome.storage?.local,
         onOpenBrand: () => centerShellRuntime.openCenterModule(undefined, bar.dataset.encounterId, brandButton),
-        onExamSelect: (module, trigger) => centerShellRuntime.openCenterModule(module, bar.dataset.encounterId, trigger),
+        onExamSelect: (module, trigger, flow) => centerShellRuntime.openCenterModule(module, bar.dataset.encounterId, trigger, flow),
       });
       document.body.appendChild(bar);
     }
     bar.dataset.encounterId = encId || '';
-    const labButton = barPart(bar, '.hhr-exams-lab');
-    if (labButton) {
+    [barPart(bar, '.hhr-exams-lab'), barPart(bar, '.hhr-exams-results')].filter(Boolean).forEach(labButton => {
       const labDisabled = !labHelper;
       labButton.setAttribute('aria-disabled', String(labDisabled));
-      labButton.querySelector('small').textContent = labDisabled
-        ? 'Recarga la extensión para activar laboratorio' : 'Resultados y solicitudes Syslab';
-    }
+      labButton.title = labDisabled ? 'Recarga la extensión para activar laboratorio' : '';
+    });
     updateOperationsBarPosition(bar);
     void refreshOperationsConnectionBadge(
       bar,

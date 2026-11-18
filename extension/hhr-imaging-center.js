@@ -28,6 +28,8 @@
     }
 
     const renderImagingCenter = (root, encId) => {
+      globalThis.HhrRequestDrafts?.checkpoint(root);
+      root.dataset.selectedEncounterId = String(encId || '');
       const main = root.querySelector('.hhr-center-main');
       if (!requestForms) {
         main.innerHTML = '<div class="hhr-center-toolbar"><h2 class="hhr-center-heading">Imágenes</h2></div>' +
@@ -160,6 +162,20 @@
         docTabs.forEach(tab => tab.setAttribute('aria-selected', String(tab.dataset.doc === selectedDoc)));
         renderOverlays();
       };
+      const draft = globalThis.HhrRequestDrafts?.attach({ root, main, kind: 'imaging', encId,
+        fieldForEvent: event => event.target === physicianInput ? 'physician' :
+          event.target.matches('.hhr-imaging-text-editor') ? ['marksByDoc', selectedDoc] : null,
+        capture: () => ({ selectedDoc, toolMode, physician: physicianInput.value, marksByDoc }),
+        restore: state => {
+          if (documents[state.selectedDoc]) selectedDoc = state.selectedDoc;
+          toolMode = state.toolMode === 'text' ? 'text' : 'cross'; physicianInput.value = state.physician;
+          Object.keys(marksByDoc).forEach(key => { marksByDoc[key] = state.marksByDoc[key] || []; });
+          main.querySelectorAll('.hhr-imaging-tool').forEach(button => {
+            const active = button.dataset.tool === toolMode; button.classList.toggle('is-active', active);
+            button.setAttribute('aria-pressed', String(active));
+          });
+          renderDocument();
+        } });
 
       const openTextEditor = (x, y) => {
         const editor = document.createElement('input');
@@ -174,6 +190,7 @@
           const text = editor.value.trim();
           editor.remove();
           if (text) {
+            draft?.markEdited(['marksByDoc', selectedDoc]);
             marksByDoc[selectedDoc].push({ x, y, text });
           }
           if (!restoreCanvasFocus) keyboardActive = false;
@@ -203,6 +220,7 @@
       canvas.addEventListener('click', event => {
         if (!patientView) return;
         if (event.target.closest('.hhr-imaging-text-editor')) return;
+        draft?.markEdited(['marksByDoc', selectedDoc]);
         const rect = canvas.getBoundingClientRect();
         const x = Math.round(((event.clientX - rect.left) / rect.width) * 1000) / 10;
         const y = Math.round(((event.clientY - rect.top) / rect.height) * 1000) / 10;
@@ -233,6 +251,7 @@
         else if (event.key === 'ArrowDown') keyboardPoint.y = Math.min(100, keyboardPoint.y + step);
         else if ((event.key === 'Enter' || event.key === ' ') && patientView) {
           event.preventDefault();
+          draft?.markEdited(['marksByDoc', selectedDoc]);
           if (toolMode === 'text') openTextEditor(keyboardPoint.x, keyboardPoint.y);
           else {
             marksByDoc[selectedDoc].push({ x: keyboardPoint.x, y: keyboardPoint.y });
@@ -246,6 +265,7 @@
       });
       main.querySelectorAll('.hhr-imaging-tool').forEach(button => {
         button.addEventListener('click', () => {
+          draft?.markEdited('toolMode');
           toolMode = button.dataset.tool;
           main.querySelectorAll('.hhr-imaging-tool').forEach(candidate => {
             const active = candidate === button;
@@ -255,11 +275,13 @@
         });
       });
       undoButton.addEventListener('click', () => {
+        draft?.markEdited(['marksByDoc', selectedDoc]);
         marksByDoc[selectedDoc].pop();
         renderOverlays();
       });
       docTabs.forEach(tab => tab.addEventListener('click', () => {
         if (tab.dataset.doc === selectedDoc) return;
+        draft?.markEdited('selectedDoc');
         selectedDoc = tab.dataset.doc;
         renderDocument();
       }));
@@ -297,16 +319,23 @@
       });
 
       renderDocument();
-      fetchPatientHeaderView(encId).then(result => {
+      const loadPatient = async () => {
+        setFeedback('');
+        const result = await fetchPatientHeaderView(encId);
         if (!printButton.isConnected || root.dataset.activeModule !== 'imaging') return;
         if (result.error) {
           setFeedback(result.error, true);
+          globalThis.HhrReadRecovery?.attach({ root, host: feedback, response: result,
+            isCurrent: () => printButton.isConnected && root.dataset.selectedEncounterId === String(encId),
+            retry: loadPatient, sendMessage, runtimeMessages });
           return;
         }
         patientView = result.view;
+        draft?.confirm(result.patient.patientId, result.actorId);
         printButton.disabled = false;
         renderDocument();
-      });
+      };
+      void loadPatient();
     };
 
     return Object.freeze({ renderImagingCenter });
