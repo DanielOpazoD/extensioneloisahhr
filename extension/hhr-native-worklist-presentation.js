@@ -13,7 +13,18 @@
   const overlay = 'dialog,[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],.MuiDrawer-root,.MuiPopover-root';
   const tableSelector = '.MuiTableContainer-root > table';
   const markedSelector = `table[${marked}],table[${complete}]`;
+  const filters = '.MuiPaper-root:has(#search-encounter-list)';
   const css = `
+    @media screen {
+      /* Both routes keep the filters and tab panels as siblings, including while loading. */
+      ${filters}:has(~ [role="tabpanel"]), ${filters} ~ [role="tabpanel"] {
+        box-sizing:border-box;
+        inline-size:100%;
+        /* Use all the space up to 1280px, then grow the gutters up to 7% per side. */
+        max-inline-size:clamp(86%, calc(60% + 512px), 100%);
+        margin-inline:auto;
+      }
+    }
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }
     td.hhr-worklist-documents { white-space:nowrap; text-align:center; vertical-align:middle; border-bottom:1px solid #ddd; }
