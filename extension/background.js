@@ -4,7 +4,7 @@
 // MV3 requires initial imports. Excel/PDF stay here until their separate offscreen migrations.
 importScripts(
   'message-contract.js', 'build-identity.js', 'hhr-origin-policy.js', 'exalab-background.js', 'exalab-session-transport.js', 'exalab-auto-runtime.js', 'eloisa-patient-code-contract.js', 'fichamedico-manual-patient-code-runtime.js',
-  'encounter-navigation.js',
+  'encounter-navigation.js', 'worklist-patient-editor.js',
   'hhr-request-forms.js',
   'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
   'connection-relay-recovery.js', 'fichamedico-transport-runtime.js', 'fichamedico-history-read-model.js', 'fichamedico-device-evidence-runtime.js', 'clinical-read-error-contract.js', 'fichamedico-clinical-client.js', 'tab-encounter-authorization.js', 'fichamedico-patient-flow-runtime.js',
@@ -725,6 +725,7 @@ const handleExamRequestCombinePrint = async ({ encId, diteIds, requests, sender 
   return opened.error ? opened : { ...opened, count: selected.length };
 };
 
+const checkWorklistChartAccess = info => self.HhrWorklistPatientEditor.authorizeChart(fetchFichaClaims, info);
 const clinicalReportRuntime = self.HhrClinicalReportRuntime.create({
   chrome,
   crypto,
@@ -741,12 +742,7 @@ const clinicalReportRuntime = self.HhrClinicalReportRuntime.create({
   prescriptionPdf: self.HhrPrescriptionPdf,
   epicrisisPdf: self.HhrEpicrisisPdf,
   pdfLib: self.PDFLib,
-  checkWorklistChartAccess: async info => {
-    const result = await fetchFichaClaims(info);
-    if (result.error) return result;
-    return result.claims.some(item => item.claim === 'Acceso_Ficha_Clinica')
-      ? { ok: true } : { error: 'Eloísa no autorizó el acceso a la ficha clínica.' };
-  },
+  checkWorklistChartAccess,
   prepareDocumentPreview: options => documentPreviewJobs.prepare(options),
   now: () => Date.now(),
 });
@@ -1188,6 +1184,9 @@ const handlePatientClinicalBundleRequest = self.HhrPatientClinicalBundleRuntime.
   readFluidBalance: self.HhrFichaMedicoFluidBalanceRuntime.create({ authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); }, resolveSession: resolveFichaClinicalSession, readJson: options => fichaMedicoClinicalClient.readJson(options), clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify }).fetchFluidBalance,
 });
 
+const worklistPatientEditor = self.HhrWorklistPatientEditor.create({
+  chrome, getContext: getClinicalReportContext, getInfo: getFichaFetchInfo, checkAccess: checkWorklistChartAccess,
+});
 const runtimeMessageRoutes = Object.freeze({
   [RUNTIME_MESSAGES.EXTENSION_HEALTH_REQUEST]: runtimeRoute(
     message => handleExtensionHealth(message),
@@ -1420,6 +1419,8 @@ const runtimeMessageRoutes = Object.freeze({
       }),
     'No se pudo generar la impresión de pacientes hospitalizados.'
   ),
+  [RUNTIME_MESSAGES.WORKLIST_PATIENT_EDIT]: runtimeRoute(worklistPatientEditor.start, 'No se pudo abrir Gestión de Camas.'),
+  [RUNTIME_MESSAGES.WORKLIST_EDITOR_READY]: runtimeRoute(worklistPatientEditor.resume, 'No se pudo abrir el editor de Gestión de Camas.'),
   [RUNTIME_MESSAGES.WORKLIST_DOCUMENT_PRINT_REQUEST]: runtimeRoute(
     (message, sender) => clinicalReportRuntime.printWorklistDocument({ ...message, sender }),
     'No se pudo imprimir el documento de este episodio.'

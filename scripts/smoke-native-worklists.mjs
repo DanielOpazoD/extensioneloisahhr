@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { verifyEditShortcut } from './smoke-worklist-editor.mjs';
 import { verifyWorklistOverlays } from './smoke-worklist-overlays.mjs';
 
 const routes = [
@@ -65,7 +66,8 @@ function startFixture(route) {
         body.replaceChildren();
         const columns = [
           ['location', 'Ubicación'], ['patient', 'Paciente'], ...(referral ? [] : [['ges', 'GES']]),
-          [discharge ? 'medicalDischargeDatetime' : referral ? 'referralReason' : 'diagnosisAdmission', 'Diagnóstico'],
+          ['diagnosisAdmission', 'Diagnóstico'],
+          ...(discharge || referral ? [[discharge ? 'medicalDischargeDatetime' : 'referralReason', 'Detalle']] : []),
           ['assignment', 'Médico tratante'], ['actions', 'Acciones'],
         ].map(([id, label]) => ({ id, label }));
         const tr = (id) => {
@@ -76,7 +78,9 @@ function startFixture(route) {
             ...['Datos de prueba', 'Identificador ' + id].map(text => nativeJsx('span', {className:'MuiTypography-root',children:text})),
           ], className:'MuiStack-root' });
           const nativeAction = nativeJsx('button', { ...(discharge ? {encId,patId:3000+id} : {}), children: 'Abrir ficha' });
-          const cells = ['Servicio', patient, ...(referral ? [] : ['No GES']), 'Diagnóstico simulado',
+          const location = ['AMQI', nativeJsx('br', {}), 'H1', nativeJsx('br', {}), 'H1C2'];
+          const cells = [location, patient, ...(referral ? [] : ['No GES']), 'Diagnóstico (lateral) (Ingreso) (principal) (solicitud hospitalización)',
+            ...(discharge || referral ? ['Detalle'] : []),
             nativeJsx('select', {'aria-label':'Asignación', children:['Sin asignación','Profesional de prueba'].map(text => nativeJsx('option',{children:text}))}),
             nativeAction].map(child => nativeJsx('td', {children:child}));
           return nativeJsx('tr', {children:cells}, id);
@@ -241,6 +245,13 @@ const verifyLists = async (context, origin, worker) => {
         await page.getByRole('tab', { name, exact: true }).click();
         await page.locator('table[data-hhr-complete-worklist]').waitFor();
         await verifyWorklistWidth(page);
+        const first = rows.first();
+        assert.equal(await first.locator('td').first().innerText(), 'AMQI\nH1C2');
+        assert.equal(await first.getByText('Diagnóstico (lateral)', {exact:true}).count(), 1);
+        await first.hover();
+        assert.equal(await first.locator('td').last().evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(231, 244, 241)');
+        assert.equal(await first.locator('[data-hhr-edit-episode]').count(), route.pathname.endsWith('-nurse') ? 1 : 0);
+        if (name === 'Pacientes sin novedad') await verifyEditShortcut(context, page, rows.nth(2));
         const referral = name === 'Mis pacientes de interconsulta';
         assert.equal(await page.locator('.heading').isVisible(), referral);
         const spacing = await page.evaluate(() => {
@@ -288,14 +299,14 @@ const verifyLists = async (context, origin, worker) => {
           assert.equal(await buttons.last().evaluate(b => b.closest('td').dataset.hhrWorklistEpisode), String(2000 + total));
         }
         await printAndCheck(context, worker, rows.last().getByRole('button', {name:'Imprimir indicaciones vigentes de hoy'}), 'Reporte_Indicaciones_Paciente.pdf', 2000 + total);
-        const identities = await rows.locator('strong').allTextContents();
+        const identities = await rows.locator('td:nth-child(2) strong').allTextContents();
         assert.deepEqual(identities, Array.from({ length: total }, (_, i) => 'Paciente sintético ' + (i + 1)));
         await rows.last().getByRole('combobox').selectOption('Profesional de prueba');
         await rows.last().getByRole('button', { name: 'Abrir ficha' }).click();
         assert.equal(await page.locator('output').textContent(), String(total));
         await page.getByRole('checkbox').check();
         assert.equal(await rows.count(), Math.ceil(total / 2));
-        assert.equal(await rows.nth(1).locator('strong').textContent(), 'Paciente sintético 3');
+        assert.equal(await rows.nth(1).locator('td:nth-child(2) strong').textContent(), 'Paciente sintético 3');
         await printAndCheck(context, worker, rows.nth(1).getByRole('button', {name:'Imprimir última receta completa'}), 'Reporte_Receta_Medica.pdf', 2003);
         await page.getByRole('checkbox').uncheck();
         await rows.last().evaluate(tr => tr.remove());

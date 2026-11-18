@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.107
+
+- Las ocho listas de hospitalizados resaltan la fila con ratón o teclado. Muestran servicio y cama, destacan el nombre de uso y simplifican el selector de médico y los sufijos del diagnóstico de ingreso.
+- El panel izquierdo enlaza a Gestión de Camas. En Gestión de cuidados, el lápiz junto al nombre abre el editor oficial del paciente y permite continuar tras iniciar sesión en Camas.
+
 ## 0.48.106
 
 - En Gestión de cuidados y Lista de trabajo médico, las pestañas, el buscador y la tabla quedan más juntos. Se ocultan el rótulo «Resultados de búsqueda…» y el icono «Familiar esperando por información». Las interconsultas conservan el nombre de cada servicio.

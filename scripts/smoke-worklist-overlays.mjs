@@ -10,6 +10,11 @@ export async function verifyWorklistOverlays(page, total) {
     const drawer = document.createElement('nav');
     drawer.className = 'MuiDrawer-root';
     drawer.setAttribute('aria-label', 'Menú principal');
+    drawer.classList.add('MuiDrawer-anchorLeft');
+    const paper = document.createElement('div');
+    paper.className = 'MuiDrawer-paper';
+    paper.innerHTML = '<ul><li><button>Gestión de cuidados</button></li></ul>';
+    drawer.append(paper);
     const menu = document.createElement('div');
     menu.setAttribute('role', 'listbox');
     const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
@@ -28,6 +33,7 @@ export async function verifyWorklistOverlays(page, total) {
     document.body.style.overflow = 'hidden';
     await frame();
     samples.drawer = sample();
+    const bedLink = paper.querySelector('a[data-hhr-bed-link]')?.href;
 
     // The results may stay painted while the responsive tabs are unmounted.
     const anchor = document.createComment('tabs');
@@ -73,7 +79,7 @@ export async function verifyWorklistOverlays(page, total) {
     title.data = original;
     await frame();
     samples.refreshed = sample();
-    return { before, samples, menuStyled, partial };
+    return { before, samples, menuStyled, partial, bedLink };
   });
   assert.equal(result.before.heights.length, total);
   assert.equal(result.before.footer, 'none');
@@ -83,6 +89,7 @@ export async function verifyWorklistOverlays(page, total) {
   assert.deepEqual(result.partial.heights, result.before.heights);
   assert.notEqual(result.partial.footer, 'none');
   assert.equal(result.menuStyled, false);
+  assert.equal(result.bedLink, 'https://hospitalizado.rayensalud.cl/#/bed');
   const viewport = page.viewportSize();
   await page.setViewportSize({ ...viewport, width: 600 });
   const layout = await page.locator('#worklist table').evaluate(table => ({

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "118",
   "name": "Rayen → HHR · Puente de censo",
-  "version": "0.48.106",
+  "version": "0.48.107",
   "description": "Conecta Eloísa con HHR y ofrece herramientas de recetas y exámenes.",
   "permissions": [
     "tabs",
@@ -268,7 +268,8 @@
         "hhr-connection-presentation.js",
         "gestion-camas-connection-indicator.js",
         "gestion-camas-connection-indicator-bootstrap.js",
-        "content-gestioncamas.js"
+        "content-gestioncamas.js",
+        "content-worklist-editor-destination.js"
       ],
       "run_at": "document_start"
     },
