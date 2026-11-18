@@ -33,6 +33,8 @@ a empaquetar y recargar Chrome. Una carpeta fuente sin empaquetar no afirma una 
 
 ## Controles de la interfaz
 
+«Pacientes sin médico», «Pacientes con novedad» y «Pacientes sin novedad» muestran todos los resultados filtrados en una lista compacta con desplazamiento vertical. Cada fila conserva los controles de Eloísa.
+
 Las recetas y las indicaciones se abren desde Centro HHR; la extensión no agrega iconos
 junto a «Validar tratamiento». El selector Estándar/Compacta está sobre el contenido
 desplazable, tanto para un paciente como para el censo.

@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.101
+
+- «Pacientes sin médico», «Pacientes con novedad» y «Pacientes sin novedad» muestran todos los resultados filtrados en una sola lista compacta. Se conserva el acceso a la ficha y a la asignación desde cada fila.
+
 ## 0.48.100
 
 - «Pacientes sin médico» en Lista de trabajo médico y «Pacientes con novedad» en Gestión de cuidados usan filas compactas. Se reduce el espacio dentro de las celdas y entre las líneas para mostrar más pacientes por pantalla.
