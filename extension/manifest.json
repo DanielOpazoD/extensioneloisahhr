@@ -168,6 +168,7 @@
       ],
       "js": [
         "hhr-worklist-print-column.js",
+        "hhr-nursing-worklist.js",
         "hhr-continuous-worklist-main.js",
         "fichamedico-isolation-normalization.js",
         "fichamedico-treating-physician-dom.js",

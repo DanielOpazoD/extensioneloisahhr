@@ -79,6 +79,7 @@
         return next.some((child, i) => child !== node[i]) ? next : node;
       }
       if (!node?.props) return node;
+      if (node.props.size === 'small' && node.props.label?.toString().trim().toLowerCase() === 'pendiente') return null;
       if (social && registered) {
         if (node === registered) return withChildren(jsx, node, social.name);
         if (node === social.node) return withChildren(jsx, node, 'Nombre registrado: ' + registered.props.children);

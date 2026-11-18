@@ -56,7 +56,7 @@
         [order.patientId, encounterPatient].some(id => id != null && String(id) !== request.patient)) {
       return { error: 'El paciente de Gestión de Camas no coincide con el de la fila. Actualiza la lista.' };
     }
-    if (document.querySelector('.pt-dialog:not([hidden]),[role="dialog"][aria-modal="true"]')) return { error: 'Cierra el cuadro abierto en Gestión de Camas y vuelve a pulsar el lápiz.' };
+    if (document.querySelector('dialog[open],.pt-dialog:not([hidden]),[role="dialog"][aria-modal="true"]')) return { error: 'Cierra el cuadro abierto en Gestión de Camas y vuelve a pulsar el lápiz.' };
     const cells = view.typeViewResult(type, bed);
     const allowed = cells.some(cell => cell.bed === bed && cell.action?.flat().some(option => option.value === 'requestModified' && !option.disabled));
     if (!allowed) return { error: 'La opción «Modificar paciente» no está disponible para este episodio.' };
@@ -76,8 +76,26 @@
       ? { ok: true } : { error: 'Eloísa no autorizó el acceso a la ficha clínica.' };
   }
 
+  // A hash can survive an expired session. Consult mounted React owners in this
+  // document and return only whether its current professional and facility match.
+  function inspectSession(professional, facility) {
+    if (location.origin !== 'https://hospitalizado.rayensalud.cl' || location.hash.startsWith('#/authenticate')) return 'login';
+    for (const element of document.querySelectorAll('.sdxTemplate__wrapper,.sdxWrapper__content-tabs, [data-reactroot]')) {
+      const internal = Object.keys(element).find(key => key.startsWith('__reactInternalInstance$'));
+      for (let host = element[internal]; host; host = host._hostParent) {
+        for (let owner = host._currentElement?._owner; owner; owner = owner._currentElement?._owner) {
+          const current = owner._instance?.props?.authenticate?.current;
+          if (!current?.profile?.id || !current.role?.facilityId) continue;
+          return String(current.profile.id) === professional && String(current.role.facilityId) === facility ? 'match' : 'other';
+        }
+      }
+    }
+    return 'unknown';
+  }
+
   function create({ chrome, getContext, getInfo, checkAccess }) {
     const store = chrome.storage.session;
+    let selecting = Promise.resolve();
     async function start({ encId }, sender) {
       if (sender?.frameId !== 0 || !Number.isInteger(sender.tab?.id) || !nurse.test(sender.url) || !nurse.test(sender.tab.url) || !numeric(encId)) {
         return { error: 'Selecciona una fila de Gestión de cuidados.' };
@@ -90,15 +108,39 @@
       if (context.error) return context;
       const { patientId, info } = context;
       if (![info.facId, info.practitionerId, patientId].every(numeric)) return { error: 'No se pudo verificar la identidad del episodio o de la sesión.' };
-      const candidates = await chrome.tabs.query({ url: origin + '/*', windowId: sender.tab.windowId });
-      const existing = candidates.find(tab => tab.url?.startsWith(origin + '/#/bed'));
-      const dest = existing ? await chrome.tabs.duplicate(existing.id) : await chrome.tabs.create({ url: 'about:blank', windowId: sender.tab.windowId });
+      const request = { episode: String(encId), patient: String(patientId), professional: String(info.practitionerId), facility: String(info.facId) };
+      const operation = selecting.then(() => openDestination(request, sender.tab.windowId));
+      selecting = operation.catch(() => {});
+      return operation;
+    }
+    async function openDestination(request, windowId) {
+      const candidates = await chrome.tabs.query({ url: origin + '/*' });
+      const states = await Promise.all(candidates.map(async tab => {
+        if (tab.discarded) return null;
+        try {
+          const [probe] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, world: 'MAIN',
+            func: inspectSession, args: [request.professional, request.facility] });
+          const score = { match: 4, unknown: 2, login: 1 }[probe?.result];
+          return score ? { tab, score } : null;
+        } catch { return null; }
+      }));
+      const ranked = states.filter(Boolean).sort((a, b) => b.score - a.score ||
+        Number(b.tab.url.startsWith(origin + '/#/bed')) - Number(a.tab.url.startsWith(origin + '/#/bed')) ||
+        Number(b.tab.windowId === windowId) - Number(a.tab.windowId === windowId));
+      const existing = ranked[0]?.tab;
+      const dest = existing || await chrome.tabs.create({ url: 'about:blank', windowId });
       const storageKey = key(dest.id);
+      const prior = (await store.get(storageKey))[storageKey];
+      if (prior?.expires > Date.now() || running.has(dest.id)) return { error: 'Hay una apertura de paciente en curso en Gestión de Camas.' };
       try {
-        await store.set({ [storageKey]: { episode: String(encId), patient: String(patientId), professional: String(info.practitionerId),
-          facility: String(info.facId), expires: Date.now() + 5 * 60_000 } });
-        await chrome.tabs.update(dest.id, { active: true, url: origin + '/#/bed' });
-        await chrome.tabs.sendMessage(dest.id, { type: 'HHR_WAKE_BED_EDITOR' }).catch(() => {});
+        await store.set({ [storageKey]: { ...request, expires: Date.now() + 5 * 60_000 } });
+        await chrome.tabs.update(dest.id, existing ? { active: true } : { active: true, url: origin + '/#/bed' });
+        if (dest.windowId !== windowId) await chrome.windows.update(dest.windowId, { focused: true });
+        if (existing) {
+          // The tab may predate installation. Install the idempotent listener without reloading Camas.
+          await chrome.tabs.sendMessage(dest.id, { type: 'HHR_WAKE_BED_EDITOR' }).catch(() =>
+            chrome.scripting.executeScript({ target: { tabId: dest.id }, files: ['content-worklist-editor-destination.js'] }));
+        }
         return { ok: true };
       } catch (error) {
         await store.remove(storageKey);
@@ -121,7 +163,13 @@
         if (pending.searchStarted) { delete pending.searchStarted; await store.set({ [storageKey]: pending }); }
         return { login: true };
       }
-      if (!/^#\/bed\/?(?:\?|$)/.test(page.hash)) return { navigate: true };
+      if (!/^#\/bed\/?(?:\?|$)/.test(page.hash)) {
+        const [modal] = await chrome.scripting.executeScript({ target: { tabId, documentIds: [sender.documentId] },
+          func: () => Boolean(document.querySelector('dialog[open],.pt-dialog:not([hidden]),[role="dialog"][aria-modal="true"]')) });
+        if (!modal?.result) return { navigate: true };
+        await store.remove(storageKey);
+        return { error: 'Cierra el cuadro abierto en Gestión de Camas y vuelve a pulsar el lápiz.' };
+      }
       if (running.has(tabId)) return { wait: true };
       running.add(tabId);
       try {

@@ -51,6 +51,14 @@ export async function verifyEditShortcut(context, source, row) {
     assert.equal(await dest.getByRole('dialog').textContent(), 'Modificación del paciente');
     await dest.getByRole('status').filter({hasText:'Buscando el episodio'}).waitFor({state:'hidden'});
     assert.match(source.url(), /encounter-list-nurse$/);
+    // A second click must use this authenticated document, including its in-memory state.
+    await dest.evaluate(() => { document.querySelector('dialog').close(); window.testDocument = 'original'; });
+    await source.bringToFront();
+    const total = context.pages().length;
+    await pencil.click();
+    await dest.getByRole('dialog').waitFor({timeout:10000});
+    assert.equal(await dest.evaluate(() => window.testDocument), 'original');
+    assert.equal(context.pages().length, total);
   } finally {
     await dest?.close();
     await source.bringToFront();
