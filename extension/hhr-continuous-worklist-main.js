@@ -6,13 +6,8 @@
   // local import, leaving React, application stores and the API data untouched.
   const jsxModule = 95155;
   const routes = [
-    { id: 25587, path: '/dashboard/encounter-list', lists: [
-      ['encounterApiTag', 'encounters-unassiged-list', 'encounterList'],
-    ] },
-    { id: 61188, path: '/dashboard/encounter-list-nurse', lists: [
-      ['tagName', 'noveltyEncounterListData', 'noveltyEncounterList'],
-      ['tagName', 'nurse-encounters-uneventful-list', 'uneventfulEncounterList'],
-    ] },
+    { id: 25587, path: '/dashboard/encounter-list' },
+    { id: 61188, path: '/dashboard/encounter-list-nurse' },
   ];
 
   // Each native renderer filters this private view, then takes a ten-row
@@ -29,11 +24,20 @@
 
   const withWorklistRows = (jsx, route) => (type, props, ...rest) => {
     if (typeof type === 'function' && props && location.pathname.replace(/\/$/, '') === route.path) {
-      for (const [tag, value, key] of route.lists) {
-        if (props[tag] === value && Array.isArray(props[key]) && props[key].length) {
-          props = { ...props, [key]: WorklistRows.from(props[key]) };
-          break;
-        }
+      if (Array.isArray(props.columns)) {
+        props = globalThis.HhrWorklistPrintColumn.adapt(jsx, props, route.path);
+      } else if (route.id === 25587 && Array.isArray(props.encounterList)) {
+        const list = props.encounterList;
+        // Interconsultas groups its patients by service and paginates each group.
+        const encounters = list.some(group => Array.isArray(group?.patientList))
+          ? list.map(group => Array.isArray(group?.patientList)
+            ? { ...group, patientList: WorklistRows.from(group.patientList) } : group)
+          : WorklistRows.from(list);
+        props = { ...props, encounterList: encounters };
+      } else if (route.id === 61188) {
+        const key = ['incomeEncounterList', 'noveltyEncounterList', 'uneventfulEncounterList', 'recoveredEncounterList']
+          .find(name => Array.isArray(props[name]));
+        if (key) props = { ...props, [key]: WorklistRows.from(props[key]) };
       }
     }
     return jsx(type, props, ...rest);

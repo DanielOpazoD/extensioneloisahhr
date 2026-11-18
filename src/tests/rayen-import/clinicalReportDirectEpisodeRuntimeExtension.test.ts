@@ -41,6 +41,12 @@ const loadFactory = () => {
 };
 
 type RuntimeApi = {
+  printWorklistDocument: (request: {
+    encId: string;
+    expectedPatientId?: string;
+    documentKind: string;
+    sender: unknown;
+  }) => Promise<{ error?: string }>;
   fetchOfficialPdf: (request: {
     url: string;
     token: string;
@@ -104,6 +110,53 @@ const createDependencies = (overrides: RuntimeDependencies = {}) => ({
 });
 
 describe('clinical report runtime direct episodes and history', () => {
+  const worklist = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list';
+  const sender = { tab: { id: 10, url: worklist }, frameId: 0, url: worklist };
+
+  it('requires a top-level worklist sender before reading a session', async () => {
+    const dependencies = createDependencies();
+    const runtime = loadFactory().create(dependencies);
+    for (const other of [{ ...sender, frameId: 1 }, { ...sender, url: worklist + '/140' },
+      { ...sender, tab: { id: 10, url: 'https://unrelated.test/' } }]) {
+      const result = await runtime.printWorklistDocument({
+        encId: '140', documentKind: 'indications', sender: other,
+      });
+      expect(result.error).toBeTruthy();
+    }
+    expect(dependencies.getFichaFetchInfo).not.toHaveBeenCalled();
+  });
+
+  it('stops before reading the episode when the source session lacks chart access', async () => {
+    const info = { facId: '2' };
+    const dependencies = createDependencies({
+      getFichaFetchInfo: vi.fn(async () => ({ info })),
+      checkWorklistChartAccess: vi.fn(async () => ({ error: 'Acceso denegado' })),
+    });
+    const result = await loadFactory().create(dependencies).printWorklistDocument({
+      encId: '140', documentKind: 'prescription', sender,
+    });
+    expect(result.error).toBe('Acceso denegado');
+    expect(dependencies.getFichaFetchInfo).toHaveBeenCalledWith(sender);
+    expect(dependencies.getClinicalReportContext).not.toHaveBeenCalled();
+    expect(dependencies.chrome.tabs.create).not.toHaveBeenCalled();
+  });
+
+  it('stops before requesting the PDF when a discharge row and episode identify different patients', async () => {
+    const info = { facId: '2' };
+    const dependencies = createDependencies({
+      getFichaFetchInfo: vi.fn(async () => ({ info })),
+      checkWorklistChartAccess: vi.fn(async () => ({ ok: true })),
+      getClinicalReportContext: vi.fn(async () => ({ info, patientId: '300' })),
+    });
+    const result = await loadFactory().create(dependencies).printWorklistDocument({
+      encId: '140', expectedPatientId: '301', documentKind: 'indications', sender,
+    });
+    expect(result.error).toMatch(/no coincide/);
+    expect(dependencies.getClinicalReportContext).toHaveBeenCalledWith('140', info);
+    expect(dependencies.fetchWithTimeout).not.toHaveBeenCalled();
+    expect(dependencies.chrome.tabs.create).not.toHaveBeenCalled();
+  });
+
   it('returns prepared preview bytes without opening a print tab or adding a print action', async () => {
     const sender = { tab: { id: 10 }, url: 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse/1' };
     const buffer = new Uint8Array([37, 80, 68, 70]).buffer;

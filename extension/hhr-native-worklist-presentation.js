@@ -7,8 +7,8 @@
   // Match the native result heading that belongs to the table. Tabs, menus and
   // drawers can be hidden or remounted independently of the underlying list.
   const headings = {
-    '/dashboard/encounter-list': /^Resultados de b[uú]squeda no asignados\s*\((\d+)\)$/i,
-    '/dashboard/encounter-list-nurse': /^Resultados de b[uú]squeda (?:con|sin) novedad\s*\((\d+)\)$/i,
+    '/dashboard/encounter-list': /^(?:Resultados de b[uú]squeda (?:no asignados|pacientes asignados|pacientes con alta)|Mis pacientes de interconsulta en .+?)\s*\((\d+)\)$/i,
+    '/dashboard/encounter-list-nurse': /^Resultados de b[uú]squeda (?:ingresos|con novedad|sin novedad|alta)\s*\((\d+)\)$/i,
   };
   const overlay = 'dialog,[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],.MuiDrawer-root,.MuiPopover-root';
   const tableSelector = '.MuiTableContainer-root > table';
@@ -16,6 +16,11 @@
   const css = `
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }
+    td.hhr-worklist-documents { white-space:nowrap; text-align:center; vertical-align:middle; border-bottom:1px solid #ddd; }
+    .hhr-worklist-documents button { display:inline-grid; place-items:center; width:28px; height:28px;
+      background:transparent; border:0; border-radius:5px; color:#146962; cursor:pointer; vertical-align:middle; }
+    .hhr-worklist-documents button:hover, .hhr-worklist-documents button:focus-visible { background:#e2f1ef; }
+    .hhr-worklist-documents button:disabled { opacity:.45; cursor:default; }
     /* A tab that was open during an extension update can retain the old injected button. */
     [data-hhr-patient-code-action="1"] { display:none !important; }
     table[${marked}] > :is(thead,tbody) > tr > :is(th,td) {
