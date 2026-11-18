@@ -728,9 +728,15 @@
     }, 80);
   };
 
-  const observer = new MutationObserver(scheduleEnsureButton);
+  // Apply density to replacement tables before the browser paints. The other
+  // controls still use the debounced operations UI refresh.
+  const observer = new MutationObserver(records => {
+    if (!active || !uiLifecycle.owns()) return;
+    worklistPresentation?.refresh(window.location.pathname);
+    if (records.some(record => record.type !== 'characterData')) scheduleEnsureButton();
+  });
   observer.observe(document.documentElement, {
-    childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected', 'hidden'],
+    childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-selected', 'hidden'],
   });
   window.addEventListener('popstate', scheduleEnsureButton);
   window.addEventListener('hashchange', scheduleEnsureButton);

@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.103
+
+- Las tres listas de hospitalizados mantienen el formato compacto y la lista continua al abrir el panel izquierdo, los menús y el CUDYR, y cuando Eloísa vuelve a dibujar la tabla o sus pestañas.
+
 ## 0.48.102
 
 - Al abrir y cerrar el CUDYR desde la columna CRD, las filas de «Pacientes con novedad» y «Pacientes sin novedad» mantienen su altura compacta.

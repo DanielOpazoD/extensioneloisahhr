@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { verifyWorklistOverlays } from './smoke-worklist-overlays.mjs';
 
 const routes = [
   { pathname: '/dashboard/encounter-list', module: 25587, other: 'Mis pacientes', sections: [
@@ -155,6 +156,7 @@ export const verifyNativeWorklists = async (context, origin) => {
           assert.deepEqual(await heights(), before, 'Closing CUDYR changed the background row heights');
           console.log(`[CUDYR] ${name}: ${total} rows remain ${before[0]} px before, during and after the dialog`);
         }
+        await verifyWorklistOverlays(page, total);
         const identities = await rows.locator('strong').allTextContents();
         assert.deepEqual(identities, Array.from({ length: total }, (_, i) => 'Paciente sintético ' + (i + 1)));
         await rows.last().getByRole('combobox').selectOption('Profesional de prueba');
