@@ -33,13 +33,15 @@ a empaquetar y recargar Chrome. Una carpeta fuente sin empaquetar no afirma una 
 
 ## Controles de la interfaz
 
-Las ocho subsecciones de Gestión de cuidados y Lista de trabajo médico muestran los resultados filtrados en tablas compactas. En cada fila, «Imprimir» reúne dos iconos para el informe vigente de indicaciones y la receta completa del episodio. Sustituye GES y, en interconsultas, queda junto a «Paciente». El buscador queda junto a la tabla. Se ocultan los rótulos de resultados y el icono «Familiar esperando por información». En interconsultas sigue visible el servicio de cada grupo. La tabla mantiene la densidad al abrir el panel lateral de Rayen, desplegar un menú o completar el CUDYR.
+Gestión de cuidados reúne ingresos, pacientes con novedad y pacientes sin novedad en «Pacientes hospitalizados», y mantiene «Egresos» aparte. Si un episodio aparece en varias listas se presenta una vez, con preferencia por la fila con novedad. Ambas vistas y las cuatro subsecciones de Lista de trabajo médico muestran los resultados filtrados en tablas compactas. En cada fila, «Imprimir» reúne dos iconos para el informe vigente de indicaciones y la receta completa del episodio. Sustituye GES y, en interconsultas, queda junto a «Paciente». El buscador queda junto a la tabla. Se ocultan los rótulos de resultados y el icono «Familiar esperando por información». En interconsultas sigue visible el servicio de cada grupo. La tabla mantiene la densidad al abrir el panel lateral de Rayen, desplegar un menú o completar el CUDYR.
 
-La ubicación muestra servicio y cama. La fila se resalta al pasar el cursor o enfocar sus controles. En Gestión de cuidados, el lápiz junto al nombre abre «Modificación del paciente» en Gestión de Camas. Si hace falta iniciar sesión, se usa el acceso oficial de Camas. El editor comprueba profesional, establecimiento, episodio, paciente y disponibilidad de la acción nativa. El profesional revisa los datos y decide si guardar.
+La ubicación muestra servicio y cama. La fila se resalta al pasar el cursor o enfocar sus controles. En Gestión de cuidados, el lápiz junto al nombre abre «Modificación del paciente» en Gestión de Camas. El lápiz reutiliza la pestaña de Camas del profesional, incluso en otra ventana. Si hace falta iniciar sesión, se usa el acceso oficial de Camas. El editor comprueba profesional, establecimiento, episodio, paciente y disponibilidad de la acción nativa. El profesional revisa los datos y decide si guardar.
 
 Las recetas y las indicaciones se abren desde Centro HHR; la extensión no agrega iconos
 junto a «Validar tratamiento». El selector Estándar/Compacta está sobre el contenido
 desplazable, tanto para un paciente como para el censo.
+
+En Ajustes de Centro HHR, «Descargar extensión desde GitHub (.zip)» descarga la última versión publicada.
 
 Centro HHR se abre por defecto como un cuadro de diálogo centrado. Al actualizar esta
 versión se restablece esa apertura; después puedes elegir y guardar el panel lateral.

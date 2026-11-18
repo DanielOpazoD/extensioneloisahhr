@@ -1,6 +1,6 @@
 {
   "name": "@hhr/eloisa-extension",
-  "version": "0.48.107",
+  "version": "0.48.108",
   "private": true,
   "type": "module",
   "description": "Extensión Eloísa HHR: código, pruebas y releases independientes.",
@@ -40,6 +40,8 @@
     "vitest": "4.1.12",
     "vite": "6.4.4",
     "jsdom": "27.4.0",
-    "pdfjs-dist": "5.5.207"
+    "pdfjs-dist": "5.5.207",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   }
 }

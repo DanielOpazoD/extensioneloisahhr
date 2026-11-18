@@ -62,4 +62,5 @@ jobs:
           asset=$(node -p "JSON.parse(require('fs').readFileSync('dist/release.json')).assetName")
           current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
           test "$current" = "$GITHUB_SHA" || { echo "main avanzó; vuelve a ejecutar la publicación."; exit 1; }
-          gh release create "v${version}" "dist/${asset}" dist/release.json --target "$GITHUB_SHA" --title "Puente Eloísa HHR ${version}" --notes-file dist/NOTES.md
+          cp "dist/${asset}" dist/eloisa-hhr.zip
+          gh release create "v${version}" "dist/${asset}" dist/eloisa-hhr.zip dist/release.json --target "$GITHUB_SHA" --title "Puente Eloísa HHR ${version}" --notes-file dist/NOTES.md

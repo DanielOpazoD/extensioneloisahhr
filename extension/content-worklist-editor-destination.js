@@ -32,7 +32,9 @@
       if (result?.error) timer = setTimeout(() => show(''), 10000);
     }
   }
-  function wake(message) { if (message.type === 'HHR_WAKE_BED_EDITOR') void resume(); }
+  function wake(message, sender, respond) {
+    if (message.type === 'HHR_WAKE_BED_EDITOR') { respond({ received: true }); void resume(); }
+  }
   chrome.runtime.onMessage.addListener(wake);
   window.addEventListener('hashchange', resume);
   globalThis.hhrWorklistEditorDestination = () => {

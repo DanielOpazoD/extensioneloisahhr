@@ -45,9 +45,26 @@
 
   function bindRoute(factory, route) {
     return function(module, exports, require) {
+      let nurse;
+      const nursing = () => nurse ||= globalThis.HhrNursingWorklist.create(require, () => exports.default);
       const localRequire = new Proxy(require, {
         apply(target, receiver, args) {
           const result = Reflect.apply(target, receiver, args);
+          if (route.id === 61188 && globalThis.HhrNursingWorklist) {
+            // The native loaders turn an API error into an empty array. Let SWR
+            // surface an unavailable source alongside the other nursing rows.
+            if (args[0] === 40767) return { ...result, A: async (path, ...options) => {
+              const response = await result.A(path, ...options);
+              if (/^\/encounter\/(?:novelty|uneventful)NurseList\//.test(path) && !Array.isArray(response?.data)) {
+                throw new Error('Lista de cuidados no disponible.');
+              }
+              return response;
+            } };
+            if (args[0] === 20063) return nursing().navigation;
+            if (args[0] === 65672) return nursing().table;
+            if (args[0] === jsxModule && result.jsxs) return { ...result, jsx: withWorklistRows(result.jsx, route),
+              jsxs: (...args) => nursing().layout(result.jsxs, ...args) };
+          }
           if (args[0] !== jsxModule || typeof result?.jsx !== 'function') return result;
           return { ...result, jsx: withWorklistRows(result.jsx, route) };
         },

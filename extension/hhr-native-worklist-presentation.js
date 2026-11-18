@@ -8,7 +8,7 @@
   // drawers can be hidden or remounted independently of the underlying list.
   const headings = {
     '/dashboard/encounter-list': /^(?:Resultados de b[uú]squeda (?:no asignados|pacientes asignados|pacientes con alta)|Mis pacientes de interconsulta en .+?)\s*\((\d+)\)$/i,
-    '/dashboard/encounter-list-nurse': /^Resultados de b[uú]squeda (?:ingresos|con novedad|sin novedad|alta)\s*\((\d+)\)$/i,
+    '/dashboard/encounter-list-nurse': /^(?:Pacientes hospitalizados|Resultados de b[uú]squeda (?:ingresos|con novedad|sin novedad|alta))\s*\((\d+)\)$/i,
   };
   const overlay = 'dialog,[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],.MuiDrawer-root,.MuiPopover-root';
   const tableSelector = '.MuiTableContainer-root > table';
@@ -55,6 +55,8 @@
         margin-inline:auto;
       }
     }
+    .hhr-hospitalized-panel { box-sizing:border-box; background:white; border-radius:12px; padding:10px 12px; }
+    .hhr-hospitalized-panel .hhr-activity-label { display:block; color:#50625e; }
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }
     td.hhr-worklist-documents { white-space:nowrap; text-align:center; vertical-align:middle; border-bottom:1px solid #ddd; }

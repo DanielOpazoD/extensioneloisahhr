@@ -10,6 +10,7 @@
         <div class="hhr-labreq-meta-group"><label>Presentación <select class="hhr-center-select" aria-label="Presentación" data-setting="mode"><option value="floating">Cuadro centrado</option><option value="docked">Panel lateral</option></select></label></div>
         <div class="hhr-labreq-meta-group"><label>Densidad <select class="hhr-center-select" aria-label="Densidad" data-setting="density"><option value="normal">Normal</option><option value="compact">Compacta</option></select></label></div>
         <div class="hhr-labreq-meta-group"><label><input type="checkbox" data-setting="collapsed"> Contraer barra a HHR</label></div>
+        <a class="hhr-center-action" href="https://github.com/DanielOpazoD/extensioneloisahhr/releases/latest/download/eloisa-hhr.zip" target="_blank" rel="noopener noreferrer">Descargar extensión desde GitHub (.zip)</a>
       </section></div>`;
     main.querySelector('[data-settings="favorites"]').addEventListener('click', () => openFavorites(root));
     const update = () => {

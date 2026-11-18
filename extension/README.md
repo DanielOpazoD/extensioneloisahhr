@@ -206,6 +206,7 @@ sin desplazar las acciones ni la tabla al iniciar una lectura.
 | `fichamedico-clinical-client.js` | Cliente read-only: valida la sesión, construye rutas relativas y centraliza GET JSON/PDF autenticados de Ficha Médico |
 | `fichamedico-patient-context.js` | Contexto clínico read-only: caché de cabeceras, modelo normalizado de hospitalizados y revalidación de episodios activos |
 | `eloisa-patient-code-contract.js` | Serializa en UTF-8 y agrega un checksum SHA-256 contra daños accidentales; el código no está cifrado ni autentica criptográficamente su origen |
+| `hhr-nursing-worklist.js` | Combina las tres fuentes de hospitalizados en una tabla con los controles originales de cada episodio. |
 | `hhr-continuous-worklist-main.js` | Permite al componente nativo dibujar todas las filas después de aplicar sus filtros |
 | `worklist-patient-editor.js` y `content-worklist-editor-destination.js` | Abren el editor nativo desde una fila de enfermería y retoman el acceso tras el inicio de sesión en Gestión de Camas. |
 | `hhr-worklist-print-column.js` | Sustituye GES por las dos acciones de impresión del episodio en las tablas nativas. En interconsultas añade la columna junto al paciente. |

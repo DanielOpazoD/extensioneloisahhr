@@ -56,3 +56,25 @@ it('solicita únicamente abrir el editor autorizado por el menú nativo', async 
   expect(await api.openNativeEditor(request)).toEqual({opened: true});
   expect(view.props.onAction.mock.calls).toEqual([[{ option: 'requestModified', bed }]]);
 });
+
+it('activa la sesión coincidente en otra ventana sin navegar de nuevo ni duplicar la pestaña', async () => {
+  const origin = 'https://hospitalizado.rayensalud.cl';
+  const tabs = [{id:1,windowId:1,url:origin+'/#/authenticate/login'}, {id:2,windowId:1,url:origin+'/#/bed'},
+    {id:3,windowId:2,url:origin+'/#/bed'}];
+  const pending = {};
+  const chrome = { tabs: { query: vi.fn(async()=>tabs), update: vi.fn(), sendMessage: vi.fn(async()=>({received:true})),
+    create: vi.fn(), onRemoved:{addListener:vi.fn()} }, windows:{update:vi.fn()}, storage:{session:{
+      get: async key=>({[key]:pending[key]}), set: async data=>Object.assign(pending,data), remove:vi.fn(),
+    }}, scripting:{executeScript:vi.fn(async ({target})=>[{result:['login','other','match'][target.tabId-1]}])} };
+  const editor=api.create({chrome,getInfo:async()=>({info:{}}),checkAccess:async()=>({ok:true}),
+    getContext:async()=>({patientId:41,info:{facId:8,practitionerId:17}})});
+  const url='https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse';
+  const sender={frameId:0,url,tab:{id:9,url,windowId:1}};
+  const [first,second]=await Promise.all([editor.start({encId:21},sender),editor.start({encId:22},sender)]);
+  expect(first).toEqual({ok:true});
+  expect(second).toHaveProperty('error');
+  expect(chrome.tabs.create).not.toHaveBeenCalled();
+  expect(chrome.tabs.update.mock.calls).toEqual([[3,{active:true}]]);
+  expect(chrome.windows.update).toHaveBeenCalledWith(2,{focused:true});
+  expect(pending['hhr-worklist-editor-3'].episode).toBe('21');
+});

@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.108
+
+- Gestión de cuidados presenta dos pestañas. «Pacientes hospitalizados» reúne ingresos y pacientes con y sin novedad en una tabla con búsqueda, filtro de estación y acciones por episodio. «Egresos» conserva su lista.
+- El lápiz abre el editor en la pestaña de Gestión de Camas que ya tiene la sesión del profesional, incluso en otra ventana. Si se precisa el acceso oficial, la edición continúa tras iniciar sesión.
+- Las listas de pacientes ocultan la etiqueta «Pendiente» junto al nombre. Ajustes de Centro HHR incluye una descarga directa del último ZIP publicado en GitHub.
+
 ## 0.48.107
 
 - Las ocho listas de hospitalizados resaltan la fila con ratón o teclado. Muestran servicio y cama, destacan el nombre de uso y simplifican el selector de médico y los sufijos del diagnóstico de ingreso.
