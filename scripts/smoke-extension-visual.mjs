@@ -78,6 +78,9 @@ export const verifyHistoryNavigation = async page => {
 export const verifyLabActionLayout = async page => {
   const originalViewport = page.viewportSize();
   const root = page.locator('#hhr-prescription-print-modal');
+  const docking = root.locator('[data-panel="dock"]');
+  const initiallyDocked = await root.getAttribute('data-panel-mode') === 'docked';
+  if (initiallyDocked) await docking.click();
   for (const width of [1280, 840, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const geometry = await root.evaluate(root => {
@@ -88,10 +91,16 @@ export const verifyLabActionLayout = async page => {
         const rect = node.getBoundingClientRect();
         return { selector, left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width };
       });
+      const rect = selector => root.querySelector(selector).getBoundingClientRect();
+      const search = rect('.hhr-labreq-search'), groups = rect('.hhr-labreq-selection-tools');
       return { controls, left: dialog.left, right: dialog.right,
-        overflowing: [...root.querySelectorAll('.hhr-center-header,.hhr-center-patientbar,.hhr-center-toolbar')].some(node => node.scrollWidth > node.clientWidth + 1) };
+        searchAndGroupsAligned: Math.abs(search.y + search.height / 2 - groups.y - groups.height / 2) <= 2,
+        headerHeight: Math.round(rect('.hhr-labreq-grid').top - rect('.hhr-labreq-patient').top),
+        overflowing: [...root.querySelectorAll('.hhr-center-header,.hhr-center-patientbar,.hhr-center-toolbar,.hhr-labreq-patient,.hhr-labreq-meta,.hhr-labreq-selection')].some(node => node.scrollWidth > node.clientWidth + 1) };
     });
     assert.equal(geometry.overflowing, false, `Toolbar overflow at ${width}px`);
+    if (width === 1280) assert.ok(geometry.searchAndGroupsAligned, 'Search and exam groups share the desktop row: ' + JSON.stringify(geometry));
+    console.info('[laboratorio] ' + width + ' px: ' + geometry.headerHeight + ' px antes del catálogo');
     for (const control of geometry.controls) {
       assert.ok(control.width > 0 && control.left >= geometry.left && control.right <= geometry.right, `${control.selector} outside dialog at ${width}px`);
       for (const other of geometry.controls.filter(other => other !== control)) {
@@ -102,6 +111,7 @@ export const verifyLabActionLayout = async page => {
     await screenshot(page, 'laboratorio-' + width);
   }
   await page.setViewportSize(originalViewport);
+  if (initiallyDocked) await docking.click();
 };
 
 export const verifyPrescriptionFormats = async (page, extensionPath) => {

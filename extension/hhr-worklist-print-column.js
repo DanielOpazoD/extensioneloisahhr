@@ -61,18 +61,6 @@
   }
 
   function patientCell(jsx, cell, editId) {
-    // Ficha uses either a plain string or two text children for its "Nombre social" line.
-    let social, registered;
-    function scan(node) {
-      if (Array.isArray(node)) return node.forEach(scan);
-      if (!node?.props) return;
-      const { children, fontWeight } = node.props;
-      if (fontWeight === 'bold' && typeof children === 'string') registered = node;
-      const text = Array.isArray(children) && children.every(child => typeof child === 'string') ? children.join('') : children;
-      if (typeof text === 'string' && /^Nombre social:\s*\S/i.test(text)) social = { node, name: text.replace(/^Nombre social:\s*/i, '') };
-      scan(children);
-    }
-    scan(cell.props.children);
     function present(node) {
       if (Array.isArray(node)) {
         const next = node.map(present);
@@ -80,10 +68,6 @@
       }
       if (!node?.props) return node;
       if (node.props.size === 'small' && node.props.label?.toString().trim().toLowerCase() === 'pendiente') return null;
-      if (social && registered) {
-        if (node === registered) return withChildren(jsx, node, social.name);
-        if (node === social.node) return withChildren(jsx, node, 'Nombre registrado: ' + registered.props.children);
-      }
       const children = present(node.props.children);
       const current = children === node.props.children ? node : withChildren(jsx, node, children);
       if (!editId || !node.props.href || node.props.component === 'div') return current;

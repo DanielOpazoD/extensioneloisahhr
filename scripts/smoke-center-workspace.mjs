@@ -124,25 +124,17 @@ export const verifyLabWorkspace = async (page, worker) => {
   assert.equal(await root.locator('.hhr-labreq-selected button').count(), 2);
   await search.fill('');
   await capture(page, 'workspace-laboratorio');
-  await root.locator('.hhr-labreq-print').click();
-  const preview = root.locator('.hhr-document-preview');
-  assert.equal(await preview.locator('.hhr-preview-formats').isVisible(), false);
-  assert.equal(await preview.locator('.hhr-preview-page-controls').isVisible(), false);
-  const documentFrame = preview.frameLocator('iframe');
-  await documentFrame.getByText('Paciente de prueba', { exact: false }).first().waitFor();
-  assert.equal(await documentFrame.locator('.exam').filter({ hasText: 'CREATININA' }).locator('.box.on').count(), 1);
-  assert.equal(await documentFrame.locator('.exam').filter({ hasText: 'PROTEINA C REACTIVA' }).locator('.box.on').count(), 1);
-  await capture(page, 'workspace-solicitud');
   const printedPage = page.waitForEvent('popup');
-  await preview.getByRole('button', { name: 'Imprimir', exact: true }).click();
+  await root.getByRole('button', { name: 'Imprimir solicitud' }).click();
   const popup = await printedPage;
   await popup.getByText('Paciente de prueba', { exact: false }).first().waitFor();
-  await page.waitForFunction(() => document.querySelector('.hhr-preview-status')?.textContent === 'Impresión solicitada.');
+  for (const exam of ['CREATININA', 'PROTEINA C REACTIVA']) {
+    assert.equal(await popup.locator('.exam').filter({ hasText: exam }).locator('.box.on').count(), 1);
+  }
+  assert.equal(await root.locator('.hhr-document-preview').count(), 0);
   await popup.close();
-  await preview.getByRole('button', { name: 'Volver', exact: true }).click();
   assert.equal(await name.inputValue(), 'Paciente de prueba');
   assert.equal(await root.locator('.hhr-labreq-selected button').count(), 2);
-  await verifyPdfPreview(page, worker);
   await root.locator('.hhr-rx-close').click();
   await page.locator('#hhr-clinical-operations-bar').evaluate(bar => {
     bar.shadowRoot.querySelector('.hhr-ops-exams').click();
@@ -151,44 +143,4 @@ export const verifyLabWorkspace = async (page, worker) => {
   await page.locator('.hhr-labreq-print').waitFor();
   assert.equal(await page.locator('.hhr-labreq-selected button').count(), 0);
   assert.equal(await page.getByRole('combobox', { name: 'Grupos de exámenes guardados' }).locator('option').filter({ hasText: 'Grupo de prueba' }).count(), 1);
-};
-
-const verifyPdfPreview = async (page, worker) => {
-  const fixture = await worker.evaluate(async url => {
-    self.HhrExtensionRuntime.ensurePdf();
-    const pdf = await self.PDFLib.PDFDocument.create();
-    pdf.addPage([612, 792]).drawText('Documento sintetico de prueba', { x: 40, y: 720 });
-    pdf.addPage([612, 792]).drawText('Segunda pagina sintetica', { x: 40, y: 720 });
-    const bytes = await pdf.save();
-    const base64 = btoa(String.fromCharCode(...bytes));
-    const [tab] = await chrome.tabs.query({ url });
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, world: 'ISOLATED', args: [base64], func: pdfBase64 => {
-      globalThis.__hhrWorkspacePreviewMessages = [];
-      globalThis.HhrDocumentPreviewRuntime.open({
-        root: document.querySelector('#hhr-prescription-print-modal'), title: 'Documento sintético', formats: true,
-        runtimeMessages: globalThis.HhrRayenMessageContract.types,
-        load: async format => ({ ok: true, jobId: 'synthetic-' + format, pdfBase64, filename: 'synthetic.pdf' }),
-        sendMessage: async message => { globalThis.__hhrWorkspacePreviewMessages.push(message); return { ok: true }; },
-      });
-    } });
-    return { tabId: tab.id };
-  }, page.url());
-  const preview = page.locator('.hhr-document-preview');
-  await preview.locator('canvas').waitFor();
-  await page.waitForFunction(() => document.querySelector('.hhr-preview-status')?.textContent === 'Documento listo para revisar e imprimir.');
-  assert.equal(await preview.locator('.hhr-preview-page-controls span').textContent(), '1 / 2');
-  await preview.getByRole('button', { name: 'Página siguiente' }).click();
-  await page.waitForFunction(() => document.querySelector('.hhr-preview-page-controls span')?.textContent === '2 / 2');
-  await preview.getByRole('button', { name: 'Compacta', exact: true }).click();
-  await page.waitForFunction(() => document.querySelector('[data-format="compact"]')?.getAttribute('aria-pressed') === 'true' &&
-    document.querySelector('.hhr-preview-status')?.textContent === 'Documento listo para revisar e imprimir.');
-  await capture(page, 'workspace-pdf');
-  await preview.getByRole('button', { name: 'Imprimir', exact: true }).click();
-  const messages = await worker.evaluate(async tabId => {
-    const [result] = await chrome.scripting.executeScript({ target: { tabId }, world: 'ISOLATED',
-      func: () => globalThis.__hhrWorkspacePreviewMessages });
-    return result.result;
-  }, fixture.tabId);
-  assert.ok(messages.some(message => message.operation === 'print' && message.jobId === 'synthetic-compact'));
-  await preview.getByRole('button', { name: 'Volver', exact: true }).click();
 };

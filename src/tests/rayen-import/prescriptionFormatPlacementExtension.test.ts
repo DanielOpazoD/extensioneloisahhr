@@ -62,6 +62,8 @@ describe('Prescription format in the upper toolbar', () => {
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
       type: 'print', encId: '1', printFormat: 'compact',
     })));
+    expect(root.querySelector('.hhr-document-preview')).toBeNull();
+    expect(sendMessage.mock.calls.filter(([message]) => message.type === 'print')).toHaveLength(1);
   });
 
   it('replaces the formats when switching scope and prints the selected hospitalized patient', async () => {
@@ -77,7 +79,10 @@ describe('Prescription format in the upper toolbar', () => {
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
       type: 'bulk-print', encIds: ['2'], printFormat: 'compact',
     })));
-    click(root, '[data-preview="back"]');
+    expect(root.querySelector('.hhr-document-preview')).toBeNull();
+    expect(sendMessage.mock.calls.filter(([message]) => message.type === 'bulk-print')).toEqual([
+      [{ type: 'bulk-print', batchId: 'synthetic', encIds: ['2'], printFormat: 'compact' }],
+    ]);
     click(root, '[data-tab="current"]');
     await vi.waitFor(() => expect(root.querySelectorAll('[name="hhr-prescription-format"]')).toHaveLength(2));
     expect(root.querySelectorAll('[name="hhr-bulk-prescription-format"]')).toHaveLength(0);
