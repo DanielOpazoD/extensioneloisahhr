@@ -10,7 +10,10 @@
   };
   const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .trim().toLowerCase().replace(/\s*\(\d+\)$|\s+\d+$/, '').replace(/\s+/g, ' ');
-  const isVisible = element => element.getClientRects().length && !element.closest('[hidden],[aria-hidden="true"]') &&
+  // Opening the CUDYR dialog marks the painted background aria-hidden.
+  // Use layout visibility for density and exclude the dialog's own contents.
+  const isWorklistSurface = element => element.getClientRects().length &&
+    !element.closest('[hidden],dialog,[role="dialog"],[role="alertdialog"]') &&
     getComputedStyle(element).visibility === 'visible';
   const columns = new Set(['ubicacion', 'cama', 'asignacion', 'medico tratante', 'acciones']);
   const css = `
@@ -41,12 +44,12 @@
       const label = lists[pathname.replace(/\/$/, '')];
       if (!label) return null;
       const selected = [...document.querySelectorAll('[role="tablist"] [role="tab"][aria-selected="true"]')]
-        .find(tab => label.test(normalize(tab.textContent)) && isVisible(tab));
+        .find(tab => label.test(normalize(tab.textContent)) && isWorklistSurface(tab));
       if (!selected) return null;
       const panel = document.getElementById(selected.getAttribute('aria-controls') || '');
       const scope = panel || document.querySelector('main') || document.body;
       const tables = [...scope.querySelectorAll('table')].filter(candidate => {
-        if (!candidate.tBodies.length || !isVisible(candidate)) return false;
+        if (!candidate.tBodies.length || !isWorklistSurface(candidate)) return false;
         const headers = [...(candidate.tHead?.querySelectorAll('th') || [])].map(th => normalize(th.textContent));
         return headers.includes('paciente') && headers.some(header => columns.has(header));
       });
