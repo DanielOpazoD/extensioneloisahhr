@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.105
+
+- El buscador y la lista de pacientes quedan centrados y alineados en las ocho subsecciones de hospitalizados. Los márgenes laterales crecen con el ancho disponible y las pantallas estrechas aprovechan todo el espacio.
+
 ## 0.48.104
 
 - Las ocho subsecciones de Gestión de cuidados y Lista de trabajo médico muestran filas compactas. Desde cada fila puedes imprimir en un clic las indicaciones vigentes o la última receta completa del episodio. Los dos iconos ocupan el lugar de GES. En «Mis pacientes de interconsulta» aparecen junto a «Paciente».
