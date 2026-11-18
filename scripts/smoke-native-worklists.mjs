@@ -46,6 +46,29 @@ function startFixture(route) {
         for (const { id } of visible) {
           const row = body.insertRow();
           row.innerHTML = '<th scope="row">Servicio<br>Cama ' + id + '</th><td><div class="MuiStack-root"><strong class="MuiTypography-root">Paciente sintético ' + id + '</strong><span class="MuiTypography-root">Datos de prueba</span><span class="MuiTypography-root">Identificador ' + id + '</span></div></td><td>Diagnóstico simulado</td><td><select aria-label="Asignación"><option>Sin asignación</option><option>Profesional de prueba</option></select></td><td><button>Abrir ficha</button></td>';
+          if (route.pathname.endsWith('-nurse')) {
+            const crd = document.createElement('button');
+            crd.textContent = 'CRD';
+            row.lastElementChild.append(crd);
+            crd.onclick = () => {
+              const main = document.querySelector('main');
+              const dialog = document.createElement('div');
+              dialog.setAttribute('role', 'dialog');
+              dialog.setAttribute('aria-modal', 'true');
+              dialog.setAttribute('aria-label', 'CUDYR');
+              const close = document.createElement('button');
+              close.textContent = 'Cerrar';
+              dialog.append(close);
+              document.body.append(dialog);
+              close.focus();
+              main.setAttribute('aria-hidden', 'true');
+              close.onclick = () => {
+                dialog.remove();
+                main.removeAttribute('aria-hidden');
+                crd.focus();
+              };
+            };
+          }
           row.querySelector('button').onclick = () => { document.querySelector('output').value = String(id); };
         }
       }, { [tag]: value, [key]: rows });
@@ -112,6 +135,26 @@ export const verifyNativeWorklists = async (context, origin) => {
         assert.equal(await pager.isVisible(), false);
         assert.equal(await table.evaluate(t => getComputedStyle(t.parentElement).maxHeight), 'none');
         assert.ok(await rows.first().evaluate(tr => tr.offsetHeight) < nativeHeight * .8);
+        if (route.pathname.endsWith('-nurse')) {
+          const heights = () => rows.evaluateAll(elements => elements.map(row => row.offsetHeight));
+          const before = await heights();
+          const dialog = page.getByRole('dialog', { name: 'CUDYR' });
+          // Wait for the extension's DOM refresh after each portal transition.
+          const ready = page.locator('html[data-hhr-prescription-print-state="operations-ready"]');
+          await ready.evaluate(root => root.removeAttribute('data-hhr-prescription-print-state'));
+          await rows.first().getByRole('button', { name: 'CRD' }).click();
+          await dialog.waitFor();
+          await ready.waitFor();
+          assert.deepEqual(await heights(), before, 'Opening CUDYR changed the background row heights');
+          assert.equal(await table.evaluate(t => t.closest('main').getAttribute('aria-hidden')), 'true');
+          assert.equal(await pager.isVisible(), false);
+          await ready.evaluate(root => root.removeAttribute('data-hhr-prescription-print-state'));
+          await dialog.getByRole('button', { name: 'Cerrar' }).click();
+          await dialog.waitFor({ state: 'detached' });
+          await ready.waitFor();
+          assert.deepEqual(await heights(), before, 'Closing CUDYR changed the background row heights');
+          console.log(`[CUDYR] ${name}: ${total} rows remain ${before[0]} px before, during and after the dialog`);
+        }
         const identities = await rows.locator('strong').allTextContents();
         assert.deepEqual(identities, Array.from({ length: total }, (_, i) => 'Paciente sintético ' + (i + 1)));
         await rows.last().getByRole('combobox').selectOption('Profesional de prueba');
