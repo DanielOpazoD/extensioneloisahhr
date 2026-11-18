@@ -268,7 +268,8 @@
         "hhr-connection-presentation.js",
         "gestion-camas-connection-indicator.js",
         "gestion-camas-connection-indicator-bootstrap.js",
-        "content-gestioncamas.js"
+        "content-gestioncamas.js",
+        "content-worklist-editor-destination.js"
       ],
       "run_at": "document_start"
     },

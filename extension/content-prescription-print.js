@@ -166,6 +166,20 @@
     runtimeMessages, chromeApi: chrome, windowRef: window,
   });
 
+  const onWorklistEdit = async event => {
+    const button = event.target.closest?.('button[data-hhr-edit-episode]');
+    if (!event.isTrusted || !button || !uiLifecycle.owns() ||
+        !/^\/dashboard\/encounter-list-nurse\/?$/.test(location.pathname) ||
+        !button.closest('table[data-hhr-compact-worklist]')) return;
+    event.stopPropagation();
+    if (button.disabled) return;
+    button.disabled = true;
+    try {
+      const result = await sendMessage({ type: runtimeMessages.WORKLIST_PATIENT_EDIT, encId: button.dataset.hhrEditEpisode });
+      if (!result?.ok && active) showPageNotice(result?.error || 'No se pudo abrir Gestión de Camas.', { title: 'Modificar paciente', error: true });
+    } finally { button.disabled = false; }
+  };
+  document.addEventListener('click', onWorklistEdit, true);
   const pendingWorklistPrints = new Set();
   const onWorklistPrint = async event => {
     const button = event.target.closest?.('button[data-hhr-print-document]');
@@ -782,6 +796,7 @@
       }
       active = false;
       document.removeEventListener('click', onWorklistPrint, true);
+      document.removeEventListener('click', onWorklistEdit, true);
       observer.disconnect();
       window.removeEventListener('popstate', scheduleEnsureButton);
       window.removeEventListener('hashchange', scheduleEnsureButton);

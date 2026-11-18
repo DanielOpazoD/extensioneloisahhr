@@ -31,6 +31,21 @@
       table[${marked}] > tbody > tr > td button[id="fade-button"][aria-haspopup="true"]:has(svg path[d="${announcementPath}"]) {
         display:none;
       }
+      table[${marked}] > tbody > tr:is(:hover,:focus-within) > :is(td,th) { background-color:#e7f4f1 !important; }
+      .hhr-location-service,.hhr-location-bed { display:block; }
+      .hhr-location-service { font-weight:400; color:#526561; }
+      .hhr-location-bed { font-weight:700; }
+      table[${marked}] td:nth-child(2) .MuiTypography-root { overflow-wrap:anywhere; }
+      td[data-hhr-worklist-doctor] .MuiOutlinedInput-root:not(:hover,:focus-within) fieldset { border-color:transparent; }
+      td[data-hhr-worklist-doctor] .MuiFormControl-root:not(:focus-within) .MuiInputLabel-shrink { opacity:0; }
+      td[data-hhr-worklist-doctor] select:not(:hover,:focus) { border-color:transparent; background-color:transparent; }
+      .hhr-patient-name-line { display:flex; align-items:center; gap:3px; }
+      button[data-hhr-edit-episode] { opacity:0; display:inline-grid; place-items:center; flex:none;
+        inline-size:25px; block-size:25px; border:0; border-radius:4px; padding:2px; background:transparent; color:#166963; cursor:pointer; }
+      tr:is(:hover,:focus-within) button[data-hhr-edit-episode], button[data-hhr-edit-episode]:focus-visible { opacity:1; }
+      @media (hover:none) { button[data-hhr-edit-episode] { opacity:1; } }
+      a[data-hhr-bed-link] { display:flex; align-items:center; gap:8px; padding:8px 14px; color:inherit; font:inherit; text-decoration:none; }
+      a[data-hhr-bed-link]:is(:hover,:focus-visible) { background:#e7f4f1; }
       /* Both routes keep the filters and tab panels as siblings, including while loading. */
       ${filters}:has(~ [role="tabpanel"]), ${filters} ~ [role="tabpanel"] {
         box-sizing:border-box;
@@ -75,6 +90,25 @@
       }
     };
     const refresh = pathname => {
+      for (const drawer of document.querySelectorAll('.MuiDrawer-paperAnchorLeft, .MuiDrawer-anchorLeft .MuiDrawer-paper')) {
+        if (drawer.querySelector('[data-hhr-bed-link]')) continue;
+        const nav = [...drawer.querySelectorAll('a,button,[role="button"]')].find(item =>
+          /^(Gestión de cuidados|Lista de trabajo médico)$/i.test(item.textContent.trim()));
+        if (!nav) continue;
+        const link = document.createElement('a');
+        link.dataset.hhrBedLink = '';
+        link.href = 'https://hospitalizado.rayensalud.cl/#/bed';
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4v16m18-8v8M3 16h18v-4H9v4m1-8h7a4 4 0 014 4M4 9h4v3H4z"/></svg>Gestión de Camas';
+        const item = nav.closest('li') || nav;
+        if (item.parentElement.matches('ul,ol')) {
+          const wrapper = document.createElement('li');
+          wrapper.dataset.hhrBedItem = '';
+          wrapper.append(link);
+          item.parentElement.append(wrapper);
+        } else item.parentElement.append(link);
+      }
       const heading = headings[pathname.replace(/\/$/, '')];
       if (!heading) {
         if (onWorklist) clear();
@@ -101,6 +135,7 @@
       refresh,
       dispose() {
         clear();
+        document.querySelectorAll('[data-hhr-bed-item],[data-hhr-bed-link]').forEach(node => node.remove());
         style.remove();
       },
     });
