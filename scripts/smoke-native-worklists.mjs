@@ -88,6 +88,11 @@ function startFixture(route) {
         for (const [index, row] of [...body.rows].entries()) {
           const {id} = visible[index];
           if (route.pathname.endsWith('-nurse')) {
+            const family = document.createElement('button');
+            family.id = 'fade-button';
+            family.setAttribute('aria-haspopup', 'true');
+            family.innerHTML = '<svg><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m-7 9h-2V5h2zm0 4h-2v-2h2z"/></svg>';
+            row.lastElementChild.append(family);
             const crd = document.createElement('button');
             crd.textContent = 'CRD';
             row.lastElementChild.append(crd);
@@ -139,13 +144,15 @@ export const nativeWorklistFixture = pathname => {
   if (!route) return null;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
     body { font:14px/1.5 system-ui,sans-serif; }
-    main { margin:16px; }
+    main { margin:16px; display:flex; flex-direction:column; gap:32px; }
+    #filters { height:70px; padding-block:16px; box-sizing:border-box; }
+    .heading { margin:0; padding-block:16px; }
     .MuiTableContainer-root { overflow:auto; max-height:400px; }
     table { border-collapse:collapse; width:100%; min-width:550px; text-align:left; }
     td,th { padding:13px 16px; border-bottom:1px solid #ddd; }
     .MuiStack-root { display:flex; flex-direction:column; }
     .MuiStack-root > * + * { margin-top:3px; }
-  </style></head><body><main><div role="tablist">
+  </style></head><body><main class="MuiBox-root"><div role="tablist">
     ${[route.other, ...route.sections.map(s => s[0])].map((tab, i) => `<button role="tab" aria-selected="${i === 0}" aria-controls="worklist">${tab}</button>`).join('')}
   </div><div class="MuiPaper-root" id="filters"><label><input type="checkbox">Filtrar estación</label>
   <input id="search-encounter-list" aria-label="Buscar paciente"><output></output></div>
@@ -234,6 +241,19 @@ const verifyLists = async (context, origin, worker) => {
         await page.getByRole('tab', { name, exact: true }).click();
         await page.locator('table[data-hhr-complete-worklist]').waitFor();
         await verifyWorklistWidth(page);
+        const referral = name === 'Mis pacientes de interconsulta';
+        assert.equal(await page.locator('.heading').isVisible(), referral);
+        const spacing = await page.evaluate(() => {
+          const filters = document.getElementById('filters').getBoundingClientRect();
+          const tabs = document.querySelector('[role="tablist"]').getBoundingClientRect();
+          const panel = document.getElementById('worklist').getBoundingClientRect();
+          return [filters.top - tabs.bottom, panel.top - filters.bottom, filters.height];
+        });
+        assert.deepEqual(spacing, [6, 6, 48]);
+        if (route.pathname.endsWith('-nurse')) {
+          assert.equal(await rows.locator('button[id="fade-button"]').count(), total);
+          assert.equal(await rows.locator('button[id="fade-button"]:visible').count(), 0);
+        }
         assert.equal(await rows.count(), total);
         assert.equal(await pager.isVisible(), false);
         assert.equal(await table.evaluate(t => getComputedStyle(t.parentElement).maxHeight), 'none');

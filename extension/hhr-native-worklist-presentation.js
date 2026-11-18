@@ -14,8 +14,23 @@
   const tableSelector = '.MuiTableContainer-root > table';
   const markedSelector = `table[${marked}],table[${complete}]`;
   const filters = '.MuiPaper-root:has(#search-encounter-list)';
+  // The native family-information button uses the same Announcement glyph for pending and idle requests.
+  const announcementPath = 'M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m-7 9h-2V5h2zm0 4h-2v-2h2z';
   const css = `
     @media screen {
+      .MuiBox-root:has(> .MuiPaper-root #search-encounter-list):has(> [role="tabpanel"]) {
+        row-gap:6px;
+      }
+      ${filters}:has(~ [role="tabpanel"]) {
+        block-size:auto;
+        min-block-size:48px;
+        padding-block:4px;
+      }
+      [role="tabpanel"] :has(+ * > .MuiTableContainer-root > table[${marked}="results"]) { display:none; }
+      [role="tabpanel"] :has(+ * > .MuiTableContainer-root > table[${marked}="referrals"]) { padding-block:4px; }
+      table[${marked}] > tbody > tr > td button[id="fade-button"][aria-haspopup="true"]:has(svg path[d="${announcementPath}"]) {
+        display:none;
+      }
       /* Both routes keep the filters and tab panels as siblings, including while loading. */
       ${filters}:has(~ [role="tabpanel"]), ${filters} ~ [role="tabpanel"] {
         box-sizing:border-box;
@@ -73,7 +88,12 @@
         const title = container.parentElement?.previousElementSibling;
         const result = container.matches('.MuiTableContainer-root') && table.tBodies.length &&
           !table.closest(overlay) && title?.textContent.trim().match(heading);
-        table.toggleAttribute(marked, Boolean(result));
+        if (result) {
+          const kind = /^Mis pacientes de interconsulta/i.test(result[0]) ? 'referrals' : 'results';
+          if (table.getAttribute(marked) !== kind) table.setAttribute(marked, kind);
+        } else {
+          table.removeAttribute(marked);
+        }
         table.toggleAttribute(complete, Boolean(result && Number(result[1]) === table.tBodies[0].rows.length));
       }
     };
