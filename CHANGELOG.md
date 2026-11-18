@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.112
+
+- «Cambiar paciente» muestra el nombre completo disponible en el censo. Las listas de trabajo y cuidados conservan el nombre registrado y muestran aparte el nombre social cuando existe.
+- Solicitar laboratorio reúne los datos del paciente, procedencia, Fonasa, búsqueda y grupos en una cabecera compacta que se adapta al ancho del panel.
+- Imprimir abre directamente el diálogo de Chrome para recetas, solicitudes de laboratorio e imágenes. En Recetas se conserva la elección de formato Estándar o Compacta.
+
 ## 0.48.111
 
 - El menú del icono muestra la versión instalada y comprueba la última publicación al abrirse. Si hay una actualización, puedes descargarla desde la misma ventana. Si la consulta falla, ofrece reintentar.
