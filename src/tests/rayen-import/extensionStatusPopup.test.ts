@@ -79,7 +79,8 @@ describe('extension version popup', () => {
       );
 
       expect(manifest.action).toEqual({
-        default_title: 'Ver versión del puente Eloísa → HHR',
+        default_title: 'Puente Eloísa → HHR',
+        default_icon: manifest.icons,
         default_popup: 'extension-status.html',
       });
       expect(html).toContain('Versión que Chrome está usando');

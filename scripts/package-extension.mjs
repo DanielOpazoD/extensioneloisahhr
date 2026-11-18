@@ -19,6 +19,8 @@ export function packageRayenExtension(root) {
   const files = new Set([
     "manifest.json",
     "vendor-lock.json",
+    ...Object.values(manifest.icons || {}),
+    ...Object.values(manifest.action?.default_icon || {}),
     ...fs
       .readdirSync(directory)
       .filter((name) => /^(?!\.)[\w.-]+\.(?:js|mjs|html|css)$/.test(name)),

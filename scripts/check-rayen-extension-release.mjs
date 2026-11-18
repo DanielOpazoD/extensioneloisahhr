@@ -196,6 +196,8 @@ if (gestionCamasInjectVersion !== manifest.version) {
   );
 }
 
+validateFileReferences("manifest.icons", Object.values(manifest.icons || {}));
+validateFileReferences("manifest.action.default_icon", Object.values(manifest.action?.default_icon || {}));
 const backgroundWorker = manifest.background?.service_worker;
 if (backgroundWorker) {
   validateFileReferences("manifest.background.service_worker", [
