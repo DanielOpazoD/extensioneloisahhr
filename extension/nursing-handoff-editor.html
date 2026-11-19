@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrega de turno · HHR pruebas</title>
+  <link rel="stylesheet" href="nursing-handoff-editor.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Entrega de turno</h1>
+      <span>Pruebas HHR</span>
+    </header>
+    <p id="patient"></p>
+    <p id="slot" class="detail"></p>
+    <form id="pair" hidden>
+      <label for="code">Código de vinculación de HHR</label>
+      <div class="actions">
+        <input id="code" required autocomplete="off" spellcheck="false">
+        <button type="submit">Vincular</button>
+      </div>
+    </form>
+    <form id="edit" hidden>
+      <label class="sr-only" for="note">Nota del turno</label>
+      <textarea id="note" rows="8" maxlength="16000" placeholder="Escribe la entrega de turno"></textarea>
+      <div class="actions">
+        <button type="submit">Guardar</button>
+        <button type="button" id="disconnect" class="quiet">Desvincular</button>
+      </div>
+    </form>
+    <div id="conflict" hidden>
+      <label for="remote">Nota actual de HHR</label>
+      <textarea id="remote" rows="4" readonly></textarea>
+      <button type="button" id="keep" class="quiet">Conservar mi edición</button>
+      <button type="button" id="use-remote" class="quiet">Usar nota de HHR</button>
+    </div>
+    <p id="status" role="status"></p>
+  </main>
+  <script src="message-contract.js"></script>
+  <script src="nursing-handoff-editor.js"></script>
+</body>
+</html>

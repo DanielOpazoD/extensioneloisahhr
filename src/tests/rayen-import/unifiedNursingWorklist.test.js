@@ -114,3 +114,14 @@ it('ordena las camas visibles y mantiene ambos episodios cuando comparten ubicac
   expected.splice(1, 0, '999');
   expect(ordered.children.map(row => row.props.children[2].props['data-hhr-worklist-episode'])).toEqual(expected);
 });
+
+it('muestra Entrega de turno para cada episodio del piloto', () => {
+  Function(readFileSync('extension/hhr-worklist-print-column.js', 'utf8'))();
+  Function(readFileSync('extension/hhr-nursing-worklist.js', 'utf8'))();
+  const { jsx } = runtime;
+  const columns = [{ id: 'patient', label: 'Paciente' }];
+  const row = jsx('tr', { children: [jsx('td', { children: 'Paciente sintético' })] }, '123');
+  const result = globalThis.HhrNursingWorklist.joinTables(jsx, [{ columns, children: [row] }], true);
+  expect(result.columns.map(col => col.label)).toEqual(['Paciente', 'Entrega de turno']);
+  expect(result.children[0].props.children[1].props.children.props['data-hhr-handoff-episode']).toBe('123');
+});

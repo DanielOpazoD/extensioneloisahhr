@@ -6,7 +6,7 @@
   const activity = ['Estadía', 'Última novedad', 'Última atención'];
   const columnIds = ['location', 'patient', 'hhrPrint', 'diagnosisAdmission', 'crd', 'assignesDoctor', 'isolated', 'activity', 'actions', 'link'];
 
-  function joinTables(jsx, tables) {
+  function joinTables(jsx, tables, handoff = globalThis.HhrNursingHandoffDemo === true) {
     const headers = new Map();
     const children = [];
     const episodes = new Set();
@@ -16,7 +16,7 @@
       const table = tables[source];
       if (!table) continue;
       for (const col of table.columns) headers.set(col.id, col);
-      headers.set('activity', { id: 'activity', label: 'Actividad', style: { width: '10%' } });
+      headers.set('activity', { id: 'activity', label: handoff ? 'Entrega de turno' : 'Actividad', style: { width: '10%' } });
       for (const [position, row] of table.children.entries()) {
         const episode = String(row.key ?? '');
         const valid = /^[1-9]\d*$/.test(episode);
@@ -32,7 +32,15 @@
           cells.set('link', native.at(-1));
         }
         const detail = cells.get(['stay', 'lastNovelty', '"lastNursePublishDatetime"'][source]);
-        if (detail?.props) {
+        if (handoff && valid) {
+          cells.set('activity', jsx('td', { className: 'hhr-worklist-handoff', children: jsx('button', {
+            type: 'button',
+            'data-hhr-handoff-episode': episode,
+            'aria-label': 'Abrir entrega de turno',
+            title: 'Abrir entrega de turno',
+            children: '✎',
+          }) }));
+        } else if (!handoff && detail?.props) {
           const value = detail.props.children;
           const children = typeof value === 'string' && value.startsWith('Sin registro') ? value : [activity[source], ' ', value];
           cells.set('activity', jsx(detail.type, { ...detail.props, className: 'hhr-worklist-activity', children }));

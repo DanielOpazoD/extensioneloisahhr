@@ -1,0 +1,25 @@
+:root { font: 15px/1.45 system-ui, sans-serif; color: #213734; background: #f5f8f7; }
+body { margin: 0; }
+main { box-sizing: border-box; max-width: 38rem; margin: 0 auto; padding: 1.4rem; }
+header, .actions { display: flex; align-items: center; gap: .75rem; }
+header { justify-content: space-between; }
+h1 { font-size: 1.28rem; margin: 0; }
+header span, .detail { color: #506560; font-size: .87rem; }
+p { margin: .4rem 0; }
+label { display: block; font-size: .9rem; margin-block-end: .25rem; }
+form, #conflict { margin-block-start: 1rem; }
+textarea, input, button { font: inherit; }
+textarea, input {
+  background: white; color: inherit; border: 1px solid #b5c8c2;
+  border-radius: .45rem; box-sizing: border-box; padding: .55rem .65rem;
+}
+textarea { display: block; width: 100%; resize: vertical; }
+input { min-width: 0; flex: 1; }
+button { border: 0; border-radius: .45rem; padding: .5rem .8rem; background: #126559; color: white; cursor: pointer; }
+button:disabled { opacity: .55; cursor: default; }
+.quiet { background: transparent; color: #126559; }
+#edit .actions { margin-block-start: .6rem; }
+#status { font-size: .9rem; margin-block-start: .7rem; }
+#status[data-tone="ok"] { color: #126559; }
+#status[data-tone="error"] { color: #9b2929; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

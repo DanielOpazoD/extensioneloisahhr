@@ -93,6 +93,11 @@
     }
     .hhr-hospitalized-panel { box-sizing:border-box; background:white; border-radius:12px; padding:10px 12px; }
     .hhr-care-source[hidden] { display:none !important; }
+    .hhr-worklist-handoff button {
+      border:0; border-radius:4px; background:transparent; color:#126559;
+      font-size:1.12rem; min-width:28px; min-height:26px; cursor:pointer;
+    }
+    .hhr-worklist-handoff button:is(:hover,:focus-visible) { background:#d8efea; }
     .hhr-hospitalized-panel .hhr-worklist-activity { font-size:.8333em; color:#50625e; }
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }

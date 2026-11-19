@@ -180,6 +180,18 @@
     } finally { button.disabled = false; }
   };
   document.addEventListener('click', onWorklistEdit, true);
+  const onNursingHandoff = async event => {
+    const button = event.target.closest?.('button[data-hhr-handoff-episode]');
+    if (!event.isTrusted || !button || button.disabled || !uiLifecycle.owns() ||
+        !button.closest('.hhr-hospitalized-panel')) return;
+    event.stopPropagation();
+    button.disabled = true;
+    try {
+      const result = await sendMessage({ type: runtimeMessages.NURSING_HANDOFF_OPEN, encId: button.dataset.hhrHandoffEpisode });
+      if (!result?.ok && active) showPageNotice(result?.error || 'No se pudo abrir la entrega.', { title: 'Entrega de turno', error: true });
+    } finally { button.disabled = false; }
+  };
+  document.addEventListener('click', onNursingHandoff, true);
   const pendingWorklistPrints = new Set();
   const onWorklistPrint = async event => {
     const button = event.target.closest?.('button[data-hhr-print-document]');
@@ -442,6 +454,23 @@
     invalidateConnectionState,
   } = connectionCenterRuntime;
   const onRuntimeMessage = (message, _sender, sendResponse) => {
+    if (message?.type === 'RAYEN_NURSING_HANDOFF_CONFIRMED' && _sender.id === chrome.runtime.id &&
+        /^[1-9]\d*$/.test(message.episode)) {
+      const button = document.querySelector(`button[data-hhr-handoff-episode="${message.episode}"]`);
+      if (button) {
+        const label = 'Guardado en HHR · ' + message.date + ' · ' + (message.shift === 'day' ? 'Día' : 'Noche');
+        button.textContent = '✓';
+        button.title = label;
+        button.setAttribute('aria-label', label + '. Abrir entrega de turno');
+        setTimeout(() => {
+          if (button.title !== label) return;
+          button.textContent = '✎';
+          button.title = 'Abrir entrega de turno';
+          button.setAttribute('aria-label', button.title);
+        }, 4000);
+      }
+      return;
+    }
     if (message?.type === 'RAYEN_EXTENSION_FICHA_UI_PING') {
       sendMessage({ type: runtimeMessages.EXTENSION_RUNTIME_CONTEXT_REQUEST })
         .then(context => sendResponse({ uiReady: Boolean(context?.runtimeGeneration), uiBuildVersion: uiLifecycle.version }))
@@ -797,6 +826,7 @@
       active = false;
       document.removeEventListener('click', onWorklistPrint, true);
       document.removeEventListener('click', onWorklistEdit, true);
+      document.removeEventListener('click', onNursingHandoff, true);
       observer.disconnect();
       window.removeEventListener('popstate', scheduleEnsureButton);
       window.removeEventListener('hashchange', scheduleEnsureButton);
