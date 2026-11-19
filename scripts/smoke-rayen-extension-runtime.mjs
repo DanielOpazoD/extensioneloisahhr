@@ -838,6 +838,22 @@ try {
   assert.notEqual(hhrHealthResult.report.fichaMedico.reason, "outdated_tab");
   assert.equal(hhrHealthResult.report.fichaMedico.status, "ready");
 
+  // A Ficha tab opened before 0.48.115 keeps its compatible MAIN reader across the update,
+  // and that reader's health carries no facility. The Camas pairing must not depend on it.
+  await page.evaluate(() => {
+    const post = window.postMessage.bind(window);
+    window.postMessage = (message, ...rest) => {
+      if (message?.type === "RAYEN_FM_SESSION_STATUS_RESULT" && message.identity) {
+        const { facilityId: _previousReaderOmitsIt, ...identity } = message.identity;
+        message = { ...message, identity };
+      }
+      return post(message, ...rest);
+    };
+  });
+  const previousReaderHealth = await requestHhrHealth(hhrPage, { verifySessions: true });
+  assert.equal(previousReaderHealth.report.fichaMedico.status, "ready");
+  assert.equal(previousReaderHealth.report.fichaMedico.identity.facilityId, undefined);
+
   // Exercise the packaged HHR → ISOLATED → MV3 preflight contract with a fresh cached
   // green report. A revoked GC connection must bypass that report and its 15-minute lease.
   sessionExpired = true;
@@ -936,7 +952,11 @@ try {
     }), undefined);
     assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
     await gestionCamasPage.goto(gestionCamasFixtureUrl);
-    assert.equal((await requestReport()).ok, true);
+    // Health and the egresos download decide the pairing the same way: both ready, or neither.
+    const pairedHealth = await requestHhrHealth(hhrPage, { verifySessions: true });
+    assert.equal(pairedHealth.report.gestionCamas.status, "ready");
+    const pairedReport = await requestReport();
+    assert.equal(pairedReport.ok, true, "Health said Camas was ready but the egresos download refused it");
     assert.equal(await reloadedStatusPage.evaluate(async () => {
       const key = 'hhrGestionCamasSessionV1';
       return (await chrome.storage.session.get(key))[key]?.fichaScope;

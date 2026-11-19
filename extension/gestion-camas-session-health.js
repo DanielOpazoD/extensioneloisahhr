@@ -8,7 +8,7 @@
   };
 
   const create = ({ session, readSession, clearUnusableSession, requestLiveSession,
-    verifySession, bindFichaScope, healthProbeTimeoutMs }) => {
+    verifySession, readFichaScope, pairWithFicha, healthProbeTimeoutMs }) => {
     const finish = status => {
       return { ...status, reason: reasonOf(status) };
     };
@@ -57,41 +57,29 @@
       }) };
     };
 
-    return async ({ matchingTabs, liveOptions, verifySessions = false, fichaHealth, background = false, bindScope = true }) => {
+    return async ({ matchingTabs, liveOptions, verifySessions = false, background = false, bindScope = true }) => {
       const resolved = background ? { record: await readSession() } : await resolveRecord(matchingTabs, liveOptions);
       if (resolved.status) return finish(resolved.status);
       let { record } = resolved;
       if (background && matchingTabs.some(tab => Number(tab?.id) === Number(record?.sourceTabId))) return null;
       if (background && !session.isUsable(record)) return matchingTabs.length ? null : session.publicStatus(record);
-      const ficha = await fichaHealth;
-      const scope = session.fichaScopeOf(ficha);
-      const needsFreshFicha = ficha?.status === 'ready' && !scope;
-      const scopeMismatch = candidate => candidate.fichaScope || background
-        ? !scope || scope !== candidate.fichaScope
-        : Boolean(scope && !scope.startsWith(candidate.facId + ':'));
-      const reconnect = candidate => ({
-        ...session.publicStatus(candidate), status: 'stale', reason: 'session_unverified',
-        message: needsFreshFicha
-          ? 'Recarga Ficha Médico y abre Gestión de Camas para conectarla en segundo plano.'
-          : 'Vuelve a conectar Gestión de Camas con el acceso actual de Ficha Médico.',
+      // A background session has no Camas tab to vouch for it: only its paired Ficha access can.
+      const scope = await readFichaScope();
+      const pairing = { scope, sourceAlive: !background, bind: bindScope && !background };
+      const reconnect = (candidate, message) => ({
+        ...session.publicStatus(candidate), status: 'stale', reason: 'session_unverified', message,
       });
-      if (scopeMismatch(record)) return reconnect(record);
+      // Settle the pairing before verifying, so a session of another access never reaches Rayen.
+      const unverified = await pairWithFicha(record, { ...pairing, bind: false });
+      if (unverified.error) return reconnect(record, unverified.error);
       if (verifySessions || !session.isVerificationFresh(record)) {
         const verified = await verifyRecord(record, liveOptions, background);
         if (verified.status) return verified.status;
         record = verified.record;
       }
-      if (scopeMismatch(record)) return reconnect(record);
-      if (bindScope && !background && !record.fichaScope && scope) {
-        const bound = await bindFichaScope(record, scope);
-        if (!bound || scopeMismatch(bound)) return reconnect(bound);
-        record = bound;
-      }
-      const status = session.publicStatus(record);
-      if (needsFreshFicha && status.status === 'ready') {
-        return { ...status, message: 'Gestión de Camas conectada. Recarga Ficha Médico antes de cerrar Camas.' };
-      }
-      return status;
+      const paired = await pairWithFicha(record, pairing);
+      if (paired.error) return reconnect(record, paired.error);
+      return session.publicStatus(paired.record);
     };
   };
 

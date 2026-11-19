@@ -244,7 +244,7 @@ const handleManualPatientCodeRequest = self.HhrFichaMedicoManualPatientCodeRunti
 const gestionCamasRuntime = self.HhrGestionCamasRuntime.create({
   chrome,
   session: self.HhrGestionCamasSession,
-  readFichaHealth: async () => handleFichaMedicoHealth((await getRuntimeContext()).runtimeGeneration),
+  readFichaFetchInfo: () => getFichaFetchInfo(),
   extensionHealth: self.HhrExtensionHealth,
   withTimeout,
   fetchWithTimeout,
@@ -280,11 +280,10 @@ const healthRelaySelfRepair = self.HhrHealthRelaySelfRepair.create({
 });
 const readExtensionHealthUncached = async (targets = {}) => {
   const runtimeContext = await getRuntimeContext();
-  const fichaHealth = handleFichaMedicoHealth(runtimeContext.runtimeGeneration, targets.fichaMedicoTabIds);
   const [fichaMedico, gestionCamas, hhr] = await Promise.all([
-    fichaHealth,
+    handleFichaMedicoHealth(runtimeContext.runtimeGeneration, targets.fichaMedicoTabIds),
     handleGestionCamasHealth(runtimeContext.runtimeGeneration, targets.gestionCamasTabIds, {
-      verifySessions: targets.verifySessions === true, fichaHealth,
+      verifySessions: targets.verifySessions === true,
       bindScope: !Array.isArray(targets.fichaMedicoTabIds) && !Array.isArray(targets.gestionCamasTabIds),
     }),
     handleHhrHealth(runtimeContext),
@@ -389,6 +388,7 @@ const handleSyncBundleRequest = (message, sender) =>
         dateStart: message.dateStart,
         dateEnd: message.dateEnd, isCancelled: () => syncBundleCancellation.isCancelled(message.requestId),
         readHealth: options => healthReportCache.read(options),
+        readFichaScope: gestionCamasRuntime.readFichaScope,
         // The bundle wrapper authorizes the union of live and report-backed episodes atomically.
         readSnapshot: readSnapshotWithClinicalCribs,
         readReport: handleReportRequest,

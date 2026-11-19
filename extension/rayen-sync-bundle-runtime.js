@@ -36,8 +36,7 @@
     const calendarDay = root.HhrClinicalDayRuntime?.calendarDayAt(at);
     return nextIsoDay(calendarDay) === dateEnd && dateStart <= calendarDay;
   };
-  const hasReaders = (readHealth, readSnapshot, readReport) =>
-    [readHealth, readSnapshot, readReport].every(reader => typeof reader === 'function');
+  const hasReaders = (...readers) => readers.every(reader => typeof reader === 'function');
   const createBundleResult = ({
     snapshot,
     report,
@@ -91,7 +90,8 @@
     const after = await context.measuredRead('captureHealthAfter', () => context.readHealth({ force: true }));
     if (context.isCancelled()) return { error: 'Sincronización cancelada desde HHR.', cancelled: true };
     if (after?.fichaMedico?.status !== 'ready') return { error: 'Una fuente se desconectó durante la captura. ' + (after?.fichaMedico?.message || 'Ficha Médico no está conectada.') }; // GC's download re-checked its own session; a sleeping GC tab failed 4/102 runs here.
-    const finalFichaScope = root.HhrGestionCamasSession?.fichaScopeOf(after.fichaMedico);
+    // The verified Ficha access, the same one that pairs the Camas session used for the egresos.
+    const finalFichaScope = await context.readFichaScope();
     if ((context.initialFichaScope && context.initialFichaScope !== finalFichaScope) ||
         (after.gestionCamas?.usingBackgroundSession && !context.initialFichaScope)) {
       return { error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' };
@@ -113,13 +113,14 @@
     readHealth,
     readSnapshot,
     readReport,
+    readFichaScope,
     now = () => new Date(),
     idFactory = () => crypto.randomUUID(),
     monotonicNow = () => root.performance.now(),
     isCancelled = () => false,
   }) => {
     const started = now(), startedAt = started.toISOString();
-    const inputError = captureInputError(dateStart, dateEnd, started, [readHealth, readSnapshot, readReport]);
+    const inputError = captureInputError(dateStart, dateEnd, started, [readHealth, readSnapshot, readReport, readFichaScope]);
     if (inputError) return { error: inputError };
     const captureTimingsMs = {};
     const deadline = monotonicNow() + 10_000;
@@ -131,6 +132,8 @@
       const before = await measuredRead('captureHealthBefore', readHealth);
       if (isCancelled()) return cancelled();
       if (!canStartReads(before)) return { error: sourceFailureMessage(before) };
+      const initialFichaScope = await readFichaScope();
+      if (isCancelled()) return cancelled();
       const reads = await root.HhrCaptureReadRecovery.read({
         readFicha: () => measuredRead('captureFichaMedico', readSnapshot),
         readGestion: () => measuredRead('captureGestionCamas', () => readReport({ dateStart, dateEnd })),
@@ -145,8 +148,7 @@
       if (readResult.error) return { ...readResult, ...(captureRetries ? { captureRetries } : {}) };
       return withRetries(await completeCapture({
         ...readResult, started, startedAt, dateStart, dateEnd, idFactory,
-        initialFichaScope: root.HhrGestionCamasSession?.fichaScopeOf(before.fichaMedico),
-        captureTimingsMs, captureRetries, now, measuredRead, readHealth, isCancelled,
+        initialFichaScope, captureTimingsMs, captureRetries, now, measuredRead, readHealth, readFichaScope, isCancelled,
       }));
     } catch (error) {
       if (isCancelled()) return cancelled();

@@ -20,6 +20,7 @@ const session = (
       isUsable: (record: SessionRecord | null, now?: number) => boolean;
       normalizeApiBase: (value: unknown) => string;
       publicStatus: (record: SessionRecord | null, now?: number) => Record<string, unknown>;
+      fichaScopeOf: (info: unknown) => string;
     };
   }
 ).HhrGestionCamasSession;
@@ -157,5 +158,14 @@ describe('Gestión de Camas session helpers', () => {
       status: 'stale',
       verification: 'pending',
     });
+  });
+
+  it('pairs Camas with the verified Ficha access that every compatible reader returns', () => {
+    const info = { facId: '1342', practitionerId: '3', practitionerRoleId: '5', identityVerified: true };
+    expect(session.fichaScopeOf(info)).toBe('1342:3:5');
+    expect(session.fichaScopeOf({ ...info, identityVerified: undefined })).toBe('');
+    expect(session.fichaScopeOf({ ...info, facId: '' })).toBe('');
+    expect(session.fichaScopeOf({ ...info, practitionerRoleId: '5a' })).toBe('');
+    expect(session.fichaScopeOf(null)).toBe('');
   });
 });

@@ -4,16 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 import '../../../extension/clinical-day-runtime.js';
 import '../../../extension/census-sync-horizon-runtime.js';
 import '../../../extension/capture-read-recovery.js';
-import '../../../extension/gestion-camas-session.js';
 import '../../../extension/rayen-sync-bundle-runtime.js';
 import '../../../extension/fichamedico-read-resilience.js';
 
-type Health = Record<string, {
-  status: string;
-  message: string;
-  identity?: { facilityId: string; practitionerId: string; practitionerRoleId: string };
-  usingBackgroundSession?: boolean;
-}>;
+type Health = Record<string, { status: string; message: string; usingBackgroundSession?: boolean }>;
 
 const globals = globalThis as typeof globalThis & {
   HhrRayenSyncBundleRuntime: {
@@ -50,7 +44,10 @@ const snapshot = {
   },
 };
 
-const capture = (healths: Health[], readSnapshot: () => Promise<unknown>) => {
+// The verified Ficha access (facility:professional:role) before and after the reads.
+const capture = (healths: Health[], readSnapshot: () => Promise<unknown>, scopes = ['1342:3:5', '1342:3:5']) => {
+  const readFichaScope = vi.fn();
+  scopes.forEach(scope => readFichaScope.mockResolvedValueOnce(scope));
   const times = [new Date('2026-07-24T18:00:00.000Z'), new Date('2026-07-24T18:00:21.000Z')];
   const readHealth = vi.fn();
   healths.forEach(health => readHealth.mockResolvedValueOnce(health));
@@ -59,6 +56,7 @@ const capture = (healths: Health[], readSnapshot: () => Promise<unknown>) => {
     dateEnd: '2026-07-25',
     readHealth,
     readSnapshot,
+    readFichaScope,
     readReport: vi.fn().mockResolvedValue({
       ok: true,
       rows: [],
@@ -121,26 +119,23 @@ describe('Rayen capture while Ficha Médico is in its read block', () => {
   });
 });
 
+const accessChanged = { error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' };
+const withCamas = (usingBackgroundSession: boolean, status = 'ready'): Health => ({
+  ...ready, gestionCamas: { ...ready.gestionCamas, status, usingBackgroundSession },
+});
+
 it.each([false, true])('descarta la captura si cambia el profesional y Camas termina en segundo plano (inicio en segundo plano: %s)', async usingBackgroundSession => {
-  const identity = { facilityId: '1342', practitionerId: '3', practitionerRoleId: '5' };
-  const background = {
-    fichaMedico: { ...ready.fichaMedico, identity },
-    gestionCamas: { ...ready.gestionCamas, usingBackgroundSession },
-  };
-  const after = {
-    ...background,
-    fichaMedico: { ...background.fichaMedico, identity: { ...identity, practitionerId: '4' } },
-    gestionCamas: { ...background.gestionCamas, usingBackgroundSession: true },
-  };
-  const result = await capture([background, after], async () => snapshot);
-  expect(result).toEqual({ error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' });
+  const result = await capture(
+    [withCamas(usingBackgroundSession), withCamas(true)], async () => snapshot, ['1342:3:5', '1342:4:5']);
+  expect(result).toEqual(accessChanged);
 });
 
 it.each(['ready', 'stale'])('exige un acceso inicial verificable si Camas se cierra durante la captura (%s)', async status => {
-  const after = {
-    fichaMedico: { ...ready.fichaMedico, identity: { facilityId: '1342', practitionerId: '3', practitionerRoleId: '5' } },
-    gestionCamas: { ...ready.gestionCamas, status, usingBackgroundSession: true },
-  };
-  const result = await capture([ready, after], async () => snapshot);
-  expect(result).toEqual({ error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' });
+  const result = await capture([ready, withCamas(true, status)], async () => snapshot, ['', '1342:3:5']);
+  expect(result).toEqual(accessChanged);
+});
+
+it('completa la captura con Camas en segundo plano si el acceso verificado de Ficha no cambia', async () => {
+  const result = await capture([withCamas(true), withCamas(true)], async () => snapshot);
+  expect(result).toEqual(expect.objectContaining({ ok: true }));
 });

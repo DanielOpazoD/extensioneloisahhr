@@ -31,7 +31,7 @@
       fetchWithTimeout,
       backendRequestTimeoutMs,
       tabMessageTimeoutMs,
-      healthProbeTimeoutMs, recoverMissingReceiver, readFichaHealth,
+      healthProbeTimeoutMs, recoverMissingReceiver, readFichaFetchInfo,
     } = dependencies || {};
 
     if (
@@ -42,7 +42,7 @@
       typeof extensionHealth.probeTabs !== 'function' ||
       typeof withTimeout !== 'function' || typeof fetchWithTimeout !== 'function' ||
       !Number.isFinite(backendRequestTimeoutMs) || !Number.isFinite(tabMessageTimeoutMs) ||
-      !Number.isFinite(healthProbeTimeoutMs)
+      !Number.isFinite(healthProbeTimeoutMs) || typeof readFichaFetchInfo !== 'function'
     ) {
       throw new Error('No se pudo inicializar el runtime de Gestión de Camas.');
     }
@@ -342,23 +342,43 @@
       }
     };
 
+    const RECONNECT_MESSAGE = 'Vuelve a conectar Gestión de Camas con el acceso actual de Ficha Médico.';
+    const readFichaScope = async (timeoutMs = tabMessageTimeoutMs) => {
+      try {
+        const result = await withTimeout(readFichaFetchInfo(), timeoutMs,
+          'Ficha Médico no confirmó su acceso a tiempo.');
+        return session.fichaScopeOf(result?.info);
+      } catch {
+        return '';
+      }
+    };
+
+    // The one decision, for health and for every read, on whether this Camas session may be used
+    // with the current Ficha access. A paired session needs exactly that access. An unpaired one
+    // needs its own Camas tab and pairs with a Ficha access of its facility. Without a verified
+    // Ficha access only the open Camas tab vouches for the session, never enough for clinical capture.
+    const pairWithFicha = async (record, { scope, sourceAlive, bind = true, requirePairing = false }) => {
+      if (scope && record.fichaScope === scope) return { record };
+      if (!sourceAlive || (scope && record.fichaScope)) return { error: RECONNECT_MESSAGE };
+      if (!scope) return requirePairing ? { error: RECONNECT_MESSAGE } : { record };
+      if (!scope.startsWith(record.facId + ':')) return { error: RECONNECT_MESSAGE };
+      if (!bind) return requirePairing ? { error: RECONNECT_MESSAGE } : { record };
+      const bound = await bindFichaScope(record, scope);
+      return bound?.fichaScope === scope ? { record: bound } : { error: RECONNECT_MESSAGE };
+    };
+
     const resolveGestionCamasSession = async ({ requireFichaScope = false, ...options } = {}) => {
       const result = await readVerifiedGestionCamasSession(options);
       const { record } = result;
       if (!record) return result;
-      const sourceAlive = await isGestionCamasTabOpen(record.sourceTabId);
-      const ficha = await readFichaHealth();
-      const scope = session.fichaScopeOf(ficha);
-      let current = await readGestionCamasSession();
+      const [sourceAlive, scope] = await Promise.all([
+        isGestionCamasTabOpen(record.sourceTabId), readFichaScope(),
+      ]);
+      const current = await readGestionCamasSession();
       if (!sameGestionCamasSession(current, record) || !session.isUsable(current)) {
         return { error: 'La sesión de Gestión de Camas cambió durante la lectura.' };
       }
-      if (sourceAlive && !current.fichaScope && scope.startsWith(current.facId + ':')) {
-        current = await bindFichaScope(current, scope);
-      }
-      if (scope && current?.fichaScope === scope) return { record: current };
-      if (!requireFichaScope && !scope && sourceAlive && ficha?.status !== 'ready' && current) return { record: current };
-      return { error: 'Vuelve a conectar Gestión de Camas con el acceso actual de Ficha Médico.' };
+      return pairWithFicha(current, { scope, sourceAlive, requirePairing: requireFichaScope });
     };
 
     const classifyGestionCamasRejection = async (response, record) => {
@@ -398,7 +418,8 @@
       clearUnusableSession: clearUnusableGestionCamasSession,
       requestLiveSession: requestLiveGestionCamasSession,
       verifySession: verifyGestionCamasSession,
-      bindFichaScope,
+      readFichaScope: () => readFichaScope(healthProbeTimeoutMs),
+      pairWithFicha,
     });
 
     const setGestionCamasConnectionAttempt = async (
@@ -531,6 +552,7 @@
       captureSession: captureGestionCamasSession,
       handleDocumentReady: handleGestionCamasDocumentReady,
       resolveSession: resolveGestionCamasSession,
+      readFichaScope: () => readFichaScope(),
       classifyRejection: classifyGestionCamasRejection,
       health: handleGestionCamasHealth,
       connect: handleConnectGestionCamas,
