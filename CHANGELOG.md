@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.114
+
+- En Gestión de cuidados, la tabla queda cerca del buscador y el menú de impresión es más compacto.
+- La actividad usa el mismo tamaño de letra para el rótulo y la duración, con abreviaturas como «1 h». En las filas se oculta el RUN materno y el número de identificación queda visible sin prefijo.
+- El lápiz retoma la edición en la pestaña de Gestión de Camas, incluso cuando quedó pendiente un intento anterior. Si hace falta iniciar sesión, el editor se abre al completar el acceso oficial.
+
 ## 0.48.113
 
 - Lista de trabajo médico y Gestión de cuidados ordenan las camas desde R1–R4 y NEO1–NEO2 hasta H1C1–H6C2, con urgencias al final. Las interconsultas mantienen sus grupos por servicio.
