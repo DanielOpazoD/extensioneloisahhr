@@ -183,7 +183,8 @@ describe('Ficha Médico patient-context owner', () => {
     // vive en sync-bundle-cancellation-runtime.js.
     // 1525: la reparación de conexión sondea sin caché las pestañas recién abiertas (una línea
     // de cableado y su comentario); la lógica sigue en connection-repair-runtime.js.
-    expect(background.split('\n').length).toBeLessThanOrEqual(1_525);
+    // 1531: instancia y dos rutas del piloto. La lógica vive en nursing-handoff-pilot.js.
+    expect(background.split('\n').length).toBeLessThanOrEqual(1_531);
     expect(source.split('\n').length).toBeLessThanOrEqual(380);
     expect(() => factory.create({})).toThrow('Falta la dependencia resolveSession.');
   });

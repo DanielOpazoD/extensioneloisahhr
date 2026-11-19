@@ -46,6 +46,8 @@
     HOSPITALIZED_PRESCRIPTION_OPTIONS_REQUEST: 'RAYEN_HOSPITALIZED_PRESCRIPTION_OPTIONS_REQUEST',
     HOSPITALIZED_PRESCRIPTION_PRINT_REQUEST:
       'RAYEN_HOSPITALIZED_PRESCRIPTION_PRINT_REQUEST',
+    NURSING_HANDOFF_OPEN: 'RAYEN_NURSING_HANDOFF_OPEN',
+    NURSING_HANDOFF_EDITOR: 'RAYEN_NURSING_HANDOFF_EDITOR',
     WORKLIST_PATIENT_EDIT: 'RAYEN_WORKLIST_PATIENT_EDIT',
     WORKLIST_EDITOR_READY: 'RAYEN_WORKLIST_EDITOR_READY',
     WORKLIST_DOCUMENT_PRINT_REQUEST: 'RAYEN_WORKLIST_DOCUMENT_PRINT_REQUEST',
@@ -131,6 +133,8 @@
       encIds: 'array',
       printFormat: 'string?', preview: 'boolean?',
     },
+    [types.NURSING_HANDOFF_OPEN]: { encId: 'id' },
+    [types.NURSING_HANDOFF_EDITOR]: { id: 'string', action: 'string', code: 'string?', date: 'string?', shift: 'string?', since: 'string?', version: 'string?', text: 'string?' },
     [types.WORKLIST_PATIENT_EDIT]: { encId: 'id' },
     [types.WORKLIST_DOCUMENT_PRINT_REQUEST]: { encId: 'id', documentKind: 'string', expectedPatientId: 'id?' },
     [types.INDICATIONS_PRINT_REQUEST]: { encId: 'id' },

@@ -117,3 +117,11 @@ que todas las funciones se conserven.
 No incluir pacientes, cookies, contraseñas, perfiles de Chrome ni archivos `.env` en código,
 pruebas, notas o publicaciones. Se conservan las licencias y la trazabilidad de los vendors
 en `extension/vendor-lock.json` y en sus archivos originales.
+
+## Piloto local de entrega de turno
+
+`node scripts/build-nursing-handoff-pilot.mjs` crea
+`dist/eloisa-hhr-entrega-turno-pruebas.zip`. Cárgalo descomprimido en un perfil de Chrome de
+pruebas. En HHR local, genera un código en Entrega de turno de enfermería y úsalo al abrir
+la nota de un paciente de prueba desde Gestión de cuidados. El piloto usa exclusivamente
+`demo-hhr-handoff` en el emulador de Functions y el ZIP habitual conserva su configuración.

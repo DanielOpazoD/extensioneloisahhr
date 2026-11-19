@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.117
+
+- El paquete local de pruebas agrega «Entrega de turno» en Pacientes hospitalizados. Incluye edición vinculada a HHR, sincronización y confirmación de guardado.
+
 ## 0.48.116
 
 - Vuelve a funcionar la sincronización del censo cuando la pestaña de Ficha Médico se abrió antes de actualizar la extensión. Desde 0.48.115 esa pestaña conservaba su lector anterior y la comprobación decía «Gestión de Camas conectada», pero la descarga de egresos la rechazaba y HHR mostraba que faltaba abrir Gestión de Camas.
