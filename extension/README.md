@@ -268,7 +268,7 @@ sin desplazar las acciones ni la tabla al iniciar una lectura.
    datos en Rayen.
 5. El Centro HHR muestra la identidad de Ficha Médico y la disponibilidad independiente de Gestión de
    Camas. Esta última se conecta desde una ventana oficial de Rayen; su contraseña nunca pasa por la
-   extensión y, una vez capturado el token temporal, la ventana se cierra automáticamente.
+   extensión. Puedes cerrar la ventana de Camas cuando la conexión aparezca como lista.
 6. El botón de panel clínico de cada paciente sincronizado abre una vista en vivo con mundos
    Médico/Enfermería, entregas de turno, indicaciones y cuidados de enfermería.
 
@@ -325,14 +325,14 @@ El módulo **Conexiones** permite abrir `hospitalizado.rayensalud.cl` en una ven
 temporal. El usuario autentica directamente en Rayen —idealmente mediante el gestor de contraseñas de
 Chrome— y la extensión conserva en `chrome.storage.session` un registro temporal con el token de acceso
 y los metadatos mínimos de sesión necesarios para validarlo y mostrar su estado (`apiBase`,
-establecimiento, fechas de captura/verificación, expiración e identidad derivada). Si el token incluye
-expiración, el panel muestra su vigencia y advierte cuando está por vencer. La ventana creada por
-la extensión se mantiene abierta después de verificar la sesión: el contrato de sincronización exige
-un puente vivo tanto en Gestión de Camas como en Ficha Médico. Cerrarla interrumpe esa condición,
-aunque todavía exista un token temporal. No se declara una conexión sana solo porque el token siga
-almacenado. **Olvidar** elimina la sesión de la extensión.
+establecimiento, fechas de captura/verificación, expiración e identidad derivada). Con ambas fuentes
+conectadas, la extensión vincula la sesión verificada de Camas al profesional, rol y establecimiento
+activos en Ficha Médico. Puedes cerrar Camas después de que esté conectada. HHR valida la sesión
+por API antes de sincronizar y usa la descarga de egresos del mismo establecimiento. Si Rayen
+rechaza la sesión o cambia el acceso activo de Ficha, el estado indica que hay que reconectar.
+**Olvidar** elimina la sesión temporal de la extensión.
 
-La comprobación activa mantiene el chequeo de expiración y de respuesta de las pestañas; no renueva
+La comprobación activa verifica la expiración y la respuesta de las fuentes; no renueva
 credenciales ni prolonga artificialmente una sesión vencida. La recuperación de capacidades para
 leer evidencia clínica reintenta una comprobación transitoria fallida y usa el presupuesto de
 sincronización existente. Una respuesta ausente no equivale a «extensión incompatible».
@@ -344,7 +344,7 @@ El estado de conexión se sostiene sobre seis reglas. Cambiarlas rompe la estabi
 `src/tests/rayen-import/rayenConnectionTimingContract.test.ts` fija la relación entre los tiempos
 (no sus valores exactos, que se pueden ajustar mientras las desigualdades se cumplan).
 
-1. **Una pestaña sana por fuente basta.** Las pestañas que coinciden con el patrón se sondean
+1. **Una pestaña sana por fuente basta durante la conexión inicial.** Las pestañas que coinciden con el patrón se sondean
    **en paralelo** y gana la primera lista por orden de preferencia (activa, luego la más reciente).
    No importa cuántas pestañas de Ficha Médico o de Gestión de Camas estén abiertas: la espera total
    es un único tiempo de espera y no uno por pestaña, de modo que una pestaña lenta o colgada no
@@ -382,9 +382,8 @@ MAIN negocian un protocolo independiente de la versión del paquete. Así Ficha 
 Camas y HHR recuperan la comunicación sin recargar ni duplicar interceptores. Un cambio futuro que
 rompa el protocolo seguirá fallando de forma cerrada y pedirá abrir un documento nuevo.
 
-**Límite deliberado:** se sigue exigiendo al menos una pestaña viva por fuente. Un token guardado sin
-página que lo respalde no prueba que Rayen siga aceptando la sesión, y mostrarlo como «conectado»
-engañaría justo antes de que la sincronización falle.
+La captura clínica sigue usando una pestaña activa de Ficha Médico. Los egresos de Camas se descargan
+en segundo plano con la sesión de Camas previamente verificada y vinculada a ese acceso de Ficha.
 
 Cuando la vista tiene un episodio activo, **Recetas** abre primero **Paciente actual**. Desde listas,
 paneles u otras rutas sin episodio abre directamente **Hospitalizados** y deja deshabilitada la pestaña

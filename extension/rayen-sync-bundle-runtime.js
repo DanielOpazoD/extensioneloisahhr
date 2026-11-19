@@ -91,6 +91,11 @@
     const after = await context.measuredRead('captureHealthAfter', () => context.readHealth({ force: true }));
     if (context.isCancelled()) return { error: 'Sincronización cancelada desde HHR.', cancelled: true };
     if (after?.fichaMedico?.status !== 'ready') return { error: 'Una fuente se desconectó durante la captura. ' + (after?.fichaMedico?.message || 'Ficha Médico no está conectada.') }; // GC's download re-checked its own session; a sleeping GC tab failed 4/102 runs here.
+    const finalFichaScope = root.HhrGestionCamasSession?.fichaScopeOf(after.fichaMedico);
+    if ((context.initialFichaScope && context.initialFichaScope !== finalFichaScope) ||
+        (after.gestionCamas?.usingBackgroundSession && !context.initialFichaScope)) {
+      return { error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' };
+    }
     const completed = context.now();
     const temporalError = root.HhrCensusSyncHorizonRuntime?.validateCaptureBoundary(context.started, completed);
     if (temporalError) return { error: temporalError };
@@ -140,6 +145,7 @@
       if (readResult.error) return { ...readResult, ...(captureRetries ? { captureRetries } : {}) };
       return withRetries(await completeCapture({
         ...readResult, started, startedAt, dateStart, dateEnd, idFactory,
+        initialFichaScope: root.HhrGestionCamasSession?.fichaScopeOf(before.fichaMedico),
         captureTimingsMs, captureRetries, now, measuredRead, readHealth, isCancelled,
       }));
     } catch (error) {

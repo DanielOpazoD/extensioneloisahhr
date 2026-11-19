@@ -579,6 +579,7 @@
           ...describeSessionExpiry(identity, sessionReady),
           identity: sessionReady
             ? {
+                facilityId: identity.facilityId,
                 fullName: identity.fullName,
                 role: identity.role,
                 practitionerId: identity.practitionerId,

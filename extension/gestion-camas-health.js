@@ -1,4 +1,4 @@
-/** Live-tab readiness and session health gate for Gestión de Camas. */
+/** Bridge and background session health for Gestión de Camas. */
 (function (root) {
   'use strict';
 
@@ -14,11 +14,14 @@
       timeoutMessage: 'La pestaña de Gestión de Camas no respondió a la comprobación.',
     });
 
-    return async (runtimeGeneration, targetTabIds, { verifySessions = false } = {}) => {
+    return async (runtimeGeneration, targetTabIds, { verifySessions = false, fichaHealth } = {}) => {
       const readyTabIds = [];
       const matchingTabs = extensionHealth.orderTabs(
         await extensionHealth.resolveTabs(chromeApi.tabs, matchPattern, targetTabIds)
       );
+      const readBackground = () => Array.isArray(targetTabIds) ? null
+        : readSessionHealth({ matchingTabs, verifySessions, fichaHealth, background: true });
+      if (!Array.isArray(targetTabIds) && !matchingTabs.length) return readBackground();
       const tabHealth = await extensionHealth.probeTabs({
         tabs: matchingTabs,
         sendMessage: async (tabId, message) => {
@@ -30,15 +33,20 @@
         staleMessage: 'Abre una pestaña nueva de Gestión de Camas para activar la extensión vigente.',
         healthMessage: { type: 'RAYEN_EXTENSION_HEALTH_PING', runtimeGeneration },
       });
-      if (tabHealth.status !== 'ready') return tabHealth;
+      if (tabHealth.status !== 'ready') return await readBackground() || tabHealth;
       const status = await readSessionHealth({
         matchingTabs,
         verifySessions,
+        fichaHealth,
         liveOptions: {
           verificationTimeoutMs: healthProbeTimeoutMs, tabTimeoutMs: healthProbeTimeoutMs,
           targetTabIds, confirmedTabIds: readyTabIds,
         },
       });
+      if (status.status !== 'ready') {
+        const background = await readBackground();
+        if (background) return background;
+      }
       return {
         ...status,
         bridgeVersion: tabHealth.bridgeVersion,

@@ -31,7 +31,7 @@
       fetchWithTimeout,
       backendRequestTimeoutMs,
       tabMessageTimeoutMs,
-      healthProbeTimeoutMs, recoverMissingReceiver,
+      healthProbeTimeoutMs, recoverMissingReceiver, readFichaHealth,
     } = dependencies || {};
 
     if (
@@ -147,6 +147,9 @@
         if (sameGestionCamasSession(current, record)) {
           record.verificationEpoch = current.verificationEpoch;
           record.lastVerifiedAt = current.lastVerifiedAt;
+        }
+        if (current?.token === record.token && current.apiBase === record.apiBase && current.facId === record.facId) {
+          record.fichaScope = current.fichaScope;
         }
         await chromeApi.storage.session.set({ [session.SESSION_STORAGE_KEY]: record });
         return record;
@@ -304,7 +307,7 @@
       return { error: lastError, reason: lastReason };
     };
 
-    const resolveGestionCamasSession = async ({ allowLive = true } = {}) => {
+    const readVerifiedGestionCamasSession = async ({ allowLive = true } = {}) => {
       let record = await readGestionCamasSession();
       if (!session.isUsable(record)) {
         if (record) await clearGestionCamasSession(record);
@@ -322,6 +325,25 @@
         if (live.record) return live;
       }
       return { error: verified.error || 'No se pudo comprobar la sesión de Gestión de Camas.' };
+    };
+
+    const resolveGestionCamasSession = async options => {
+      const result = await readVerifiedGestionCamasSession(options);
+      const { record } = result;
+      if (!record) return result;
+      const sourceAlive = await isGestionCamasTabOpen(record.sourceTabId);
+      const scope = session.fichaScopeOf(await readFichaHealth());
+      const current = await readGestionCamasSession();
+      if (!sameGestionCamasSession(current, record) || !session.isUsable(current)) {
+        return { error: 'La sesión de Gestión de Camas cambió durante la lectura.' };
+      }
+      const scopeMismatch = current.fichaScope
+        ? scope !== current.fichaScope
+        : !sourceAlive || (scope && !scope.startsWith(current.facId + ':'));
+      if (scopeMismatch) {
+        return { error: 'Vuelve a conectar Gestión de Camas con el acceso actual de Ficha Médico.' };
+      }
+      return { record: current };
     };
 
     const classifyGestionCamasRejection = async (response, record) => {
@@ -361,6 +383,8 @@
       clearUnusableSession: clearUnusableGestionCamasSession,
       requestLiveSession: requestLiveGestionCamasSession,
       verifySession: verifyGestionCamasSession,
+      bindFichaScope: (record, fichaScope) => updateVerification(record, current =>
+        current.fichaScope ? current : { ...current, fichaScope }),
     });
 
     const setGestionCamasConnectionAttempt = async (
