@@ -33,16 +33,17 @@
         }
         const detail = cells.get(['stay', 'lastNovelty', '"lastNursePublishDatetime"'][source]);
         if (detail?.props) cells.set('activity', jsx(detail.type, { ...detail.props,
-          children: [jsx('small', { className: 'hhr-activity-label', children: activity[source] }, 'label'), detail.props.children] }));
+          children: [jsx('small', { className: 'hhr-activity-label', children: activity[source] }, 'label'), ' ', detail.props.children] }));
         children.push({ row, cells, key: valid ? episode : source + '-' + position });
       }
     }
     const columns = columnIds.map(id => headers.get(id)).filter(Boolean);
-    return { columns, listLenght: children.length, children: children.map(({ row, cells, key }) =>
+    const rows = children.map(({ row, cells, key }) =>
       jsx(row.type, { ...row.props, children: columns.map(({ id }) => {
         const cell = cells.get(id);
         return cell?.props ? jsx(cell.type, { ...cell.props }, id) : jsx('td', {}, id);
-      }) }, key)) };
+      }) }, key));
+    return { columns, listLenght: rows.length, children: globalThis.HhrWorklistPrintColumn.orderRows(rows) };
   }
 
   function create(require, getPage) {
