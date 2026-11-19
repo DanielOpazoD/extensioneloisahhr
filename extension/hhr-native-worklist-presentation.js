@@ -16,6 +16,17 @@
   const filters = '.MuiPaper-root:has(#search-encounter-list)';
   // The native family-information button uses the same Announcement glyph for pending and idle requests.
   const announcementPath = 'M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m-7 9h-2V5h2zm0 4h-2v-2h2z';
+  const drawerItems = [
+    ['worklist', /^lista de trabajo médico$/i, 'M8 5H5v16h14V5h-3 M9 3h6v4H9z M8 12h8m-8 4h6'],
+    ['care', /^gestión de cuidados$/i, 'M12 20s-8-5-8-11a4.5 4.5 0 018-3 4.5 4.5 0 018 3c0 6-8 11-8 11z M9 12h6m-3-3v6'],
+    ['plan', /^ejecución (?:del? )?plan de cuidados$/i, 'M3 6l2 2 3-4m2 3h11M3 14l2 2 3-4m2 3h11'],
+    ['reports', /^informes$/i, 'M5 3h10l4 4v14H5z M14 3v5h5M8 16v-3m4 3v-6m4 6v-4'],
+    ['beds', /^gestión de camas$/i, 'M3 4v16m18-8v8M3 16h18v-4H9v4m1-8h7a4 4 0 014 4M4 9h4v3H4z'],
+  ];
+  const drawerIcons = drawerItems.map(([key, , path]) => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="' + path + '"/></svg>';
+    return '[data-hhr-menu-icon="' + key + '"]::before { mask-image:url("data:image/svg+xml,' + encodeURIComponent(svg) + '"); }';
+  }).join('\n');
   const css = `
     @media screen {
       .MuiBox-root:has(> .MuiPaper-root #search-encounter-list):has(> [role="tabpanel"]) {
@@ -36,6 +47,14 @@
       .hhr-location-service { font-weight:400; color:#526561; }
       .hhr-location-bed { font-weight:700; }
       table[${marked}] td:nth-child(2) .MuiTypography-root { overflow-wrap:anywhere; }
+      td[data-hhr-worklist-doctor] { width:136px; max-width:136px; }
+      td[data-hhr-worklist-doctor] :is(.MuiFormControl-root,select) { box-sizing:border-box; width:100%; min-width:0; max-width:136px; }
+      td[data-hhr-worklist-doctor] .MuiSelect-select { overflow:hidden; text-overflow:ellipsis; }
+      table[${marked}] [data-hhr-discharge-chip] {
+        background:#e8f3ee; color:#225a45; border:1px solid #b9d6c8; border-radius:5px;
+        min-height:19px; height:auto; width:fit-content; font-size:11px; font-weight:600;
+      }
+      [data-hhr-discharge-chip] .MuiChip-label { padding-inline:6px; }
       td[data-hhr-worklist-doctor] .MuiOutlinedInput-root:not(:hover,:focus-within) fieldset { border-color:transparent; }
       td[data-hhr-worklist-doctor] .MuiFormControl-root:not(:focus-within) .MuiInputLabel-shrink { opacity:0; }
       td[data-hhr-worklist-doctor] select:not(:hover,:focus) { border-color:transparent; background-color:transparent; }
@@ -44,7 +63,15 @@
         inline-size:25px; block-size:25px; border:0; border-radius:4px; padding:2px; background:transparent; color:#166963; cursor:pointer; }
       tr:is(:hover,:focus-within) button[data-hhr-edit-episode], button[data-hhr-edit-episode]:focus-visible { opacity:1; }
       @media (hover:none) { button[data-hhr-edit-episode] { opacity:1; } }
-      a[data-hhr-bed-link] { display:flex; align-items:center; gap:8px; padding:8px 14px; color:inherit; font:inherit; text-decoration:none; }
+      [data-hhr-menu-icon] { display:flex; align-items:center; column-gap:9px; }
+      [data-hhr-menu-icon]::before {
+        content:""; flex:none; width:17px; height:17px; background:currentColor;
+        mask-size:contain; mask-repeat:no-repeat; mask-position:center;
+      }
+      ${drawerIcons}
+      .MuiDrawer-paper:has(> a[data-hhr-bed-link]), .MuiDrawer-paperAnchorLeft:has(> a[data-hhr-bed-link]) { display:flex; flex-direction:column; }
+      a[data-hhr-bed-link] { flex:none; margin-block-start:auto; padding:12px 16px; border-top:1px solid #dce7e4;
+        background:white; color:#235f59; font:inherit; text-decoration:none; }
       a[data-hhr-bed-link]:is(:hover,:focus-visible) { background:#e7f4f1; }
       /* Both routes keep the filters and tab panels as siblings, including while loading. */
       ${filters}:has(~ [role="tabpanel"]), ${filters} ~ [role="tabpanel"] {
@@ -56,7 +83,7 @@
       }
     }
     .hhr-hospitalized-panel { box-sizing:border-box; background:white; border-radius:12px; padding:10px 12px; }
-    .hhr-hospitalized-panel .hhr-activity-label { display:block; color:#50625e; }
+    .hhr-hospitalized-panel .hhr-activity-label { white-space:nowrap; color:#50625e; }
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }
     td.hhr-worklist-documents { white-space:nowrap; text-align:center; vertical-align:middle; border-bottom:1px solid #ddd; }
@@ -93,23 +120,23 @@
     };
     const refresh = pathname => {
       for (const drawer of document.querySelectorAll('.MuiDrawer-paperAnchorLeft, .MuiDrawer-anchorLeft .MuiDrawer-paper')) {
-        if (drawer.querySelector('[data-hhr-bed-link]')) continue;
-        const nav = [...drawer.querySelectorAll('a,button,[role="button"]')].find(item =>
-          /^(Gestión de cuidados|Lista de trabajo médico)$/i.test(item.textContent.trim()));
-        if (!nav) continue;
+        let hasWorklist = false;
+        for (const item of drawer.querySelectorAll('a,button,[role="button"]')) {
+          const label = item.textContent.trim().replace(/\s+/g, ' ');
+          const key = !item.querySelector('a,button,[role="button"]') && drawerItems.find(([, pattern]) => pattern.test(label))?.[0];
+          if (key === 'care' || key === 'worklist') hasWorklist = true;
+          if (key && item.dataset.hhrMenuIcon !== key) item.dataset.hhrMenuIcon = key;
+          if (!key && item.dataset.hhrMenuIcon) delete item.dataset.hhrMenuIcon;
+        }
+        if (!hasWorklist || drawer.querySelector('[data-hhr-bed-link]')) continue;
         const link = document.createElement('a');
         link.dataset.hhrBedLink = '';
+        link.dataset.hhrMenuIcon = 'beds';
         link.href = 'https://hospitalizado.rayensalud.cl/#/bed';
         link.target = '_blank';
         link.rel = 'noopener';
-        link.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4v16m18-8v8M3 16h18v-4H9v4m1-8h7a4 4 0 014 4M4 9h4v3H4z"/></svg>Gestión de Camas';
-        const item = nav.closest('li') || nav;
-        if (item.parentElement.matches('ul,ol')) {
-          const wrapper = document.createElement('li');
-          wrapper.dataset.hhrBedItem = '';
-          wrapper.append(link);
-          item.parentElement.append(wrapper);
-        } else item.parentElement.append(link);
+        link.textContent = 'Gestión de Camas';
+        drawer.append(link);
       }
       const heading = headings[pathname.replace(/\/$/, '')];
       if (!heading) {
@@ -138,6 +165,7 @@
       dispose() {
         clear();
         document.querySelectorAll('[data-hhr-bed-item],[data-hhr-bed-link]').forEach(node => node.remove());
+        document.querySelectorAll('[data-hhr-menu-icon]').forEach(node => node.removeAttribute('data-hhr-menu-icon'));
         style.remove();
       },
     });

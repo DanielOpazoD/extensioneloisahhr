@@ -221,7 +221,11 @@ async function verifyWorklistWidth(page) {
     } else {
       assert.deepEqual(bounds.table, bounds.panel);
     }
-    if (width === 1800) assert.ok(left >= 70 && left <= 125, 'Wide worklists need moderate side margins');
+    if (width === 1800) {
+      assert.ok(left >= 70 && left <= 125, 'Wide worklists need moderate side margins');
+      const doctor = page.locator('td[data-hhr-worklist-doctor]').first();
+      assert.ok((await doctor.getByRole('combobox').boundingBox()).width <= 137, 'Compact assignment selector');
+    }
     else assert.ok(Math.abs(left) < 1, 'Narrow worklists need all the available width');
   }
 }

@@ -28,6 +28,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   const Tab = ({ label, value, select }) => jsx('button', { onClick: () => select(null,value), children: label });
   const Tabs = ({ children, onChange }) => jsx('nav', { children: children.map(child => React.cloneElement(child, {select:onChange})) });
   const keys = ['incomeEncounterList','noveltyEncounterList','uneventfulEncounterList','recoveredEncounterList'];
+  const beds = { 20: 'R1', 21: 'B1UEA', 22: 'H6C2', 23: 'NEO 1', 30: 'H1C1' };
   const lists = [[20,21], [21,22], [22,23], [30]];
   const mocks = { 12115:React, 95155:runtime, 65672:{A:Table}, 26466:{A:Tab}, 68175:{A:Tabs}, 575:{A:()=>()=>{}},
     20063:{useSearchParams:()=>new URLSearchParams(activeUrl.search), useRouter:()=>({replace: next=>setUrl(new URL(next,location.href))})} };
@@ -39,15 +40,18 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
     const Panel = ({children})=>children;
     function Rows(props) {
       const { index } = props;
-      const columns = ['location','patient','ges','diagnosisAdmission',...(index === 0 ? ['stay'] : ['crd']), 'actions','link'].map(id=>({id,label:id}));
+      const columns = ['location','patient','ges','diagnosisAdmission',...(index === 0 ? ['stay'] : ['crd', index === 1 ? 'lastNovelty' : '"lastNursePublishDatetime"']), 'actions','link'].map(id=>({id,label:id}));
       const visible = props[keys[index]].filter(id=>!filter || String(id).includes(filter)).slice(0,10);
       return localJsx.jsx(NativeTable, { columns, listLenght:visible.length, children:visible.map(id =>
         jsx('tr', {children: columns.map(({id: column})=>jsx('td', {children: column === 'actions' ? jsx('button', {
           onClick:()=>action(index,id), children:'Acción '+id
-        }) : column === 'patient' ? jsx('a', {href:path+'/'+id, children:[jsx('strong', {children:'Paciente '+id},'name'),
+        }) : column === 'location' ? ['AMQI', jsx('br', {}, 'a'), 'Sala', jsx('br', {}, 'b'), beds[id]]
+          : column === 'lastNovelty' ? ['Hace 0 horas ', ' por Profesional de prueba']
+          : column === '"lastNursePublishDatetime"' ? 'Hace 5 horas'
+          : column === 'patient' ? jsx('a', {href:path+'/'+id, children:[jsx('strong', {children:'Paciente '+id},'name'),
           jsx(Chip,{size:'small',label:'Pendiente'},'status'), jsx(Chip,{size:'small',label:'Alta médica'},'discharge')]}) : column},column))},id)) });
     }
-    function Chip({label}) {return label;}
+    function Chip({label, ...props}) {return jsx('span', {...props, children:label});}
     function Loader({index}) { return localJsx.jsx(Rows, {index,[keys[index]]:lists[index]}); }
     exports.default = function Page() {
       const index = Number(nav.useSearchParams().get('tab'));
@@ -67,9 +71,12 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   const rows = () => [...document.querySelectorAll('tr')].map(tr=>tr.querySelector('a').getAttribute('href').split('/').pop());
   expect([...document.querySelectorAll('nav button')].map(b=>b.textContent)).toEqual(['Pacientes hospitalizados','Egresos']);
   expect(document.querySelectorAll('table')).toHaveLength(1);
-  expect(rows()).toEqual(['21','22','23','20']);
+  expect(rows()).toEqual(['20','23','22','21']);
   expect(document.body.textContent).not.toContain('Pendiente');
-  expect(document.body.textContent).toContain('Alta médica');
+  expect(document.querySelector('[data-hhr-discharge-chip]')?.textContent).toBe('Alta médica');
+  expect(document.body.textContent).toContain('Última novedad 0 horas');
+  expect(document.body.textContent).toContain('Última atención 5 horas');
+  expect(document.body.textContent).not.toMatch(/Hace |por Profesional/);
   const click = text => [...document.querySelectorAll('button')].find(b=>b.textContent===text).click();
   await act(()=>click('Acción 22'));
   expect(action).toHaveBeenCalledWith(1,22);
@@ -79,5 +86,26 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   await act(()=>click('Egresos'));
   expect(rows()).toEqual(['30']);
   await act(()=>click('Pacientes hospitalizados'));
-  expect(rows()).toEqual(['21','22','23','20']);
+  expect(rows()).toEqual(['20','23','22','21']);
+});
+
+it('ordena las camas visibles y mantiene ambos episodios cuando comparten ubicación', () => {
+  Function(readFileSync('extension/hhr-worklist-print-column.js', 'utf8'))();
+  const { jsx } = runtime;
+  const codes = ['R1', 'R2', 'R3', 'R4', 'Neo 1', 'NEO2', 'H1C1', 'H1C2',
+    'H2C1', 'H2C2', 'H3C1', 'H3C2', 'H4C1', 'H4C2', 'H5C1', 'H5C2', 'H6C1', 'H6C2',
+    'Sin cama', 'B2UEA', 'B10UEA'];
+  const makeRow = (bed, id) => jsx('tr', { children: [
+    jsx('td', { children: ['AMQI', jsx('br', {}), 'Sala', jsx('br', {}), bed] }),
+    jsx('td', { children: jsx('a', { href: '/dashboard/encounter-list/' + id }) }),
+    jsx('td', { children: 'GES' }),
+  ] }, id);
+  const children = codes.map((bed, i) => makeRow(bed, 100 + i)).reverse();
+  children.unshift(makeRow('R2', 999));
+  const ordered = globalThis.HhrWorklistPrintColumn.adapt(jsx, {
+    children, listLenght: children.length, columns: ['location', 'patient', 'ges'].map(id => ({ id })),
+  }, '/dashboard/encounter-list');
+  const expected = codes.map((_, i) => String(100 + i));
+  expected.splice(1, 0, '999');
+  expect(ordered.children.map(row => row.props.children[2].props['data-hhr-worklist-episode'])).toEqual(expected);
 });

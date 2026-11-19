@@ -34,6 +34,25 @@
     return jsx(element.type, { ...element.props, children }, element.key ?? undefined);
   }
 
+  // Rows sharing a bed retain their native order and episode keys.
+  function bedOrder(service, bed) {
+    const code = String(bed ?? '').toUpperCase().replace(/[\s_-]+/g, '');
+    const box = /^(?:B(\d+)UEA|BOX(\d+))$/.exec(code);
+    if (box) return 20 + Number(box[1] || box[2]);
+    if (/urgencia|\bUEA\b/i.test(String(service))) return Number.MAX_SAFE_INTEGER;
+    const recovery = /^R([1-4])$/.exec(code);
+    if (recovery) return Number(recovery[1]);
+    const neo = /^N(?:EO)?([12])$/.exec(code);
+    if (neo) return 4 + Number(neo[1]);
+    const ward = /^H([1-6])C([12])$/.exec(code);
+    return ward ? 6 + (Number(ward[1]) - 1) * 2 + Number(ward[2]) : 19;
+  }
+
+  function orderRows(rows) {
+    const rank = row => row.props.children[0]?.props?.['data-hhr-bed-order'] ?? 19;
+    return rows.sort((a, b) => rank(a) - rank(b));
+  }
+
   function compactLocation(jsx, cell) {
     const parts = cell.props.children;
     if (!Array.isArray(parts)) return cell;
@@ -44,10 +63,10 @@
       service = parts[0].props.children;
       bed = parts[2].props.children;
     } else return cell;
-    return withChildren(jsx, cell, [
+    return jsx(cell.type, { ...cell.props, 'data-hhr-bed-order': bedOrder(service, bed), children: [
       jsx('span', { className: 'hhr-location-service', children: service }, 'service'),
       jsx('strong', { className: 'hhr-location-bed', children: bed }, 'bed'),
-    ]);
+    ] }, cell.key ?? undefined);
   }
 
   function compactDiagnosis(jsx, cell) {
@@ -60,7 +79,15 @@
     return withChildren(jsx, cell, typeof content === 'string' ? cleaned : withChildren(jsx, content, cleaned));
   }
 
-  function patientCell(jsx, cell, editId) {
+  function compactActivity(jsx, cell) {
+    const children = cell?.props?.children;
+    const value = Array.isArray(children) && children.every(part => typeof part === 'string')
+      ? children.join('') : children;
+    if (typeof value !== 'string' || !/^\s*Hace\s+/i.test(value)) return cell;
+    return withChildren(jsx, cell, value.trim().replace(/^Hace\s+/i, '').split(/\s+por\s+/i)[0].trim());
+  }
+
+  function patientCell(jsx, cell, nursing, editId) {
     function present(node) {
       if (Array.isArray(node)) {
         const next = node.map(present);
@@ -68,9 +95,12 @@
       }
       if (!node?.props) return node;
       if (node.props.size === 'small' && node.props.label?.toString().trim().toLowerCase() === 'pendiente') return null;
+      if (nursing && node.props.label === 'Alta médica' && node.props.size === 'small') {
+        return jsx(node.type, { ...node.props, 'data-hhr-discharge-chip': '' }, node.key ?? undefined);
+      }
       const children = present(node.props.children);
       const current = children === node.props.children ? node : withChildren(jsx, node, children);
-      if (!editId || !node.props.href || node.props.component === 'div') return current;
+      if (!nursing || !editId || !node.props.href || node.props.component === 'div') return current;
       return jsx('span', { className: 'hhr-patient-name-line', children: [current,
         jsx('button', { type: 'button', 'data-hhr-edit-episode': editId, title: 'Modificar paciente en Gestión de Camas',
           'aria-label': 'Modificar paciente en Gestión de Camas', children: jsx('svg', { viewBox: '0 0 24 24',
@@ -93,17 +123,25 @@
     const discharge = route === '/dashboard/encounter-list' && columns.some(col => col.id === 'medicalDischargeDatetime');
     const diagnosis = columns.findIndex(column => column.id === 'diagnosisAdmission');
     const doctor = columns.findIndex(column => ['assignment', 'assignesDoctor'].includes(column.id));
+    const nursing = route.endsWith('-nurse');
+    const activity = nursing ? columns.findIndex(col => col.id === 'lastNovelty' ||
+      col.id === '"lastNursePublishDatetime"' || /última atención/i.test(col.label)) : -1;
     const nextColumns = columns.slice();
+    if (doctor >= 0) {
+      const column = nextColumns[doctor];
+      nextColumns[doctor] = { ...column, width: '136px', style: { ...column.style, width: '136px' } };
+    }
     nextColumns.splice(index, referral ? 0 : 1, { id: 'hhrPrint', label: 'Imprimir', style: { width: '1%' } });
-    return { ...props, columns: nextColumns, children: rows.map(row => {
+    const adaptedRows = rows.map(row => {
       const cells = row.props.children.slice();
       const { encId, patientId } = encounterForRow(cells, discharge, route);
       cells[0] = compactLocation(jsx, cells[0]);
-      cells[1] = patientCell(jsx, cells[1], route.endsWith('-nurse') && encId);
+      cells[1] = patientCell(jsx, cells[1], nursing, encId);
+      if (activity >= 0) cells[activity] = compactActivity(jsx, cells[activity]);
       if (diagnosis >= 0) cells[diagnosis] = compactDiagnosis(jsx, cells[diagnosis]);
       if (cells[doctor]?.props) {
         const cell = cells[doctor];
-        cells[doctor] = jsx(cell.type, { ...cell.props, 'data-hhr-worklist-doctor': '' }, cell.key ?? undefined);
+        cells[doctor] = jsx(cell.type, { ...cell.props, width: '136px', 'data-hhr-worklist-doctor': '' }, cell.key ?? undefined);
       }
       const buttons = documents.map(([kind, label, path]) => jsx('button', {
         type: 'button', 'data-hhr-print-document': kind, disabled: !encId,
@@ -115,7 +153,8 @@
       cells.splice(index, referral ? 0 : 1, jsx('td', { className: 'hhr-worklist-documents',
         'data-hhr-worklist-episode': encId, 'data-hhr-worklist-patient': patientId, children: buttons }, 'hhrPrint'));
       return jsx(row.type, { ...row.props, children: cells }, row.key ?? undefined);
-    }) };
+    });
+    return { ...props, columns: nextColumns, children: orderRows(adaptedRows) };
   };
-  globalThis.HhrWorklistPrintColumn = Object.freeze({ adapt });
+  globalThis.HhrWorklistPrintColumn = Object.freeze({ adapt, orderRows });
 })();

@@ -13,7 +13,9 @@ export async function verifyWorklistOverlays(page, total) {
     drawer.classList.add('MuiDrawer-anchorLeft');
     const paper = document.createElement('div');
     paper.className = 'MuiDrawer-paper';
-    paper.innerHTML = '<ul><li><button>Gestión de cuidados</button></li></ul>';
+    paper.style.height = '420px';
+    paper.innerHTML = '<ul>' + ['Lista de trabajo médico', 'Gestión de cuidados', 'Ejecución plan de cuidados', 'Informes']
+      .map(text => '<li><button>' + text + '</button></li>').join('') + '</ul>';
     drawer.append(paper);
     const menu = document.createElement('div');
     menu.setAttribute('role', 'listbox');
@@ -33,7 +35,12 @@ export async function verifyWorklistOverlays(page, total) {
     document.body.style.overflow = 'hidden';
     await frame();
     samples.drawer = sample();
-    const bedLink = paper.querySelector('a[data-hhr-bed-link]')?.href;
+    const beds = paper.querySelector('a[data-hhr-bed-link]');
+    const bedLink = beds?.href;
+    const footerGap = paper.getBoundingClientRect().bottom - beds.getBoundingClientRect().bottom;
+    const icons = [...paper.querySelectorAll('[data-hhr-menu-icon]')].map(item => ({
+      key: item.dataset.hhrMenuIcon, visible: getComputedStyle(item, '::before').maskImage !== 'none',
+    }));
 
     // The results may stay painted while the responsive tabs are unmounted.
     const anchor = document.createComment('tabs');
@@ -79,7 +86,7 @@ export async function verifyWorklistOverlays(page, total) {
     title.data = original;
     await frame();
     samples.refreshed = sample();
-    return { before, samples, menuStyled, partial, bedLink };
+    return { before, samples, menuStyled, partial, bedLink, footerGap, icons };
   });
   assert.equal(result.before.heights.length, total);
   assert.equal(result.before.footer, 'none');
@@ -89,6 +96,9 @@ export async function verifyWorklistOverlays(page, total) {
   assert.deepEqual(result.partial.heights, result.before.heights);
   assert.notEqual(result.partial.footer, 'none');
   assert.equal(result.menuStyled, false);
+  assert.ok(Math.abs(result.footerGap) < 2, 'Gestión de Camas at the bottom of the drawer');
+  assert.deepEqual(result.icons.map(icon => icon.key), ['worklist', 'care', 'plan', 'reports', 'beds']);
+  assert.ok(result.icons.every(icon => icon.visible));
   assert.equal(result.bedLink, 'https://hospitalizado.rayensalud.cl/#/bed');
   const viewport = page.viewportSize();
   await page.setViewportSize({ ...viewport, width: 600 });
