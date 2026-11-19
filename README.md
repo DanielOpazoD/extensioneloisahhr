@@ -122,6 +122,6 @@ en `extension/vendor-lock.json` y en sus archivos originales.
 
 `node scripts/build-nursing-handoff-pilot.mjs` crea
 `dist/eloisa-hhr-entrega-turno-pruebas.zip`. Cárgalo descomprimido en un perfil de Chrome de
-pruebas. En HHR local, genera un código en Entrega de turno de enfermería y úsalo al abrir
-la nota de un paciente de prueba desde Gestión de cuidados. El piloto usa exclusivamente
-`demo-hhr-handoff` en el emulador de Functions y el ZIP habitual conserva su configuración.
+pruebas. El flujo sintético inicia una sesión de Eloísa y permite abrir y guardar la
+entrega directamente desde Gestión de cuidados. El piloto usa exclusivamente
+`demo-hhr-handoff` en el emulador de Functions. El ZIP habitual conserva su configuración.

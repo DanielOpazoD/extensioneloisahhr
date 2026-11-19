@@ -2,7 +2,6 @@
   'use strict';
   const id = location.hash.slice(1);
   const byId = id => document.getElementById(id);
-  const pair = byId('pair');
   const edit = byId('edit');
   const note = byId('note');
   const conflict = byId('conflict');
@@ -12,7 +11,7 @@
   let pendingVersion;
   let remote;
   let saving = false;
-  let linked = false;
+  let available = false;
   let polling = 0;
   const dirty = () => base && note.value !== base.text.replace(/\r\n?/g, '\n');
   const show = (text, tone = '') => {
@@ -24,8 +23,7 @@
   }).catch(() => ({ error: 'Se perdió la conexión con la extensión.', code: 'UNAVAILABLE' }));
 
   const updateButtons = () => {
-    save.disabled = saving || !linked || Boolean(remote) || !dirty();
-    byId('disconnect').disabled = saving || !linked;
+    save.disabled = saving || !available || Boolean(remote) || !dirty();
     note.readOnly = saving;
   };
   const accept = (value, replaceText) => {
@@ -39,18 +37,13 @@
     updateButtons();
   };
   const raise = result => {
-    if (result.code === 'UNAUTHENTICATED' || result.code === 'PERMISSION_DENIED') {
+    if (['UNAUTHENTICATED', 'PERMISSION_DENIED', 'SOURCE_SESSION_CHANGED'].includes(result.code)) {
+      available = false;
       edit.hidden = conflict.hidden = true;
-      pair.hidden = false;
-      linked = false;
-    }
-    if (result.code === 'FAILED_PRECONDITION') linked = false;
-    if (result.code === 'SOURCE_SESSION_CHANGED') {
-      linked = false;
-      edit.hidden = conflict.hidden = pair.hidden = true;
       byId('patient').textContent = '';
       byId('slot').textContent = '';
     }
+    if (result.code === 'FAILED_PRECONDITION') available = false;
     show(result.error, 'error');
     updateButtons();
   };
@@ -63,14 +56,14 @@
   };
 
   async function follow(generation, wait = false) {
-    if (generation !== polling || !linked) return;
+    if (generation !== polling || !available) return;
     const result = await send('read', base && {
       date: base.date, shift: base.shift, since: wait ? pendingVersion : undefined,
     });
     if (generation !== polling) return;
     if (result.error) {
       raise(result);
-      if (linked) setTimeout(() => void follow(generation), 2000);
+      if (available) setTimeout(() => void follow(generation), 2000);
       return;
     }
     if (pendingVersion !== result.version) {
@@ -88,42 +81,6 @@
     void follow(generation, true);
   }
 
-  function start() {
-    linked = true;
-    pair.hidden = true;
-    show('Cargando entrega…');
-    void follow(++polling);
-  }
-  pair.addEventListener('submit', async event => {
-    event.preventDefault();
-    const code = byId('code');
-    const button = pair.querySelector('button');
-    button.disabled = true;
-    try {
-      const result = await send('connect', { code: code.value });
-      if (result.error) raise(result);
-      else {
-        code.value = '';
-        start();
-      }
-    } finally { button.disabled = false; }
-  });
-  byId('disconnect').addEventListener('click', async () => {
-    if (dirty()) {
-      show('Guarda tu edición antes de desvincular.', 'error');
-      return;
-    }
-    const result = await send('disconnect');
-    if (result.error && result.code !== 'UNAUTHENTICATED') return raise(result);
-    ++polling;
-    linked = false;
-    base = remote = pendingVersion = undefined;
-    note.value = '';
-    byId('slot').textContent = '';
-    edit.hidden = conflict.hidden = true;
-    pair.hidden = false;
-    show('');
-  });
   note.addEventListener('input', () => {
     if (!remote) show(dirty() ? 'Sin guardar' : '');
     updateButtons();
@@ -155,13 +112,14 @@
       accept(result, true);
       show('✓ Guardado en HHR', 'ok');
     } else raise(result.error ? result : { error: 'HHR todavía no confirmó el guardado.' });
-    if (linked) void follow(++polling, Boolean(result.confirmed));
+    if (available) void follow(++polling, Boolean(result.confirmed));
   });
   void (async () => {
     const context = await send('context');
     if (context.error) return raise(context);
     byId('patient').textContent = context.name;
-    if (context.paired) start();
-    else pair.hidden = false;
+    available = true;
+    show('Cargando entrega…');
+    void follow(++polling);
   })();
 })();

@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.118
+
+- El piloto local abre y guarda la entrega con la sesión de Eloísa de pruebas. Retira el código de vinculación y el paso por HHR.
+
 ## 0.48.117
 
 - El paquete local de pruebas agrega «Entrega de turno» en Pacientes hospitalizados. Incluye edición vinculada a HHR, sincronización y confirmación de guardado.
