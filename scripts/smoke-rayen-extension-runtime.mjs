@@ -840,6 +840,9 @@ try {
 
   // Exercise the packaged HHR → ISOLATED → MV3 preflight contract with a fresh cached
   // green report. A revoked GC connection must bypass that report and its 15-minute lease.
+  sessionExpired = true;
+  const signedOutFixture = await requestHhrHealth(hhrPage, { verifySessions: true });
+  assert.notEqual(signedOutFixture.report.fichaMedico.status, 'ready');
   await reloadedWorker.evaluate(async () => {
     const [sourceTab] = await chrome.tabs.query({
       url: "https://hospitalizado.rayensalud.cl/*",
@@ -911,7 +914,6 @@ try {
         type:'HHR_RAYEN_EGRESO_REPORT_REQUEST', reqId, dateStart:'2026-07-24', dateEnd:'2026-07-25',
       }, location.origin);
     }));
-    sessionExpired = true;
     const signedOutFichaReport = await requestReport();
     assert.equal(signedOutFichaReport.ok, false);
     assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
@@ -922,6 +924,10 @@ try {
     assert.equal((await requestReport()).ok, false);
     assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
     await gestionCamasPage.goto('https://hospitalizado.rayensalud.cl/#/authenticate/login');
+    assert.equal(await reloadedStatusPage.evaluate(async () => {
+      const key = 'hhrGestionCamasSessionV1';
+      return (await chrome.storage.session.get(key))[key]?.fichaScope;
+    }), undefined, 'The original Camas session must be unbound before the first authenticated pairing');
     syntheticSession.session.facilityId = '1';
     assert.equal((await requestReport()).ok, false);
     assert.equal(await reloadedStatusPage.evaluate(async () => {
