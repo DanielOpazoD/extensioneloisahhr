@@ -2,6 +2,9 @@
 (function (root) {
   'use strict';
   const MAX_SOURCE_SKEW_MS = 2 * 60 * 1000;
+  // HHR shows this as an inactive Ficha Médico session, not as a Gestión de Camas problem.
+  const UNVERIFIED_FICHA_MESSAGE =
+    'No se pudo verificar la sesión clínica de Ficha Médico. Inicia sesión en Ficha Médico y vuelve a sincronizar.';
   const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
   const bothSourcesReady = health => health?.fichaMedico?.status === 'ready' && health?.gestionCamas?.status === 'ready';
   const sourceFailureMessage = health => health?.fichaMedico?.status !== 'ready'
@@ -90,10 +93,9 @@
     const after = await context.measuredRead('captureHealthAfter', () => context.readHealth({ force: true }));
     if (context.isCancelled()) return { error: 'Sincronización cancelada desde HHR.', cancelled: true };
     if (after?.fichaMedico?.status !== 'ready') return { error: 'Una fuente se desconectó durante la captura. ' + (after?.fichaMedico?.message || 'Ficha Médico no está conectada.') }; // GC's download re-checked its own session; a sleeping GC tab failed 4/102 runs here.
-    // The verified Ficha access, the same one that pairs the Camas session used for the egresos.
-    const finalFichaScope = await context.readFichaScope();
-    if ((context.initialFichaScope && context.initialFichaScope !== finalFichaScope) ||
-        (after.gestionCamas?.usingBackgroundSession && !context.initialFichaScope)) {
+    // The verified Ficha access, the same one that pairs the Camas session used for the egresos,
+    // must still be the one confirmed before the reads, whether Camas is open or closed.
+    if (await context.readVerifiedFichaScope() !== context.initialFichaScope) {
       return { error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' };
     }
     const completed = context.now();
@@ -128,12 +130,17 @@
     const withRetries = result => captureRetries && result.error ? { ...result, captureRetries } : result;
     const cancelled = () => ({ error: 'Sincronización cancelada desde HHR.', cancelled: true });
     const measuredRead = createMeasuredRead(captureTimingsMs, monotonicNow);
+    // One retry absorbs a transient failure; an empty scope is never a verified access.
+    const readVerifiedFichaScope = async () =>
+      await readFichaScope() || (isCancelled() ? '' : await readFichaScope());
     try {
       const before = await measuredRead('captureHealthBefore', readHealth);
       if (isCancelled()) return cancelled();
       if (!canStartReads(before)) return { error: sourceFailureMessage(before) };
-      const initialFichaScope = await readFichaScope();
+      // No read starts without the verified Ficha access that the result is later checked against.
+      const initialFichaScope = await readVerifiedFichaScope();
       if (isCancelled()) return cancelled();
+      if (!initialFichaScope) return { error: UNVERIFIED_FICHA_MESSAGE };
       const reads = await root.HhrCaptureReadRecovery.read({
         readFicha: () => measuredRead('captureFichaMedico', readSnapshot),
         readGestion: () => measuredRead('captureGestionCamas', () => readReport({ dateStart, dateEnd })),
@@ -148,7 +155,7 @@
       if (readResult.error) return { ...readResult, ...(captureRetries ? { captureRetries } : {}) };
       return withRetries(await completeCapture({
         ...readResult, started, startedAt, dateStart, dateEnd, idFactory,
-        initialFichaScope, captureTimingsMs, captureRetries, now, measuredRead, readHealth, readFichaScope, isCancelled,
+        initialFichaScope, captureTimingsMs, captureRetries, now, measuredRead, readHealth, readVerifiedFichaScope, isCancelled,
       }));
     } catch (error) {
       if (isCancelled()) return cancelled();
