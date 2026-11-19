@@ -31,7 +31,7 @@ export function bedEditorFixture() {
   return '<!doctype html><meta charset="utf-8"><button>Ingresar en prueba</button><div class="sdxWrapper__content-tabs pt-tabs"></div><div class="sdxTemplate__wrapper"></div><dialog>Modificación del paciente</dialog><script>(' + boot.toString() + ')()</script>';
 }
 
-export async function verifyEditShortcut(context, source, row) {
+export async function verifyEditShortcut(context, source, row, worker) {
   const pencil = row.getByRole('button', { name: 'Modificar paciente en Gestión de Camas' });
   await source.mouse.move(0, 0);
   await source.locator('body').click({position:{x:0,y:0}});
@@ -53,6 +53,15 @@ export async function verifyEditShortcut(context, source, row) {
     assert.match(source.url(), /encounter-list-nurse$/);
     // A second click must use this authenticated document, including its in-memory state.
     await dest.evaluate(() => { document.querySelector('dialog').close(); window.testDocument = 'original'; });
+    await worker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ url: 'https://hospitalizado.rayensalud.cl/*' });
+      // An earlier handoff may have lost its listener during a reload or update.
+      await chrome.storage.session.set({
+        ['hhr-worklist-editor-' + tab.id]: {
+          episode: '2002', patient: '3002', professional: '2', facility: '1', expires: Date.now() + 90_000,
+        },
+      });
+    });
     await source.bringToFront();
     const total = context.pages().length;
     await pencil.click();

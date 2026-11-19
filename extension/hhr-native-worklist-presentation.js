@@ -73,6 +73,15 @@
       a[data-hhr-bed-link] { flex:none; margin-block-start:auto; padding:12px 16px; border-top:1px solid #dce7e4;
         background:white; color:#235f59; font:inherit; text-decoration:none; }
       a[data-hhr-bed-link]:is(:hover,:focus-visible) { background:#e7f4f1; }
+      .MuiBox-root:has(> .MuiPaper-root #search-encounter-list):has(> .hhr-hospitalized-panel) {
+        row-gap:8px;
+      }
+      #discharge-action-button .MuiMenu-paper { max-inline-size:min(270px, calc(100vw - 32px)); }
+      #discharge-action-button .MuiMenu-list { padding:4px; }
+      #discharge-action-button .MuiMenuItem-root {
+        min-height:34px; padding:6px 9px; border-radius:5px; font-size:.8125rem;
+        line-height:1.3; white-space:normal;
+      }
       /* Both routes keep the filters and tab panels as siblings, including while loading. */
       ${filters}:has(~ [role="tabpanel"]), ${filters} ~ [role="tabpanel"] {
         box-sizing:border-box;
@@ -83,7 +92,8 @@
       }
     }
     .hhr-hospitalized-panel { box-sizing:border-box; background:white; border-radius:12px; padding:10px 12px; }
-    .hhr-hospitalized-panel .hhr-activity-label { white-space:nowrap; color:#50625e; }
+    .hhr-care-source[hidden] { display:none !important; }
+    .hhr-hospitalized-panel .hhr-worklist-activity { font-size:.8333em; color:#50625e; }
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }
     td.hhr-worklist-documents { white-space:nowrap; text-align:center; vertical-align:middle; border-bottom:1px solid #ddd; }

@@ -100,6 +100,24 @@ export async function verifyWorklistOverlays(page, total) {
   assert.deepEqual(result.icons.map(icon => icon.key), ['worklist', 'care', 'plan', 'reports', 'beds']);
   assert.ok(result.icons.every(icon => icon.visible));
   assert.equal(result.bedLink, 'https://hospitalizado.rayensalud.cl/#/bed');
+  const compactPrintMenu = await page.evaluate(() => {
+    const popover = document.createElement('div');
+    popover.id = 'discharge-action-button';
+    popover.innerHTML = '<div class="MuiMenu-paper"><ul role="menu" class="MuiMenu-list">' +
+      ['Regímenes para servicios de Nutrición', 'Entrega de turno', 'Lista de trabajo']
+        .map(label => '<li role="menuitem" class="MuiMenuItem-root" style="box-sizing:border-box">' + label + '</li>').join('') + '</ul></div>';
+    document.body.append(popover);
+    const items = Array.from(popover.querySelectorAll('[role="menuitem"]'));
+    const geometry = items.map(item => ({
+      height: item.getBoundingClientRect().height,
+      fontSize: getComputedStyle(item).fontSize,
+    }));
+    const width = popover.firstElementChild.getBoundingClientRect().width;
+    popover.remove();
+    return { geometry, width };
+  });
+  assert.ok(compactPrintMenu.width <= 270);
+  assert.ok(compactPrintMenu.geometry.every(item => item.height < 56 && item.fontSize === '13px'));
   const viewport = page.viewportSize();
   await page.setViewportSize({ ...viewport, width: 600 });
   const layout = await page.locator('#worklist table').evaluate(table => ({
