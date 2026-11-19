@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.113
+
+- Lista de trabajo médico y Gestión de cuidados ordenan las camas desde R1–R4 y NEO1–NEO2 hasta H1C1–H6C2, con urgencias al final. Las interconsultas mantienen sus grupos por servicio.
+- El menú lateral incorpora iconos y deja Gestión de Camas al pie. La columna de asignación es más estrecha y conserva el selector nativo.
+- En cuidados, Actividad muestra el tipo de evento y su antigüedad. Alta médica tiene una etiqueta compacta con borde y fondo suaves.
+
 ## 0.48.112
 
 - «Cambiar paciente» muestra el nombre completo disponible en el censo. Las listas de trabajo y cuidados conservan el nombre registrado y muestran aparte el nombre social cuando existe.
