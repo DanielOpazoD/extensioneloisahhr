@@ -274,6 +274,10 @@
         });
         return;
       }
+      if (currentPageState().pageState === 'login') {
+        reply('RAYEN_GC_FETCHINFO_RESULT', { error: 'Inicia sesión en Gestión de Camas.' });
+        return;
+      }
       const requestedAttemptId = String(d.connectionAttemptId || '');
       // Rechaza solo cuando el solicitante fija OTRA generación que la activa
       // (carrera real de renovación). Exigir además que la credencial se haya

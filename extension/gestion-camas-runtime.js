@@ -327,8 +327,20 @@
       return { error: verified.error || 'No se pudo comprobar la sesión de Gestión de Camas.' };
     };
 
-    const bindFichaScope = (record, fichaScope) => updateVerification(record, current =>
-      current.fichaScope ? current : { ...current, fichaScope });
+    const bindFichaScope = async (record, fichaScope) => {
+      try {
+        const response = await withTimeout(chromeApi.tabs.sendMessage(record.sourceTabId, {
+          type: 'RAYEN_GC_GET_FETCH_INFO',
+          connectionAttemptId: String(record.connectionAttemptId || ''),
+        }), healthProbeTimeoutMs, 'Gestión de Camas no confirmó el acceso original.');
+        const source = session.buildSessionRecord(response?.info);
+        if (!source || source.token !== record.token || source.apiBase !== record.apiBase ||
+            source.facId !== record.facId) return null;
+        return updateVerification(record, current => current.fichaScope ? current : { ...current, fichaScope });
+      } catch {
+        return null;
+      }
+    };
 
     const resolveGestionCamasSession = async ({ requireFichaScope = false, ...options } = {}) => {
       const result = await readVerifiedGestionCamasSession(options);
@@ -345,8 +357,7 @@
         current = await bindFichaScope(current, scope);
       }
       if (scope && current?.fichaScope === scope) return { record: current };
-      if (!scope && sourceAlive && current &&
-          (!current.fichaScope || (!requireFichaScope && ficha?.status !== 'ready'))) return { record: current };
+      if (!requireFichaScope && !scope && sourceAlive && ficha?.status !== 'ready' && current) return { record: current };
       return { error: 'Vuelve a conectar Gestión de Camas con el acceso actual de Ficha Médico.' };
     };
 

@@ -882,6 +882,19 @@ try {
       );
     };
   });
+  await context.route("https://hospbackend.rayensalud.cl/**", route =>
+    route.fulfill({ body: "[]", headers: {
+      "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Authorization",
+    } }));
+  await gestionCamasPage.evaluate(() => {
+    localStorage.setItem('FAC_ID', '1');
+    window.envConfig = { environment: { api_app: 'https://hospbackend.rayensalud.cl' } };
+    return fetch('https://hospbackend.rayensalud.cl/synthetic', {
+      headers: { Authorization: 'test-token-placeholder' },
+    }).then(response => {
+      if (!response.ok) throw new Error('The GC fixture could not establish its session.');
+    });
+  });
   try {
     const requestReport = () => hhrPage.evaluate(() => new Promise((resolve, reject) => {
       const reqId = 'synthetic-background-egresos';
@@ -898,12 +911,21 @@ try {
         type:'HHR_RAYEN_EGRESO_REPORT_REQUEST', reqId, dateStart:'2026-07-24', dateEnd:'2026-07-25',
       }, location.origin);
     }));
+    sessionExpired = true;
+    const signedOutFichaReport = await requestReport();
+    assert.equal(signedOutFichaReport.ok, false);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
+    sessionExpired = false;
     syntheticSession.session.facilityId = '9';
     const differentFacility = await requestHhrHealth(hhrPage, { verifySessions: true });
     assert.equal(differentFacility.report.gestionCamas.status, 'stale');
     assert.equal((await requestReport()).ok, false);
     assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
     syntheticSession.session.facilityId = '1';
+    await gestionCamasPage.goto('https://hospitalizado.rayensalud.cl/#/authenticate/login');
+    assert.equal((await requestReport()).ok, false);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
+    await gestionCamasPage.goto(gestionCamasFixtureUrl);
     assert.equal((await requestReport()).ok, true);
     assert.equal(await reloadedStatusPage.evaluate(async () => {
       const key = 'hhrGestionCamasSessionV1';
