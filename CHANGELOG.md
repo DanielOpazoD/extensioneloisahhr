@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.115
+
+- HHR puede sincronizar con Gestión de Camas cerrada después de verificar su sesión oficial con ambos módulos abiertos. La comprobación previa valida la sesión de Camas en segundo plano y usa el informe de egresos del mismo establecimiento.
+- La sesión temporal de Camas se vincula al profesional, rol y establecimiento de Ficha Médico. Un cambio de acceso o una sesión rechazada por Rayen pide reconectar.
+
 ## 0.48.114
 
 - En Gestión de cuidados, la tabla queda cerca del buscador y el menú de impresión es más compacto.
