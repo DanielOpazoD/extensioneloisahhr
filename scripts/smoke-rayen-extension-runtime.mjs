@@ -921,9 +921,13 @@ try {
     assert.equal(differentFacility.report.gestionCamas.status, 'stale');
     assert.equal((await requestReport()).ok, false);
     assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
-    syntheticSession.session.facilityId = '1';
     await gestionCamasPage.goto('https://hospitalizado.rayensalud.cl/#/authenticate/login');
+    syntheticSession.session.facilityId = '1';
     assert.equal((await requestReport()).ok, false);
+    assert.equal(await reloadedStatusPage.evaluate(async () => {
+      const key = 'hhrGestionCamasSessionV1';
+      return (await chrome.storage.session.get(key))[key]?.fichaScope;
+    }), undefined);
     assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
     await gestionCamasPage.goto(gestionCamasFixtureUrl);
     assert.equal((await requestReport()).ok, true);
