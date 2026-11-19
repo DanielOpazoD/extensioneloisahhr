@@ -57,7 +57,7 @@
       }) };
     };
 
-    return async ({ matchingTabs, liveOptions, verifySessions = false, fichaHealth, background = false }) => {
+    return async ({ matchingTabs, liveOptions, verifySessions = false, fichaHealth, background = false, bindScope = true }) => {
       const resolved = background ? { record: await readSession() } : await resolveRecord(matchingTabs, liveOptions);
       if (resolved.status) return finish(resolved.status);
       let { record } = resolved;
@@ -82,13 +82,12 @@
         record = verified.record;
       }
       if (scopeMismatch(record)) return reconnect(record);
-      if (!background && !record.fichaScope && scope) {
+      if (bindScope && !background && !record.fichaScope && scope) {
         const bound = await bindFichaScope(record, scope);
         if (!bound || scopeMismatch(bound)) return reconnect(bound);
         record = bound;
       }
       const status = session.publicStatus(record);
-      if (background) return { ...status, usingBackgroundSession: true };
       if (needsFreshFicha && status.status === 'ready') {
         return { ...status, message: 'Gestión de Camas conectada. Recarga Ficha Médico antes de cerrar Camas.' };
       }

@@ -904,6 +904,11 @@ try {
     assert.equal((await requestReport()).ok, false);
     assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
     syntheticSession.session.facilityId = '1';
+    assert.equal((await requestReport()).ok, true);
+    assert.equal(await reloadedStatusPage.evaluate(async () => {
+      const key = 'hhrGestionCamasSessionV1';
+      return (await chrome.storage.session.get(key))[key]?.fichaScope;
+    }), '1:2:3');
     const verifiedHealth = await requestHhrHealth(hhrPage, {
       verifySessions: true,
     });
@@ -986,7 +991,7 @@ try {
     const differentProfessionalWhileOpen = await requestHhrHealth(hhrPage, { verifySessions: true });
     assert.equal(differentProfessionalWhileOpen.report.gestionCamas.status, 'stale');
     assert.equal((await requestReport()).ok, false);
-    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 1);
     syntheticSession.session.healthCarePractitionerId = '2';
 
     await gestionCamasPage.close();
@@ -1008,7 +1013,7 @@ try {
     const rejectedReport = await requestReport();
     assert.equal(rejectedReport.ok, false);
     assert.deepEqual(rejectedReport.rows, []);
-    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 1);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 2);
     const differentProfessional = await requestHhrHealth(hhrPage, { verifySessions: true });
     assert.equal(differentProfessional.report.fichaMedico.identity.practitionerId, '99');
     assert.equal(differentProfessional.report.gestionCamas.status, "stale");

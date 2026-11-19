@@ -14,14 +14,17 @@
       timeoutMessage: 'La pestaña de Gestión de Camas no respondió a la comprobación.',
     });
 
-    return async (runtimeGeneration, targetTabIds, { verifySessions = false, fichaHealth } = {}) => {
+    return async (runtimeGeneration, targetTabIds, { verifySessions = false, fichaHealth, bindScope = true } = {}) => {
       const readyTabIds = [];
       const matchingTabs = extensionHealth.orderTabs(
         await extensionHealth.resolveTabs(chromeApi.tabs, matchPattern, targetTabIds)
       );
-      const readBackground = () => Array.isArray(targetTabIds) ? null
-        : readSessionHealth({ matchingTabs, verifySessions, fichaHealth, background: true });
-      if (!Array.isArray(targetTabIds) && !matchingTabs.length) return readBackground();
+      const readBackground = async () => {
+        if (Array.isArray(targetTabIds) || !bindScope) return null;
+        const status = await readSessionHealth({ matchingTabs, verifySessions, fichaHealth, background: true });
+        return status && { ...status, usingBackgroundSession: true };
+      };
+      if (bindScope && !Array.isArray(targetTabIds) && !matchingTabs.length) return readBackground();
       const tabHealth = await extensionHealth.probeTabs({
         tabs: matchingTabs,
         sendMessage: async (tabId, message) => {
@@ -38,6 +41,7 @@
         matchingTabs,
         verifySessions,
         fichaHealth,
+        bindScope,
         liveOptions: {
           verificationTimeoutMs: healthProbeTimeoutMs, tabTimeoutMs: healthProbeTimeoutMs,
           targetTabIds, confirmedTabIds: readyTabIds,

@@ -285,10 +285,10 @@ const readExtensionHealthUncached = async (targets = {}) => {
     fichaHealth,
     handleGestionCamasHealth(runtimeContext.runtimeGeneration, targets.gestionCamasTabIds, {
       verifySessions: targets.verifySessions === true, fichaHealth,
+      bindScope: !Array.isArray(targets.fichaMedicoTabIds) && !Array.isArray(targets.gestionCamasTabIds),
     }),
     handleHhrHealth(runtimeContext),
   ]);
-
   const report = {
     ...self.HhrExtensionBuildIdentity.withIdentity(chrome.runtime.getManifest(), runtimeContext),
     protocolVersion: EXTENSION_PROTOCOL_VERSION,
@@ -365,7 +365,7 @@ const base64ToArrayBuffer = value => {
 const egresoReportRuntime = self.HhrGestionCamasEgresoReportRuntime.create({
   downloads: chrome.downloads,
   reportFile: REPORT_FILE,
-  resolveSession: resolveGestionCamasSession,
+  resolveSession: () => resolveGestionCamasSession({ requireFichaScope: true }),
   classifyRejection: classifyGestionCamasRejection,
   markSessionVerified: markGestionCamasSessionVerified,
   fetchWithTimeout,

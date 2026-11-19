@@ -327,23 +327,27 @@
       return { error: verified.error || 'No se pudo comprobar la sesión de Gestión de Camas.' };
     };
 
-    const resolveGestionCamasSession = async options => {
+    const bindFichaScope = (record, fichaScope) => updateVerification(record, current =>
+      current.fichaScope ? current : { ...current, fichaScope });
+
+    const resolveGestionCamasSession = async ({ requireFichaScope = false, ...options } = {}) => {
       const result = await readVerifiedGestionCamasSession(options);
       const { record } = result;
       if (!record) return result;
       const sourceAlive = await isGestionCamasTabOpen(record.sourceTabId);
-      const scope = session.fichaScopeOf(await readFichaHealth());
-      const current = await readGestionCamasSession();
+      const ficha = await readFichaHealth();
+      const scope = session.fichaScopeOf(ficha);
+      let current = await readGestionCamasSession();
       if (!sameGestionCamasSession(current, record) || !session.isUsable(current)) {
         return { error: 'La sesión de Gestión de Camas cambió durante la lectura.' };
       }
-      const scopeMismatch = current.fichaScope
-        ? scope !== current.fichaScope
-        : !sourceAlive || (scope && !scope.startsWith(current.facId + ':'));
-      if (scopeMismatch) {
-        return { error: 'Vuelve a conectar Gestión de Camas con el acceso actual de Ficha Médico.' };
+      if (sourceAlive && !current.fichaScope && scope.startsWith(current.facId + ':')) {
+        current = await bindFichaScope(current, scope);
       }
-      return { record: current };
+      if (scope && current?.fichaScope === scope) return { record: current };
+      if (!scope && sourceAlive && current &&
+          (!current.fichaScope || (!requireFichaScope && ficha?.status !== 'ready'))) return { record: current };
+      return { error: 'Vuelve a conectar Gestión de Camas con el acceso actual de Ficha Médico.' };
     };
 
     const classifyGestionCamasRejection = async (response, record) => {
@@ -383,8 +387,7 @@
       clearUnusableSession: clearUnusableGestionCamasSession,
       requestLiveSession: requestLiveGestionCamasSession,
       verifySession: verifyGestionCamasSession,
-      bindFichaScope: (record, fichaScope) => updateVerification(record, current =>
-        current.fichaScope ? current : { ...current, fichaScope }),
+      bindFichaScope,
     });
 
     const setGestionCamasConnectionAttempt = async (

@@ -136,10 +136,10 @@ it.each([false, true])('descarta la captura si cambia el profesional y Camas ter
   expect(result).toEqual({ error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' });
 });
 
-it('exige un acceso de Ficha verificable desde el inicio si Camas se cierra durante la captura', async () => {
+it.each(['ready', 'stale'])('exige un acceso inicial verificable si Camas se cierra durante la captura (%s)', async status => {
   const after = {
     fichaMedico: { ...ready.fichaMedico, identity: { facilityId: '1342', practitionerId: '3', practitionerRoleId: '5' } },
-    gestionCamas: { ...ready.gestionCamas, usingBackgroundSession: true },
+    gestionCamas: { ...ready.gestionCamas, status, usingBackgroundSession: true },
   };
   const result = await capture([ready, after], async () => snapshot);
   expect(result).toEqual({ error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' });
