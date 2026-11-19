@@ -4,10 +4,16 @@ import { describe, expect, it, vi } from 'vitest';
 import '../../../extension/clinical-day-runtime.js';
 import '../../../extension/census-sync-horizon-runtime.js';
 import '../../../extension/capture-read-recovery.js';
+import '../../../extension/gestion-camas-session.js';
 import '../../../extension/rayen-sync-bundle-runtime.js';
 import '../../../extension/fichamedico-read-resilience.js';
 
-type Health = Record<string, { status: string; message: string }>;
+type Health = Record<string, {
+  status: string;
+  message: string;
+  identity?: { facilityId: string; practitionerId: string; practitionerRoleId: string };
+  usingBackgroundSession?: boolean;
+}>;
 
 const globals = globalThis as typeof globalThis & {
   HhrRayenSyncBundleRuntime: {
@@ -113,4 +119,28 @@ describe('Rayen capture while Ficha Médico is in its read block', () => {
     expect(readSnapshot).not.toHaveBeenCalled();
     expect(result).toEqual({ error: readBlocked.fichaMedico.message });
   });
+});
+
+it.each([false, true])('descarta la captura si cambia el profesional y Camas termina en segundo plano (inicio en segundo plano: %s)', async usingBackgroundSession => {
+  const identity = { facilityId: '1342', practitionerId: '3', practitionerRoleId: '5' };
+  const background = {
+    fichaMedico: { ...ready.fichaMedico, identity },
+    gestionCamas: { ...ready.gestionCamas, usingBackgroundSession },
+  };
+  const after = {
+    ...background,
+    fichaMedico: { ...background.fichaMedico, identity: { ...identity, practitionerId: '4' } },
+    gestionCamas: { ...background.gestionCamas, usingBackgroundSession: true },
+  };
+  const result = await capture([background, after], async () => snapshot);
+  expect(result).toEqual({ error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' });
+});
+
+it.each(['ready', 'stale'])('exige un acceso inicial verificable si Camas se cierra durante la captura (%s)', async status => {
+  const after = {
+    fichaMedico: { ...ready.fichaMedico, identity: { facilityId: '1342', practitionerId: '3', practitionerRoleId: '5' } },
+    gestionCamas: { ...ready.gestionCamas, status, usingBackgroundSession: true },
+  };
+  const result = await capture([ready, after], async () => snapshot);
+  expect(result).toEqual({ error: 'El acceso de Ficha Médico cambió durante la sincronización. Vuelve a sincronizar.' });
 });

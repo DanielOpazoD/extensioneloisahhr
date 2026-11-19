@@ -244,6 +244,7 @@ const handleManualPatientCodeRequest = self.HhrFichaMedicoManualPatientCodeRunti
 const gestionCamasRuntime = self.HhrGestionCamasRuntime.create({
   chrome,
   session: self.HhrGestionCamasSession,
+  readFichaHealth: async () => handleFichaMedicoHealth((await getRuntimeContext()).runtimeGeneration),
   extensionHealth: self.HhrExtensionHealth,
   withTimeout,
   fetchWithTimeout,
@@ -279,12 +280,15 @@ const healthRelaySelfRepair = self.HhrHealthRelaySelfRepair.create({
 });
 const readExtensionHealthUncached = async (targets = {}) => {
   const runtimeContext = await getRuntimeContext();
+  const fichaHealth = handleFichaMedicoHealth(runtimeContext.runtimeGeneration, targets.fichaMedicoTabIds);
   const [fichaMedico, gestionCamas, hhr] = await Promise.all([
-    handleFichaMedicoHealth(runtimeContext.runtimeGeneration, targets.fichaMedicoTabIds),
-    handleGestionCamasHealth(runtimeContext.runtimeGeneration, targets.gestionCamasTabIds, { verifySessions: targets.verifySessions === true }),
+    fichaHealth,
+    handleGestionCamasHealth(runtimeContext.runtimeGeneration, targets.gestionCamasTabIds, {
+      verifySessions: targets.verifySessions === true, fichaHealth,
+      bindScope: !Array.isArray(targets.fichaMedicoTabIds) && !Array.isArray(targets.gestionCamasTabIds),
+    }),
     handleHhrHealth(runtimeContext),
   ]);
-
   const report = {
     ...self.HhrExtensionBuildIdentity.withIdentity(chrome.runtime.getManifest(), runtimeContext),
     protocolVersion: EXTENSION_PROTOCOL_VERSION,
@@ -361,7 +365,7 @@ const base64ToArrayBuffer = value => {
 const egresoReportRuntime = self.HhrGestionCamasEgresoReportRuntime.create({
   downloads: chrome.downloads,
   reportFile: REPORT_FILE,
-  resolveSession: resolveGestionCamasSession,
+  resolveSession: () => resolveGestionCamasSession({ requireFichaScope: true }),
   classifyRejection: classifyGestionCamasRejection,
   markSessionVerified: markGestionCamasSessionVerified,
   fetchWithTimeout,

@@ -671,7 +671,7 @@ try {
   // Updating an unpacked MV3 extension invalidates the old ISOLATED worlds while the
   // source documents and their MAIN readers survive. The new worker must recover the
   // original generation and reconnect all three pages without navigating any of them.
-  const gestionCamasPage = await context.newPage();
+  let gestionCamasPage = await context.newPage();
   const hhrPage = await context.newPage();
   for (const [fixturePage, label] of [
     [gestionCamasPage, "Gestion de Camas fixture"],
@@ -840,6 +840,9 @@ try {
 
   // Exercise the packaged HHR → ISOLATED → MV3 preflight contract with a fresh cached
   // green report. A revoked GC connection must bypass that report and its 15-minute lease.
+  sessionExpired = true;
+  const signedOutFixture = await requestHhrHealth(hhrPage, { verifySessions: true });
+  assert.notEqual(signedOutFixture.report.fichaMedico.status, 'ready');
   await reloadedWorker.evaluate(async () => {
     const [sourceTab] = await chrome.tabs.query({
       url: "https://hospitalizado.rayensalud.cl/*",
@@ -857,11 +860,23 @@ try {
       },
     });
     globalThis.__hhrGcProbeRequests = 0;
+    globalThis.__hhrGcReportRequests = 0;
     globalThis.__hhrGcProbeAvailable = true;
+    HhrExtensionRuntime.ensureSpreadsheet();
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+      ['N° Ident.', 'Nombre paciente', 'Destino de alta'], ['10000000-8', 'Paciente sintético', 'Domicilio'],
+    ]), 'Altas');
+    const report = XLSX.write(workbook, { type: 'array', bookType: 'biff8' });
     globalThis.__hhrGcOriginalFetch = globalThis.fetch;
     globalThis.fetch = (input, init) => {
       if (!String(input).startsWith("https://hospbackend.rayensalud.cl/"))
         return globalThis.__hhrGcOriginalFetch(input, init);
+      if (globalThis.__hhrGcReject) return Promise.resolve(new Response(null, { status: 401 }));
+      if (String(input).includes('/report/')) {
+        globalThis.__hhrGcReportRequests += 1;
+        return Promise.resolve(new Response(report));
+      }
       globalThis.__hhrGcProbeRequests += 1;
       return Promise.resolve(
         new Response("[]", {
@@ -870,7 +885,62 @@ try {
       );
     };
   });
+  await context.route("https://hospbackend.rayensalud.cl/**", route =>
+    route.fulfill({ body: "[]", headers: {
+      "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Authorization",
+    } }));
+  await gestionCamasPage.evaluate(() => {
+    localStorage.setItem('FAC_ID', '1');
+    window.envConfig = { environment: { api_app: 'https://hospbackend.rayensalud.cl' } };
+    return fetch('https://hospbackend.rayensalud.cl/synthetic', {
+      headers: { Authorization: 'test-token-placeholder' },
+    }).then(response => {
+      if (!response.ok) throw new Error('The GC fixture could not establish its session.');
+    });
+  });
   try {
+    const requestReport = () => hhrPage.evaluate(() => new Promise((resolve, reject) => {
+      const reqId = 'synthetic-background-egresos';
+      const timeout = setTimeout(() => reject(new Error('HHR did not receive the GC report')), 10000);
+      const receive = event => {
+        if (event.origin !== window.location.origin || event.data?.type !== 'HHR_RAYEN_EGRESO_REPORT_RESULT' ||
+            event.data.reqId !== reqId) return;
+        window.removeEventListener('message', receive);
+        clearTimeout(timeout);
+        resolve(event.data);
+      };
+      window.addEventListener('message', receive);
+      window.postMessage({
+        type:'HHR_RAYEN_EGRESO_REPORT_REQUEST', reqId, dateStart:'2026-07-24', dateEnd:'2026-07-25',
+      }, location.origin);
+    }));
+    const signedOutFichaReport = await requestReport();
+    assert.equal(signedOutFichaReport.ok, false);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
+    sessionExpired = false;
+    syntheticSession.session.facilityId = '9';
+    const differentFacility = await requestHhrHealth(hhrPage, { verifySessions: true });
+    assert.equal(differentFacility.report.gestionCamas.status, 'stale');
+    assert.equal((await requestReport()).ok, false);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
+    await gestionCamasPage.goto('https://hospitalizado.rayensalud.cl/#/authenticate/login');
+    assert.equal(await reloadedStatusPage.evaluate(async () => {
+      const key = 'hhrGestionCamasSessionV1';
+      return (await chrome.storage.session.get(key))[key]?.fichaScope;
+    }), undefined, 'The original Camas session must be unbound before the first authenticated pairing');
+    syntheticSession.session.facilityId = '1';
+    assert.equal((await requestReport()).ok, false);
+    assert.equal(await reloadedStatusPage.evaluate(async () => {
+      const key = 'hhrGestionCamasSessionV1';
+      return (await chrome.storage.session.get(key))[key]?.fichaScope;
+    }), undefined);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 0);
+    await gestionCamasPage.goto(gestionCamasFixtureUrl);
+    assert.equal((await requestReport()).ok, true);
+    assert.equal(await reloadedStatusPage.evaluate(async () => {
+      const key = 'hhrGestionCamasSessionV1';
+      return (await chrome.storage.session.get(key))[key]?.fichaScope;
+    }), '1:2:3');
     const verifiedHealth = await requestHhrHealth(hhrPage, {
       verifySessions: true,
     });
@@ -949,6 +1019,49 @@ try {
     assert.equal(recoveredPreflight.report.syncPreflight, true);
     assert.equal(recoveredPreflight.report.fichaMedico.status, "ready");
     assert.equal(recoveredPreflight.report.gestionCamas.status, "ready");
+    syntheticSession.session.healthCarePractitionerId = '99';
+    const differentProfessionalWhileOpen = await requestHhrHealth(hhrPage, { verifySessions: true });
+    assert.equal(differentProfessionalWhileOpen.report.gestionCamas.status, 'stale');
+    assert.equal((await requestReport()).ok, false);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 1);
+    syntheticSession.session.healthCarePractitionerId = '2';
+
+    await gestionCamasPage.close();
+    const noCamas = await requestHhrHealth(hhrPage, { verifySessions: true });
+    assert.equal(noCamas.report.gestionCamas.status, "ready", "A verified GC session must survive closing its tab");
+    assert.equal(noCamas.report.gestionCamas.usingBackgroundSession, true);
+    const signedOutCamas = await context.newPage();
+    await signedOutCamas.goto('https://hospitalizado.rayensalud.cl/#/authenticate/login');
+    const withUnrelatedCamas = await requestHhrHealth(hhrPage, { verifySessions: true });
+    assert.equal(withUnrelatedCamas.report.gestionCamas.usingBackgroundSession, true);
+    await signedOutCamas.close();
+
+    const report = await requestReport();
+    assert.equal(report.error, undefined);
+    assert.equal(report.rows?.length, 1);
+    assert.equal(report.rows[0].patientName, 'Paciente sintético');
+
+    syntheticSession.session.healthCarePractitionerId = '99';
+    const rejectedReport = await requestReport();
+    assert.equal(rejectedReport.ok, false);
+    assert.deepEqual(rejectedReport.rows, []);
+    assert.equal(await reloadedWorker.evaluate(() => globalThis.__hhrGcReportRequests), 2);
+    const differentProfessional = await requestHhrHealth(hhrPage, { verifySessions: true });
+    assert.equal(differentProfessional.report.fichaMedico.identity.practitionerId, '99');
+    assert.equal(differentProfessional.report.gestionCamas.status, "stale");
+    syntheticSession.session.healthCarePractitionerId = '2';
+
+    await reloadedWorker.evaluate(() => { globalThis.__hhrGcReject = true; });
+    const revoked = await requestHhrHealth(hhrPage, { verifySessions: true });
+    assert.equal(revoked.report.gestionCamas.reason, "session_expired");
+    assert.equal(await reloadedStatusPage.evaluate(async () => {
+      const key = 'hhrGestionCamasSessionV1';
+      return Boolean((await chrome.storage.session.get(key))[key]);
+    }), false);
+    gestionCamasPage = await context.newPage();
+    await gestionCamasPage.goto(gestionCamasFixtureUrl);
+    await gestionCamasPage.evaluate(value => { window.__hhrExtensionUpdateDocumentSentinel = value; }, documentSentinel);
+    console.log('[camas] lectura de egresos con la pestaña cerrada, cambio de profesional y rechazo HTTP 401 verificados');
     console.log(
       "[preflight] cached green bypassed, disconnected GC blocked, verified recovery ready",
     );
@@ -959,6 +1072,7 @@ try {
       );
       globalThis.fetch = globalThis.__hhrGcOriginalFetch;
       delete globalThis.__hhrGcOriginalFetch;
+      delete globalThis.__hhrGcReject;
     });
   }
 

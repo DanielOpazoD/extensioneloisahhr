@@ -93,6 +93,13 @@
     Number(record.lastVerifiedAt) > now - VERIFICATION_FRESHNESS_MS
   );
 
+  const fichaScopeOf = health => {
+    const identity = health?.identity;
+    const parts = [identity?.facilityId, identity?.practitionerId, identity?.practitionerRoleId];
+    return health?.status === 'ready' && parts.every(value => /^\d+$/.test(String(value || '')))
+      ? parts.join(':') : '';
+  };
+
   const publicStatus = (record, now = Date.now()) => {
     if (!record) {
       return {
@@ -160,6 +167,7 @@
     SESSION_STORAGE_KEY,
     PENDING_WINDOW_STORAGE_KEY,
     buildSessionRecord,
+    fichaScopeOf,
     isVerificationFresh,
     isUsable,
     normalizeApiBase,
