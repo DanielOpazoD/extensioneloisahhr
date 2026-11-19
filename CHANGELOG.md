@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.116
+
+- Vuelve a funcionar la sincronización del censo cuando la pestaña de Ficha Médico se abrió antes de actualizar la extensión. Desde 0.48.115 esa pestaña conservaba su lector anterior y la comprobación decía «Gestión de Camas conectada», pero la descarga de egresos la rechazaba y HHR mostraba que faltaba abrir Gestión de Camas.
+- La sesión de Camas se vincula con el establecimiento, profesional y rol que confirma la propia sesión de Ficha Médico, como ya informan todas las versiones compatibles. La comprobación y la descarga deciden con la misma regla, así que ya no pueden contradecirse. Se retira el aviso «Recarga Ficha Médico…», que dejó de ser necesario.
+- La sincronización confirma la identidad verificada de Ficha Médico antes de leer y de nuevo antes de entregar el resultado, con Camas abierta o cerrada. Si no logra confirmarla al inicio, tras un reintento, no lee y pide iniciar sesión en Ficha Médico. Si el profesional, el establecimiento o el rol cambian durante la lectura, descarta el resultado.
+
 ## 0.48.115
 
 - HHR puede sincronizar con Gestión de Camas cerrada después de verificar su sesión oficial con ambos módulos abiertos. La comprobación previa valida la sesión de Camas en segundo plano y usa el informe de egresos del mismo establecimiento.

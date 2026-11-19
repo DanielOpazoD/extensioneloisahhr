@@ -93,10 +93,11 @@
     Number(record.lastVerifiedAt) > now - VERIFICATION_FRESHNESS_MS
   );
 
-  const fichaScopeOf = health => {
-    const identity = health?.identity;
-    const parts = [identity?.facilityId, identity?.practitionerId, identity?.practitionerRoleId];
-    return health?.status === 'ready' && parts.every(value => /^\d+$/.test(String(value || '')))
+  // The Ficha access a Camas session is paired with: facility, professional and role verified by
+  // Ficha's own session, as every compatible MAIN reader returns them in RAYEN_FM_FETCHINFO_RESULT.
+  const fichaScopeOf = info => {
+    const parts = [info?.facId, info?.practitionerId, info?.practitionerRoleId];
+    return info?.identityVerified === true && parts.every(value => /^\d+$/.test(String(value || '')))
       ? parts.join(':') : '';
   };
 

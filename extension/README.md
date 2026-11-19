@@ -327,7 +327,9 @@ Chrome— y la extensión conserva en `chrome.storage.session` un registro tempo
 y los metadatos mínimos de sesión necesarios para validarlo y mostrar su estado (`apiBase`,
 establecimiento, fechas de captura/verificación, expiración e identidad derivada). Con ambas fuentes
 conectadas, la extensión vincula la sesión verificada de Camas al profesional, rol y establecimiento
-activos en Ficha Médico. Puedes cerrar Camas después de que esté conectada. HHR valida la sesión
+activos en Ficha Médico, tal como los confirma la propia sesión de Ficha (todas las versiones
+compatibles del lector los entregan). La comprobación de estado y cada lectura de Camas usan esa
+misma regla, de modo que no pueden contradecirse. Puedes cerrar Camas después de que esté conectada. HHR valida la sesión
 por API antes de sincronizar y usa la descarga de egresos del mismo establecimiento. Si Rayen
 rechaza la sesión o cambia el acceso activo de Ficha, el estado indica que hay que reconectar.
 **Olvidar** elimina la sesión temporal de la extensión.
