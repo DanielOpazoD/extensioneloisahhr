@@ -49,10 +49,13 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
           : column === 'lastNovelty' ? ['Hace 0 horas ', ' por Profesional de prueba']
           : column === '"lastNursePublishDatetime"' ? 'Hace 5 horas'
           : column === 'patient' ? jsx('a', {href:path+'/'+id, children:[jsx('strong', {children:'Paciente '+id},'name'),
-          jsx(Chip,{size:'small',label:'Pendiente'},'status'), jsx(Chip,{size:'small',label:'Alta médica'},'discharge')]}) : column},column))},id)) });
+          jsx(Chip,{size:'small',label:'Pendiente'},'status'), jsx(Chip,{size:'small',label:'Alta médica'},'discharge'),
+          jsx('span', {children:id === 23 ? 'RUN Materno/progenitor(a): 12345678-9' : 'Número de Identificación: DEMO'+id}, 'id')]}) : column},column))},id)) });
     }
     function Chip({label, ...props}) {return jsx('span', {...props, children:label});}
-    function Loader({index}) { return localJsx.jsx(Rows, {index,[keys[index]]:lists[index]}); }
+    function Loader({index}) {
+      return jsx('article', { style:{paddingBlock:12}, children:localJsx.jsx(Rows, {index,[keys[index]]:lists[index]}) });
+    }
     exports.default = function Page() {
       const index = Number(nav.useSearchParams().get('tab'));
       return localJsx.jsxs('main',{children:[jsx('nav',{}),jsx('input',{'aria-label':'Buscar'}),
@@ -71,12 +74,14 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   const rows = () => [...document.querySelectorAll('tr')].map(tr=>tr.querySelector('a').getAttribute('href').split('/').pop());
   expect([...document.querySelectorAll('nav button')].map(b=>b.textContent)).toEqual(['Pacientes hospitalizados','Egresos']);
   expect(document.querySelectorAll('table')).toHaveLength(1);
+  expect(document.querySelectorAll('.hhr-care-source[hidden]')).toHaveLength(3);
   expect(rows()).toEqual(['20','23','22','21']);
   expect(document.body.textContent).not.toContain('Pendiente');
   expect(document.querySelector('[data-hhr-discharge-chip]')?.textContent).toBe('Alta médica');
-  expect(document.body.textContent).toContain('Última novedad 0 horas');
-  expect(document.body.textContent).toContain('Última atención 5 horas');
-  expect(document.body.textContent).not.toMatch(/Hace |por Profesional/);
+  expect(document.body.textContent).toContain('Última novedad 0 h');
+  expect(document.body.textContent).toContain('Última atención 5 h');
+  expect(document.body.textContent).not.toMatch(/Hace |por Profesional|RUN Materno|Número de Identificación/);
+  expect(document.body.textContent).toContain('DEMO22');
   const click = text => [...document.querySelectorAll('button')].find(b=>b.textContent===text).click();
   await act(()=>click('Acción 22'));
   expect(action).toHaveBeenCalledWith(1,22);

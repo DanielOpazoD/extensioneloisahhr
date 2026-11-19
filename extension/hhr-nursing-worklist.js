@@ -32,8 +32,11 @@
           cells.set('link', native.at(-1));
         }
         const detail = cells.get(['stay', 'lastNovelty', '"lastNursePublishDatetime"'][source]);
-        if (detail?.props) cells.set('activity', jsx(detail.type, { ...detail.props,
-          children: [jsx('small', { className: 'hhr-activity-label', children: activity[source] }, 'label'), ' ', detail.props.children] }));
+        if (detail?.props) {
+          const value = detail.props.children;
+          const children = typeof value === 'string' && value.startsWith('Sin registro') ? value : [activity[source], ' ', value];
+          cells.set('activity', jsx(detail.type, { ...detail.props, className: 'hhr-worklist-activity', children }));
+        }
         children.push({ row, cells, key: valid ? episode : source + '-' + position });
       }
     }
@@ -94,15 +97,20 @@
         return this.state.failed ? jsx('div', { role: 'alert', children: 'No se pudo cargar la lista de ' + sources[this.props.index].toLowerCase() + '.' }) : this.props.children;
       }
     }
+    function SourcePanel({ registry, index, children }) {
+      const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get);
+      // Keep each native loader mounted for refreshes, but remove its empty layout from the table's flow.
+      return jsx('div', { hidden: Boolean(tables[index]), className: 'hhr-care-source', children });
+    }
     function Hospitalized({ active, loaded }) {
       const [registry] = React.useState(makeRegistry);
       return jsx('section', { role: 'tabpanel', id: 'hhr-care-panel-0', 'aria-labelledby': 'hhr-care-tab-0',
         className: 'hhr-hospitalized-panel', children: jsx(Registry.Provider, { value: registry, children: [
           ...sources.map((name, index) => jsx(Source.Provider, { value: index,
-            children: jsx(SourceError, { index, children: jsx(React.Suspense, {
+            children: jsx(SourcePanel, { registry, index, children: jsx(SourceError, { index, children: jsx(React.Suspense, {
               fallback: jsx('span', { role: 'status', children: 'Cargando ' + name.toLowerCase() + '…' }),
               children: index === active ? loaded : jsx(getPage(), {}),
-            }) }) }, index)),
+            }) }) }) }, index)),
           jsx(Combined, { registry }, 'table'),
         ] }) });
     }

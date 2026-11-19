@@ -26,7 +26,7 @@ beforeEach(() => {
       dialog ? [{ textContent: 'Modificación del paciente', getClientRects: () => [1] }] : [],
   };
   const self = {};
-  vm.runInNewContext(source, { self, document, location: { origin: 'https://hospitalizado.rayensalud.cl', hash: '#/bed' } });
+  vm.runInNewContext(source, { self, document, URL, location: { origin: 'https://hospitalizado.rayensalud.cl', hash: '#/bed' } });
   api = self.HhrWorklistPatientEditor;
 });
 
@@ -61,20 +61,30 @@ it('activa la sesión coincidente en otra ventana sin navegar de nuevo ni duplic
   const origin = 'https://hospitalizado.rayensalud.cl';
   const tabs = [{id:1,windowId:1,url:origin+'/#/authenticate/login'}, {id:2,windowId:1,url:origin+'/#/bed'},
     {id:3,windowId:2,url:origin+'/#/bed'}];
-  const pending = {};
-  const chrome = { tabs: { query: vi.fn(async()=>tabs), update: vi.fn(), sendMessage: vi.fn(async()=>({received:true})),
+  const pendingKey = 'hhr-worklist-editor-3';
+  const pending = { [pendingKey]: { ...request, episode: '20', expires: Date.now() + 90_000 } };
+  const chrome = { tabs: { query: vi.fn(async()=>tabs), update: vi.fn(),
     create: vi.fn(), onRemoved:{addListener:vi.fn()} }, windows:{update:vi.fn()}, storage:{session:{
-      get: async key=>({[key]:pending[key]}), set: async data=>Object.assign(pending,data), remove:vi.fn(),
-    }}, scripting:{executeScript:vi.fn(async ({target})=>[{result:['login','other','match'][target.tabId-1]}])} };
+      get: async key=>({[key]:pending[key]}), set: async data=>Object.assign(pending,data), remove:vi.fn(async key => { delete pending[key]; }),
+    }}, scripting:{executeScript:vi.fn(async ({target, func, files}) => {
+      if (files) return [];
+      if (func.name === 'openNativeEditor') {
+        if (target.documentIds[0] === 'retired') throw new Error('Document was replaced');
+        return [{result:{opened:true}}];
+      }
+      return [{result:['login','other','match'][target.tabId-1]}];
+    })} };
   const editor=api.create({chrome,getInfo:async()=>({info:{}}),checkAccess:async()=>({ok:true}),
     getContext:async()=>({patientId:41,info:{facId:8,practitionerId:17}})});
   const url='https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse';
   const sender={frameId:0,url,tab:{id:9,url,windowId:1}};
-  const [first,second]=await Promise.all([editor.start({encId:21},sender),editor.start({encId:22},sender)]);
-  expect(first).toEqual({ok:true});
-  expect(second).toHaveProperty('error');
+  expect(await editor.start({encId:21},sender)).toEqual({ok:true});
   expect(chrome.tabs.create).not.toHaveBeenCalled();
   expect(chrome.tabs.update.mock.calls).toEqual([[3,{active:true}]]);
   expect(chrome.windows.update).toHaveBeenCalledWith(2,{focused:true});
-  expect(pending['hhr-worklist-editor-3'].episode).toBe('21');
+  expect(pending[pendingKey].episode).toBe('21');
+  const dest = { frameId: 0, documentId: 'retired', url: tabs[2].url, tab: tabs[2] };
+  expect(await editor.resume({}, dest)).toEqual({wait:true});
+  expect(await editor.resume({}, {...dest, documentId:'new-document'})).toEqual({opened:true});
+  expect(pending[pendingKey]).toBeUndefined();
 });

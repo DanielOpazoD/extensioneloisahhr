@@ -255,7 +255,7 @@ const verifyLists = async (context, origin, worker) => {
         await first.hover();
         assert.equal(await first.locator('td').last().evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(231, 244, 241)');
         assert.equal(await first.locator('[data-hhr-edit-episode]').count(), route.pathname.endsWith('-nurse') ? 1 : 0);
-        if (name === 'Pacientes sin novedad') await verifyEditShortcut(context, page, rows.nth(2));
+        if (name === 'Pacientes sin novedad') await verifyEditShortcut(context, page, rows.nth(2), worker);
         const referral = name === 'Mis pacientes de interconsulta';
         assert.equal(await page.locator('.heading').isVisible(), referral);
         const spacing = await page.evaluate(() => {

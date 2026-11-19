@@ -84,7 +84,8 @@
     const value = Array.isArray(children) && children.every(part => typeof part === 'string')
       ? children.join('') : children;
     if (typeof value !== 'string' || !/^\s*Hace\s+/i.test(value)) return cell;
-    return withChildren(jsx, cell, value.trim().replace(/^Hace\s+/i, '').split(/\s+por\s+/i)[0].trim());
+    const elapsed = value.trim().replace(/^Hace\s+/i, '').split(/\s+por\s+/i)[0].trim();
+    return withChildren(jsx, cell, elapsed.replace(/(\d+)\s+horas?\b/gi, '$1 h'));
   }
 
   function patientCell(jsx, cell, nursing, editId) {
@@ -98,7 +99,13 @@
       if (nursing && node.props.label === 'Alta médica' && node.props.size === 'small') {
         return jsx(node.type, { ...node.props, 'data-hhr-discharge-chip': '' }, node.key ?? undefined);
       }
-      const children = present(node.props.children);
+      const text = node.props.children;
+      if (typeof text === 'string') {
+        if (/^\s*RUN\s+materno\s*\/\s*progenitor(?:\(a\))?\s*:/i.test(text)) return null;
+        const id = text.match(/^\s*n[uú]mero de identificaci[oó]n\s*:\s*(\S.*)$/i);
+        if (id) return withChildren(jsx, node, id[1].trim());
+      }
+      const children = present(text);
       const current = children === node.props.children ? node : withChildren(jsx, node, children);
       if (!nursing || !editId || !node.props.href || node.props.component === 'div') return current;
       return jsx('span', { className: 'hhr-patient-name-line', children: [current,
