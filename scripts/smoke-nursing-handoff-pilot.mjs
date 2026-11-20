@@ -89,6 +89,7 @@ try {
   await reopened.getByLabel('Nota del turno').waitFor();
   assert.equal(await reopened.getByLabel('Nota del turno').inputValue(), 'Guardado desde Chromium con HHR cerrado');
   const otherPage = await context.newPage();
+  await otherPage.setViewportSize({ width: 390, height: 700 });
   await otherPage.goto(origin + '/dashboard/encounter-list-nurse');
   const observer = await open(otherPage);
   await observer.getByLabel('Nota del turno').waitFor();
@@ -102,6 +103,9 @@ try {
   await observer.getByText('Hay cambios en HHR.', { exact: false }).waitFor();
   assert.equal(await observer.getByLabel('Nota del turno').inputValue(), 'Borrador de otro editor');
   assert.equal(await observer.getByLabel('Nota actual de HHR').inputValue(), 'Cambio sincronizado entre editores');
+  assert.equal(await observer.locator('main').evaluate(main => (
+    main.scrollWidth <= main.clientWidth
+  )), true);
   assert.equal(await observer.getByRole('button', { name: 'Guardar', exact: true }).isEnabled(), false);
   console.log('OK: diálogo en Eloísa, episodio ausente, guardado con HHR cerrado, confirmación, reapertura y borrador ante conflicto.');
 } finally {
