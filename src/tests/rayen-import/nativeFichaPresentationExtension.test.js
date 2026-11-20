@@ -58,6 +58,19 @@ describe('Compact native history dates', () => {
     expect(document.querySelector('[data-hhr-history-rail],[data-hhr-history-tab],[data-hhr-history-scroll]')).toBeNull();
     expect(document.querySelectorAll('.MuiCard-root')).toHaveLength(1);
   });
+
+  it('compacts Nuevo only within history cards and clears the style when the label changes', () => {
+    const chip = '<div class="MuiChip-root"><span class="MuiChip-label">Nuevo</span></div>';
+    document.body.innerHTML = historyTab + chip + '<div id="timeline">' +
+      group('Hoy', event('Médico', 'Fármacos', chip)) + '</div>';
+    history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
+    const marked = document.querySelector('[data-hhr-history-new]');
+    expect(marked.closest('#timeline')).not.toBeNull();
+    expect(document.querySelectorAll('[data-hhr-history-new]')).toHaveLength(1);
+    marked.firstElementChild.textContent = 'Suspendido';
+    history.refresh('1');
+    expect(marked.hasAttribute('data-hhr-history-new')).toBe(false);
+  });
 });
 
 describe('Native ficha presentation', () => {

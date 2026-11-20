@@ -8,6 +8,11 @@
     [data-hhr-history-rail] > [role="tab"] { flex-shrink:0; }
     [data-hhr-history-rail] > [data-hhr-history-tab] ~ [role="tab"] { order:2; }
     [data-hhr-history-scroll] { overflow-x:auto !important; scrollbar-width:none; }
+    .MuiChip-root[data-hhr-history-new] {
+      background:#e8f3ee; color:#225a45; border-radius:4px; height:16px;
+      font-size:10px; font-weight:600; vertical-align:middle;
+    }
+    [data-hhr-history-new] > .MuiChip-label { padding-inline:5px; }
   `;
   const dateLabel = label => {
     if (/^(Hoy|Ayer)$/i.test(label)) {
@@ -31,12 +36,15 @@
     let rail = null;
     let horizontalScroll = null;
     let timelineRoot = null;
+    let newBadges = new Set();
     let selected = -1;
     let frame = 0;
     let scroller = window;
     let disposed = false;
     const clear = () => {
       host?.remove();
+      newBadges.forEach(chip => chip.removeAttribute('data-hhr-history-new'));
+      newBadges.clear();
       rail?.removeAttribute('data-hhr-history-rail');
       tab?.removeAttribute('data-hhr-history-tab');
       horizontalScroll?.removeAttribute('data-hhr-history-scroll');
@@ -177,6 +185,16 @@
       const changed = groups.length !== nextGroups.length || nextGroups.some((group, index) =>
         group.element !== groups[index]?.element || group.label !== groups[index]?.label);
       groups = nextGroups;
+      const nextBadges = new Set(groups.flatMap(({ element }) =>
+        [...element.querySelectorAll(':scope > .MuiCard-root .MuiChip-root > .MuiChip-label')]
+          .filter(label => label.textContent.trim() === 'Nuevo').map(label => label.parentElement)));
+      newBadges.forEach(chip => {
+        if (!nextBadges.has(chip)) chip.removeAttribute('data-hhr-history-new');
+      });
+      nextBadges.forEach(chip => {
+        if (!newBadges.has(chip)) chip.setAttribute('data-hhr-history-new', '');
+      });
+      newBadges = nextBadges;
       const mounted = !host;
       if (mounted) mount(timeline, tabList);
       if (changed) {

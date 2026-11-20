@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.124
+
+- En Gestión de cuidados, un icono ámbar junto al nombre identifica los pacientes con novedad y muestra el tiempo desde la última publicación médica cuando Eloísa lo informa.
+- La etiqueta «Nuevo» queda más pequeña en Gestión de cuidados y en el Historial de la ficha.
+
 ## 0.48.123
 
 - Las entregas en tabla usan filas más compactas y muestran turno, estado y Guardar en la misma línea. La barra indica cuántos borradores quedan y permite volver a la lista.

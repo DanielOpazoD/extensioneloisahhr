@@ -793,7 +793,12 @@
   const observer = new MutationObserver(records => {
     if (!active || !uiLifecycle.owns()) return;
     worklistPresentation?.refresh(window.location.pathname);
-    if (records.some(record => record.type !== 'characterData')) scheduleEnsureButton();
+    if (records.some(record => {
+      if (record.type !== 'characterData') return true;
+      const label = record.target.parentElement;
+      return label?.matches('.MuiChip-root > .MuiChip-label') &&
+        (label.textContent.trim() === 'Nuevo' || label.parentElement.hasAttribute('data-hhr-history-new'));
+    })) scheduleEnsureButton();
   });
   observer.observe(document.documentElement, {
     childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-selected', 'hidden'],
