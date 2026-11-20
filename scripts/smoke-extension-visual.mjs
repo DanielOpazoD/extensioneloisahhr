@@ -35,6 +35,10 @@ export const verifyHistoryNavigation = async page => {
     await select.waitFor();
     assert.equal(await select.locator('option').count(), 3);
     assert.match(await select.locator('option').first().textContent(), /^Hoy · \d{2}-\d{2}-\d{4}$/);
+    await page.waitForFunction(() => {
+      const shadow = document.querySelector('#hhr-history-date-navigation')?.shadowRoot;
+      return shadow?.querySelector('select')?.value === '0' && shadow.querySelector('[data-step="-1"]')?.disabled;
+    });
     assert.equal(await nav.getByRole('button', { name: 'Fecha más reciente' }).isDisabled(), true);
     await nav.getByRole('button', { name: 'Fecha anterior', exact: true }).click();
     await page.waitForFunction(() => document.querySelector('#hhr-history-date-navigation')?.shadowRoot?.querySelector('select')?.value === '1', null, { timeout: 10000 });
