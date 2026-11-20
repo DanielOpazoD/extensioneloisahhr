@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.122
+
+- En Pacientes hospitalizados, «Entrega de turno» abre un editor en la fila de cada paciente y da espacio a las notas con una tabla de cinco columnas. Cada paciente guarda por separado. Al ocultar las entregas vuelven CRD, Médico tratante, Aislado y Acciones.
+
 ## 0.48.121
 
 - Entrega de turno se conecta con el censo de HHR en Netlify. La autorización temporal atribuye la nota a la cuenta de HHR y permite cerrar esa pestaña después de conectar.

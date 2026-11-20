@@ -39,3 +39,16 @@ footer { margin-block-start: .75rem; }
 @media (min-width: 550px) {
   .notes:has(#conflict:not([hidden])) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.hhr-handoff-row { background:#f1f7f5; }
+.hhr-handoff-row main { padding:8px 10px; }
+.hhr-handoff-row header, .hhr-handoff-row #patient { display:none; }
+.hhr-handoff-row .patient {
+  margin:0 0 5px; padding:0; background:transparent; justify-content:flex-start;
+}
+.hhr-handoff-row main:not(:has(#conflict:not([hidden]))) label[for="note"] {
+  position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
+}
+.hhr-handoff-row .notes textarea { min-height:58px; height:58px; }
+.hhr-handoff-row footer { min-height:28px; margin-block-start:5px; }
+.hhr-handoff-row footer button { font-size:.85rem; padding:4px 10px; }

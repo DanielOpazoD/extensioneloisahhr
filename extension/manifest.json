@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "118",
   "name": "Rayen → HHR · Puente de censo",
-  "version": "0.48.121",
+  "version": "0.48.122",
   "description": "Conecta Eloísa con HHR y ofrece herramientas de recetas y exámenes.",
   "permissions": [
     "tabs",
@@ -376,8 +376,12 @@
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://hhr-hospitalizados.app/*"],
-      "js": ["nursing-handoff-hhr-relay.js"],
+      "matches": [
+        "https://hhr-hospitalizados.app/*"
+      ],
+      "js": [
+        "nursing-handoff-hhr-relay.js"
+      ],
       "run_at": "document_start"
     }
   ],

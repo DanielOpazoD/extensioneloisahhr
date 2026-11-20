@@ -133,7 +133,7 @@
       encIds: 'array',
       printFormat: 'string?', preview: 'boolean?',
     },
-    [types.NURSING_HANDOFF_OPEN]: { encId: 'id' },
+    [types.NURSING_HANDOFF_OPEN]: { encId: 'id', inline: 'boolean?' },
     [types.NURSING_HANDOFF_EDITOR]: { id: 'string', action: 'string', date: 'string?', shift: 'string?', since: 'string?', version: 'string?', text: 'string?', expiresAt: 'number?' },
     [types.WORKLIST_PATIENT_EDIT]: { encId: 'id' },
     [types.WORKLIST_DOCUMENT_PRINT_REQUEST]: { encId: 'id', documentKind: 'string', expectedPatientId: 'id?' },

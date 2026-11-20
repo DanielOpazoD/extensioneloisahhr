@@ -4,7 +4,10 @@
   const name = 'Eloísa HHR · Entrega de turno (pruebas)';
   const source = /^https:\/\/fichamedico\.rayensalud\.cl\/dashboard\/encounter-list-nurse\/?(?:[?#].*)?$/;
   const editor = 'nursing-handoff-editor.html';
-  const editorKey = tabId => 'hhr-nursing-handoff-editor-' + tabId;
+  const prefix = tabId => 'hhr-nursing-handoff-' + tabId + ':';
+  const editorKey = (tabId, id) => prefix(tabId) + 'editor:' + id;
+  const draftKey = (context, date, shift) => prefix(context.tabId) +
+    ['draft', context.sourceDocument, context.episode, date, shift].join(':');
   const number = value => /^[1-9]\d{0,15}$/.test(value ?? '');
   const error = (message, code) => ({ error: message, code });
   const identity = info => {
@@ -25,6 +28,25 @@
     const enabled = Boolean(connection || (isPilot && localPilot?.installationKey));
     const needsHhr = () => error('Conecta tu cuenta de HHR para continuar.', 'HHR_LINK_REQUIRED');
     const load = async key => (await store.get(key))[key];
+    const draftWrites = new Map();
+    async function writeDraft(context, { date, shift, version, text }) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !['day', 'night'].includes(shift) ||
+          !/^[a-f0-9]{64}$/.test(version) || (text !== undefined && (typeof text !== 'string' || text.length > 16000))) {
+        return error('No se pudo conservar el borrador.');
+      }
+      const key = draftKey(context, date, shift);
+      const { owner, sessionKey, patientId, run } = context;
+      const write = Promise.resolve(draftWrites.get(key)).catch(() => {}).then(() =>
+        text === undefined ? store.remove(key) :
+          store.set({ [key]: { owner, sessionKey, patientId, run, version, text } }));
+      draftWrites.set(key, write);
+      try {
+        await write;
+        return { ok: true };
+      } finally {
+        if (draftWrites.get(key) === write) draftWrites.delete(key);
+      }
+    }
     const getPatient = (episode, info, sender) => {
       const testCase = localPilot?.testCase;
       if (testCase?.episode === episode && new URL(sender.url).searchParams.get('hhrHandoffTest') === '1') {
@@ -32,7 +54,7 @@
       }
       return getContext(episode, info, null, sender);
     };
-    async function start({ encId }, sender) {
+    async function start({ encId, inline }, sender) {
       if (!enabled || sender.frameId !== 0 || !source.test(sender.url) ||
           !source.test(sender.tab?.url) || !number(encId)) return error('Abre la lista de Gestión de cuidados.');
       const session = await getInfo(sender);
@@ -46,9 +68,9 @@
       if (!owner) return error('No se pudo verificar la sesión de Eloísa.');
       const id = crypto.randomUUID();
       const sessionKey = await getSessionKey(result.info, sender);
-      await store.set({ [editorKey(sender.tab.id)]: {
+      await store.set({ [editorKey(sender.tab.id, id)]: {
         id, tabId: sender.tab.id, sourceDocument: sender.documentId, episode: String(encId), owner, sessionKey,
-        patientId: result.patientId, run: result.patient.run, name: result.patient.name,
+        patientId: result.patientId, run: result.patient.run, name: result.patient.name, inline: inline === true,
       } });
       return { ok: true, id };
     }
@@ -94,7 +116,7 @@
       if (connection && action === 'hosted-result') return connection.receive(message, sender);
       if (!enabled || !/^[a-f0-9-]{36}$/.test(id) || !source.test(sender.tab?.url) ||
           !sender.documentId) return error('Editor no autorizado.');
-      const key = editorKey(sender.tab.id);
+      const key = editorKey(sender.tab.id, id);
       const context = await load(key);
       if (context?.id !== id) return error('Vuelve a abrir la entrega desde la lista.');
       if (action === 'close' && sender.frameId === 0 && sender.documentId === context.sourceDocument) {
@@ -105,12 +127,15 @@
           (context.editorDocument ? context.editorDocument !== sender.documentId : action !== 'context')) {
         return error('Editor no autorizado.');
       }
+      if (action === 'draft' && context.inline && context.editorDocument === sender.documentId) {
+        return writeDraft(context, message);
+      }
       if (!['context', 'read', 'save', 'connect', 'disconnect'].includes(action)) return error('Operación no autorizada.');
       const verified = await verifySource(context, ['read', 'save'].includes(action));
       if (verified.error) return verified;
       if (action === 'context') {
         await store.set({ [key]: { ...context, editorDocument: sender.documentId } });
-        return { name: context.name, hosted: Boolean(connection) };
+        return { name: context.name, hosted: Boolean(connection), inline: context.inline === true };
       }
 
       if (action === 'connect') return connection ?
@@ -139,6 +164,15 @@
       if (!result.error && action === 'read') {
         const updated = await verifySource(context, true);
         if (updated.error) return updated;
+        if (context.inline && !message.since) {
+          const key = draftKey(context, result.date, result.shift);
+          await draftWrites.get(key)?.catch(() => {});
+          const draft = await load(key);
+          if (draft?.owner === context.owner && draft.sessionKey === context.sessionKey &&
+              draft.patientId === context.patientId && draft.run === context.run) {
+            return { ...result, draft: { text: draft.text, version: draft.version } };
+          }
+        }
       }
       if (result.confirmed) {
         const updated = await verifySource(context).catch(() => error('Cambió la sesión de Eloísa.', 'SOURCE_SESSION_CHANGED'));
@@ -151,7 +185,10 @@
       return result;
     }
 
-    if (enabled) chrome.tabs.onRemoved.addListener(tabId => store.remove(editorKey(tabId)));
+    if (enabled) chrome.tabs.onRemoved.addListener(async tabId => {
+      const keys = Object.keys(await store.get(null)).filter(key => key.startsWith(prefix(tabId)));
+      if (keys.length) await store.remove(keys);
+    });
     return { start, operate };
   }
 
