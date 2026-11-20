@@ -21,7 +21,10 @@
   border: 0;
 }
 
-.hhr-handoff-toolbar { display:flex; justify-content:flex-end; padding-block:0 8px; }
+.hhr-handoff-toolbar { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding-block:0 7px; }
+.hhr-handoff-toolbar [data-hhr-handoff-pending]:not(:empty):not([hidden]) {
+  color:#774718; background:#fff5e7; border-radius:5px; padding:2px 7px; font-size:.83em;
+}
 .hhr-handoff-toolbar button {
   border:1px solid #b6d1cb; border-radius:6px; background:#edf6f3; color:#14594f;
   font:inherit; font-weight:600; min-height:30px; padding:3px 11px; cursor:pointer;
@@ -34,5 +37,6 @@
   min-height:80px; min-width:220px; margin-block:3px; text-align:start;
   background:#f1f7f5; border-inline-start:3px solid #a6cbc1;
 }
-[data-hhr-handoff-inline] > iframe { display:block; width:100%; height:128px; border:0; }
+[data-hhr-handoff-inline] > iframe { display:block; width:100%; height:96px; border:0; }
+[data-hhr-handoff-inline]:focus-within { border-inline-start-color:#177867; }
 [data-hhr-handoff-inline] > p { margin:0; padding:12px; color:#31544d; }

@@ -46,6 +46,7 @@ try {
     const table = new URL(route.request().url()).searchParams.has('handoffTable');
     const markup = table ? `
       <button data-hhr-handoff-toggle aria-expanded="false">Entrega de turno</button>
+      <span data-hhr-handoff-pending role="status"></span>
       <table><tbody>${['901001', '901002'].map(id => `<tr><th>Paciente sintético</th><td>
         <button data-hhr-handoff-episode="${id}">✎</button><div data-hhr-handoff-inline="${id}" hidden></div>
       </td></tr>`).join('')}</tbody></table>
@@ -144,18 +145,33 @@ try {
   assert.equal(await b.inputValue(), '');
   await a.fill('Solo borrador del primer episodio');
   await b.fill('Nota guardada del segundo episodio');
+  await grid.getByText('2 borradores', { exact: true }).waitFor();
   await second.getByRole('button', { name: 'Guardar', exact: true }).click();
   await second.getByText('✓ Guardado en HHR', { exact: true }).waitFor();
   await first.getByText('Sin guardar', { exact: true }).waitFor();
+  await grid.getByText('1 borrador', { exact: true }).waitFor();
+  assert.match(await second.locator('footer #slot').innerText(), /^(Día|Noche) · \d{2}-\d{2}-\d{4}$/);
   await toggle.click();
   assert.equal(await grid.locator(host('901001')).isVisible(), false);
   await toggle.click();
   await a.waitFor();
   assert.equal(await a.inputValue(), 'Solo borrador del primer episodio');
-  for (const id of ['901001', '901002']) {
-    await grid.locator(host(id)).evaluate(element => element.replaceWith(element.cloneNode(false)));
-  }
+  await grid.locator(host('901001')).evaluate(element => {
+    const empty = element.cloneNode(false);
+    empty.removeAttribute('data-hhr-handoff-inline');
+    empty.id = 'filtered-row-editor';
+    element.replaceWith(empty);
+  });
+  await grid.getByText('1 borrador', { exact: true }).waitFor({ state: 'hidden' });
+  await grid.locator('#filtered-row-editor').evaluate(element => {
+    const restored = element.cloneNode(false);
+    restored.removeAttribute('id');
+    restored.dataset.hhrHandoffInline = '901001';
+    element.replaceWith(restored);
+  });
+  await grid.locator(host('901002')).evaluate(element => element.replaceWith(element.cloneNode(false)));
   await first.getByText('Borrador recuperado', { exact: true }).waitFor();
+  await grid.getByText('1 borrador', { exact: true }).waitFor();
   await b.waitFor();
   assert.equal(await a.inputValue(), 'Solo borrador del primer episodio');
   assert.equal(await b.inputValue(), 'Nota guardada del segundo episodio');

@@ -105,16 +105,19 @@
         }),
       })) : result.children;
       return jsx(React.Fragment, { children: [
-        jsx('div', { className: 'hhr-handoff-toolbar', children: jsx('button', {
-          type: 'button', 'data-hhr-handoff-toggle': '', 'aria-expanded': expanded,
-          disabled: !result.listLenght && !expanded,
-          onClick: event => {
-            if (!event.isTrusted) return;
-            setVisited(true);
-            setExpanded(previous => !previous);
-          },
-          children: expanded ? 'Ocultar entregas' : 'Entrega de turno',
-        }) }, 'handoff-toolbar'),
+        jsx('div', { className: 'hhr-handoff-toolbar', children: [
+          jsx('span', { 'data-hhr-handoff-pending': '', role: 'status', hidden: !expanded }, 'pending'),
+          jsx('button', {
+            type: 'button', 'data-hhr-handoff-toggle': '', 'aria-expanded': expanded,
+            disabled: !result.listLenght && !expanded,
+            onClick: event => {
+              if (!event.isTrusted) return;
+              setVisited(true);
+              setExpanded(previous => !previous);
+            },
+            children: expanded ? 'Volver a la lista' : 'Entrega de turno',
+          }, 'toggle'),
+        ] }, 'handoff-toolbar'),
         jsx(Table, { ...result, columns, children: rows, currentPage: 1, header: jsx('div', {
           hidden: true, children: 'Pacientes hospitalizados (' + result.listLenght + ')' }) }, 'patients'),
       ] });

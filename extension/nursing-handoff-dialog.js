@@ -18,11 +18,24 @@
     let opening = 0;
     let redraw;
     const send = (entry, type, value) => entry.frame?.contentWindow?.postMessage({ type, value }, extensionOrigin);
-    const resize = message => {
-      if (message.origin !== extensionOrigin || message.data?.type !== 'hhr-handoff-row-height' ||
-          !Number.isFinite(message.data.value)) return;
+    const updatePending = () => {
+      const count = [...entries.values()].filter(entry => entry.dirty).length;
+      const pending = panel.querySelector('[data-hhr-handoff-pending]');
+      const label = count === 1 ? '1 borrador' : count ? count + ' borradores' : '';
+      if (pending && pending.textContent !== label) pending.textContent = label;
+    };
+    const receiveRow = message => {
+      if (message.origin !== extensionOrigin ||
+          !['hhr-handoff-row-height', 'hhr-handoff-row-dirty'].includes(message.data?.type)) return;
       const row = [...entries.values()].find(entry => entry.frame?.contentWindow === message.source);
-      if (row) row.frame.style.height = String(Math.max(80, Math.min(880, Math.ceil(message.data.value)))) + 'px';
+      if (!row || !panel.contains(row.host)) return;
+      const { type, value } = message.data;
+      if (type === 'hhr-handoff-row-height' && Number.isFinite(value)) {
+        row.frame.style.height = String(Math.max(72, Math.min(880, Math.ceil(value)))) + 'px';
+      } else if (type === 'hhr-handoff-row-dirty' && typeof value === 'boolean') {
+        row.dirty = value;
+        updatePending();
+      }
     };
     const drain = () => {
       if (!panel.isConnected || panel.querySelector('[data-hhr-handoff-toggle]')?.ariaExpanded !== 'true') return;
@@ -93,7 +106,7 @@
       if (!panel.isConnected || !sourcePath.test(location.pathname)) {
         observer.disconnect();
         changes.disconnect();
-        window.removeEventListener('message', resize);
+        window.removeEventListener('message', receiveRow);
         for (const [host, entry] of entries) cleanup(host, entry);
         if (table?.panel === panel) table = undefined;
         return;
@@ -104,6 +117,7 @@
         entries.set(host, { host, visible: false, started: false });
         observer.observe(host);
       }
+      updatePending();
       drain();
     };
     const changes = new MutationObserver(records => {
@@ -111,7 +125,7 @@
       if (redraw === undefined) redraw = requestAnimationFrame(reconcile);
     });
     changes.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-expanded'] });
-    window.addEventListener('message', resize);
+    window.addEventListener('message', receiveRow);
     reconcile();
     return { panel };
   }

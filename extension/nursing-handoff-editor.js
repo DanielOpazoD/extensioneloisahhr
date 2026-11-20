@@ -22,6 +22,7 @@
   let rowVisible = true;
   let refresh;
   let draftVersion;
+  let reportedDirty;
   let polling = 0;
   const dirty = () => base && note.value !== base.text.replace(/\r\n?/g, '\n');
   const show = (text, tone = '') => {
@@ -44,10 +45,15 @@
   };
 
   const updateButtons = () => {
+    const changed = Boolean(dirty());
     save.hidden = edit.hidden;
-    save.disabled = saving || !available || !ready || Boolean(remote) || !dirty();
+    save.disabled = saving || !available || !ready || Boolean(remote) || !changed;
     disconnect.disabled = saving;
     note.readOnly = saving;
+    if (inline && base && reportedDirty !== changed) {
+      reportedDirty = changed;
+      window.parent.postMessage({ type: 'hhr-handoff-row-dirty', value: changed }, 'https://fichamedico.rayensalud.cl');
+    }
   };
   const close = () => window.parent.postMessage('hhr-nursing-handoff-close', 'https://fichamedico.rayensalud.cl');
   const requestClose = () => {
@@ -77,14 +83,14 @@
       if (!save.disabled) edit.requestSubmit(save);
     }
   });
-  const accept = (value, replaceText) => {
+  const accept = (value, text = value.text) => {
     pinSlot(value);
     base = value;
     draftVersion = value.version;
     pendingVersion = value.version;
     remote = undefined;
     conflict.hidden = true;
-    if (replaceText) note.value = value.text;
+    note.value = text;
     edit.hidden = false;
     updateButtons();
   };
@@ -130,9 +136,8 @@
     connect.hidden = true;
     disconnect.hidden = !hosted;
     if (!base && inline && result.draft) {
-      accept(result, true);
-      if (note.value !== result.draft.text.replace(/\r\n?/g, '\n')) {
-        note.value = result.draft.text;
+      accept(result, result.draft.text);
+      if (dirty()) {
         draftVersion = result.draft.version;
         if (draftVersion !== result.version) notifyRemote(result);
         else show('Borrador recuperado');
@@ -142,7 +147,7 @@
       pendingVersion = result.version;
       if (dirty() && note.value !== result.text.replace(/\r\n?/g, '\n')) notifyRemote(result);
       else {
-        accept(result, true);
+        accept(result);
         show(inline ? '' : 'Nota al día');
       }
     } else {
@@ -209,13 +214,13 @@
     if (available) setTimeout(() => void follow(generation), 2000);
   });
   byId('keep').addEventListener('click', () => {
-    if (remote) accept(remote, false);
+    if (remote) accept(remote, note.value);
     saveDraft();
     show(dirty() ? 'Sin guardar' : '');
     note.focus();
   });
   byId('use-remote').addEventListener('click', () => {
-    if (remote) accept(remote, true);
+    if (remote) accept(remote);
     saveDraft();
     show('Nota al día');
     note.focus();
@@ -235,7 +240,7 @@
       raise(result);
       show('✓ HHR guardó la entrega. Vuelve a abrirla desde la lista.', 'ok');
     } else if (result.confirmed) {
-      accept(result, true);
+      accept(result);
       saveDraft();
       show('✓ Guardado en HHR', 'ok');
     } else raise(result.error ? result : { error: 'HHR todavía no confirmó el guardado.' });
@@ -247,6 +252,8 @@
     inline = context.inline === true;
     if (inline) {
       document.body.classList.add('hhr-handoff-row');
+      status.before(byId('slot'));
+      note.placeholder = 'Escribir entrega…';
       const main = document.querySelector('main');
       new ResizeObserver(() => window.parent.postMessage({
         type: 'hhr-handoff-row-height', value: main.offsetHeight,

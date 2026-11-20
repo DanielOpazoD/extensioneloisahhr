@@ -35,7 +35,7 @@ const setup = async () => {
     chrome, localPilot: { installationKey }, getSessionKey: () => 'rayen-session', getInfo, checkAccess, fetchImpl,
     getContext: async () => ({ info, patientId: '1', patient: { run: '11111111-1' } }),
   });
-  const message = (index, action, overrides) => runtime.operate({ id: ids[index], action }, {
+  const message = (index, action, overrides, fields) => runtime.operate({ id: ids[index], action, ...fields }, {
     frameId: 5, documentId: 'editor-' + index, url: extensionOrigin + 'nursing-handoff-editor.html#' + ids[index],
     tab: { id: index + 1, url: source }, ...overrides,
   });
@@ -78,6 +78,24 @@ it('conserva la confirmación del servidor si caduca la sesión mientras respond
   });
   await expect(message(0, 'save')).resolves.toMatchObject({ confirmed: true, code: 'SOURCE_SESSION_CHANGED' });
   expect(chrome.tabs.sendMessage).not.toHaveBeenCalled();
+});
+
+it('guarda en orden y conserva el texto de cada editor mientras HHR confirma el anterior', async () => {
+  const { message, fetchImpl } = await setup();
+  const firstResponse = Promise.withResolvers();
+  const success = () => Response.json({ result: { confirmed: true, date: '2026-11-19', shift: 'night' } });
+  fetchImpl.mockImplementationOnce(() => firstResponse.promise).mockImplementation(success);
+  const first = message(0, 'save', undefined, { text: 'Primera nota' });
+  await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+  const second = message(1, 'save', undefined, { text: 'Segunda nota' });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(fetchImpl).toHaveBeenCalledTimes(1);
+  firstResponse.resolve(success());
+  await expect(Promise.all([first, second])).resolves.toEqual([
+    expect.objectContaining({ confirmed: true }), expect.objectContaining({ confirmed: true }),
+  ]);
+  expect(fetchImpl.mock.calls.map(([, request]) => JSON.parse(request.body).data.text))
+    .toEqual(['Primera nota', 'Segunda nota']);
 });
 
 it('rechaza una operación si falta la sesión activa', async () => {
