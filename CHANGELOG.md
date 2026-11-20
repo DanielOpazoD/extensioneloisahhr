@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.123
+
+- Las entregas en tabla usan filas más compactas y muestran turno, estado y Guardar en la misma línea. La barra indica cuántos borradores quedan y permite volver a la lista.
+- La extensión ordena los guardados de distintas filas para evitar conflictos sobre el mismo censo.
+
 ## 0.48.122
 
 - En Pacientes hospitalizados, «Entrega de turno» abre un editor en la fila de cada paciente y da espacio a las notas con una tabla de cinco columnas. Cada paciente guarda por separado. Al ocultar las entregas vuelven CRD, Médico tratante, Aislado y Acciones.

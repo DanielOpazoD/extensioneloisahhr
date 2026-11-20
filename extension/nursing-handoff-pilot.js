@@ -189,7 +189,20 @@
       const keys = Object.keys(await store.get(null)).filter(key => key.startsWith(prefix(tabId)));
       if (keys.length) await store.remove(keys);
     });
-    return { start, operate };
+    // HHR commits to the same census document even when two rows belong to different patients.
+    let saving = Promise.resolve();
+    return {
+      start,
+      operate(message, sender) {
+        if (message.action !== 'save' || !(sender.frameId > 0) ||
+            sender.url !== chrome.runtime.getURL(editor) + '#' + message.id) {
+          return operate(message, sender);
+        }
+        const next = saving.then(() => operate(message, sender));
+        saving = next.catch(() => {});
+        return next;
+      },
+    };
   }
 
   globalThis.HhrNursingHandoffPilot = { create };

@@ -46,6 +46,7 @@ try {
     const table = new URL(route.request().url()).searchParams.has('handoffTable');
     const markup = table ? `
       <button data-hhr-handoff-toggle aria-expanded="false">Entrega de turno</button>
+      <span data-hhr-handoff-pending role="status"></span>
       <table><tbody>${['901001', '901002'].map(id => `<tr><th>Paciente sintético</th><td>
         <button data-hhr-handoff-episode="${id}">✎</button><div data-hhr-handoff-inline="${id}" hidden></div>
       </td></tr>`).join('')}</tbody></table>
@@ -144,9 +145,12 @@ try {
   assert.equal(await b.inputValue(), '');
   await a.fill('Solo borrador del primer episodio');
   await b.fill('Nota guardada del segundo episodio');
+  await grid.getByText('2 borradores', { exact: true }).waitFor();
   await second.getByRole('button', { name: 'Guardar', exact: true }).click();
   await second.getByText('✓ Guardado en HHR', { exact: true }).waitFor();
   await first.getByText('Sin guardar', { exact: true }).waitFor();
+  await grid.getByText('1 borrador', { exact: true }).waitFor();
+  assert.match(await second.locator('footer #slot').innerText(), /^(Día|Noche) · \d{2}-\d{2}-\d{4}$/);
   await toggle.click();
   assert.equal(await grid.locator(host('901001')).isVisible(), false);
   await toggle.click();
