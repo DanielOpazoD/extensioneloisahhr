@@ -4,25 +4,39 @@ import { unzipSync, zipSync } from 'fflate';
 import { packageRayenExtension } from './package-extension.mjs';
 
 const installationKey = process.env.HHR_HANDOFF_LOCAL_KEY;
+const port = Number(process.env.HHR_HANDOFF_FUNCTIONS_PORT ?? 5001);
 if (!/^[a-f0-9]{64}$/.test(installationKey ?? '')) {
   throw new Error('Genera el piloto junto al emulador con runNursingHandoffPilot.cjs.');
 }
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Puerto del emulador no válido.');
 
 const { zip } = packageRayenExtension(process.cwd());
 const files = unzipSync(zip);
 const manifest = JSON.parse(Buffer.from(files['manifest.json']).toString());
 manifest.name = 'Eloísa HHR · Entrega de turno (pruebas)';
 manifest.version_name = manifest.version + ' · Entrega de turno (pruebas)';
-manifest.host_permissions.push('http://127.0.0.1:5001/*');
+manifest.host_permissions.push('http://127.0.0.1:' + port + '/*');
+manifest.web_accessible_resources.push({
+  resources: ['nursing-handoff-editor.html'],
+  matches: ['https://fichamedico.rayensalud.cl/*'],
+});
+const nursingList = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse*';
+manifest.content_scripts.push({
+  matches: ['https://fichamedico.rayensalud.cl/*'],
+  js: ['message-contract.js', 'nursing-handoff-dialog.js'],
+  css: ['nursing-handoff-dialog.css'],
+  run_at: 'document_idle',
+});
 const worklist = manifest.content_scripts.find(item => item.js.includes('hhr-nursing-worklist.js'));
 worklist.js.unshift('nursing-handoff-pilot-flag.js');
 files['nursing-handoff-pilot-flag.js'] = Buffer.from('globalThis.HhrNursingHandoffDemo = true;\n');
 
-const testCase = process.env.HHR_HANDOFF_LOCAL_INTERACTIVE === '1' ? {
+const testCase = process.env.HHR_HANDOFF_LOCAL_INTERACTIVE === '1' &&
+  process.env.HHR_HANDOFF_SHARED_CENSUS !== '1' ? {
   episode: '901001',
   patient: { run: '11111111-1', name: 'Paciente ficticio · Entrega de turno' },
 } : null;
-const localPilot = { installationKey, testCase };
+const localPilot = { installationKey, port, testCase };
 const worker = manifest.background.service_worker;
 files[worker] = Buffer.concat([
   Buffer.from(`'use strict';\nglobalThis.HhrNursingHandoffLocalPilot = ${JSON.stringify(localPilot)};\n`),
@@ -31,7 +45,7 @@ files[worker] = Buffer.concat([
 
 if (testCase) {
   manifest.content_scripts.push({
-    matches: ['https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse*'],
+    matches: [nursingList],
     js: ['nursing-handoff-local-check.js'],
     run_at: 'document_idle',
   });
@@ -39,25 +53,12 @@ if (testCase) {
     if (location.pathname !== '/dashboard/encounter-list-nurse' ||
         new URL(location.href).searchParams.get('hhrHandoffTest') !== '1') return;
     const row = document.createElement('section');
+    row.className = 'hhr-hospitalized-panel';
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = 'Abrir entrega del paciente ficticio';
-    const status = document.createElement('span');
-    status.setAttribute('role', 'status');
-    button.addEventListener('click', async event => {
-      if (!event.isTrusted) return;
-      button.disabled = true;
-      try {
-        const result = await chrome.runtime.sendMessage({
-          type: 'RAYEN_NURSING_HANDOFF_OPEN',
-          encId: ${JSON.stringify(testCase.episode)},
-        });
-        status.textContent = result?.error ?? '';
-      } catch {
-        status.textContent = 'Recarga la ficha y vuelve a abrir la entrega.';
-      } finally { button.disabled = false; }
-    });
-    row.append(button, status);
+    button.dataset.hhrHandoffEpisode = ${JSON.stringify(testCase.episode)};
+    row.append(button);
     document.body.prepend(row);
   })();\n`);
 }

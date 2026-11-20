@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.119
+
+- En el piloto local, «Entrega de turno» abre un diálogo dentro de Gestión de cuidados de Eloísa. Muestra la fecha censal y el turno incluso si falta el censo local, y conserva ese turno al reintentar.
+
 ## 0.48.118
 
 - El piloto local abre y guarda la entrega con la sesión habitual de Hospitalizados de Eloísa. Registra el profesional que escribe y retira el código de vinculación.

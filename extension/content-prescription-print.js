@@ -180,18 +180,6 @@
     } finally { button.disabled = false; }
   };
   document.addEventListener('click', onWorklistEdit, true);
-  const onNursingHandoff = async event => {
-    const button = event.target.closest?.('button[data-hhr-handoff-episode]');
-    if (!event.isTrusted || !button || button.disabled || !uiLifecycle.owns() ||
-        !button.closest('.hhr-hospitalized-panel')) return;
-    event.stopPropagation();
-    button.disabled = true;
-    try {
-      const result = await sendMessage({ type: runtimeMessages.NURSING_HANDOFF_OPEN, encId: button.dataset.hhrHandoffEpisode });
-      if (!result?.ok && active) showPageNotice(result?.error || 'No se pudo abrir la entrega.', { title: 'Entrega de turno', error: true });
-    } finally { button.disabled = false; }
-  };
-  document.addEventListener('click', onNursingHandoff, true);
   const pendingWorklistPrints = new Set();
   const onWorklistPrint = async event => {
     const button = event.target.closest?.('button[data-hhr-print-document]');
@@ -826,7 +814,6 @@
       active = false;
       document.removeEventListener('click', onWorklistPrint, true);
       document.removeEventListener('click', onWorklistEdit, true);
-      document.removeEventListener('click', onNursingHandoff, true);
       observer.disconnect();
       window.removeEventListener('popstate', scheduleEnsureButton);
       window.removeEventListener('hashchange', scheduleEnsureButton);

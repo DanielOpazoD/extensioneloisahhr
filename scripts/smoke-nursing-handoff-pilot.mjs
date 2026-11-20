@@ -27,7 +27,7 @@ try {
       const url = new URL(input);
       if (url.origin !== 'https://fichamedicoback.rayensalud.cl') return fetchNative(input, init);
       if (url.pathname.endsWith('/claim/getAllInApp')) return Response.json([{ claim: 'Acceso_Ficha_Clinica', moduleId: 6 }]);
-      if (url.pathname.includes('/patientHeaderData/901001/')) return Response.json({
+      if (url.pathname.includes('/patientHeaderData/901001/') || url.pathname.includes('/patientHeaderData/901003/')) return Response.json({
         patID: 700001, preferredIdentifierCode: '11111111-1', firstGivenName: 'Paciente', firstFamilyName: 'Sintético',
       });
       return new Response(null, { status: 404 });
@@ -40,23 +40,33 @@ try {
         healthCarePractitionerRoleId: '3', role: 'Enfermera', fullName: 'Profesional de prueba',
       },
     } });
-    return route.fulfill({ contentType: 'text/html', body: `<!doctype html><meta charset="utf-8">
+    return route.fulfill({ contentType: 'text/html', headers: {
+      'Content-Security-Policy': "default-src 'self'; frame-src 'self' blob: https://visor.saludenred.cl https://viau.ssmso.cl; child-src 'self' blob:",
+    }, body: `<!doctype html><meta charset="utf-8">
       <main><section class="hhr-hospitalized-panel"><table><tr><td>Paciente sintético</td><td>
       <button title="Abrir entrega de turno" data-hhr-handoff-episode="901001">✎</button>
+      <button title="Abrir episodio ausente" data-hhr-handoff-episode="901003">✎</button>
       </td></tr></table></section></main>` });
   });
   await context.route('https://fichamedicoback.rayensalud.cl/**', route => route.abort());
   const page = await context.newPage();
   await page.goto(origin + '/dashboard/encounter-list-nurse');
-  const button = page.getByTitle('Abrir entrega de turno');
-  await page.waitForFunction(() => !!document.documentElement.dataset.hhrPrescriptionPrintScript);
-  const open = async () => {
-    const [editor] = await Promise.all([context.waitForEvent('page', { timeout: 10000 }), button.click()]);
-    await editor.waitForURL(/nursing-handoff-editor\.html#/);
-    return editor;
+  const frame = 'dialog.hhr-nursing-handoff-dialog[open] iframe';
+  const open = async (source, title = 'Abrir entrega de turno') => {
+    await source.waitForFunction(() => !!document.documentElement.dataset.hhrPrescriptionPrintScript);
+    const pages = context.pages().length;
+    await source.getByTitle(title).click();
+    await source.locator(frame).waitFor();
+    assert.equal(context.pages().length, pages);
+    return source.frameLocator(frame);
   };
-  const editor = await open();
-  editor.on('pageerror', e => console.error(e.message));
+  const missing = await open(page, 'Abrir episodio ausente');
+  await missing.getByText('Este episodio aún no está en el censo local de pruebas.').waitFor();
+  assert.match(await missing.locator('#slot').innerText(), /^(Día|Noche) · \d{2}-\d{2}-\d{4}$/);
+  assert.equal(await missing.getByRole('button', { name: 'Guardar' }).isVisible(), false);
+  await missing.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await page.locator(frame).waitFor({ state: 'detached' });
+  const editor = await open(page);
   const note = editor.getByLabel('Nota del turno');
   try {
     await note.waitFor({ timeout: 12000 });
@@ -65,20 +75,27 @@ try {
   }
   assert.equal(await editor.getByLabel('Código de vinculación de HHR').count(), 0);
   assert.equal(await editor.getByRole('button', { name: /vincular/i }).count(), 0);
+  assert.equal(await page.locator(frame).evaluate(node => node.contentDocument === null), true);
   assert.equal(context.pages().some(tab => /^http:\/\/127\.0\.0\.1/.test(tab.url())), false);
   await note.fill('Guardado desde Chromium con HHR cerrado');
   assert.equal(await editor.getByText('✓ Guardado en HHR', { exact: true }).count(), 0);
   await editor.getByRole('button', { name: 'Guardar', exact: true }).click();
   await editor.getByText('✓ Guardado en HHR', { exact: true }).waitFor();
   await page.getByTitle(/Guardado en HHR/).waitFor();
-  await editor.close();
-  await button.waitFor();
-  const reopened = await open();
+  await editor.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await page.locator(frame).waitFor({ state: 'detached' });
+  assert.equal(await page.getByTitle('Abrir entrega de turno').evaluate(el => el === document.activeElement), true);
+  const reopened = await open(page);
   await reopened.getByLabel('Nota del turno').waitFor();
   assert.equal(await reopened.getByLabel('Nota del turno').inputValue(), 'Guardado desde Chromium con HHR cerrado');
-  const observer = await open();
+  const otherPage = await context.newPage();
+  await otherPage.goto(origin + '/dashboard/encounter-list-nurse');
+  const observer = await open(otherPage);
   await observer.getByLabel('Nota del turno').waitFor();
   await observer.getByLabel('Nota del turno').fill('Borrador de otro editor');
+  await observer.getByLabel('Nota del turno').press('Escape');
+  await observer.getByText('Hay cambios sin guardar.').waitFor();
+  await observer.getByRole('button', { name: 'Seguir editando' }).click();
   await reopened.getByLabel('Nota del turno').fill('Cambio sincronizado entre editores');
   await reopened.getByRole('button', { name: 'Guardar', exact: true }).click();
   await reopened.getByText('✓ Guardado en HHR', { exact: true }).waitFor();
@@ -86,7 +103,7 @@ try {
   assert.equal(await observer.getByLabel('Nota del turno').inputValue(), 'Borrador de otro editor');
   assert.equal(await observer.getByLabel('Nota actual de HHR').inputValue(), 'Cambio sincronizado entre editores');
   assert.equal(await observer.getByRole('button', { name: 'Guardar', exact: true }).isEnabled(), false);
-  console.log('OK: Chromium, sesión automática de Eloísa, guardado sin pestaña HHR, confirmación, reapertura y borrador ante conflicto.');
+  console.log('OK: diálogo en Eloísa, episodio ausente, guardado con HHR cerrado, confirmación, reapertura y borrador ante conflicto.');
 } finally {
   await context?.close();
   await rm(root, { recursive: true, force: true });

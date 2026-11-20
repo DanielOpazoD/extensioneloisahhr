@@ -14,8 +14,9 @@ const setup = async () => {
   const fields = { owner, sessionKey: 'rayen-session' };
   const store = {};
   ids.forEach((id, i) => {
-    store['hhr-nursing-handoff-editor-' + id] = {
-      ...fields, tabId: 1, editorTab: i + 2, episode: '901001', patientId: '1', run: '11111111-1',
+    store['hhr-nursing-handoff-editor-' + (i + 1)] = {
+      ...fields, id, tabId: i + 1, editorDocument: 'editor-' + i, sourceDocument: 'source-' + i,
+      episode: '901001', patientId: '1', run: '11111111-1',
     };
   });
   const chrome = {
@@ -25,7 +26,7 @@ const setup = async () => {
       set: async values => Object.assign(store, values),
       remove: async key => { delete store[key]; },
     } },
-    tabs: { get: async () => ({ id: 1, url: source }), onRemoved: { addListener: vi.fn() }, sendMessage: vi.fn().mockResolvedValue(undefined) },
+    tabs: { get: async id => ({ id, url: source }), onRemoved: { addListener: vi.fn() }, sendMessage: vi.fn().mockResolvedValue(undefined) },
   };
   const checkAccess = vi.fn().mockResolvedValue({ ok: true });
   const fetchImpl = vi.fn();
@@ -34,8 +35,9 @@ const setup = async () => {
     chrome, localPilot: { installationKey }, getSessionKey: () => 'rayen-session', getInfo, checkAccess, fetchImpl,
     getContext: async () => ({ info, patientId: '1', patient: { run: '11111111-1' } }),
   });
-  const message = (index, action) => runtime.operate({ id: ids[index], action }, {
-    frameId: 0, url: extensionOrigin + 'nursing-handoff-editor.html#' + ids[index], tab: { id: index + 2 },
+  const message = (index, action, overrides) => runtime.operate({ id: ids[index], action }, {
+    frameId: 5, documentId: 'editor-' + index, url: extensionOrigin + 'nursing-handoff-editor.html#' + ids[index],
+    tab: { id: index + 1, url: source }, ...overrides,
   });
   return { checkAccess, chrome, fetchImpl, getInfo, message };
 };
@@ -82,5 +84,15 @@ it('rechaza una operación si falta la sesión activa', async () => {
   const { message, fetchImpl, getInfo } = await setup();
   getInfo.mockResolvedValue({ info: { ...info, token: '' } });
   await expect(message(0, 'read')).resolves.toMatchObject({ code: 'SOURCE_SESSION_CHANGED' });
+  expect(fetchImpl).not.toHaveBeenCalled();
+});
+
+it('limita la nota al marco de la entrega y al documento que lo abrió', async () => {
+  const { message, fetchImpl } = await setup();
+  await expect(message(0, 'read', { frameId: 0 })).resolves.toHaveProperty('error');
+  await expect(message(0, 'read', { documentId: 'otro-marco' })).resolves.toHaveProperty('error');
+  await expect(message(0, 'close', { frameId: 0, documentId: 'source-1' })).resolves.toHaveProperty('error');
+  await expect(message(0, 'close', { frameId: 0, documentId: 'source-0' })).resolves.toEqual({ ok: true });
+  await expect(message(0, 'read')).resolves.toHaveProperty('error');
   expect(fetchImpl).not.toHaveBeenCalled();
 });

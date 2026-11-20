@@ -4,8 +4,7 @@
   const name = 'Eloísa HHR · Entrega de turno (pruebas)';
   const source = /^https:\/\/fichamedico\.rayensalud\.cl\/dashboard\/encounter-list-nurse\/?(?:[?#].*)?$/;
   const editor = 'nursing-handoff-editor.html';
-  const endpoint = 'http://127.0.0.1:5001/demo-hhr-handoff/southamerica-east1/nursingHandoffExtension';
-  const editorKey = id => 'hhr-nursing-handoff-editor-' + id;
+  const editorKey = tabId => 'hhr-nursing-handoff-editor-' + tabId;
   const number = value => /^[1-9]\d{0,15}$/.test(value ?? '');
   const error = (message, code) => ({ error: message, code });
   const identity = info => {
@@ -18,6 +17,8 @@
     localPilot = globalThis.HhrNursingHandoffLocalPilot,
   }) {
     const store = chrome.storage.session;
+    const endpoint = 'http://127.0.0.1:' + (localPilot?.port ?? 5001) +
+      '/demo-hhr-handoff/southamerica-east1/nursingHandoffExtension';
     const enabled = () => chrome.runtime.getManifest().name === name && Boolean(localPilot?.installationKey);
     const load = async key => (await store.get(key))[key];
     const getPatient = (episode, info, sender) => {
@@ -41,20 +42,11 @@
       if (!owner) return error('No se pudo verificar la sesión de Eloísa.');
       const id = crypto.randomUUID();
       const sessionKey = await getSessionKey(result.info, sender);
-      const settings = {
-        tabId: sender.tab.id, episode: String(encId), owner, sessionKey,
+      await store.set({ [editorKey(sender.tab.id)]: {
+        id, tabId: sender.tab.id, sourceDocument: sender.documentId, episode: String(encId), owner, sessionKey,
         patientId: result.patientId, run: result.patient.run, name: result.patient.name,
-      };
-      const tab = await chrome.tabs.create({ url: 'about:blank', active: false });
-      await store.set({ [editorKey(id)]: { ...settings, editorTab: tab.id } });
-      try {
-        await chrome.tabs.update(tab.id, { url: chrome.runtime.getURL(editor) + '#' + id, active: true });
-      } catch (failure) {
-        await store.remove(editorKey(id));
-        await chrome.tabs.remove(tab.id).catch(() => {});
-        throw failure;
-      }
-      return { ok: true };
+      } });
+      return { ok: true, id };
     }
 
     async function call(data) {
@@ -64,8 +56,9 @@
           body: JSON.stringify({ data }), signal: AbortSignal.timeout(24_000),
         });
         const body = await response.json();
-        return response.ok && body.result ? body.result :
-          error(body.error?.message || 'HHR no respondió. Intenta de nuevo.', body.error?.status);
+        if (response.ok && body.result) return body.result;
+        const { status, message, details } = body.error ?? {};
+        return { ...error(message || 'HHR no respondió. Intenta de nuevo.', status), slot: details };
       } catch {
         return error('HHR no está disponible. Tu edición sigue abierta.', 'UNAVAILABLE');
       }
@@ -94,14 +87,26 @@
 
     async function operate(message, sender) {
       const { id, action } = message;
-      if (!enabled() || sender.frameId !== 0 || !/^[a-f0-9-]{36}$/.test(id) ||
-          sender.url !== chrome.runtime.getURL(editor) + '#' + id) return error('Editor no autorizado.');
-      const context = await load(editorKey(id));
-      if (!context || context.editorTab !== sender.tab?.id) return error('Vuelve a abrir la entrega desde la lista.');
+      if (!enabled() || !/^[a-f0-9-]{36}$/.test(id) || !source.test(sender.tab?.url) ||
+          !sender.documentId) return error('Editor no autorizado.');
+      const key = editorKey(sender.tab.id);
+      const context = await load(key);
+      if (context?.id !== id) return error('Vuelve a abrir la entrega desde la lista.');
+      if (action === 'close' && sender.frameId === 0 && sender.documentId === context.sourceDocument) {
+        await store.remove(key);
+        return { ok: true };
+      }
+      if (!(sender.frameId > 0) || sender.url !== chrome.runtime.getURL(editor) + '#' + id ||
+          (context.editorDocument ? context.editorDocument !== sender.documentId : action !== 'context')) {
+        return error('Editor no autorizado.');
+      }
       if (!['context', 'read', 'save'].includes(action)) return error('Operación no autorizada.');
       const verified = await verifySource(context, action !== 'context');
       if (verified.error) return verified;
-      if (action === 'context') return { name: context.name };
+      if (action === 'context') {
+        await store.set({ [key]: { ...context, editorDocument: sender.documentId } });
+        return { name: context.name };
+      }
 
       const { facId, practitionerId, practitionerRoleId } = verified.info;
       const result = await call({
@@ -120,17 +125,12 @@
         await chrome.tabs.sendMessage(context.tabId, {
           type: 'RAYEN_NURSING_HANDOFF_CONFIRMED',
           episode: context.episode, date: result.date, shift: result.shift,
-        }).catch(() => {});
+        }, { documentId: context.sourceDocument }).catch(() => {});
       }
       return result;
     }
 
-    if (enabled()) chrome.tabs.onRemoved.addListener(async tabId => {
-      const all = await store.get(null);
-      const keys = Object.entries(all).filter(([key, value]) =>
-        key.startsWith(editorKey('')) && (value.tabId === tabId || value.editorTab === tabId)).map(([key]) => key);
-      if (keys.length) await store.remove(keys);
-    });
+    if (enabled()) chrome.tabs.onRemoved.addListener(tabId => store.remove(editorKey(tabId)));
     return { start, operate };
   }
 
