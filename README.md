@@ -118,6 +118,13 @@ No incluir pacientes, cookies, contraseñas, perfiles de Chrome ni archivos `.en
 pruebas, notas o publicaciones. Se conservan las licencias y la trazabilidad de los vendors
 en `extension/vendor-lock.json` y en sus archivos originales.
 
+## Entrega de turno
+
+En Gestión de cuidados, «Entrega de turno» habilita la edición de todas las notas del turno
+vigente en sus filas. Cada fila guarda por separado y muestra la confirmación de HHR. Al cerrar
+el modo vuelven las columnas operativas. Un borrador de la tabla se conserva durante la
+misma vista de Eloísa, incluso al filtrar, y se vincula al profesional, paciente, episodio y turno.
+
 ## Piloto local de entrega de turno
 
 Ejecuta `functions/scripts/runNursingHandoffPilot.cjs` desde el repositorio de HHR con

@@ -14,7 +14,7 @@ const setup = async () => {
   const fields = { owner, sessionKey: 'rayen-session' };
   const store = {};
   ids.forEach((id, i) => {
-    store['hhr-nursing-handoff-editor-' + (i + 1)] = {
+    store['hhr-nursing-handoff-' + (i + 1) + ':editor:' + id] = {
       ...fields, id, tabId: i + 1, editorDocument: 'editor-' + i, sourceDocument: 'source-' + i,
       episode: '901001', patientId: '1', run: '11111111-1',
     };
@@ -24,7 +24,7 @@ const setup = async () => {
     storage: { session: {
       get: async key => ({ [key]: store[key] }),
       set: async values => Object.assign(store, values),
-      remove: async key => { delete store[key]; },
+      remove: async key => { for (const item of Array.isArray(key) ? key : [key]) delete store[item]; },
     } },
     tabs: { get: async id => ({ id, url: source }), onRemoved: { addListener: vi.fn() }, sendMessage: vi.fn().mockResolvedValue(undefined) },
   };

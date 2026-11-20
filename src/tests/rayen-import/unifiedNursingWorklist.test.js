@@ -24,7 +24,10 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   const action = vi.fn();
   const session = { facilityId: 8, healthCarePractitionerId: 2 };
   const jsx = runtime.jsx;
-  const Table = ({ children }) => jsx('table', { children: jsx('tbody', { children }) });
+  const Table = ({ columns, children }) => jsx('table', { children: [
+    jsx('thead', { children: jsx('tr', { children: columns.map(({ id, label }) => jsx('th', { children: label }, id)) }) }, 'head'),
+    jsx('tbody', { children }, 'body'),
+  ] });
   const Tab = ({ label, value, select }) => jsx('button', { onClick: () => select(null,value), children: label });
   const Tabs = ({ children, onChange }) => jsx('nav', { children: children.map(child => React.cloneElement(child, {select:onChange})) });
   const keys = ['incomeEncounterList','noveltyEncounterList','uneventfulEncounterList','recoveredEncounterList'];
@@ -40,7 +43,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
     const Panel = ({children})=>children;
     function Rows(props) {
       const { index } = props;
-      const columns = ['location','patient','ges','diagnosisAdmission',...(index === 0 ? ['stay'] : ['crd', index === 1 ? 'lastNovelty' : '"lastNursePublishDatetime"']), 'actions','link'].map(id=>({id,label:id}));
+      const columns = ['location','patient','ges','diagnosisAdmission',...(index === 0 ? ['stay'] : ['crd', index === 1 ? 'lastNovelty' : '"lastNursePublishDatetime"']), 'assignesDoctor', 'isolated', 'actions','link'].map(id=>({id,label:id}));
       const visible = props[keys[index]].filter(id=>!filter || String(id).includes(filter)).slice(0,10);
       return localJsx.jsx(NativeTable, { columns, listLenght:visible.length, children:visible.map(id =>
         jsx('tr', {children: columns.map(({id: column})=>jsx('td', {children: column === 'actions' ? jsx('button', {
@@ -71,7 +74,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   }
   root = createRoot(document.body.appendChild(document.createElement('div')));
   await act(() => root.render(createElement(App)));
-  const rows = () => [...document.querySelectorAll('tr')].map(tr=>tr.querySelector('a').getAttribute('href').split('/').pop());
+  const rows = () => [...document.querySelectorAll('tbody tr')].map(tr=>tr.querySelector('a').getAttribute('href').split('/').pop());
   expect([...document.querySelectorAll('nav button')].map(b=>b.textContent)).toEqual(['Pacientes hospitalizados','Egresos']);
   expect(document.querySelectorAll('table')).toHaveLength(1);
   expect(document.querySelectorAll('.hhr-care-source[hidden]')).toHaveLength(3);
@@ -83,6 +86,21 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(document.body.textContent).not.toContain('Última atención');
   expect(document.body.textContent).not.toMatch(/Hace |por Profesional|RUN Materno|Número de Identificación/);
   expect(document.body.textContent).toContain('DEMO22');
+  const toggle = document.querySelector('[data-hhr-handoff-toggle]');
+  const onToggle = toggle[Object.keys(toggle).find(key => key.startsWith('__reactProps'))].onClick;
+  const operationalColumns = ['crd', 'assignesDoctor', 'isolated', 'actions', 'link'];
+  const headings = () => [...document.querySelectorAll('thead th')].map(th => th.textContent);
+  await act(() => onToggle({ isTrusted: false }));
+  expect(document.querySelectorAll('[data-hhr-handoff-inline]')).toHaveLength(0);
+  await act(() => onToggle({ isTrusted: true }));
+  expect(headings().filter(heading => operationalColumns.includes(heading))).toEqual([]);
+  expect([...document.querySelectorAll('[data-hhr-handoff-inline]')].map(host => host.dataset.hhrHandoffInline)).toEqual(rows());
+  expect(rows()).toEqual(['20','23','22','21']);
+  const editor = document.querySelector('[data-hhr-handoff-inline]');
+  await act(() => onToggle({ isTrusted: true }));
+  expect(headings()).toEqual(expect.arrayContaining(operationalColumns));
+  expect(document.querySelector('[data-hhr-handoff-inline]')).toBe(editor);
+  expect(editor.hidden).toBe(true);
   const click = text => [...document.querySelectorAll('button')].find(b=>b.textContent===text).click();
   await act(()=>click('Acción 22'));
   expect(action).toHaveBeenCalledWith(1,22);

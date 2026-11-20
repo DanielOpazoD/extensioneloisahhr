@@ -18,6 +18,10 @@
   let available = false;
   let ready = false;
   let hosted = false;
+  let inline = false;
+  let rowVisible = true;
+  let refresh;
+  let draftVersion;
   let polling = 0;
   const dirty = () => base && note.value !== base.text.replace(/\r\n?/g, '\n');
   const show = (text, tone = '') => {
@@ -34,6 +38,10 @@
   const send = (action, data = {}) => chrome.runtime.sendMessage({
     type: HhrRayenMessageContract.types.NURSING_HANDOFF_EDITOR, id, action, ...data,
   }).catch(() => ({ error: 'Se perdió la conexión con la extensión.', code: 'UNAVAILABLE' }));
+  const saveDraft = () => {
+    if (!inline || !base) return;
+    void send('draft', { ...slot, version: draftVersion, text: dirty() ? note.value : undefined });
+  };
 
   const updateButtons = () => {
     save.hidden = edit.hidden;
@@ -58,7 +66,7 @@
     note.focus();
   });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') {
+    if (!inline && event.key === 'Escape') {
       event.preventDefault();
       requestClose();
     }
@@ -72,6 +80,7 @@
   const accept = (value, replaceText) => {
     pinSlot(value);
     base = value;
+    draftVersion = value.version;
     pendingVersion = value.version;
     remote = undefined;
     conflict.hidden = true;
@@ -109,23 +118,32 @@
   };
 
   async function follow(generation, wait = false) {
-    if (generation !== polling || !available) return;
+    if (generation !== polling || !available || (inline && (!rowVisible || document.hidden))) return;
     const result = await send('read', { ...slot, since: wait ? pendingVersion : undefined });
     if (generation !== polling) return;
     if (result.error) {
       raise(result);
-      if (available) setTimeout(() => void follow(generation), 2000);
+      if (available) refresh = setTimeout(() => void follow(generation), inline ? 12000 : 2000);
       return;
     }
     ready = true;
     connect.hidden = true;
     disconnect.hidden = !hosted;
-    if (pendingVersion !== result.version) {
+    if (!base && inline && result.draft) {
+      accept(result, true);
+      if (note.value !== result.draft.text.replace(/\r\n?/g, '\n')) {
+        note.value = result.draft.text;
+        draftVersion = result.draft.version;
+        if (draftVersion !== result.version) notifyRemote(result);
+        else show('Borrador recuperado');
+      } else saveDraft();
+      updateButtons();
+    } else if (pendingVersion !== result.version) {
       pendingVersion = result.version;
       if (dirty() && note.value !== result.text.replace(/\r\n?/g, '\n')) notifyRemote(result);
       else {
         accept(result, true);
-        show('Nota al día');
+        show(inline ? '' : 'Nota al día');
       }
     } else {
       edit.hidden = false;
@@ -133,12 +151,32 @@
       if (status.dataset.tone === 'error' && !remote) show(dirty() ? 'Sin guardar' : '');
       updateButtons();
     }
-    void follow(generation, true);
+    if (!inline || document.activeElement === note) void follow(generation, true);
+    else refresh = setTimeout(() => void follow(generation), 30000 + Math.random() * 10000);
   }
 
+  const resumeRow = () => {
+    if (inline && rowVisible && available && !saving) {
+      clearTimeout(refresh);
+      void follow(++polling);
+    }
+  };
+  window.addEventListener('message', event => {
+    if (!inline || event.source !== window.parent || event.origin !== 'https://fichamedico.rayensalud.cl') return;
+    if (event.data?.type === 'hhr-handoff-row-visible') {
+      const visible = event.data.value === true;
+      if (visible !== rowVisible) {
+        rowVisible = visible;
+        if (visible) resumeRow();
+        else clearTimeout(refresh);
+      }
+    }
+  });
+  note.addEventListener('focus', resumeRow);
   note.addEventListener('input', () => {
     if (!remote) show(dirty() ? 'Sin guardar' : '');
     updateButtons();
+    saveDraft();
   });
   connect.addEventListener('click', async () => {
     connect.disabled = true;
@@ -150,7 +188,8 @@
     }
   });
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && !connect.hidden && available && !saving) {
+    if (document.visibilityState === 'visible' && inline) resumeRow();
+    else if (document.visibilityState === 'visible' && !connect.hidden && available && !saving) {
       void follow(++polling);
     }
   });
@@ -171,17 +210,20 @@
   });
   byId('keep').addEventListener('click', () => {
     if (remote) accept(remote, false);
+    saveDraft();
     show(dirty() ? 'Sin guardar' : '');
     note.focus();
   });
   byId('use-remote').addEventListener('click', () => {
     if (remote) accept(remote, true);
+    saveDraft();
     show('Nota al día');
     note.focus();
   });
   edit.addEventListener('submit', async event => {
     event.preventDefault();
     if (save.disabled) return;
+    clearTimeout(refresh);
     ++polling;
     saving = true;
     updateButtons();
@@ -194,6 +236,7 @@
       show('✓ HHR guardó la entrega. Vuelve a abrirla desde la lista.', 'ok');
     } else if (result.confirmed) {
       accept(result, true);
+      saveDraft();
       show('✓ Guardado en HHR', 'ok');
     } else raise(result.error ? result : { error: 'HHR todavía no confirmó el guardado.' });
     if (available) void follow(++polling, Boolean(result.confirmed));
@@ -201,6 +244,14 @@
   void (async () => {
     const context = await send('context');
     if (context.error) return raise(context);
+    inline = context.inline === true;
+    if (inline) {
+      document.body.classList.add('hhr-handoff-row');
+      const main = document.querySelector('main');
+      new ResizeObserver(() => window.parent.postMessage({
+        type: 'hhr-handoff-row-height', value: main.offsetHeight,
+      }, 'https://fichamedico.rayensalud.cl')).observe(main);
+    }
     hosted = context.hosted === true;
     byId('environment').textContent = hosted ? 'HHR' : 'Pruebas HHR';
     byId('patient').textContent = context.name;

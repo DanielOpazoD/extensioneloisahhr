@@ -5,6 +5,7 @@
   const sources = ['Ingresos', 'Con novedad', 'Sin novedad'];
   const activity = ['Estadía', 'Última novedad', 'Última atención'];
   const columnIds = ['location', 'patient', 'hhrPrint', 'diagnosisAdmission', 'crd', 'assignesDoctor', 'isolated', 'activity', 'actions', 'link'];
+  const handoffColumns = new Set(['location', 'patient', 'hhrPrint', 'diagnosisAdmission', 'activity']);
 
   function joinTables(jsx, tables, handoff = globalThis.HhrNursingHandoffDemo === true) {
     const headers = new Map();
@@ -85,10 +86,38 @@
     }
     function Combined({ registry }) {
       const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get);
+      const [expanded, setExpanded] = React.useState(false);
+      const [visited, setVisited] = React.useState(false);
       const result = joinTables(jsx, tables, true);
       if (!result.listLenght && !tables.every(Boolean)) return null;
-      return jsx(Table, { ...result, currentPage: 1, header: jsx('div', {
-        hidden: true, children: 'Pacientes hospitalizados (' + result.listLenght + ')' }) });
+      const columns = expanded ? result.columns.filter(column => handoffColumns.has(column.id)).map(column =>
+        column.id === 'activity' ? { ...column, style: { ...column.style, width: '52%' } } : column
+      ) : result.columns;
+      const rows = visited ? result.children.map(row => React.cloneElement(row, { children:
+        result.columns.flatMap(({ id }, index) => {
+          if (expanded && !handoffColumns.has(id)) return [];
+          const cell = row.props.children[index];
+          if (id !== 'activity' || !/^[1-9]\d{0,15}$/.test(row.key)) return [cell];
+          return [React.cloneElement(cell, { children: [
+            jsx('div', { hidden: expanded, children: cell.props.children }, 'pencil'),
+            jsx('div', { hidden: !expanded, 'data-hhr-handoff-inline': row.key }, 'editor'),
+          ] })];
+        }),
+      })) : result.children;
+      return jsx(React.Fragment, { children: [
+        jsx('div', { className: 'hhr-handoff-toolbar', children: jsx('button', {
+          type: 'button', 'data-hhr-handoff-toggle': '', 'aria-expanded': expanded,
+          disabled: !result.listLenght && !expanded,
+          onClick: event => {
+            if (!event.isTrusted) return;
+            setVisited(true);
+            setExpanded(previous => !previous);
+          },
+          children: expanded ? 'Ocultar entregas' : 'Entrega de turno',
+        }) }, 'handoff-toolbar'),
+        jsx(Table, { ...result, columns, children: rows, currentPage: 1, header: jsx('div', {
+          hidden: true, children: 'Pacientes hospitalizados (' + result.listLenght + ')' }) }, 'patients'),
+      ] });
     }
     function useSearchParams() {
       const params = navigation.useSearchParams();

@@ -27,6 +27,9 @@ try {
       const url = new URL(input);
       if (url.origin !== 'https://fichamedicoback.rayensalud.cl') return fetchNative(input, init);
       if (url.pathname.endsWith('/claim/getAllInApp')) return Response.json([{ claim: 'Acceso_Ficha_Clinica', moduleId: 6 }]);
+      if (url.pathname.includes('/patientHeaderData/901002/')) return Response.json({
+        patID: 700002, preferredIdentifierCode: '22222222-2', firstGivenName: 'Segundo', firstFamilyName: 'Paciente',
+      });
       if (url.pathname.includes('/patientHeaderData/901001/') || url.pathname.includes('/patientHeaderData/901003/')) return Response.json({
         patID: 700001, preferredIdentifierCode: '11111111-1', firstGivenName: 'Paciente', firstFamilyName: 'Sintético',
       });
@@ -40,13 +43,21 @@ try {
         healthCarePractitionerRoleId: '3', role: 'Enfermera', fullName: 'Profesional de prueba',
       },
     } });
+    const table = new URL(route.request().url()).searchParams.has('handoffTable');
+    const markup = table ? `
+      <button data-hhr-handoff-toggle aria-expanded="false">Entrega de turno</button>
+      <table><tbody>${['901001', '901002'].map(id => `<tr><th>Paciente sintético</th><td>
+        <button data-hhr-handoff-episode="${id}">✎</button><div data-hhr-handoff-inline="${id}" hidden></div>
+      </td></tr>`).join('')}</tbody></table>
+    ` : `
+      <table><tr><td>Paciente sintético</td><td>
+      <button title="Abrir entrega de turno" data-hhr-handoff-episode="901001">✎</button>
+      <button title="Abrir episodio ausente" data-hhr-handoff-episode="901003">✎</button>
+      </td></tr></table>`;
     return route.fulfill({ contentType: 'text/html', headers: {
       'Content-Security-Policy': "default-src 'self'; frame-src 'self' blob: https://visor.saludenred.cl https://viau.ssmso.cl; child-src 'self' blob:",
     }, body: `<!doctype html><meta charset="utf-8">
-      <main><section class="hhr-hospitalized-panel"><table><tr><td>Paciente sintético</td><td>
-      <button title="Abrir entrega de turno" data-hhr-handoff-episode="901001">✎</button>
-      <button title="Abrir episodio ausente" data-hhr-handoff-episode="901003">✎</button>
-      </td></tr></table></section></main>` });
+      <main><section class="hhr-hospitalized-panel">${markup}</section></main>` });
   });
   await context.route('https://fichamedicoback.rayensalud.cl/**', route => route.abort());
   const page = await context.newPage();
@@ -108,6 +119,50 @@ try {
   )), true);
   assert.equal(await observer.getByRole('button', { name: 'Guardar', exact: true }).isEnabled(), false);
   console.log('OK: diálogo en Eloísa, episodio ausente, guardado con HHR cerrado, confirmación, reapertura y borrador ante conflicto.');
+
+  const grid = await context.newPage();
+  await grid.goto(origin + '/dashboard/encounter-list-nurse?handoffTable=1');
+  await grid.waitForFunction(() => !!document.documentElement.dataset.hhrPrescriptionPrintScript);
+  const toggle = grid.locator('[data-hhr-handoff-toggle]');
+  await toggle.evaluate(button => button.addEventListener('click', () => {
+    const expanded = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', String(!expanded));
+    for (const host of document.querySelectorAll('[data-hhr-handoff-inline]')) host.hidden = expanded;
+  }));
+  const tabCount = context.pages().length;
+  await toggle.click();
+  const host = id => `[data-hhr-handoff-inline="${id}"]`;
+  const first = grid.frameLocator(host('901001') + ' iframe');
+  const second = grid.frameLocator(host('901002') + ' iframe');
+  const a = first.getByLabel('Nota del turno');
+  const b = second.getByLabel('Nota del turno');
+  await a.waitFor();
+  await b.waitFor();
+  assert.equal(context.pages().length, tabCount);
+  assert.equal(await grid.locator(host('901001') + ' iframe').evaluate(element => element.contentDocument), null);
+  assert.equal(await a.inputValue(), 'Cambio sincronizado entre editores');
+  assert.equal(await b.inputValue(), '');
+  await a.fill('Solo borrador del primer episodio');
+  await b.fill('Nota guardada del segundo episodio');
+  await second.getByRole('button', { name: 'Guardar', exact: true }).click();
+  await second.getByText('✓ Guardado en HHR', { exact: true }).waitFor();
+  await first.getByText('Sin guardar', { exact: true }).waitFor();
+  await toggle.click();
+  assert.equal(await grid.locator(host('901001')).isVisible(), false);
+  await toggle.click();
+  await a.waitFor();
+  assert.equal(await a.inputValue(), 'Solo borrador del primer episodio');
+  for (const id of ['901001', '901002']) {
+    await grid.locator(host(id)).evaluate(element => element.replaceWith(element.cloneNode(false)));
+  }
+  await first.getByText('Borrador recuperado', { exact: true }).waitFor();
+  await b.waitFor();
+  assert.equal(await a.inputValue(), 'Solo borrador del primer episodio');
+  assert.equal(await b.inputValue(), 'Nota guardada del segundo episodio');
+  assert.equal(await first.getByRole('button', { name: 'Guardar', exact: true }).isEnabled(), true);
+  assert.equal(await second.getByRole('button', { name: 'Guardar', exact: true }).isDisabled(), true);
+  assert.equal(context.pages().length, tabCount);
+  console.log('OK: dos entregas en una tabla, guardado por episodio y borrador recuperado tras ocultar o filtrar.');
 } finally {
   await context?.close();
   await rm(root, { recursive: true, force: true });
