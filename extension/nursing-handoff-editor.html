@@ -15,26 +15,34 @@
         <button type="button" id="close" class="quiet" aria-label="Cerrar">×</button>
       </div>
     </header>
-    <p id="patient"></p>
-    <p id="slot" class="detail"></p>
-    <form id="edit" hidden>
-      <label class="sr-only" for="note">Nota del turno</label>
-      <textarea id="note" rows="8" maxlength="16000" placeholder="Escribe la entrega de turno"></textarea>
-      <div class="actions">
-        <button type="submit">Guardar</button>
-      </div>
-    </form>
-    <div id="conflict" hidden>
-      <label for="remote">Nota actual de HHR</label>
-      <textarea id="remote" rows="4" readonly></textarea>
-      <button type="button" id="keep" class="quiet">Conservar mi edición</button>
-      <button type="button" id="use-remote" class="quiet">Usar nota de HHR</button>
+    <div class="patient">
+      <p id="patient"></p>
+      <p id="slot" class="detail"></p>
     </div>
-    <p id="status" role="status"></p>
+    <div class="notes">
+      <form id="edit" hidden>
+        <label for="note">Nota del turno</label>
+        <textarea id="note" rows="7" maxlength="16000" placeholder="Escribe la entrega de turno"></textarea>
+      </form>
+      <div id="conflict" hidden>
+        <label for="remote">Nota actual de HHR</label>
+        <textarea id="remote" rows="7" readonly></textarea>
+        <div class="actions conflict-actions">
+          <button type="button" id="keep" class="quiet">Conservar mi edición</button>
+          <button type="button" id="use-remote" class="quiet">Usar nota de HHR</button>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <p id="status" role="status"></p>
+      <button type="submit" form="edit" id="save" aria-keyshortcuts="Control+Enter Meta+Enter" hidden>Guardar</button>
+    </footer>
     <div id="discard" hidden>
       <p>Hay cambios sin guardar.</p>
-      <button type="button" id="continue" class="quiet">Seguir editando</button>
-      <button type="button" id="confirm-close">Cerrar sin guardar</button>
+      <div class="actions">
+        <button type="button" id="continue" class="quiet">Seguir editando</button>
+        <button type="button" id="confirm-close">Cerrar sin guardar</button>
+      </div>
     </div>
   </main>
   <script src="message-contract.js"></script>
