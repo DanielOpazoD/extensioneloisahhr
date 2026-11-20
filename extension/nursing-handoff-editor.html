@@ -10,7 +10,10 @@
   <main>
     <header>
       <h1>Entrega de turno</h1>
-      <span>Pruebas HHR</span>
+      <div class="actions">
+        <span>Pruebas HHR</span>
+        <button type="button" id="close" class="quiet" aria-label="Cerrar">×</button>
+      </div>
     </header>
     <p id="patient"></p>
     <p id="slot" class="detail"></p>
@@ -28,6 +31,11 @@
       <button type="button" id="use-remote" class="quiet">Usar nota de HHR</button>
     </div>
     <p id="status" role="status"></p>
+    <div id="discard" hidden>
+      <p>Hay cambios sin guardar.</p>
+      <button type="button" id="continue" class="quiet">Seguir editando</button>
+      <button type="button" id="confirm-close">Cerrar sin guardar</button>
+    </div>
   </main>
   <script src="message-contract.js"></script>
   <script src="nursing-handoff-editor.js"></script>

@@ -6,12 +6,14 @@
   const note = byId('note');
   const conflict = byId('conflict');
   const status = byId('status');
+  const discard = byId('discard');
   const save = edit.querySelector('button[type=submit]');
   let base;
   let pendingVersion;
   let remote;
   let saving = false;
   let available = false;
+  let ready = false;
   let polling = 0;
   const dirty = () => base && note.value !== base.text.replace(/\r\n?/g, '\n');
   const show = (text, tone = '') => {
@@ -23,9 +25,31 @@
   }).catch(() => ({ error: 'Se perdió la conexión con la extensión.', code: 'UNAVAILABLE' }));
 
   const updateButtons = () => {
-    save.disabled = saving || !available || Boolean(remote) || !dirty();
+    save.disabled = saving || !available || !ready || Boolean(remote) || !dirty();
     note.readOnly = saving;
   };
+  const close = () => window.parent.postMessage('hhr-nursing-handoff-close', 'https://fichamedico.rayensalud.cl');
+  const requestClose = () => {
+    if (saving) return;
+    if (!dirty()) {
+      close();
+      return;
+    }
+    discard.hidden = false;
+    byId('continue').focus();
+  };
+  byId('close').addEventListener('click', requestClose);
+  byId('confirm-close').addEventListener('click', close);
+  byId('continue').addEventListener('click', () => {
+    discard.hidden = true;
+    note.focus();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      requestClose();
+    }
+  });
   const accept = (value, replaceText) => {
     base = value;
     pendingVersion = value.version;
@@ -44,6 +68,7 @@
       byId('slot').textContent = '';
     }
     if (result.code === 'FAILED_PRECONDITION') available = false;
+    if (result.code === 'NOT_FOUND') ready = false;
     show(result.error, 'error');
     updateButtons();
   };
@@ -66,6 +91,7 @@
       if (available) setTimeout(() => void follow(generation), 2000);
       return;
     }
+    ready = true;
     if (pendingVersion !== result.version) {
       pendingVersion = result.version;
       if (dirty() && note.value !== result.text.replace(/\r\n?/g, '\n')) notifyRemote(result);
@@ -77,6 +103,7 @@
       edit.hidden = false;
       conflict.hidden = !remote;
       if (status.dataset.tone === 'error' && !remote) show(dirty() ? 'Sin guardar' : '');
+      updateButtons();
     }
     void follow(generation, true);
   }

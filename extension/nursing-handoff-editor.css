@@ -18,6 +18,8 @@ input { min-width: 0; flex: 1; }
 button { border: 0; border-radius: .45rem; padding: .5rem .8rem; background: #126559; color: white; cursor: pointer; }
 button:disabled { opacity: .55; cursor: default; }
 .quiet { background: transparent; color: #126559; }
+#close { font-size: 1.35rem; padding: 0 .45rem; line-height: 1.5; }
+#discard { padding: .65rem .8rem; border: 1px solid #b5c8c2; border-radius: .45rem; }
 #edit .actions { margin-block-start: .6rem; }
 #status { font-size: .9rem; margin-block-start: .7rem; }
 #status[data-tone="ok"] { color: #126559; }
