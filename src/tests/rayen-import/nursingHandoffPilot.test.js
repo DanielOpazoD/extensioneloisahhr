@@ -6,14 +6,13 @@ Function(readFileSync('extension/nursing-handoff-pilot.js', 'utf8'))();
 const source = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse';
 const extensionOrigin = 'chrome-extension://demo/';
 const ids = ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'];
-const info = { facId: '1', practitionerId: '2', practitionerRoleId: '3' };
-const grantKey = 'hhr-nursing-handoff-grant';
+const demoProof = crypto.randomUUID();
+const installationKey = 'a'.repeat(64);
+const info = { facId: '1', practitionerId: '2', practitionerRoleId: '3', token: demoProof };
 const setup = async () => {
   const owner = '1:2:3';
   const fields = { owner, sessionKey: 'rayen-session' };
-  const store = {
-    [grantKey]: { ...fields, grant: 'first' },
-  };
+  const store = {};
   ids.forEach((id, i) => {
     store['hhr-nursing-handoff-editor-' + id] = {
       ...fields, tabId: 1, editorTab: i + 2, episode: '901001', patientId: '1', run: '11111111-1',
@@ -30,14 +29,15 @@ const setup = async () => {
   };
   const checkAccess = vi.fn().mockResolvedValue({ ok: true });
   const fetchImpl = vi.fn();
+  const getInfo = vi.fn().mockResolvedValue({ info });
   const runtime = globalThis.HhrNursingHandoffPilot.create({
-    chrome, getSessionKey: () => 'rayen-session', getInfo: async () => ({ info }), checkAccess, fetchImpl,
+    chrome, localPilot: { installationKey }, getSessionKey: () => 'rayen-session', getInfo, checkAccess, fetchImpl,
     getContext: async () => ({ info, patientId: '1', patient: { run: '11111111-1' } }),
   });
   const message = (index, action) => runtime.operate({ id: ids[index], action }, {
     frameId: 0, url: extensionOrigin + 'nursing-handoff-editor.html#' + ids[index], tab: { id: index + 2 },
   });
-  return { store, checkAccess, chrome, fetchImpl, message };
+  return { checkAccess, chrome, fetchImpl, getInfo, message };
 };
 
 it('retira el acceso a la nota si Eloísa revoca el permiso durante una lectura', async () => {
@@ -54,32 +54,33 @@ it('retira el acceso a la nota si Eloísa revoca el permiso durante una lectura'
   expect(fetchImpl).toHaveBeenCalledOnce();
 });
 
-it('confirma el guardado antes de desvincular y conserva la vinculación nueva', async () => {
-  const { store, message, chrome, fetchImpl } = await setup();
-  const order = [];
-  let complete;
-  const saved = new Promise(resolve => { complete = resolve; });
-  let started;
-  const saving = new Promise(resolve => { started = resolve; });
-  fetchImpl.mockImplementation(async (_url, request) => {
-    const { data } = JSON.parse(request.body);
-    order.push(data.action);
-    if (data.action === 'save') {
-      started();
-      return saved;
-    }
-    if (data.action === 'disconnect') return Response.json({ result: { disconnected: true } });
-    return Response.json({ result: { grant: 'second' } });
+it('guarda directamente con la sesión de Eloísa y comunica la confirmación', async () => {
+  const { message, chrome, fetchImpl } = await setup();
+  fetchImpl.mockResolvedValue(Response.json({ result: { confirmed: true, date: '2026-11-19', shift: 'day' } }));
+  await expect(message(1, 'save')).resolves.toMatchObject({ confirmed: true });
+  const { data } = JSON.parse(fetchImpl.mock.calls[0][1].body);
+  expect(data).toMatchObject({
+    action: 'save',
+    episode: '901001',
+    source: { installationKey, facilityId: '1', practitionerId: '2', roleId: '3' },
   });
-  const write = message(0, 'save');
-  await saving;
-  const disconnect = message(1, 'disconnect');
-  const reconnect = message(0, 'connect');
-  expect(order).toEqual(['save']);
-  complete(Response.json({ result: { confirmed: true, date: '2026-11-19', shift: 'day' } }));
-  await expect(write).resolves.toMatchObject({ confirmed: true });
-  await Promise.all([disconnect, reconnect]);
+  expect(fetchImpl.mock.calls[0][1].body).not.toContain(demoProof);
   expect(chrome.tabs.sendMessage).toHaveBeenCalledOnce();
-  expect(order).toEqual(['save', 'disconnect', 'connect']);
-  expect(store[grantKey].grant).toBe('second');
+});
+
+it('conserva la confirmación del servidor si caduca la sesión mientras responde', async () => {
+  const { message, chrome, fetchImpl, getInfo } = await setup();
+  fetchImpl.mockImplementation(async () => {
+    getInfo.mockResolvedValue({ error: 'Sesión cerrada.' });
+    return Response.json({ result: { text: 'nota sintética', confirmed: true } });
+  });
+  await expect(message(0, 'save')).resolves.toMatchObject({ confirmed: true, code: 'SOURCE_SESSION_CHANGED' });
+  expect(chrome.tabs.sendMessage).not.toHaveBeenCalled();
+});
+
+it('rechaza una operación si falta la sesión activa', async () => {
+  const { message, fetchImpl, getInfo } = await setup();
+  getInfo.mockResolvedValue({ info: { ...info, token: '' } });
+  await expect(message(0, 'read')).resolves.toMatchObject({ code: 'SOURCE_SESSION_CHANGED' });
+  expect(fetchImpl).not.toHaveBeenCalled();
 });

@@ -5,8 +5,7 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 import { unzipSync } from 'fflate';
 
-const code = process.env.HHR_HANDOFF_SMOKE_CODE;
-assert.match(code ?? '', /^[\w-]{32}$/, 'Requiere un código sintético del emulador.');
+const token = crypto.randomUUID();
 const root = await mkdtemp(path.join(os.tmpdir(), 'hhr-handoff-smoke-'));
 let context;
 const origin = 'https://fichamedico.rayensalud.cl';
@@ -37,7 +36,7 @@ try {
   await context.route(origin + '/**', route => {
     if (route.request().url().includes('/api/auth/session')) return route.fulfill({ json: {
       ok: true, session: {
-        token: 'fixture', facilityId: '1', healthCarePractitionerId: '2',
+        token, facilityId: '1', healthCarePractitionerId: '2',
         healthCarePractitionerRoleId: '3', role: 'Enfermera', fullName: 'Profesional de prueba',
       },
     } });
@@ -58,14 +57,14 @@ try {
   };
   const editor = await open();
   editor.on('pageerror', e => console.error(e.message));
-  await editor.getByLabel('Código de vinculación de HHR').fill(code);
-  await editor.getByRole('button', { name: 'Vincular', exact: true }).click();
   const note = editor.getByLabel('Nota del turno');
   try {
     await note.waitFor({ timeout: 12000 });
   } catch (error) {
     throw new Error('El editor no cargó: ' + await editor.locator('#status').innerText(), { cause: error });
   }
+  assert.equal(await editor.getByLabel('Código de vinculación de HHR').count(), 0);
+  assert.equal(await editor.getByRole('button', { name: /vincular/i }).count(), 0);
   assert.equal(context.pages().some(tab => /^http:\/\/127\.0\.0\.1/.test(tab.url())), false);
   await note.fill('Guardado desde Chromium con HHR cerrado');
   assert.equal(await editor.getByText('✓ Guardado en HHR', { exact: true }).count(), 0);
@@ -87,7 +86,7 @@ try {
   assert.equal(await observer.getByLabel('Nota del turno').inputValue(), 'Borrador de otro editor');
   assert.equal(await observer.getByLabel('Nota actual de HHR').inputValue(), 'Cambio sincronizado entre editores');
   assert.equal(await observer.getByRole('button', { name: 'Guardar', exact: true }).isEnabled(), false);
-  console.log('OK: Chromium, vinculación, guardado sin pestaña HHR, confirmación, reapertura y borrador ante conflicto.');
+  console.log('OK: Chromium, sesión automática de Eloísa, guardado sin pestaña HHR, confirmación, reapertura y borrador ante conflicto.');
 } finally {
   await context?.close();
   await rm(root, { recursive: true, force: true });

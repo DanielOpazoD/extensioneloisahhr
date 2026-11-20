@@ -5,7 +5,6 @@
   const source = /^https:\/\/fichamedico\.rayensalud\.cl\/dashboard\/encounter-list-nurse\/?(?:[?#].*)?$/;
   const editor = 'nursing-handoff-editor.html';
   const endpoint = 'http://127.0.0.1:5001/demo-hhr-handoff/southamerica-east1/nursingHandoffExtension';
-  const accessKey = 'hhr-nursing-handoff-grant';
   const editorKey = id => 'hhr-nursing-handoff-editor-' + id;
   const number = value => /^[1-9]\d{0,15}$/.test(value ?? '');
   const error = (message, code) => ({ error: message, code });
@@ -14,21 +13,27 @@
     return ids.every(number) ? ids.join(':') : null;
   };
 
-  function create({ chrome, getContext, getInfo, checkAccess, getSessionKey, fetchImpl = fetch }) {
+  function create({
+    chrome, getContext, getInfo, checkAccess, getSessionKey, fetchImpl = fetch,
+    localPilot = globalThis.HhrNursingHandoffLocalPilot,
+  }) {
     const store = chrome.storage.session;
-    const enabled = () => chrome.runtime.getManifest().name === name;
+    const enabled = () => chrome.runtime.getManifest().name === name && Boolean(localPilot?.installationKey);
     const load = async key => (await store.get(key))[key];
-    let grantOperations = Promise.resolve();
-    function withGrant(action) {
-      const operation = grantOperations.then(action);
-      grantOperations = operation.catch(() => {});
-      return operation;
-    }
-
+    const getPatient = (episode, info, sender) => {
+      const testCase = localPilot?.testCase;
+      if (testCase?.episode === episode && new URL(sender.url).searchParams.get('hhrHandoffTest') === '1') {
+        return { info, patientId: testCase.episode, patient: testCase.patient };
+      }
+      return getContext(episode, info, null, sender);
+    };
     async function start({ encId }, sender) {
       if (!enabled() || sender.frameId !== 0 || !source.test(sender.url) ||
           !source.test(sender.tab?.url) || !number(encId)) return error('Abre la lista de Gestión de cuidados.');
-      const result = await getContext(encId, null, null, sender);
+      const session = await getInfo(sender);
+      if (session.error) return error(session.error);
+      if (!session.info?.token || !identity(session.info)) return error('Inicia sesión en Hospitalizados de Eloísa.');
+      const result = await getPatient(String(encId), session.info, sender);
       if (result.error) return error(result.error);
       const access = await checkAccess(result.info);
       if (access.error) return error(access.error);
@@ -71,7 +76,7 @@
       if (!source.test(tab?.url)) return error('Vuelve a la lista de Gestión de cuidados.', 'SOURCE_SESSION_CHANGED');
       const ficha = { tab, frameId: 0, url: tab.url, id: chrome.runtime.id };
       const session = await getInfo(ficha);
-      if (identity(session.info) !== context.owner ||
+      if (!session.info?.token || identity(session.info) !== context.owner ||
           await getSessionKey(session.info, ficha) !== context.sessionKey) {
         return error('Cambió la sesión de Eloísa. Abre la entrega desde la lista.', 'SOURCE_SESSION_CHANGED');
       }
@@ -79,12 +84,12 @@
       const access = await checkAccess(session.info);
       if (access.error) return error(access.error, 'SOURCE_SESSION_CHANGED');
       if (checkPatient) {
-        const refreshed = await getContext(context.episode, session.info, null, ficha);
+        const refreshed = await getPatient(context.episode, session.info, ficha);
         if (refreshed.error || refreshed.patientId !== context.patientId || refreshed.patient?.run !== context.run) {
           return error('Eloísa no confirmó el paciente y episodio. Abre otra vez la entrega.', 'SOURCE_SESSION_CHANGED');
         }
       }
-      return { ok: true };
+      return { info: session.info };
     }
 
     async function operate(message, sender) {
@@ -93,40 +98,21 @@
           sender.url !== chrome.runtime.getURL(editor) + '#' + id) return error('Editor no autorizado.');
       const context = await load(editorKey(id));
       if (!context || context.editorTab !== sender.tab?.id) return error('Vuelve a abrir la entrega desde la lista.');
-      const request = () => perform(message, context);
-      return ['connect', 'disconnect', 'save'].includes(action) ? withGrant(request) : request();
-    }
-
-    async function perform(message, context) {
-      const { action } = message;
-      const verified = await verifySource(context, action === 'read' || action === 'save');
+      if (!['context', 'read', 'save'].includes(action)) return error('Operación no autorizada.');
+      const verified = await verifySource(context, action !== 'context');
       if (verified.error) return verified;
-      const current = await load(accessKey);
-      const grant = current?.owner === context.owner && current.sessionKey === context.sessionKey ? current.grant : null;
-      if (action === 'context') return { name: context.name, paired: Boolean(grant) };
-      if (action === 'connect') {
-        const result = await call({ action, code: message.code?.trim() });
-        if (result.error) return result;
-        await store.set({ [accessKey]: { owner: context.owner, sessionKey: context.sessionKey, grant: result.grant } });
-        return { paired: true };
-      }
-      if (!grant) return error('Vincula HHR para leer la entrega.', 'UNAUTHENTICATED');
-      if (action === 'disconnect') {
-        const result = await call({ action, grant });
-        if (!result.error || result.code === 'UNAUTHENTICATED') await store.remove(accessKey);
-        return result;
-      }
-      if (!['read', 'save'].includes(action)) return error('Operación no autorizada.');
+      if (action === 'context') return { name: context.name };
 
+      const { facId, practitionerId, practitionerRoleId } = verified.info;
       const result = await call({
-        action, grant, episode: context.episode, patientRun: context.run,
+        action, episode: context.episode, patientRun: context.run,
+        source: { installationKey: localPilot.installationKey, facilityId: String(facId), practitionerId: String(practitionerId), roleId: String(practitionerRoleId) },
         date: message.date, shift: message.shift, since: message.since,
         version: message.version, text: message.text,
       });
       if (!result.error && action === 'read') {
         const updated = await verifySource(context, true);
         if (updated.error) return updated;
-        if ((await load(accessKey))?.grant !== grant) return error('Cambió la vinculación con HHR.', 'UNAUTHENTICATED');
       }
       if (result.confirmed) {
         const updated = await verifySource(context).catch(() => error('Cambió la sesión de Eloísa.', 'SOURCE_SESSION_CHANGED'));
