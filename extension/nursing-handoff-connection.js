@@ -15,11 +15,24 @@
     const store = chrome.storage.session;
     const get = async key => (await store.get(key))[key];
     let opening;
+    let accessChange = Promise.resolve();
+    const changeAccess = operation => {
+      const result = accessChange.then(operation);
+      accessChange = result.catch(() => {});
+      return result;
+    };
 
     async function authorized(owner) {
+      await accessChange;
       const value = await get(accessKey);
       if (value?.owner !== owner || value.expiresAt <= Date.now()) return null;
       return { deviceId: value.deviceId, proof: value.proof };
+    }
+    function forget(owner, expectedProof) {
+      return changeAccess(async () => {
+        const current = await get(accessKey);
+        if (current?.owner === owner && current.proof === expectedProof) await store.remove(accessKey);
+      });
     }
 
     async function launch(owner, sourceTab) {
@@ -63,7 +76,7 @@
       if (Number.isSafeInteger(expiresAt) && expiresAt > Date.now() &&
           expiresAt <= Date.now() + 4 * 60 * 60_000) {
         const { owner, deviceId, proof } = pending;
-        await store.set({ [accessKey]: { owner, deviceId, proof, expiresAt } });
+        await changeAccess(() => store.set({ [accessKey]: { owner, deviceId, proof, expiresAt } }));
       }
       await store.remove(pendingKey);
       const source = await chrome.tabs.update(pending.sourceTab, { active: true }).catch(() => null);
@@ -71,7 +84,7 @@
       await chrome.tabs.remove(pending.tabId).catch(() => {});
       return { ok: true };
     }
-    return { authorized, open, receive };
+    return { authorized, forget, open, receive };
   }
 
   globalThis.HhrNursingHandoffConnection = { create, endpoint: project };

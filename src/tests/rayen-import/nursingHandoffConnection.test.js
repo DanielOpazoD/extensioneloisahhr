@@ -55,6 +55,10 @@ it('requires the expected HHR tab and correlates the receipt without giving the 
   expect(hhr.url).not.toContain(proof);
   expect(parameters.get('deviceId')).toBe(deviceId);
   expect(await runtime.authorized('owner-B')).toBeNull();
+  await runtime.forget('owner-A', 'wrong-proof');
+  expect((await runtime.authorized('owner-A')).proof).toBe(proof);
+  await runtime.forget('owner-A', proof);
+  expect(await runtime.authorized('owner-A')).toBeNull();
   expect(chrome.tabs.remove).toHaveBeenCalledWith(21);
   expect(chrome.tabs.update).toHaveBeenCalledWith(2, { active: true });
   await expect(runtime.receive(message, source)).resolves.toHaveProperty('error');

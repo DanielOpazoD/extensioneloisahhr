@@ -6,6 +6,7 @@
 - La nota aprovecha el espacio del diálogo. Los cambios en conflicto aparecen al lado cuando hay espacio y se puede guardar con Ctrl+Enter o ⌘+Enter.
 - La fila muestra un ✓ legible con la fecha y el turno confirmados. El control de Entrega conserva un foco visible al navegar con teclado.
 - Entrega de turno se conecta con el HHR desplegado. La autorización temporal usa la cuenta de HHR y permite cerrar esa pestaña después de conectar.
+- Permite desconectar la cuenta de HHR desde el editor. El texto pendiente sigue abierto y el guardado se vuelve a habilitar al reconectar.
 
 ## 0.48.118
 

@@ -105,7 +105,7 @@
           (context.editorDocument ? context.editorDocument !== sender.documentId : action !== 'context')) {
         return error('Editor no autorizado.');
       }
-      if (!['context', 'read', 'save', 'connect'].includes(action)) return error('Operación no autorizada.');
+      if (!['context', 'read', 'save', 'connect', 'disconnect'].includes(action)) return error('Operación no autorizada.');
       const verified = await verifySource(context, ['read', 'save'].includes(action));
       if (verified.error) return verified;
       if (action === 'context') {
@@ -116,6 +116,12 @@
       if (action === 'connect') return connection ?
         connection.open(context.owner, context.tabId) : error('El piloto local usa el censo de pruebas.');
       const access = connection && await connection.authorized(context.owner);
+      if (action === 'disconnect') {
+        if (!access) return { disconnected: true };
+        await connection.forget(context.owner, access.proof);
+        const result = await call({ action, ...access });
+        return { disconnected: true, remoteConfirmed: result.disconnected === true };
+      }
       if (connection && !access) return needsHhr();
       const { facId, practitionerId, practitionerRoleId } = verified.info;
       const result = await call({
@@ -126,7 +132,10 @@
         date: message.date, shift: message.shift, since: message.since,
         version: message.version, text: message.text,
       });
-      if (connection && result.code === 'UNAUTHENTICATED') return needsHhr();
+      if (connection && result.code === 'UNAUTHENTICATED') {
+        await connection.forget(context.owner, access.proof);
+        return needsHhr();
+      }
       if (!result.error && action === 'read') {
         const updated = await verifySource(context, true);
         if (updated.error) return updated;
