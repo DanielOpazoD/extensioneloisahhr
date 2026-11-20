@@ -371,10 +371,14 @@
         "content-hhr-statistical-evidence.js",
         "content-hhr-syslab.js",
         "content-hhr-exalab.js",
-        "content-hhr-exalab-auto.js",
-        "nursing-handoff-hhr-relay.js"
+        "content-hhr-exalab-auto.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://hhr-hospitalizados.app/*"],
+      "js": ["nursing-handoff-hhr-relay.js"],
+      "run_at": "document_start"
     }
   ],
   "optional_permissions": [

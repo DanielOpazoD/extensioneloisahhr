@@ -149,6 +149,11 @@
       connect.disabled = false;
     }
   });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !connect.hidden && available && !saving) {
+      void follow(++polling);
+    }
+  });
   disconnect.addEventListener('click', async () => {
     if (saving) return;
     const generation = ++polling;
