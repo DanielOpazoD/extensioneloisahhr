@@ -55,10 +55,19 @@
         min-height:19px; height:auto; width:fit-content; font-size:11px; font-weight:600;
       }
       [data-hhr-discharge-chip] .MuiChip-label { padding-inline:6px; }
+      table[${marked}] [data-hhr-new-patient-chip] {
+        background:#e8f3ee; color:#225a45; border-radius:4px; height:16px;
+        width:fit-content; flex:none; font-size:10px; font-weight:600;
+      }
+      [data-hhr-new-patient-chip] .MuiChip-label { padding-inline:4px; }
       td[data-hhr-worklist-doctor] .MuiOutlinedInput-root:not(:hover,:focus-within) fieldset { border-color:transparent; }
       td[data-hhr-worklist-doctor] .MuiFormControl-root:not(:focus-within) .MuiInputLabel-shrink { opacity:0; }
       td[data-hhr-worklist-doctor] select:not(:hover,:focus) { border-color:transparent; background-color:transparent; }
       .hhr-patient-name-line { display:flex; align-items:center; gap:3px; }
+      [data-hhr-patient-novelty] {
+        display:inline-grid; place-items:center; flex:none; width:17px; height:17px;
+        border-radius:50%; color:#775119; background:#fff0d8;
+      }
       button[data-hhr-edit-episode] { opacity:0; display:inline-grid; place-items:center; flex:none;
         inline-size:25px; block-size:25px; border:0; border-radius:4px; padding:2px; background:transparent; color:#166963; cursor:pointer; }
       tr:is(:hover,:focus-within) button[data-hhr-edit-episode], button[data-hhr-edit-episode]:focus-visible { opacity:1; }

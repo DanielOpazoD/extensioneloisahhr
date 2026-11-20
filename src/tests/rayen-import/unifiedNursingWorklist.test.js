@@ -52,7 +52,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
           : column === 'lastNovelty' ? ['Hace 0 horas ', ' por Profesional de prueba']
           : column === '"lastNursePublishDatetime"' ? 'Hace 5 horas'
           : column === 'patient' ? jsx('a', {href:path+'/'+id, children:[jsx('strong', {children:'Paciente '+id},'name'),
-          jsx(Chip,{size:'small',label:'Pendiente'},'status'), jsx(Chip,{size:'small',label:'Alta médica'},'discharge'),
+          jsx(Chip,{size:'small',label:id === 20 ? 'Nuevo' : 'Pendiente'},'status'), jsx(Chip,{size:'small',label:'Alta médica'},'discharge'),
           jsx('span', {children:id === 23 ? 'RUN Materno/progenitor(a): 12345678-9' : 'Número de Identificación: DEMO'+id}, 'id')]}) : column},column))},id)) });
     }
     function Chip({label, ...props}) {return jsx('span', {...props, children:label});}
@@ -75,10 +75,14 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   root = createRoot(document.body.appendChild(document.createElement('div')));
   await act(() => root.render(createElement(App)));
   const rows = () => [...document.querySelectorAll('tbody tr')].map(tr=>tr.querySelector('a').getAttribute('href').split('/').pop());
+  const noveltyRows = () => [...document.querySelectorAll('[data-hhr-patient-novelty]')].map(marker =>
+    marker.parentElement.querySelector('a').getAttribute('href').split('/').pop());
   expect([...document.querySelectorAll('nav button')].map(b=>b.textContent)).toEqual(['Pacientes hospitalizados','Egresos']);
   expect(document.querySelectorAll('table')).toHaveLength(1);
   expect(document.querySelectorAll('.hhr-care-source[hidden]')).toHaveLength(3);
   expect(rows()).toEqual(['20','23','22','21']);
+  expect(noveltyRows()).toEqual(['22','21']);
+  expect(document.querySelector('[data-hhr-new-patient-chip]')?.textContent).toBe('Nuevo');
   expect(document.body.textContent).not.toContain('Pendiente');
   expect(document.querySelector('[data-hhr-discharge-chip]')?.textContent).toBe('Alta médica');
   expect(document.querySelectorAll('button[data-hhr-handoff-episode]')).toHaveLength(4);
@@ -96,6 +100,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(headings().filter(heading => operationalColumns.includes(heading))).toEqual([]);
   expect([...document.querySelectorAll('[data-hhr-handoff-inline]')].map(host => host.dataset.hhrHandoffInline)).toEqual(rows());
   expect(rows()).toEqual(['20','23','22','21']);
+  expect(noveltyRows()).toEqual(['22','21']);
   const editor = document.querySelector('[data-hhr-handoff-inline]');
   await act(() => onToggle({ isTrusted: true }));
   expect(headings()).toEqual(expect.arrayContaining(operationalColumns));
@@ -106,9 +111,11 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(action).toHaveBeenCalledWith(1,22);
   await act(()=>setFilter('23'));
   expect(rows()).toEqual(['23']);
+  expect(noveltyRows()).toEqual([]);
   await act(()=>setFilter(''));
   await act(()=>click('Egresos'));
   expect(rows()).toEqual(['30']);
+  expect(noveltyRows()).toEqual([]);
   await act(()=>click('Pacientes hospitalizados'));
   expect(rows()).toEqual(['20','23','22','21']);
 });

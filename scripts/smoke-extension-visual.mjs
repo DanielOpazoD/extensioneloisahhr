@@ -24,6 +24,7 @@ export const verifyHistoryNavigation = async page => {
                 <div class="MuiStack-root"><div class="MuiChip-root"><span class="MuiChip-label">${label}</span></div></div>
                 <div class="MuiCard-root" style="height:850px;background:#f1f7f5;padding:20px;box-sizing:border-box">
                   Evento sintético
+                  <span class="MuiChip-root" style="display:inline-flex;align-items:center"><span class="MuiChip-label">Nuevo</span></span>
                   <span class="MuiChip-label">02-01-2025</span>
                 </div>
               </div>`).join('')}
@@ -33,6 +34,9 @@ export const verifyHistoryNavigation = async page => {
     const nav = page.locator('#hhr-history-date-navigation');
     const select = nav.getByRole('combobox', { name: 'Fecha del historial' });
     await select.waitFor();
+    const newBadge = page.locator('[data-hhr-history-new]').first();
+    assert.equal(await newBadge.textContent(), 'Nuevo');
+    assert.equal((await newBadge.boundingBox()).height, 16);
     assert.equal(await select.locator('option').count(), 3);
     assert.match(await select.locator('option').first().textContent(), /^Hoy · \d{2}-\d{2}-\d{4}$/);
     await page.waitForFunction(() => {

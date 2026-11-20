@@ -24,6 +24,7 @@ const routes = [
 function startFixture(route) {
   const nativeJsx = (type, props, key) => typeof type === 'function' ? type(props) : ({ type, props, key });
   function renderElement(node, svg = false) {
+    if (node == null || typeof node === 'boolean') return document.createTextNode('');
     if (typeof node !== 'object') return document.createTextNode(String(node));
     const { type, props } = node;
     const el = svg || type === 'svg' ? document.createElementNS('http://www.w3.org/2000/svg', type) : document.createElement(type);
@@ -67,6 +68,7 @@ function startFixture(route) {
         const columns = [
           ['location', 'Ubicación'], ['patient', 'Paciente'], ...(referral ? [] : [['ges', 'GES']]),
           ['diagnosisAdmission', 'Diagnóstico'],
+          ...(label === 'con novedad' ? [['lastNovelty', 'Última novedad']] : []),
           ...(discharge || referral ? [[discharge ? 'medicalDischargeDatetime' : 'referralReason', 'Detalle']] : []),
           ['assignment', 'Médico tratante'], ['actions', 'Acciones'],
         ].map(([id, label]) => ({ id, label }));
@@ -80,6 +82,7 @@ function startFixture(route) {
           const nativeAction = nativeJsx('button', { ...(discharge ? {encId,patId:3000+id} : {}), children: 'Abrir ficha' });
           const location = ['AMQI', nativeJsx('br', {}), 'H1', nativeJsx('br', {}), 'H1C2'];
           const cells = [location, patient, ...(referral ? [] : ['No GES']), 'Diagnóstico (lateral) (Ingreso) (principal) (solicitud hospitalización)',
+            ...(label === 'con novedad' ? ['Hace 1 hora por Profesional de prueba'] : []),
             ...(discharge || referral ? ['Detalle'] : []),
             nativeJsx('select', {'aria-label':'Asignación', children:['Sin asignación','Profesional de prueba'].map(text => nativeJsx('option',{children:text}))}),
             nativeAction].map(child => nativeJsx('td', {children:child}));
@@ -266,6 +269,12 @@ const verifyLists = async (context, origin, worker) => {
         });
         assert.deepEqual(spacing, [6, 6, 48]);
         if (route.pathname.endsWith('-nurse')) {
+          const markers = rows.getByRole('img', { name: 'Con novedad' });
+          assert.equal(await markers.count(), name === 'Pacientes con novedad' ? total : 0);
+          if (name === 'Pacientes con novedad') {
+            assert.equal((await markers.first().boundingBox()).height, 17);
+            assert.equal(await markers.first().getAttribute('title'), 'Con novedad · Última publicación médica hace 1 h');
+          }
           assert.equal(await rows.locator('button[id="fade-button"]').count(), total);
           assert.equal(await rows.locator('button[id="fade-button"]:visible').count(), 0);
         }

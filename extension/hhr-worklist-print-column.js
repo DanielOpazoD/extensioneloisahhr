@@ -88,7 +88,7 @@
     return withChildren(jsx, cell, elapsed.replace(/(\d+)\s+horas?\b/gi, '$1 h'));
   }
 
-  function patientCell(jsx, cell, nursing, editId) {
+  function patientCell(jsx, cell, nursing, editId, noveltyTitle) {
     function present(node) {
       if (Array.isArray(node)) {
         const next = node.map(present);
@@ -99,6 +99,9 @@
       if (nursing && node.props.label === 'Alta médica' && node.props.size === 'small') {
         return jsx(node.type, { ...node.props, 'data-hhr-discharge-chip': '' }, node.key ?? undefined);
       }
+      if (nursing && node.props.label === 'Nuevo' && node.props.size === 'small') {
+        return jsx(node.type, { ...node.props, 'data-hhr-new-patient-chip': '' }, node.key ?? undefined);
+      }
       const text = node.props.children;
       if (typeof text === 'string') {
         if (/^\s*RUN\s+materno\s*\/\s*progenitor(?:\(a\))?\s*:/i.test(text)) return null;
@@ -107,9 +110,16 @@
       }
       const children = present(text);
       const current = children === node.props.children ? node : withChildren(jsx, node, children);
-      if (!nursing || !editId || !node.props.href || node.props.component === 'div') return current;
+      if (!nursing || !node.props.href) return current;
+      const edit = editId && node.props.component !== 'div';
+      const novelty = noveltyTitle && /^\/dashboard\/encounter-list-nurse\/[1-9]\d*\/?$/.test(node.props.href);
+      if (!edit && !novelty) return current;
       return jsx('span', { className: 'hhr-patient-name-line', children: [current,
-        jsx('button', { type: 'button', 'data-hhr-edit-episode': editId, title: 'Modificar paciente en Gestión de Camas',
+        novelty && jsx('span', { 'data-hhr-patient-novelty': '', role: 'img', 'aria-label': 'Con novedad',
+          title: noveltyTitle, children: jsx('svg', { viewBox: '0 0 16 16',
+            width: 13, height: 13, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round',
+            strokeLinejoin: 'round', 'aria-hidden': true, children: jsx('path', { d: 'M2 8h3l2-4 2 8 2-4h3' }) }) }, 'novelty'),
+        edit && jsx('button', { type: 'button', 'data-hhr-edit-episode': editId, title: 'Modificar paciente en Gestión de Camas',
           'aria-label': 'Modificar paciente en Gestión de Camas', children: jsx('svg', { viewBox: '0 0 24 24',
             width: 15, height: 15, fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, 'aria-hidden': true,
             children: jsx('path', { d: 'M4 20l4-1 12-12-3-3L5 16z M14 7l3 3' }) }) }, 'edit'),
@@ -133,6 +143,7 @@
     const nursing = route.endsWith('-nurse');
     const activity = nursing ? columns.findIndex(col => col.id === 'lastNovelty' ||
       col.id === '"lastNursePublishDatetime"' || /última atención/i.test(col.label)) : -1;
+    const hasNovelty = columns[activity]?.id === 'lastNovelty';
     const nextColumns = columns.slice();
     if (doctor >= 0) {
       const column = nextColumns[doctor];
@@ -143,8 +154,15 @@
       const cells = row.props.children.slice();
       const { encId, patientId } = encounterForRow(cells, discharge, route);
       cells[0] = compactLocation(jsx, cells[0]);
-      cells[1] = patientCell(jsx, cells[1], nursing, encId);
       if (activity >= 0) cells[activity] = compactActivity(jsx, cells[activity]);
+      let noveltyTitle;
+      if (hasNovelty) {
+        const elapsed = cells[activity]?.props?.children;
+        noveltyTitle = typeof elapsed === 'string' && /^\d+\s+(?:h|días?|semanas?)$/.test(elapsed)
+          ? 'Con novedad · Última publicación médica hace ' + elapsed.replace(/\s+/g, ' ')
+          : 'Con novedad';
+      }
+      cells[1] = patientCell(jsx, cells[1], nursing, encId, noveltyTitle);
       if (diagnosis >= 0) cells[diagnosis] = compactDiagnosis(jsx, cells[diagnosis]);
       if (cells[doctor]?.props) {
         const cell = cells[doctor];
