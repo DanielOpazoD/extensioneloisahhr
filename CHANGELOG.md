@@ -2,7 +2,7 @@
 
 ## 0.48.118
 
-- El piloto local abre y guarda la entrega con la sesión de Eloísa de pruebas. Retira el código de vinculación y el paso por HHR.
+- El piloto local abre y guarda la entrega con la sesión habitual de Hospitalizados de Eloísa. Registra el profesional que escribe y retira el código de vinculación.
 
 ## 0.48.117
 

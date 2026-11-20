@@ -5,8 +5,7 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 import { unzipSync } from 'fflate';
 
-const token = process.env.HHR_HANDOFF_SMOKE_SESSION;
-assert.ok(/^eloisa-demo-v1\.[a-zA-Z0-9_-]{32}$/.test(token ?? ''), 'Requiere una sesión sintética del emulador.');
+const token = crypto.randomUUID();
 const root = await mkdtemp(path.join(os.tmpdir(), 'hhr-handoff-smoke-'));
 let context;
 const origin = 'https://fichamedico.rayensalud.cl';

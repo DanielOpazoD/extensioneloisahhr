@@ -6,7 +6,8 @@ Function(readFileSync('extension/nursing-handoff-pilot.js', 'utf8'))();
 const source = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse';
 const extensionOrigin = 'chrome-extension://demo/';
 const ids = ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'];
-const demoProof = 'eloisa-demo-v1.' + 'x'.repeat(32);
+const demoProof = crypto.randomUUID();
+const installationKey = 'a'.repeat(64);
 const info = { facId: '1', practitionerId: '2', practitionerRoleId: '3', token: demoProof };
 const setup = async () => {
   const owner = '1:2:3';
@@ -30,7 +31,7 @@ const setup = async () => {
   const fetchImpl = vi.fn();
   const getInfo = vi.fn().mockResolvedValue({ info });
   const runtime = globalThis.HhrNursingHandoffPilot.create({
-    chrome, getSessionKey: () => 'rayen-session', getInfo, checkAccess, fetchImpl,
+    chrome, localPilot: { installationKey }, getSessionKey: () => 'rayen-session', getInfo, checkAccess, fetchImpl,
     getContext: async () => ({ info, patientId: '1', patient: { run: '11111111-1' } }),
   });
   const message = (index, action) => runtime.operate({ id: ids[index], action }, {
@@ -61,8 +62,9 @@ it('guarda directamente con la sesión de Eloísa y comunica la confirmación', 
   expect(data).toMatchObject({
     action: 'save',
     episode: '901001',
-    source: { sessionProof: demoProof, facilityId: '1', practitionerId: '2', roleId: '3' },
+    source: { installationKey, facilityId: '1', practitionerId: '2', roleId: '3' },
   });
+  expect(fetchImpl.mock.calls[0][1].body).not.toContain(demoProof);
   expect(chrome.tabs.sendMessage).toHaveBeenCalledOnce();
 });
 
@@ -76,10 +78,9 @@ it('conserva la confirmación del servidor si caduca la sesión mientras respond
   expect(chrome.tabs.sendMessage).not.toHaveBeenCalled();
 });
 
-it('mantiene las credenciales ajenas al piloto fuera del emulador', async () => {
+it('rechaza una operación si falta la sesión activa', async () => {
   const { message, fetchImpl, getInfo } = await setup();
-  const token = crypto.randomUUID();
-  getInfo.mockResolvedValue({ info: { ...info, token } });
+  getInfo.mockResolvedValue({ info: { ...info, token: '' } });
   await expect(message(0, 'read')).resolves.toMatchObject({ code: 'SOURCE_SESSION_CHANGED' });
   expect(fetchImpl).not.toHaveBeenCalled();
 });

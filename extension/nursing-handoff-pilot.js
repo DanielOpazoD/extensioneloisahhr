@@ -8,28 +8,35 @@
   const editorKey = id => 'hhr-nursing-handoff-editor-' + id;
   const number = value => /^[1-9]\d{0,15}$/.test(value ?? '');
   const error = (message, code) => ({ error: message, code });
-  const demoSession = value => typeof value === 'string' && /^eloisa-demo-v1\.[a-zA-Z0-9_-]{32}$/.test(value);
-  const demoSessionError = () => error('Inicia sesión en Eloísa de pruebas y vuelve a abrir la entrega.', 'SOURCE_SESSION_CHANGED');
   const identity = info => {
     const ids = [info?.facId, info?.practitionerId, info?.practitionerRoleId];
     return ids.every(number) ? ids.join(':') : null;
   };
 
-  function create({ chrome, getContext, getInfo, checkAccess, getSessionKey, fetchImpl = fetch }) {
+  function create({
+    chrome, getContext, getInfo, checkAccess, getSessionKey, fetchImpl = fetch,
+    localPilot = globalThis.HhrNursingHandoffLocalPilot,
+  }) {
     const store = chrome.storage.session;
-    const enabled = () => chrome.runtime.getManifest().name === name;
+    const enabled = () => chrome.runtime.getManifest().name === name && Boolean(localPilot?.installationKey);
     const load = async key => (await store.get(key))[key];
+    const getPatient = (episode, info, sender) => {
+      const testCase = localPilot?.testCase;
+      if (testCase?.episode === episode && new URL(sender.url).searchParams.get('hhrHandoffTest') === '1') {
+        return { info, patientId: testCase.episode, patient: testCase.patient };
+      }
+      return getContext(episode, info, null, sender);
+    };
     async function start({ encId }, sender) {
       if (!enabled() || sender.frameId !== 0 || !source.test(sender.url) ||
           !source.test(sender.tab?.url) || !number(encId)) return error('Abre la lista de Gestión de cuidados.');
       const session = await getInfo(sender);
       if (session.error) return error(session.error);
-      if (!demoSession(session.info?.token)) return demoSessionError();
-      const result = await getContext(encId, session.info, null, sender);
+      if (!session.info?.token || !identity(session.info)) return error('Inicia sesión en Hospitalizados de Eloísa.');
+      const result = await getPatient(String(encId), session.info, sender);
       if (result.error) return error(result.error);
       const access = await checkAccess(result.info);
       if (access.error) return error(access.error);
-      if (!demoSession(result.info?.token)) return demoSessionError();
       const owner = identity(result.info);
       if (!owner) return error('No se pudo verificar la sesión de Eloísa.');
       const id = crypto.randomUUID();
@@ -69,8 +76,7 @@
       if (!source.test(tab?.url)) return error('Vuelve a la lista de Gestión de cuidados.', 'SOURCE_SESSION_CHANGED');
       const ficha = { tab, frameId: 0, url: tab.url, id: chrome.runtime.id };
       const session = await getInfo(ficha);
-      if (!demoSession(session.info?.token)) return demoSessionError();
-      if (identity(session.info) !== context.owner ||
+      if (!session.info?.token || identity(session.info) !== context.owner ||
           await getSessionKey(session.info, ficha) !== context.sessionKey) {
         return error('Cambió la sesión de Eloísa. Abre la entrega desde la lista.', 'SOURCE_SESSION_CHANGED');
       }
@@ -78,7 +84,7 @@
       const access = await checkAccess(session.info);
       if (access.error) return error(access.error, 'SOURCE_SESSION_CHANGED');
       if (checkPatient) {
-        const refreshed = await getContext(context.episode, session.info, null, ficha);
+        const refreshed = await getPatient(context.episode, session.info, ficha);
         if (refreshed.error || refreshed.patientId !== context.patientId || refreshed.patient?.run !== context.run) {
           return error('Eloísa no confirmó el paciente y episodio. Abre otra vez la entrega.', 'SOURCE_SESSION_CHANGED');
         }
@@ -97,10 +103,10 @@
       if (verified.error) return verified;
       if (action === 'context') return { name: context.name };
 
-      const { token, facId, practitionerId, practitionerRoleId } = verified.info;
+      const { facId, practitionerId, practitionerRoleId } = verified.info;
       const result = await call({
         action, episode: context.episode, patientRun: context.run,
-        source: { sessionProof: token, facilityId: String(facId), practitionerId: String(practitionerId), roleId: String(practitionerRoleId) },
+        source: { installationKey: localPilot.installationKey, facilityId: String(facId), practitionerId: String(practitionerId), roleId: String(practitionerRoleId) },
         date: message.date, shift: message.shift, since: message.since,
         version: message.version, text: message.text,
       });

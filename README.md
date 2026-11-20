@@ -120,8 +120,9 @@ en `extension/vendor-lock.json` y en sus archivos originales.
 
 ## Piloto local de entrega de turno
 
-`node scripts/build-nursing-handoff-pilot.mjs` crea
-`dist/eloisa-hhr-entrega-turno-pruebas.zip`. Cárgalo descomprimido en un perfil de Chrome de
-pruebas. El flujo sintético inicia una sesión de Eloísa y permite abrir y guardar la
-entrega directamente desde Gestión de cuidados. El piloto usa exclusivamente
-`demo-hhr-handoff` en el emulador de Functions. El ZIP habitual conserva su configuración.
+Ejecuta `functions/scripts/runNursingHandoffPilot.cjs` desde el repositorio de HHR con
+`HHR_HANDOFF_EXTENSION_CHECKOUT` apuntando a este checkout. Una ejecución prepara el
+emulador local y la extensión y verifica la entrega en Chromium. El modo `--interactive`
+prepara una carpeta para Chrome y un caso ficticio. En la lista de Hospitalizados de
+Eloísa, añade `hhrHandoffTest=1` a los parámetros y abre «Abrir entrega del paciente ficticio».
+La extensión comprueba la sesión y envía el identificador del profesional a HHR local.
