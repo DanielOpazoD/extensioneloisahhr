@@ -93,11 +93,18 @@
     }
     .hhr-hospitalized-panel { box-sizing:border-box; background:white; border-radius:12px; padding:10px 12px; }
     .hhr-care-source[hidden] { display:none !important; }
+    .hhr-worklist-handoff { text-align:center; }
     .hhr-worklist-handoff button {
-      border:0; border-radius:4px; background:transparent; color:#126559;
-      font-size:1.12rem; min-width:28px; min-height:26px; cursor:pointer;
+      display:inline-grid; place-items:center; vertical-align:middle;
+      width:30px; height:28px; border:1px solid transparent; border-radius:6px;
+      background:transparent; color:#126559; font-size:1.08rem; cursor:pointer;
     }
     .hhr-worklist-handoff button:is(:hover,:focus-visible) { background:#d8efea; }
+    .hhr-worklist-handoff button:focus-visible { outline:2px solid #126559; outline-offset:1px; }
+    .hhr-worklist-handoff button[data-hhr-handoff-confirmed] {
+      background:#e3f5ec; border-color:#b2dfc8; font-size:0;
+    }
+    .hhr-worklist-handoff button[data-hhr-handoff-confirmed]::after { content:'✓'; font-size:1rem; }
     .hhr-hospitalized-panel .hhr-worklist-activity { font-size:.8333em; color:#50625e; }
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }

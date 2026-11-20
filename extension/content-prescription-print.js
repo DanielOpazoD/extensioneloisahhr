@@ -441,21 +441,25 @@
     refreshOperationsConnectionBadge,
     invalidateConnectionState,
   } = connectionCenterRuntime;
+  let handoffReceipt = 0;
   const onRuntimeMessage = (message, _sender, sendResponse) => {
     if (message?.type === 'RAYEN_NURSING_HANDOFF_CONFIRMED' && _sender.id === chrome.runtime.id &&
-        /^[1-9]\d*$/.test(message.episode)) {
+        /^[1-9]\d*$/.test(message.episode) && /^\d{4}-\d{2}-\d{2}$/.test(message.date) &&
+        ['day', 'night'].includes(message.shift)) {
       const button = document.querySelector(`button[data-hhr-handoff-episode="${message.episode}"]`);
       if (button) {
-        const label = 'Guardado en HHR · ' + message.date + ' · ' + (message.shift === 'day' ? 'Día' : 'Noche');
-        button.textContent = '✓';
+        const label = 'Guardado en HHR · ' + (message.shift === 'day' ? 'Día' : 'Noche') +
+          ' · ' + message.date.split('-').reverse().join('-');
+        const receipt = String(++handoffReceipt);
+        button.dataset.hhrHandoffConfirmed = receipt;
         button.title = label;
         button.setAttribute('aria-label', label + '. Abrir entrega de turno');
         setTimeout(() => {
-          if (button.title !== label) return;
-          button.textContent = '✎';
+          if (button.dataset.hhrHandoffConfirmed !== receipt) return;
+          delete button.dataset.hhrHandoffConfirmed;
           button.title = 'Abrir entrega de turno';
           button.setAttribute('aria-label', button.title);
-        }, 4000);
+        }, 8000);
       }
       return;
     }
