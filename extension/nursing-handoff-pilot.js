@@ -15,11 +15,15 @@
   function create({
     chrome, getContext, getInfo, checkAccess, getSessionKey, fetchImpl = fetch,
     localPilot = globalThis.HhrNursingHandoffLocalPilot,
+    hosted = globalThis.HhrNursingHandoffConnection,
   }) {
     const store = chrome.storage.session;
-    const endpoint = 'http://127.0.0.1:' + (localPilot?.port ?? 5001) +
+    const isPilot = chrome.runtime.getManifest().name === name;
+    const connection = !isPilot && hosted?.create(chrome);
+    const endpoint = connection ? hosted.endpoint : 'http://127.0.0.1:' + (localPilot?.port ?? 5001) +
       '/demo-hhr-handoff/southamerica-east1/nursingHandoffExtension';
-    const enabled = () => chrome.runtime.getManifest().name === name && Boolean(localPilot?.installationKey);
+    const enabled = Boolean(connection || (isPilot && localPilot?.installationKey));
+    const needsHhr = () => error('Conecta tu cuenta de HHR para continuar.', 'HHR_LINK_REQUIRED');
     const load = async key => (await store.get(key))[key];
     const getPatient = (episode, info, sender) => {
       const testCase = localPilot?.testCase;
@@ -29,7 +33,7 @@
       return getContext(episode, info, null, sender);
     };
     async function start({ encId }, sender) {
-      if (!enabled() || sender.frameId !== 0 || !source.test(sender.url) ||
+      if (!enabled || sender.frameId !== 0 || !source.test(sender.url) ||
           !source.test(sender.tab?.url) || !number(encId)) return error('Abre la lista de Gestión de cuidados.');
       const session = await getInfo(sender);
       if (session.error) return error(session.error);
@@ -87,7 +91,8 @@
 
     async function operate(message, sender) {
       const { id, action } = message;
-      if (!enabled() || !/^[a-f0-9-]{36}$/.test(id) || !source.test(sender.tab?.url) ||
+      if (connection && action === 'hosted-result') return connection.receive(message, sender);
+      if (!enabled || !/^[a-f0-9-]{36}$/.test(id) || !source.test(sender.tab?.url) ||
           !sender.documentId) return error('Editor no autorizado.');
       const key = editorKey(sender.tab.id);
       const context = await load(key);
@@ -100,21 +105,28 @@
           (context.editorDocument ? context.editorDocument !== sender.documentId : action !== 'context')) {
         return error('Editor no autorizado.');
       }
-      if (!['context', 'read', 'save'].includes(action)) return error('Operación no autorizada.');
-      const verified = await verifySource(context, action !== 'context');
+      if (!['context', 'read', 'save', 'connect'].includes(action)) return error('Operación no autorizada.');
+      const verified = await verifySource(context, ['read', 'save'].includes(action));
       if (verified.error) return verified;
       if (action === 'context') {
         await store.set({ [key]: { ...context, editorDocument: sender.documentId } });
-        return { name: context.name };
+        return { name: context.name, hosted: Boolean(connection) };
       }
 
+      if (action === 'connect') return connection ?
+        connection.open(context.owner, context.tabId) : error('El piloto local usa el censo de pruebas.');
+      const access = connection && await connection.authorized(context.owner);
+      if (connection && !access) return needsHhr();
       const { facId, practitionerId, practitionerRoleId } = verified.info;
       const result = await call({
         action, episode: context.episode, patientRun: context.run,
-        source: { installationKey: localPilot.installationKey, facilityId: String(facId), practitionerId: String(practitionerId), roleId: String(practitionerRoleId) },
+        ...(connection ? access : {
+          source: { installationKey: localPilot.installationKey, facilityId: String(facId), practitionerId: String(practitionerId), roleId: String(practitionerRoleId) },
+        }),
         date: message.date, shift: message.shift, since: message.since,
         version: message.version, text: message.text,
       });
+      if (connection && result.code === 'UNAUTHENTICATED') return needsHhr();
       if (!result.error && action === 'read') {
         const updated = await verifySource(context, true);
         if (updated.error) return updated;
@@ -130,7 +142,7 @@
       return result;
     }
 
-    if (enabled()) chrome.tabs.onRemoved.addListener(tabId => store.remove(editorKey(tabId)));
+    if (enabled) chrome.tabs.onRemoved.addListener(tabId => store.remove(editorKey(tabId)));
     return { start, operate };
   }
 

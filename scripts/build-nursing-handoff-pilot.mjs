@@ -16,20 +16,7 @@ const manifest = JSON.parse(Buffer.from(files['manifest.json']).toString());
 manifest.name = 'Eloísa HHR · Entrega de turno (pruebas)';
 manifest.version_name = manifest.version + ' · Entrega de turno (pruebas)';
 manifest.host_permissions.push('http://127.0.0.1:' + port + '/*');
-manifest.web_accessible_resources.push({
-  resources: ['nursing-handoff-editor.html'],
-  matches: ['https://fichamedico.rayensalud.cl/*'],
-});
 const nursingList = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse*';
-manifest.content_scripts.push({
-  matches: ['https://fichamedico.rayensalud.cl/*'],
-  js: ['message-contract.js', 'nursing-handoff-dialog.js'],
-  css: ['nursing-handoff-dialog.css'],
-  run_at: 'document_idle',
-});
-const worklist = manifest.content_scripts.find(item => item.js.includes('hhr-nursing-worklist.js'));
-worklist.js.unshift('nursing-handoff-pilot-flag.js');
-files['nursing-handoff-pilot-flag.js'] = Buffer.from('globalThis.HhrNursingHandoffDemo = true;\n');
 
 const testCase = process.env.HHR_HANDOFF_LOCAL_INTERACTIVE === '1' &&
   process.env.HHR_HANDOFF_SHARED_CENSUS !== '1' ? {

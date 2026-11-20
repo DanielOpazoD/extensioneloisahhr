@@ -78,8 +78,9 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(rows()).toEqual(['20','23','22','21']);
   expect(document.body.textContent).not.toContain('Pendiente');
   expect(document.querySelector('[data-hhr-discharge-chip]')?.textContent).toBe('Alta médica');
-  expect(document.body.textContent).toContain('Última novedad 0 h');
-  expect(document.body.textContent).toContain('Última atención 5 h');
+  expect(document.querySelectorAll('button[data-hhr-handoff-episode]')).toHaveLength(4);
+  expect(document.body.textContent).not.toContain('Última novedad');
+  expect(document.body.textContent).not.toContain('Última atención');
   expect(document.body.textContent).not.toMatch(/Hace |por Profesional|RUN Materno|Número de Identificación/);
   expect(document.body.textContent).toContain('DEMO22');
   const click = text => [...document.querySelectorAll('button')].find(b=>b.textContent===text).click();
