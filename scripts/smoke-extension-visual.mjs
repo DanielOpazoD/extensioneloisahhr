@@ -37,6 +37,14 @@ export const verifyHistoryNavigation = async page => {
     const newBadge = page.locator('[data-hhr-history-new]').first();
     assert.equal(await newBadge.textContent(), 'Nuevo');
     assert.equal((await newBadge.boundingBox()).height, 16);
+    if (!nested) {
+      const firstCard = page.locator('#fixture-timeline .MuiCard-root').first();
+      const label = firstCard.locator('.MuiChip-root > .MuiChip-label');
+      await label.evaluate(node => { node.firstChild.data = 'Suspendido'; });
+      await firstCard.locator('[data-hhr-history-new]').waitFor({ state: 'detached' });
+      await label.evaluate(node => { node.firstChild.data = 'Nuevo'; });
+      await firstCard.locator('[data-hhr-history-new]').waitFor();
+    }
     assert.equal(await select.locator('option').count(), 3);
     assert.match(await select.locator('option').first().textContent(), /^Hoy · \d{2}-\d{2}-\d{4}$/);
     await page.waitForFunction(() => {
