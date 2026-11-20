@@ -15,10 +15,15 @@
 
   function watchTable(panel) {
     const entries = new Map();
-    const drafts = new Set();
     let opening = 0;
     let redraw;
     const send = (entry, type, value) => entry.frame?.contentWindow?.postMessage({ type, value }, extensionOrigin);
+    const updatePending = () => {
+      const count = [...entries.values()].filter(entry => entry.dirty).length;
+      const pending = panel.querySelector('[data-hhr-handoff-pending]');
+      const label = count === 1 ? '1 borrador' : count ? count + ' borradores' : '';
+      if (pending && pending.textContent !== label) pending.textContent = label;
+    };
     const receiveRow = message => {
       if (message.origin !== extensionOrigin ||
           !['hhr-handoff-row-height', 'hhr-handoff-row-dirty'].includes(message.data?.type)) return;
@@ -28,11 +33,8 @@
       if (type === 'hhr-handoff-row-height' && Number.isFinite(value)) {
         row.frame.style.height = String(Math.max(72, Math.min(880, Math.ceil(value)))) + 'px';
       } else if (type === 'hhr-handoff-row-dirty' && typeof value === 'boolean') {
-        if (value) drafts.add(row.host.dataset.hhrHandoffInline);
-        else drafts.delete(row.host.dataset.hhrHandoffInline);
-        const pending = panel.querySelector('[data-hhr-handoff-pending]');
-        const label = drafts.size === 1 ? '1 borrador' : drafts.size ? drafts.size + ' borradores' : '';
-        if (pending && pending.textContent !== label) pending.textContent = label;
+        row.dirty = value;
+        updatePending();
       }
     };
     const drain = () => {
@@ -115,6 +117,7 @@
         entries.set(host, { host, visible: false, started: false });
         observer.observe(host);
       }
+      updatePending();
       drain();
     };
     const changes = new MutationObserver(records => {
