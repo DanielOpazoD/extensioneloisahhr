@@ -56,8 +56,9 @@
           body: JSON.stringify({ data }), signal: AbortSignal.timeout(24_000),
         });
         const body = await response.json();
-        return response.ok && body.result ? body.result :
-          error(body.error?.message || 'HHR no respondió. Intenta de nuevo.', body.error?.status);
+        if (response.ok && body.result) return body.result;
+        const { status, message, details } = body.error ?? {};
+        return { ...error(message || 'HHR no respondió. Intenta de nuevo.', status), slot: details };
       } catch {
         return error('HHR no está disponible. Tu edición sigue abierta.', 'UNAVAILABLE');
       }

@@ -8,6 +8,7 @@
   const status = byId('status');
   const discard = byId('discard');
   const save = edit.querySelector('button[type=submit]');
+  let slot;
   let base;
   let pendingVersion;
   let remote;
@@ -19,6 +20,13 @@
   const show = (text, tone = '') => {
     status.textContent = text;
     status.dataset.tone = tone;
+  };
+  const pinSlot = value => {
+    if (slot || !/^\d{4}-\d{2}-\d{2}$/.test(value?.date) ||
+        !['day', 'night'].includes(value.shift)) return;
+    const { date, shift } = value;
+    slot = { date, shift };
+    byId('slot').textContent = (shift === 'day' ? 'Día' : 'Noche') + ' · ' + date.split('-').reverse().join('-');
   };
   const send = (action, data = {}) => chrome.runtime.sendMessage({
     type: HhrRayenMessageContract.types.NURSING_HANDOFF_EDITOR, id, action, ...data,
@@ -51,12 +59,12 @@
     }
   });
   const accept = (value, replaceText) => {
+    pinSlot(value);
     base = value;
     pendingVersion = value.version;
     remote = undefined;
     conflict.hidden = true;
     if (replaceText) note.value = value.text;
-    byId('slot').textContent = (value.shift === 'day' ? 'Día' : 'Noche') + ' · ' + value.date.split('-').reverse().join('-');
     edit.hidden = false;
     updateButtons();
   };
@@ -68,7 +76,10 @@
       byId('slot').textContent = '';
     }
     if (result.code === 'FAILED_PRECONDITION') available = false;
-    if (result.code === 'NOT_FOUND') ready = false;
+    if (result.code === 'NOT_FOUND') {
+      pinSlot(result.slot);
+      ready = false;
+    }
     show(result.error, 'error');
     updateButtons();
   };
@@ -82,9 +93,7 @@
 
   async function follow(generation, wait = false) {
     if (generation !== polling || !available) return;
-    const result = await send('read', base && {
-      date: base.date, shift: base.shift, since: wait ? pendingVersion : undefined,
-    });
+    const result = await send('read', { ...slot, since: wait ? pendingVersion : undefined });
     if (generation !== polling) return;
     if (result.error) {
       raise(result);

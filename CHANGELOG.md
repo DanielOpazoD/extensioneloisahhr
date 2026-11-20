@@ -2,7 +2,7 @@
 
 ## 0.48.119
 
-- En el piloto local, «Entrega de turno» abre un diálogo dentro de Gestión de cuidados de Eloísa. El editor muestra cuando el episodio aún no está en el censo de pruebas y vuelve a consultar mientras siga abierto.
+- En el piloto local, «Entrega de turno» abre un diálogo dentro de Gestión de cuidados de Eloísa. Muestra la fecha censal y el turno incluso si falta el censo local, y conserva ese turno al reintentar.
 
 ## 0.48.118
 

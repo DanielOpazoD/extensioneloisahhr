@@ -61,7 +61,8 @@ try {
     return source.frameLocator(frame);
   };
   const missing = await open(page, 'Abrir episodio ausente');
-  await missing.getByText('Este episodio aún no está en el censo de HHR Pruebas.').waitFor();
+  await missing.getByText('Este episodio aún no está en el censo local de pruebas.').waitFor();
+  assert.match(await missing.locator('#slot').innerText(), /^(Día|Noche) · \d{2}-\d{2}-\d{4}$/);
   assert.equal(await missing.getByRole('button', { name: 'Guardar' }).isVisible(), false);
   await missing.getByRole('button', { name: 'Cerrar', exact: true }).click();
   await page.locator(frame).waitFor({ state: 'detached' });
