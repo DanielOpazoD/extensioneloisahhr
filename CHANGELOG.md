@@ -3,6 +3,7 @@
 ## 0.48.119
 
 - En el piloto local, «Entrega de turno» abre un diálogo dentro de Gestión de cuidados de Eloísa. Muestra la fecha censal y el turno incluso si falta el censo local, y conserva ese turno al reintentar.
+- La nota aprovecha el espacio del diálogo. Los cambios en conflicto aparecen al lado cuando hay espacio y se puede guardar con Ctrl+Enter o ⌘+Enter.
 
 ## 0.48.118
 

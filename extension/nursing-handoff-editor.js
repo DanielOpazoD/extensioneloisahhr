@@ -7,7 +7,7 @@
   const conflict = byId('conflict');
   const status = byId('status');
   const discard = byId('discard');
-  const save = edit.querySelector('button[type=submit]');
+  const save = byId('save');
   let slot;
   let base;
   let pendingVersion;
@@ -33,6 +33,7 @@
   }).catch(() => ({ error: 'Se perdió la conexión con la extensión.', code: 'UNAVAILABLE' }));
 
   const updateButtons = () => {
+    save.hidden = edit.hidden;
     save.disabled = saving || !available || !ready || Boolean(remote) || !dirty();
     note.readOnly = saving;
   };
@@ -56,6 +57,12 @@
     if (event.key === 'Escape') {
       event.preventDefault();
       requestClose();
+    }
+  });
+  note.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.isComposing) {
+      event.preventDefault();
+      if (!save.disabled) edit.requestSubmit(save);
     }
   });
   const accept = (value, replaceText) => {

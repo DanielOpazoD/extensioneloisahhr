@@ -79,7 +79,7 @@ try {
   assert.equal(context.pages().some(tab => /^http:\/\/127\.0\.0\.1/.test(tab.url())), false);
   await note.fill('Guardado desde Chromium con HHR cerrado');
   assert.equal(await editor.getByText('✓ Guardado en HHR', { exact: true }).count(), 0);
-  await editor.getByRole('button', { name: 'Guardar', exact: true }).click();
+  await note.press('Control+Enter');
   await editor.getByText('✓ Guardado en HHR', { exact: true }).waitFor();
   await page.getByTitle(/Guardado en HHR/).waitFor();
   await editor.getByRole('button', { name: 'Cerrar', exact: true }).click();
