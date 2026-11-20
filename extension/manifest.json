@@ -85,6 +85,10 @@
   },
   "web_accessible_resources": [
     {
+      "resources": ["nursing-handoff-editor.html"],
+      "matches": ["https://fichamedico.rayensalud.cl/*"]
+    },
+    {
       "resources": [
         "hhr-logo.svg",
         "message-contract.js",
@@ -246,8 +250,10 @@
         "hhr-history-date-navigation.js",
         "hhr-native-ficha-presentation.js",
         "hhr-native-worklist-presentation.js",
-        "content-prescription-print.js"
+        "content-prescription-print.js",
+        "nursing-handoff-dialog.js"
       ],
+      "css": ["nursing-handoff-dialog.css"],
       "run_at": "document_idle"
     },
     {
@@ -359,7 +365,8 @@
         "content-hhr-statistical-evidence.js",
         "content-hhr-syslab.js",
         "content-hhr-exalab.js",
-        "content-hhr-exalab-auto.js"
+        "content-hhr-exalab-auto.js",
+        "nursing-handoff-hhr-relay.js"
       ],
       "run_at": "document_idle"
     }

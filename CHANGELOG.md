@@ -5,6 +5,7 @@
 - En el piloto local, «Entrega de turno» abre un diálogo dentro de Gestión de cuidados de Eloísa. Muestra la fecha censal y el turno incluso si falta el censo local, y conserva ese turno al reintentar.
 - La nota aprovecha el espacio del diálogo. Los cambios en conflicto aparecen al lado cuando hay espacio y se puede guardar con Ctrl+Enter o ⌘+Enter.
 - La fila muestra un ✓ legible con la fecha y el turno confirmados. El control de Entrega conserva un foco visible al navegar con teclado.
+- Entrega de turno se conecta con el HHR desplegado. La autorización temporal usa la cuenta de HHR y permite cerrar esa pestaña después de conectar.
 
 ## 0.48.118
 

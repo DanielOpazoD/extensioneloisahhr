@@ -85,7 +85,7 @@
     }
     function Combined({ registry }) {
       const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get);
-      const result = joinTables(jsx, tables);
+      const result = joinTables(jsx, tables, true);
       if (!result.listLenght && !tables.every(Boolean)) return null;
       return jsx(Table, { ...result, currentPage: 1, header: jsx('div', {
         hidden: true, children: 'Pacientes hospitalizados (' + result.listLenght + ')' }) });
