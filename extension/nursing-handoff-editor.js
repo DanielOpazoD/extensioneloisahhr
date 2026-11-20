@@ -8,6 +8,8 @@
   const status = byId('status');
   const discard = byId('discard');
   const save = byId('save');
+  const connect = byId('connect');
+  const disconnect = byId('disconnect');
   let slot;
   let base;
   let pendingVersion;
@@ -15,6 +17,7 @@
   let saving = false;
   let available = false;
   let ready = false;
+  let hosted = false;
   let polling = 0;
   const dirty = () => base && note.value !== base.text.replace(/\r\n?/g, '\n');
   const show = (text, tone = '') => {
@@ -35,6 +38,7 @@
   const updateButtons = () => {
     save.hidden = edit.hidden;
     save.disabled = saving || !available || !ready || Boolean(remote) || !dirty();
+    disconnect.disabled = saving;
     note.readOnly = saving;
   };
   const close = () => window.parent.postMessage('hhr-nursing-handoff-close', 'https://fichamedico.rayensalud.cl');
@@ -76,9 +80,15 @@
     updateButtons();
   };
   const raise = result => {
+    if (result.code === 'HHR_LINK_REQUIRED') {
+      ready = false;
+      disconnect.hidden = true;
+      connect.hidden = false;
+    }
     if (['UNAUTHENTICATED', 'PERMISSION_DENIED', 'SOURCE_SESSION_CHANGED'].includes(result.code)) {
       available = false;
       edit.hidden = conflict.hidden = true;
+      connect.hidden = disconnect.hidden = true;
       byId('patient').textContent = '';
       byId('slot').textContent = '';
     }
@@ -108,6 +118,8 @@
       return;
     }
     ready = true;
+    connect.hidden = true;
+    disconnect.hidden = !hosted;
     if (pendingVersion !== result.version) {
       pendingVersion = result.version;
       if (dirty() && note.value !== result.text.replace(/\r\n?/g, '\n')) notifyRemote(result);
@@ -127,6 +139,35 @@
   note.addEventListener('input', () => {
     if (!remote) show(dirty() ? 'Sin guardar' : '');
     updateButtons();
+  });
+  connect.addEventListener('click', async () => {
+    connect.disabled = true;
+    try {
+      const result = await send('connect');
+      if (result.error) show(result.error, 'error');
+    } finally {
+      connect.disabled = false;
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !connect.hidden && available && !saving) {
+      void follow(++polling);
+    }
+  });
+  disconnect.addEventListener('click', async () => {
+    if (saving) return;
+    const generation = ++polling;
+    disconnect.hidden = true;
+    ready = false;
+    updateButtons();
+    show('Desconectando…');
+    const result = await send('disconnect');
+    raise(result.error ? result : {
+      code: 'HHR_LINK_REQUIRED',
+      error: dirty() ? 'Desconectado. Tu nota sigue abierta.' :
+        result.remoteConfirmed === false ? 'Desconectado en este navegador.' : 'Desconectado de HHR.',
+    });
+    if (available) setTimeout(() => void follow(generation), 2000);
   });
   byId('keep').addEventListener('click', () => {
     if (remote) accept(remote, false);
@@ -160,6 +201,8 @@
   void (async () => {
     const context = await send('context');
     if (context.error) return raise(context);
+    hosted = context.hosted === true;
+    byId('environment').textContent = hosted ? 'HHR' : 'Pruebas HHR';
     byId('patient').textContent = context.name;
     available = true;
     show('Cargando entrega…');

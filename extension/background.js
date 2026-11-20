@@ -4,7 +4,7 @@
 // MV3 requires initial imports. Excel/PDF stay here until their separate offscreen migrations.
 importScripts(
   'message-contract.js', 'build-identity.js', 'hhr-origin-policy.js', 'exalab-background.js', 'exalab-session-transport.js', 'exalab-auto-runtime.js', 'eloisa-patient-code-contract.js', 'fichamedico-manual-patient-code-runtime.js',
-  'encounter-navigation.js', 'worklist-patient-editor.js', 'nursing-handoff-pilot.js',
+  'encounter-navigation.js', 'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js',
   'hhr-request-forms.js',
   'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
   'connection-relay-recovery.js', 'fichamedico-transport-runtime.js', 'fichamedico-history-read-model.js', 'fichamedico-device-evidence-runtime.js', 'clinical-read-error-contract.js', 'fichamedico-clinical-client.js', 'tab-encounter-authorization.js', 'fichamedico-patient-flow-runtime.js',

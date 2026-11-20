@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.121
+
+- Entrega de turno se conecta con el censo de HHR en Netlify. La autorización temporal atribuye la nota a la cuenta de HHR y permite cerrar esa pestaña después de conectar.
+- La fila muestra un ✓ con la fecha y el turno confirmados y mantiene visible el foco para navegar con teclado.
+- Puedes desconectar la cuenta de HHR y conservar el texto pendiente en el editor hasta reconectar.
+
 ## 0.48.120
 
 - La nota aprovecha el espacio del diálogo. Los cambios en conflicto aparecen al lado cuando hay espacio y se puede guardar con Ctrl+Enter o ⌘+Enter.
