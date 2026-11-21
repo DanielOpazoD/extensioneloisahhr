@@ -137,8 +137,8 @@ function startFixture(route) {
   const tabs = [...document.querySelectorAll('[role=tab]')];
   let current = other;
   let page = 1;
-  const filter = document.querySelector('input[type=checkbox]');
-  const render = () => renderList(current, page, filter.checked);
+  const filter = document.getElementById('fixture-worklist-filter') || document.getElementById('select-nurse-station-list');
+  const render = () => renderList(current, page, filter.value !== '');
   tabs.forEach((tab, index) => {
     tab.onclick = () => {
       current = index ? route.sections[index - 1] : other;
@@ -155,13 +155,14 @@ function startFixture(route) {
 export const nativeWorklistFixture = pathname => {
   const route = routes.find(entry => entry.pathname === pathname);
   if (!route) return null;
+  const nursing = pathname.endsWith('-nurse');
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
     body { font:14px/1.5 system-ui,sans-serif; }
     header.MuiAppBar-root { height:56px; margin:-8px -8px 0; padding-inline:16px; display:flex; align-items:center; }
     main { margin:6px 16px 16px; display:flex; flex-direction:column; gap:32px; }
     #filters { height:70px; padding-block:16px; box-sizing:border-box; display:flex; align-items:center; }
     .fixture-search { display:flex; align-items:center; min-width:0; flex:1; }
-    .fixture-search input { width:100%; }
+    .fixture-search input, #filters select { width:100%; }
     .heading { margin:0; padding-block:16px; }
     .MuiTableContainer-root { overflow:auto; max-height:400px; }
     table { border-collapse:collapse; width:100%; min-width:550px; text-align:left; }
@@ -173,8 +174,13 @@ export const nativeWorklistFixture = pathname => {
   </div><div class="MuiPaper-root" id="filters">
   <label for="search-encounter-list">Nombre del Paciente / RUN</label>
   <div class="MuiInputBase-root fixture-search"><span aria-hidden="true">⌕</span><input id="search-encounter-list" aria-label="Buscar paciente"></div>
-  <label><input type="checkbox">Filtrar estación</label>
-  ${pathname.endsWith('-nurse') ? '<div class="MuiInputBase-root"><label id="select-label-hcp">Estaciones de enfermería</label><div id="select-nurse-station-list" role="combobox" aria-expanded="false" aria-labelledby="select-label-nurse-station select-nurse-station-list">Todos</div></div>' : ''}
+  <div class="MuiFormControl-root">
+    <label id="select-label-hcp" for="${nursing ? 'select-nurse-station-list' : 'fixture-worklist-filter'}">${nursing ? 'Estaciones de enfermería' : 'Servicio'}</label>
+    <div class="MuiInputBase-root"><select id="${nursing ? 'select-nurse-station-list' : 'fixture-worklist-filter'}" role="combobox"
+      aria-labelledby="${nursing ? 'select-label-nurse-station select-nurse-station-list' : 'select-label-hcp'}">
+      <option value="">Todos</option><option value="1">Sector de prueba</option>
+    </select></div>
+  </div>
   <button id="long-button" aria-label="more">⎙</button><output></output></div>
   <div id="worklist" role="tabpanel"><p class="heading"></p><div><div class="MuiTableContainer-root"><table>
   <thead><tr><th>Ubicación</th><th>Paciente</th><th>Diagnóstico de ingreso</th><th>Médico tratante</th><th>Acciones</th></tr></thead>
@@ -237,13 +243,14 @@ async function verifyWorklistWidth(page) {
       };
       return { main: rect('main'), filters: rect('#filters'), tabs: rect('[role=tablist]'),
         panel: rect('#worklist'), table: rect('#worklist table'),
-        search: rect('#search-encounter-list'), station: rect('#filters input[type=checkbox]'), print: rect('#long-button') };
+        search: rect('#search-encounter-list'), station: rect('#filters select'), print: rect('#long-button') };
     });
     const left = bounds.panel.left - bounds.main.left;
     const right = bounds.main.right - bounds.panel.right;
     assert.ok(Math.abs(left - right) < 1, 'The worklist must stay centered');
     assert.ok(bounds.filters.top < bounds.panel.top && bounds.filters.right <= bounds.main.right + 1);
-    assert.ok(bounds.search.right <= bounds.station.left + 1 && bounds.station.right <= bounds.print.left + 1);
+    assert.ok(bounds.search.right <= bounds.station.left + 1 && bounds.station.right <= bounds.print.left + 1,
+      `Filter controls overlap at ${width}px: ${JSON.stringify(bounds)}`);
     if (width === 390) {
       assert.ok(bounds.filters.top >= bounds.tabs.bottom);
       const scrollable = await page.locator('.MuiTableContainer-root').evaluate(el => el.scrollWidth > el.clientWidth);
@@ -374,7 +381,7 @@ const verifyLists = async (context, origin, worker) => {
         assert.equal(await page.locator('.heading').isVisible(), referral);
         assert.equal(await page.getByRole('button', { name: 'Imprimir', exact: true }).count(), 1);
         if (route.pathname.endsWith('-nurse')) {
-          const filter = page.locator('#filters').getByRole('combobox', { name: 'Estaciones de enfermería Todos' });
+          const filter = page.locator('#filters').getByRole('combobox', { name: /Estaciones de enfermería/ });
           assert.equal(await filter.count(), 1);
           assert.equal(await page.locator('#select-label-hcp').evaluate(label => getComputedStyle(label).clipPath), 'inset(50%)');
           const markers = rows.getByRole('link', { name: 'Abrir última publicación médica en Historial' });
@@ -446,15 +453,15 @@ const verifyLists = async (context, origin, worker) => {
           await rows.last().getByRole('button', { name: 'Abrir ficha' }).click();
           assert.equal(await page.locator('output').textContent(), String(total));
         }
-        await page.getByRole('checkbox').check();
+        await page.locator('#filters select').selectOption('1');
         assert.equal(await rows.count(), Math.ceil(total / 2));
         assert.equal(await rows.nth(1).locator('td:nth-child(2) strong').textContent(), 'Paciente sintético 3');
         await printAndCheck(context, worker, rows.nth(1).getByRole('button', {name:'Imprimir última receta completa'}), 'Reporte_Receta_Medica.pdf', 2003);
-        await page.getByRole('checkbox').uncheck();
+        await page.locator('#filters select').selectOption('');
         await rows.last().evaluate(tr => tr.remove());
         await pager.waitFor({ state: 'visible' }); // partial source: native pages remain reachable
-        await page.getByRole('checkbox').check();
-        await page.getByRole('checkbox').uncheck();
+        await page.locator('#filters select').selectOption('1');
+        await page.locator('#filters select').selectOption('');
         await page.locator('table[data-hhr-complete-worklist]').waitFor();
         const stale = await rows.first().locator('td').last().evaluate(cell => {
           const button = document.createElement('button');

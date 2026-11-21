@@ -118,7 +118,7 @@
         margin-inline:auto;
       }
       body:has([data-hhr-worklist-layout]) header.MuiAppBar-root {
-        background:#24857b linear-gradient(105deg,#217f75,#2b8b80); color:white;
+        background:#247f75 linear-gradient(105deg,#217f75,#267e74); color:white;
         box-shadow:inset 0 -1px 0 #205e5936;
       }
       [data-hhr-worklist-layout] {
@@ -157,7 +157,10 @@
       [data-hhr-worklist-filterbar] .MuiOutlinedInput-notchedOutline { border-color:#c9d7d3; }
       [data-hhr-worklist-filterbar] .MuiFormControl-root:has(#search-encounter-list) { flex:1 1 180px; min-width:78px; }
       [data-hhr-worklist-filterbar] .MuiFormControl-root:has([role="combobox"]) { flex:0 1 148px; min-width:90px; }
-      [data-hhr-worklist-filterbar] #search-encounter-list { min-width:0; padding-block:5px; }
+      [data-hhr-worklist-filterbar] .MuiInputBase-root:has(#search-encounter-list) { min-width:0; }
+      [data-hhr-worklist-filterbar] #search-encounter-list {
+        box-sizing:border-box; min-width:0; flex:1 1 0; padding-block:5px;
+      }
       [data-hhr-worklist-filterbar] #search-encounter-list::placeholder { color:transparent; }
       [data-hhr-worklist-filterbar] #long-button {
         flex:none; min-width:32px; min-height:32px; padding:4px 6px; border:1px solid #c9d7d3;
