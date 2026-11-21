@@ -82,6 +82,9 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(document.querySelectorAll('.hhr-care-source[hidden]')).toHaveLength(3);
   expect(rows()).toEqual(['20','23','22','21']);
   expect(noveltyRows()).toEqual(['22','21']);
+  expect([...document.querySelectorAll('a[data-hhr-patient-novelty]')].map(link=>link.getAttribute('href'))).toEqual([
+    path + '/22#hhr-ultima-publicacion', path + '/21#hhr-ultima-publicacion',
+  ]);
   expect(document.querySelector('[data-hhr-new-patient-chip]')?.textContent).toBe('Nuevo');
   expect(document.body.textContent).not.toContain('Pendiente');
   expect(document.querySelector('[data-hhr-discharge-chip]')?.textContent).toBe('Alta médica');

@@ -3,6 +3,8 @@
   'use strict';
   const HOST_ID = 'hhr-history-date-navigation';
   const STYLE_ID = HOST_ID + '-styles';
+  const NOVELTY_HASH = '#hhr-ultima-publicacion';
+  const medicalRole = /^m[eé]dic[oa](?:\s+(?:cirujan[oa]|especialista|tratante))?$/i;
   const railCss = `
     [data-hhr-history-rail] { display:flex; }
     [data-hhr-history-rail] > [role="tab"] { flex-shrink:0; }
@@ -13,6 +15,7 @@
       font-size:10px; font-weight:600; vertical-align:middle;
     }
     [data-hhr-history-new] > .MuiChip-label { padding-inline:5px; }
+    .MuiCard-root[data-hhr-history-novelty-target] { outline:2px solid #a36b23; outline-offset:-2px; }
   `;
   const dateLabel = label => {
     if (/^(Hoy|Ayer)$/i.test(label)) {
@@ -28,7 +31,7 @@
     }
     return /^\d{2}[-/]\d{2}[-/]\d{4}$/.test(label) ? label : '';
   };
-  const create = () => {
+  const create = ({ onNoveltyUnavailable = () => {} } = {}) => {
     let host = null;
     let groups = [];
     let encounterId = '';
@@ -39,10 +42,26 @@
     let newBadges = new Set();
     let selected = -1;
     let frame = 0;
+    let novelty;
+    let noveltyTimeout;
+    let highlighted;
     let scroller = window;
     let disposed = false;
+    const cancelNovelty = () => {
+      clearTimeout(noveltyTimeout);
+      novelty = undefined;
+    };
+    const clearHighlight = () => {
+      if (!highlighted) return;
+      const { card, tabIndex } = highlighted;
+      card.removeAttribute('data-hhr-history-novelty-target');
+      if (tabIndex === null) card.removeAttribute('tabindex');
+      else card.setAttribute('tabindex', tabIndex);
+      highlighted = undefined;
+    };
     const clear = () => {
       host?.remove();
+      clearHighlight();
       newBadges.forEach(chip => chip.removeAttribute('data-hhr-history-new'));
       newBadges.clear();
       rail?.removeAttribute('data-hhr-history-rail');
@@ -84,11 +103,10 @@
     const scheduleUpdate = () => {
       if (!disposed && !frame) frame = window.requestAnimationFrame(update);
     };
-    const jump = index => {
-      const group = groups[index];
-      if (!host?.isConnected || !group?.element.isConnected) return;
+    const jumpTo = element => {
+      if (!host?.isConnected || !element?.isConnected) return;
       const align = () => scroller.scrollBy({
-        top: group.element.getBoundingClientRect().top - visibleTop() - 12,
+        top: element.getBoundingClientRect().top - visibleTop() - 12,
         behavior: 'instant',
       });
       align();
@@ -98,6 +116,7 @@
       align();
       scheduleUpdate();
     };
+    const jump = index => jumpTo(groups[index]?.element);
     const revealDates = () => {
       if (!host?.isConnected) return;
       const bounds = horizontalScroll.getBoundingClientRect();
@@ -159,12 +178,33 @@
     };
     const refresh = nextEncounterId => {
       if (disposed) return;
-      if (encounterId !== nextEncounterId) clear();
+      if (encounterId !== nextEncounterId) { cancelNovelty(); clear(); }
       encounterId = nextEncounterId;
-      const nextTab = Array.from(document.querySelectorAll('[role="tab"][aria-selected="true"]'))
+      if (nextEncounterId && location.hash === NOVELTY_HASH &&
+          location.pathname.replace(/\/$/, '') === '/dashboard/encounter-list-nurse/' + nextEncounterId) {
+        cancelNovelty();
+        clearHighlight();
+        history.replaceState(history.state, '', location.pathname + location.search);
+        novelty = { tab: null, opened: false };
+        noveltyTimeout = setTimeout(() => {
+          cancelNovelty();
+          onNoveltyUnavailable();
+        }, 15_000);
+      }
+      const nextTab = Array.from(document.querySelectorAll('[role="tab"]'))
         .find(element => element.textContent.trim() === 'Historial' && element.getClientRects().length);
       const tabList = nextTab?.parentElement;
       if (!nextEncounterId || !tabList?.matches('[role="tablist"]')) { clear(); return; }
+      if (nextTab.getAttribute('aria-selected') !== 'true') {
+        if (novelty?.opened) cancelNovelty();
+        if (novelty && novelty.tab !== nextTab && !nextTab.matches(':disabled,[aria-disabled="true"]')) {
+          novelty.tab = nextTab;
+          nextTab.click();
+        }
+        clear();
+        return;
+      }
+      if (novelty) novelty.opened = true;
       // Native groups: a date Chip in its own Stack, followed by event Cards.
       // Ignore dates inside cards (birth dates, orders, notes) and hidden tab panels.
       const candidates = Array.from(document.querySelectorAll('.MuiChip-label')).flatMap(chip => {
@@ -208,6 +248,21 @@
         selected = -1;
       }
       if (mounted) revealDates();
+      if (novelty) {
+        // Historial renders the newest groups and publications first. Match
+        // the role in the native header, independently of the event category.
+        const card = groups.flatMap(group => [...group.element.querySelectorAll(':scope > .MuiCard-root')])
+          .find(element => element.getClientRects().length && medicalRole.test(
+            element.querySelector(':scope > .MuiCardHeader-root .MuiCardHeader-subheader')?.textContent.trim() || ''));
+        if (card) {
+          cancelNovelty();
+          highlighted = { card, tabIndex: card.getAttribute('tabindex') };
+          card.setAttribute('data-hhr-history-novelty-target', '');
+          card.tabIndex = -1;
+          card.focus({ preventScroll: true });
+          jumpTo(card);
+        }
+      }
       scheduleUpdate();
     };
     window.addEventListener('scroll', scheduleUpdate, true);
@@ -216,6 +271,7 @@
       refresh,
       dispose: () => {
         disposed = true;
+        cancelNovelty();
         clear();
         window.cancelAnimationFrame(frame);
         window.removeEventListener('scroll', scheduleUpdate, true);

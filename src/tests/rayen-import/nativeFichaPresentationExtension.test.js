@@ -19,10 +19,53 @@ beforeEach(() => {
 });
 afterEach(() => {
   history?.dispose(); presentation?.dispose(); history = null; presentation = null;
-  document.body.replaceChildren(); vi.unstubAllGlobals();
+  document.body.replaceChildren(); vi.unstubAllGlobals(); vi.useRealTimers();
+  window.history.replaceState(null, '', '/');
 });
 
 describe('Compact native history dates', () => {
+  it('opens native history once and focuses the newest medical publication after loading', () => {
+    window.history.replaceState(null, '', '/dashboard/encounter-list-nurse/22#hhr-ultima-publicacion');
+    document.body.innerHTML = historyTab + '<div id="timeline"></div>';
+    const tab = document.querySelector('button');
+    tab.setAttribute('aria-selected', 'false');
+    const open = vi.fn(() => tab.setAttribute('aria-selected', 'true'));
+    tab.addEventListener('click', open);
+    const unavailable = vi.fn();
+    history = globalThis.HhrHistoryDateNavigation.create({ onNoveltyUnavailable: unavailable });
+    history.refresh('22'); history.refresh('22');
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(window.location.hash).toBe('');
+    document.querySelector('#timeline').innerHTML = group('Hoy',
+      event('Paramédico', 'Administración') + event('Médica cirujana', 'Indicaciones') + event('Médico', 'Evolución')) +
+      group('Ayer', event('Médico', 'Evolución'));
+    history.refresh('22');
+    const target = document.querySelector('[data-hhr-history-novelty-target]');
+    expect(target.querySelector('.MuiCardContent-root').textContent).toBe('Indicaciones');
+    expect(document.activeElement).toBe(target);
+    expect(window.scrollBy).toHaveBeenCalled();
+    expect(unavailable).not.toHaveBeenCalled();
+    tab.setAttribute('aria-selected', 'false');
+    history.refresh('22');
+    expect(target.hasAttribute('data-hhr-history-novelty-target')).toBe(false);
+    expect(target.hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('reports an unavailable publication and never opens a different episode', () => {
+    vi.useFakeTimers();
+    const url = '/dashboard/encounter-list-nurse/22#hhr-ultima-publicacion';
+    window.history.replaceState(null, '', url);
+    document.body.innerHTML = historyTab + '<div>' + group('Hoy', event('Enfermera', 'Evolución')) + '</div>';
+    const unavailable = vi.fn();
+    history = globalThis.HhrHistoryDateNavigation.create({ onNoveltyUnavailable: unavailable });
+    history.refresh('23');
+    expect(window.location.hash).toBe('#hhr-ultima-publicacion');
+    history.refresh('22');
+    expect(document.querySelector('[data-hhr-history-novelty-target]')).toBeNull();
+    vi.advanceTimersByTime(15_000);
+    expect(unavailable).toHaveBeenCalledTimes(1);
+  });
+
   it('shows only date navigation while keeping every native event available', () => {
     document.body.innerHTML = historyTab + '<div id="timeline">' +
       group('Hoy', event('Médico', 'Evolución') + event('Médico', 'Fármacos')) +

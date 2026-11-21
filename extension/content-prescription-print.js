@@ -55,7 +55,9 @@
   uiLifecycle.claim();
   globalThis.__hhrPrescriptionPrintInjected = true;
   let active = true;
-  const historyNavigation = globalThis.HhrHistoryDateNavigation?.create();
+  const historyNavigation = globalThis.HhrHistoryDateNavigation?.create({
+    onNoveltyUnavailable: () => showPageNotice('No se encontró una publicación médica en el historial cargado.', { title: 'Historial' }),
+  });
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create();
 

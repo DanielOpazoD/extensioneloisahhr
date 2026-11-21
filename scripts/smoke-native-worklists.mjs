@@ -3,6 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { verifyEditShortcut } from './smoke-worklist-editor.mjs';
 import { verifyWorklistOverlays } from './smoke-worklist-overlays.mjs';
+import { nativeFichaFixture } from './smoke-native-ficha.mjs';
 
 const routes = [
   { pathname: '/dashboard/encounter-list', module: 25587, other: 'Otra tabla', sections: [
@@ -269,7 +270,7 @@ const verifyLists = async (context, origin, worker) => {
         });
         assert.deepEqual(spacing, [6, 6, 48]);
         if (route.pathname.endsWith('-nurse')) {
-          const markers = rows.getByRole('img', { name: 'Con novedad' });
+          const markers = rows.getByRole('link', { name: 'Abrir última publicación médica en Historial' });
           assert.equal(await markers.count(), name === 'Pacientes con novedad' ? total : 0);
           if (name === 'Pacientes con novedad') {
             assert.equal((await markers.first().boundingBox()).height, 17);
@@ -345,6 +346,21 @@ const verifyLists = async (context, origin, worker) => {
       assert.equal(await rows.count(), 10);
       assert.equal(await pager.isVisible(), true);
       assert.equal(await rows.first().evaluate(tr => tr.offsetHeight), nativeHeight);
+      if (route.pathname.endsWith('-nurse')) {
+        const chart = route.pathname + '/2001';
+        await page.route(origin + chart, request => request.fulfill({ contentType: 'text/html', body: nativeFichaFixture() }));
+        await page.getByRole('tab', { name: 'Pacientes con novedad', exact: true }).click();
+        const marker = rows.first().getByRole('link', { name: 'Abrir última publicación médica en Historial' });
+        await marker.focus();
+        await marker.press('Enter');
+        await page.waitForURL(origin + chart);
+        const focused = page.locator('#medication[data-hhr-history-novelty-target]');
+        await focused.waitFor();
+        assert.equal(await focused.evaluate(card => document.activeElement === card), true);
+        assert.equal(await page.getByRole('tab', { name: 'Historial', selected: true }).count(), 1);
+        assert.equal(new URL(page.url()).hash, '');
+        await page.goto(origin + route.pathname);
+      }
       await page.getByRole('tab', { name: route.sections[0][0] }).click();
       await page.locator('[data-hhr-complete-worklist]').waitFor();
       await page.evaluate(() => history.pushState({}, '', location.pathname + '/141121'));
