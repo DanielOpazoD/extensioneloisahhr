@@ -5,6 +5,9 @@
     ['indications', 'Imprimir indicaciones vigentes de hoy', 'M8 5H5v15h14V5h-3 M9 3h6v4H9z M8 11h8 M8 15h6'],
     ['prescription', 'Imprimir última receta completa', 'M6 17V4h4a4 4 0 0 1 0 8H6 M9 12l9 9 M19 12l-7 9'],
   ];
+  const chartDestination = href => typeof href === 'string'
+    ? /^(\/dashboard\/encounter-list(?:-nurse)?)\/([1-9]\d*)\/?(?:\?referralGuid=[^#]*)?$/.exec(href)
+    : null;
 
   function encounterForRow(cells, discharge, route) {
     // Medical discharges have no chart link. Their native discharge actions
@@ -19,8 +22,8 @@
       if (Array.isArray(child)) return child.forEach(visit);
       const props = child?.props;
       if (!props) return;
-      if (typeof props.href === 'string' && props.component !== 'div') {
-        const match = props.href.match(/^(\/dashboard\/encounter-list(?:-nurse)?)\/([1-9]\d*)\/?(?:\?referralGuid=[^#]*)?$/);
+      if (props.component !== 'div') {
+        const match = chartDestination(props.href);
         if (match?.[1] === route) ids.add(match[2]);
       }
       visit(props.children);
@@ -105,9 +108,9 @@
 
   function chartAction(jsx, cell, route, episode) {
     const link = cell?.props?.children;
-    const href = link?.props?.href;
-    if (!link?.props?.LinkComponent || typeof href !== 'string' ||
-        href.replace(/\/$/, '') !== route + '/' + episode) return cell;
+    const destination = chartDestination(link?.props?.href);
+    if (!link?.props?.LinkComponent || link.props.component === 'div' ||
+        destination?.[1] !== route || destination[2] !== episode) return cell;
     return withChildren(jsx, cell, jsx(link.type, {
       ...link.props, 'aria-label': 'Abrir ficha clínica', 'data-hhr-rongorongo-link': '',
       children: jsx('span', { className: 'hhr-rongorongo-icon', 'aria-hidden': true }),
@@ -183,7 +186,7 @@
     const adaptedRows = rows.map(row => {
       const cells = row.props.children.slice();
       const { encId, patientId } = encounterForRow(cells, discharge, route);
-      if (nursing && encId) cells[cells.length - 1] = chartAction(jsx, cells.at(-1), route, encId);
+      if (encId) cells[cells.length - 1] = chartAction(jsx, cells.at(-1), route, encId);
       cells[0] = compactLocation(jsx, cells[0]);
       if (activity >= 0) cells[activity] = compactActivity(jsx, cells[activity]);
       let noveltyTitle;

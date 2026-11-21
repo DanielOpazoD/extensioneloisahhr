@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.128
+
+- La tablilla Rongo Rongo reemplaza la flecha que abre la ficha en Pacientes sin médico, Mis pacientes e Interconsulta. El enlace de interconsulta conserva su identificador original.
+
 ## 0.48.127
 
 - Gestión de cuidados muestra un solo esqueleto de carga con las columnas de la tabla final.
