@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.137
+
+- Alinea pasaportes y otros números de identificación debajo del inicio del nombre en ambas listas.
+- El menú lateral usa «Ejecución de cuidados» y enlaces de fuente discretos para el tiempo y el diálogo «Un día como hoy».
+- Muestra hasta ocho nacimientos ordenados por visitas recientes en Wikipedia en español, con enlace a cada biografía.
+
 ## 0.48.136
 
 - El encabezado de las tablas clínicas se alinea encima de la primera fila y se fija al desplazar su propio contenedor.

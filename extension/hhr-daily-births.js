@@ -6,13 +6,43 @@
   const display = new Intl.DateTimeFormat('es', { timeZone: zone, month: 'long', day: 'numeric' });
   let cached;
 
-  async function retrieve(fetchImpl, url) {
+  async function retrieve(fetchImpl, url, signal = AbortSignal.timeout(7000)) {
     const response = await fetchImpl(url, {
       credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error',
-      signal: AbortSignal.timeout(7000),
+      signal,
     });
     if (!response.ok) throw new Error('No se pudo consultar la fuente pública.');
     return response;
+  }
+
+  async function recentPageViews(fetchImpl, ids) {
+    const batchSize = 50;
+    const signal = AbortSignal.timeout(3500);
+    const batches = [];
+    for (let start = 0; start < ids.length; start += batchSize) batches.push(ids.slice(start, start + batchSize));
+    async function fetchBatch(batch) {
+      try {
+        const query = new URLSearchParams({
+          action: 'query', format: 'json', formatversion: '2', origin: '*',
+          prop: 'pageviews', pvipdays: '30', pageids: batch.join('|'),
+        });
+        const response = await retrieve(fetchImpl, 'https://es.wikipedia.org/w/api.php?' + query, signal);
+        const data = await response.json();
+        return (data.query?.pages || []).map(page => [
+          page.pageid,
+          Object.values(page.pageviews || {}).reduce((sum, count) => Number.isFinite(count) && count > 0 ? sum + count : sum, 0),
+        ]);
+      } catch {
+        return [];
+      }
+    }
+    const views = new Map();
+    const concurrent = 5;
+    for (let start = 0; start < batches.length && !signal.aborted; start += concurrent) {
+      const results = await Promise.all(batches.slice(start, start + concurrent).map(fetchBatch));
+      for (const [id, count] of results.flat()) views.set(id, count);
+    }
+    return views;
   }
 
   async function birthsFor(fetchImpl, month, day) {
@@ -27,10 +57,14 @@
       if (!name || !Number.isInteger(birth.year) || names.has(name)) continue;
       names.add(name);
       const description = typeof page.description === 'string' ? page.description.trim().slice(0, 130) : '';
-      people.push({ name: name.slice(0, 120), year: birth.year, description });
-      if (people.length === 5) break;
+      const id = Number.isSafeInteger(page.pageid) && page.pageid > 0 ? page.pageid : undefined;
+      const url = 'https://es.wikipedia.org/wiki/' + encodeURIComponent(name.replace(/\s+/g, '_'));
+      people.push({ id, name: name.slice(0, 120), year: birth.year, description, url });
     }
-    return people;
+    const ids = [...new Set(people.flatMap(person => person.id ? [person.id] : []))];
+    const views = await recentPageViews(fetchImpl, ids);
+    people.sort((a, b) => (views.get(b.id) || 0) - (views.get(a.id) || 0));
+    return people.slice(0, 8).map(({ name, year, description, url }) => ({ name, year, description, url }));
   }
 
   const entityText = Object.freeze({ amp:'&', nbsp:' ', quot:'"', apos:"'", lt:'<', gt:'>' });

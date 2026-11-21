@@ -16,10 +16,11 @@
   const filters = '.MuiPaper-root:has(#search-encounter-list)';
   // The native family-information button uses the same Announcement glyph for pending and idle requests.
   const announcementPath = 'M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m-7 9h-2V5h2zm0 4h-2v-2h2z';
+  const carePlanLabel = 'Ejecución de cuidados';
   const drawerItems = [
     ['worklist', /^lista de trabajo médico$/i, 'M8 5H5v16h14V5h-3 M9 3h6v4H9z M8 12h8m-8 4h6'],
     ['care', /^gestión de cuidados$/i, 'M12 20s-8-5-8-11a4.5 4.5 0 018-3 4.5 4.5 0 018 3c0 6-8 11-8 11z M9 12h6m-3-3v6'],
-    ['plan', /^ejecución (?:del? )?plan de cuidados$/i, 'M3 6l2 2 3-4m2 3h11M3 14l2 2 3-4m2 3h11'],
+    ['plan', /^ejecución (?:de cuidados|(?:del? )?plan de cuidados)$/i, 'M3 6l2 2 3-4m2 3h11M3 14l2 2 3-4m2 3h11'],
     ['reports', /^informes$/i, 'M5 3h10l4 4v14H5z M14 3v5h5M8 16v-3m4 3v-6m4 6v-4'],
     ['beds', /^gestión de camas$/i, 'M3 4v16m18-8v8M3 16h18v-4H9v4m1-8h7a4 4 0 014 4M4 9h4v3H4z'],
   ];
@@ -71,9 +72,11 @@
       .hhr-patient-sex-icon {
         display:grid; place-items:center; flex:0 0 var(--hhr-patient-icon-width);
       }
-      td:has([data-hhr-patient-name-row]) > button[data-hhr-copy-run] {
+      td:has([data-hhr-patient-name-row]) > button[data-hhr-copy-run],
+      td:has([data-hhr-patient-name-row]) [data-hhr-patient-identifier] {
         margin-inline-start:calc(var(--hhr-patient-icon-width) + var(--hhr-patient-name-gap));
       }
+      [data-hhr-patient-identifier] { display:block; }
       button[data-hhr-copy-run] {
         display:block; border:0; padding:1px 0; border-radius:3px; background:transparent; color:#466761;
         font:inherit; font-size:.94em; font-variant-numeric:tabular-nums; cursor:copy;
@@ -315,6 +318,7 @@
   const create = options => {
     let onWorklist = false;
     const drawerTools = globalThis.HhrWorklistDrawer?.create(options);
+    const renamedLabels = new Map();
     let layout;
     const clearLayout = () => {
       if (!layout) return;
@@ -362,6 +366,7 @@
     };
     const refresh = pathname => {
       drawerTools?.prune();
+      for (const node of renamedLabels.keys()) if (!node.isConnected) renamedLabels.delete(node);
       for (const drawer of document.querySelectorAll('.MuiDrawer-paperAnchorLeft, .MuiDrawer-anchorLeft .MuiDrawer-paper')) {
         let hasWorklist = false;
         for (const item of drawer.querySelectorAll('a,button,[role="button"]')) {
@@ -369,6 +374,15 @@
           const key = !item.querySelector('a,button,[role="button"]') && drawerItems.find(([, pattern]) => pattern.test(label))?.[0];
           if (key === 'care' || key === 'worklist') hasWorklist = true;
           if (key && item.dataset.hhrMenuIcon !== key) item.dataset.hhrMenuIcon = key;
+          if (key === 'plan' && label !== carePlanLabel) {
+            const text = document.createTreeWalker(item, NodeFilter.SHOW_TEXT);
+            for (let node = text.nextNode(); node; node = text.nextNode()) {
+              if (node.data.trim().replace(/\s+/g, ' ') !== label) continue;
+              renamedLabels.set(node, node.data);
+              node.data = carePlanLabel;
+              break;
+            }
+          }
           if (!key && item.dataset.hhrMenuIcon) delete item.dataset.hhrMenuIcon;
         }
         if (!hasWorklist) continue;
@@ -429,6 +443,10 @@
         clearLayout();
         noveltyTooltip.dispose();
         drawerTools?.dispose();
+        for (const [node, original] of renamedLabels) {
+          if (node.isConnected && node.data === carePlanLabel) node.data = original;
+        }
+        renamedLabels.clear();
         document.querySelectorAll('[data-hhr-bed-item],[data-hhr-bed-link]').forEach(node => node.remove());
         document.querySelectorAll('[data-hhr-menu-icon]').forEach(node => node.removeAttribute('data-hhr-menu-icon'));
         style.remove();

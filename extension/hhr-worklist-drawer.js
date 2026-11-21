@@ -21,6 +21,13 @@
     return node;
   };
 
+  const sourceIcon = (label, href) => {
+    const link = el('a', '', { href, target: '_blank', rel: 'noopener noreferrer',
+      class: 'hhr-source-icon', 'aria-label': label, title: label });
+    link.append(el('span', '↗', { 'aria-hidden': 'true' }));
+    return link;
+  };
+
   function create({ fetchWeather, fetchDailyBirths, openFavorites } = {}) {
     const records = new Map();
     let timer;
@@ -66,7 +73,9 @@
       heading.after(el('p', data.label, { class: 'hhr-daily-births-date' }));
       status.remove();
       const events = el('section', '', { class: 'hhr-daily-events' });
-      events.append(el('h3', 'Efemérides de Chile'));
+      const eventsHeading = el('div', '', { class: 'hhr-daily-source-heading' });
+      eventsHeading.append(el('h3', 'Efemérides de Chile'), sourceIcon('Abrir calendario en Efemerides.cl', data.eventsSource));
+      events.append(eventsHeading);
       if (data.events?.length) {
         const list = el('ul', '');
         list.append(...data.events.map(title => el('li', title)));
@@ -75,16 +84,16 @@
         events.append(el('p', data.eventsUnavailable
           ? 'Efemerides.cl no está disponible.' : 'Efemerides.cl no registra conmemoraciones para hoy.'));
       }
-      events.append(el('a', 'Efemerides.cl ↗', { href: data.eventsSource, target: '_blank', rel: 'noopener noreferrer' }));
-
       const births = el('section', '');
-      births.append(el('h3', 'Nacimientos'));
+      const birthsHeading = el('div', '', { class: 'hhr-daily-source-heading' });
+      birthsHeading.append(el('h3', 'Nacimientos'), sourceIcon('Abrir nacimientos en Wikipedia', data.source));
+      births.append(birthsHeading);
       if (data.people?.length) {
         const list = el('ul', '');
-        for (const { name, year, description } of data.people) {
+        for (const { name, year, description, url } of data.people) {
           const item = el('li', '');
           const details = el('div', '');
-          details.append(el('strong', name));
+          details.append(el('a', name, { href: url, target: '_blank', rel: 'noopener noreferrer' }));
           if (description) details.append(el('span', description));
           item.append(el('span', String(year), { class: 'hhr-daily-births-year' }), details);
           list.append(item);
@@ -94,7 +103,6 @@
         births.append(el('p', data.unavailable
           ? 'No se pudieron cargar los nacimientos.' : 'No hay nacimientos disponibles para esta fecha.'));
       }
-      births.append(el('a', 'Wikipedia ↗', { href: data.source, target: '_blank', rel: 'noopener noreferrer' }));
       content.append(events, births);
     };
     const weatherCard = () => {
@@ -124,7 +132,9 @@
           sky.append(...['light', 'cloud', 'precip'].map(part => el('span', '', { class: 'hhr-sky-' + part })));
           const hero = el('div', '', { class: 'hhr-weather-hero' });
           const headline = el('div', '');
-          headline.append(el('strong', 'Rapa Nui'), el('span', forecast.current + ' °C', { class: 'hhr-weather-temperature' }));
+          const place = el('div', '', { class: 'hhr-weather-place' });
+          place.append(el('strong', 'Rapa Nui'), sourceIcon('Abrir Open-Meteo', 'https://open-meteo.com/'));
+          headline.append(place, el('span', forecast.current + ' °C', { class: 'hhr-weather-temperature' }));
           hero.append(headline, sky);
           const conditions = el('p', label + ' · Viento ' + forecast.wind + ' km/h', { class: 'hhr-weather-conditions' });
           const slots = el('div', '', { class: 'hhr-drawer-forecast-slots' });
@@ -136,12 +146,7 @@
               el('span', 'Ráf. ' + gust + ' km/h', { title: 'Ráfagas máximas' }));
             slots.append(slot);
           });
-          const source = el('a', '', {
-            href: 'https://open-meteo.com/', target: '_blank', rel: 'noopener noreferrer',
-            class: 'hhr-weather-source', 'aria-label': 'Abrir Open-Meteo', title: 'Open-Meteo',
-          });
-          source.append(el('span', '↗', { 'aria-hidden': 'true' }));
-          panel.replaceChildren(hero, conditions, slots, source);
+          panel.replaceChildren(hero, conditions, slots);
           hasForecast = true;
           status.textContent = '';
         } catch (_error) {

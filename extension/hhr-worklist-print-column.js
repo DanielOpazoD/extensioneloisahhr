@@ -147,7 +147,10 @@
           return null;
         }
         const id = line.match(/^\s*n[uú]mero de identificaci[oó]n\s*:\s*(\S.*)$/i);
-        if (id) return withChildren(jsx, node, id[1].trim());
+        if (id || /^\s*pasaporte\s*:\s*\S/i.test(line)) {
+          return jsx(node.type, { ...node.props, 'data-hhr-patient-identifier': '',
+            children: id ? id[1].trim() : text }, node.key ?? undefined);
+        }
       }
       const children = present(text);
       if (children === null && text?.props && typeof node.props.title === 'string') return null;
