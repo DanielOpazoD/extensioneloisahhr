@@ -25,7 +25,7 @@
   ];
   const drawerIcons = drawerItems.map(([key, , path]) => {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="' + path + '"/></svg>';
-    return '[data-hhr-menu-icon="' + key + '"]::before { mask-image:url("data:image/svg+xml,' + encodeURIComponent(svg) + '"); }';
+    return `[data-hhr-menu-icon="${key}"]::before { --hhr-menu-icon:url("data:image/svg+xml,${encodeURIComponent(svg)}"); }`;
   }).join('\n');
   const css = `
     @media screen {
@@ -64,6 +64,12 @@
       td[data-hhr-worklist-doctor] .MuiFormControl-root:not(:focus-within) .MuiInputLabel-shrink { opacity:0; }
       td[data-hhr-worklist-doctor] select:not(:hover,:focus) { border-color:transparent; background-color:transparent; }
       .hhr-patient-name-line { display:flex; align-items:center; gap:3px; }
+      button[data-hhr-copy-run] {
+        display:block; border:0; padding:1px 0; border-radius:3px; background:transparent; color:#466761;
+        font:inherit; font-size:.94em; font-variant-numeric:tabular-nums; cursor:copy;
+      }
+      button[data-hhr-copy-run]:is(:hover,:focus-visible) { color:#116962; text-decoration:underline; text-underline-offset:2px; }
+      button[data-hhr-copy-run]:focus-visible { outline:2px solid #247c73; outline-offset:2px; }
       [data-hhr-patient-novelty] {
         display:inline-grid; place-items:center; flex:none; width:17px; height:17px;
         border-radius:50%; color:#775119; background:#fff0d8;
@@ -79,9 +85,15 @@
       tr:is(:hover,:focus-within) button[data-hhr-edit-episode], button[data-hhr-edit-episode]:focus-visible { opacity:1; }
       @media (hover:none) { button[data-hhr-edit-episode] { opacity:1; } }
       [data-hhr-menu-icon] { display:flex; align-items:center; column-gap:9px; }
+      [data-hhr-menu-icon]:not([data-hhr-bed-link]) {
+        border-radius:7px; color:#344f4a; font:500 13px/1.35 system-ui,sans-serif;
+      }
+      [data-hhr-menu-icon]:not([data-hhr-bed-link]):is(:hover,:focus-visible) { background:#eaf4f2; color:#195f57; }
+      [data-hhr-menu-icon]:focus-visible { outline:2px solid #247c73; outline-offset:-2px; }
       [data-hhr-menu-icon]::before {
-        content:""; flex:none; width:17px; height:17px; background:currentColor;
-        mask-size:contain; mask-repeat:no-repeat; mask-position:center;
+        content:""; flex:none; width:16px; height:16px; background:#397a72;
+        -webkit-mask:var(--hhr-menu-icon) center / contain no-repeat;
+        mask:var(--hhr-menu-icon) center / contain no-repeat;
       }
       ${drawerIcons}
       .MuiDrawer-paper:has(> a[data-hhr-bed-link]), .MuiDrawer-paperAnchorLeft:has(> a[data-hhr-bed-link]) { display:flex; flex-direction:column; }
@@ -105,36 +117,61 @@
         max-inline-size:clamp(86%, calc(60% + 512px), 100%);
         margin-inline:auto;
       }
-      [data-hhr-worklist-layout] {
-        display:grid !important; grid-template-columns:auto minmax(0, 1fr);
-        align-items:center; gap:5px 12px !important;
+      body:has([data-hhr-worklist-layout]) header.MuiAppBar-root {
+        background:#247f75 linear-gradient(105deg,#217f75,#267e74); color:white;
+        box-shadow:inset 0 -1px 0 #205e5936;
       }
-      [data-hhr-worklist-layout] > * { grid-column:1 / -1; min-width:0; }
-      [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { grid-column:1; grid-row:1; }
+      [data-hhr-worklist-layout] {
+        display:flex !important; flex-flow:row wrap !important;
+        align-items:center; gap:9px 12px !important; padding-block-start:4px;
+      }
+      [data-hhr-worklist-rail] .MuiTabs-indicator { display:none; }
+      [data-hhr-worklist-rail] [role="tab"] {
+        min-height:30px; min-width:0; padding:4px 9px; border:0; border-radius:6px;
+        color:#455c57; background:transparent; cursor:pointer;
+        font-size:.8125rem; text-transform:none; white-space:normal;
+      }
+      [data-hhr-worklist-rail] [role="tab"]:hover { background:#e8efed; }
+      [data-hhr-worklist-rail] [role="tab"][aria-selected="true"] {
+        color:#175f57; background:#deefeb; font-weight:650;
+      }
+      [data-hhr-worklist-layout] > * { flex:0 0 100%; min-width:0; }
+      [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { flex:0 1 auto; max-width:100%; }
       [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] {
-        grid-column:2; grid-row:1; min-width:0; width:auto !important; height:auto !important;
+        flex:1 0 min(260px, 100%); width:auto !important; height:auto !important;
         min-height:32px; padding:1px 0 !important; gap:6px !important; box-sizing:border-box;
         display:flex; align-items:center; background:transparent; box-shadow:none;
         max-inline-size:460px;
         margin-inline-end:var(--hhr-worklist-reserve, 0px);
       }
-      [data-hhr-worklist-filterbar] :is(label[for="search-encounter-list"],#search-encounter-list-label) {
+      [data-hhr-worklist-filterbar] :is(label[for="search-encounter-list"],#search-encounter-list-label),
+      [data-hhr-worklist-layout="care"] > [data-hhr-worklist-filterbar] #select-label-hcp {
         position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;
       }
-      [data-hhr-worklist-filterbar] .MuiInputBase-root:has(#search-encounter-list) legend { max-width:0 !important; }
-      [data-hhr-worklist-filterbar] .MuiInputBase-root { height:30px; border-radius:5px; }
+      [data-hhr-worklist-filterbar] .MuiInputBase-root:has(:is(#search-encounter-list,#select-nurse-station-list)) legend {
+        max-width:0 !important;
+      }
+      [data-hhr-worklist-filterbar] .MuiInputBase-root {
+        height:32px; border-radius:7px; background:#fafcfb;
+      }
+      [data-hhr-worklist-filterbar] .MuiOutlinedInput-notchedOutline { border-color:#c9d7d3; }
       [data-hhr-worklist-filterbar] .MuiFormControl-root:has(#search-encounter-list) { flex:1 1 180px; min-width:78px; }
       [data-hhr-worklist-filterbar] .MuiFormControl-root:has([role="combobox"]) { flex:0 1 148px; min-width:90px; }
-      [data-hhr-worklist-filterbar] #search-encounter-list { min-width:0; padding-block:5px; }
-      [data-hhr-worklist-filterbar] #search-encounter-list::placeholder { color:transparent; }
-      [data-hhr-worklist-filterbar] #long-button { flex:none; min-width:30px; padding:4px; }
-      @media(max-width:1120px) {
-        [data-hhr-worklist-layout="medical"] > [data-hhr-worklist-rail] { grid-column:1 / -1; }
-        [data-hhr-worklist-layout="medical"] > [data-hhr-worklist-filterbar] { grid-column:1 / -1; grid-row:2; margin-inline-end:0; }
+      [data-hhr-worklist-filterbar] .MuiInputBase-root:has(#search-encounter-list) { min-width:0; }
+      [data-hhr-worklist-filterbar] #search-encounter-list {
+        box-sizing:border-box; min-width:0; flex:1 1 0; padding-block:5px;
       }
+      [data-hhr-worklist-filterbar] #search-encounter-list::placeholder { color:transparent; }
+      [data-hhr-worklist-filterbar] #long-button {
+        flex:none; min-width:32px; min-height:32px; padding:4px 6px; border:1px solid #c9d7d3;
+        border-radius:7px; background:#fafcfb; color:#315f58; cursor:pointer;
+      }
+      [data-hhr-worklist-filterbar] #long-button:hover { background:#e5f1ed; }
+      [data-hhr-worklist-rail] [role="tab"]:focus-visible,
+      [data-hhr-worklist-filterbar] #long-button:focus-visible { outline:2px solid #247c73; outline-offset:2px; }
       @media(max-width:740px) {
-        [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { grid-column:1 / -1; }
-        [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] { grid-column:1 / -1; grid-row:2; margin-inline-end:0; }
+        [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { flex-basis:100%; }
+        [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] { margin-inline-end:0; }
       }
     }
     .hhr-hospitalized-panel { box-sizing:border-box; background:white; border-radius:12px; padding:10px 12px; }
@@ -254,6 +291,11 @@
       rail.dataset.hhrWorklistRail = '';
       filters.dataset.hhrWorklistFilterbar = '';
       if (!control.hasAttribute('aria-label')) control.setAttribute('aria-label', 'Buscar por nombre o RUN');
+      const station = filters.querySelector('#select-nurse-station-list[role="combobox"]');
+      if (station && filters.querySelector('#select-label-hcp')) {
+        const label = 'select-label-hcp select-nurse-station-list';
+        if (station.getAttribute('aria-labelledby') !== label) station.setAttribute('aria-labelledby', label);
+      }
       filters.querySelector('#long-button[aria-label="more"]')?.setAttribute('aria-label', 'Imprimir');
     };
     const noveltyTooltip = createNoveltyTooltip();

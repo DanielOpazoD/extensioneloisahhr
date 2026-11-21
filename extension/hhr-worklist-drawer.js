@@ -77,9 +77,12 @@
               el('span', 'Ráf. ' + gust + ' km/h', { title: 'Ráfagas máximas' }));
             slots.append(slot);
           });
-          panel.replaceChildren(hero, conditions, slots, el('a', 'Open-Meteo', {
+          const source = el('a', '', {
             href: 'https://open-meteo.com/', target: '_blank', rel: 'noopener noreferrer',
-          }));
+            class: 'hhr-weather-source', 'aria-label': 'Abrir Open-Meteo', title: 'Open-Meteo',
+          });
+          source.append(el('span', '↗', { 'aria-hidden': 'true' }));
+          panel.replaceChildren(hero, conditions, slots, source);
           hasForecast = true;
           status.textContent = '';
         } catch (_error) {

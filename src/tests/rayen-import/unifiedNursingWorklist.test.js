@@ -73,8 +73,9 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
     }
     function Chip({label, ...props}) {return jsx('span', {...props, children:label});}
     function Loader({index}) {
-      const entries = index === 1 ? lists[index].map(id => ({ id, lastPhysicianPublishDatetime: publication })) : lists[index];
-      if (!ready) return localJsx.jsx(NativeSkeleton, { columns: [], isLoading: true });
+      const entries = index === 1 ? lists[index].slice(0, ready === 'novelty-only' ? 1 : undefined)
+        .map(id => ({ id, lastPhysicianPublishDatetime: publication })) : lists[index];
+      if (!ready || (ready === 'novelty-only' && index !== 1)) return localJsx.jsx(NativeSkeleton, { columns: [], isLoading: true });
       if (ready === 'error') return localJsx.jsx('div', { children: 'Error al cargar los datos' });
       return jsx('article', { style:{paddingBlock:12}, children:localJsx.jsx(Rows, {index,[keys[index]]:entries}) });
     }
@@ -99,6 +100,10 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(document.querySelector('.hhr-care-loading').textContent).not.toContain('Entrega de turno');
   expect(document.querySelector('.hhr-care-loading').textContent).toContain('Imprimir');
   expect(document.querySelector('.hhr-care-loading').textContent).not.toContain('GES');
+  await act(() => setReady('novelty-only'));
+  expect(document.querySelectorAll('table')).toHaveLength(1);
+  expect(document.querySelector('.hhr-care-loading')).not.toBeNull();
+  expect(document.body.textContent).not.toContain('Paciente 21');
   await act(() => setReady('error'));
   expect(document.querySelector('.hhr-care-loading')).toBeNull();
   expect(document.querySelectorAll('[role="alert"]')).toHaveLength(3);
@@ -144,6 +149,13 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(rows()).toEqual(['20','23','22','21']);
   expect(noveltyRows()).toEqual(['22','21']);
   const editor = document.querySelector('[data-hhr-handoff-inline]');
+  await act(() => setReady('novelty-only'));
+  expect(document.querySelector('.hhr-care-loading')).not.toBeNull();
+  expect(editor.closest('.hhr-care-results').hidden).toBe(true);
+  await act(() => setReady(true));
+  expect(document.querySelector('.hhr-care-loading')).toBeNull();
+  expect(document.querySelector('[data-hhr-handoff-inline]')).toBe(editor);
+  expect(editor.closest('.hhr-care-results').hidden).toBe(false);
   await act(() => onToggle({ isTrusted: true }));
   expect(headings()).toEqual(expect.arrayContaining(operationalColumns));
   expect(document.querySelector('[data-hhr-handoff-inline]')).toBe(editor);
