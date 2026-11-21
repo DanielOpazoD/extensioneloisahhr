@@ -122,7 +122,7 @@
         box-shadow:inset 0 -1px 0 #205e5936;
       }
       [data-hhr-worklist-layout] {
-        display:grid !important; grid-template-columns:auto minmax(0, 1fr);
+        display:flex !important; flex-flow:row wrap !important;
         align-items:center; gap:9px 12px !important; padding-block-start:4px;
       }
       [data-hhr-worklist-rail] .MuiTabs-indicator { display:none; }
@@ -135,8 +135,8 @@
       [data-hhr-worklist-rail] [role="tab"][aria-selected="true"] {
         color:#175f57; background:#deefeb; font-weight:650;
       }
-      [data-hhr-worklist-layout] > * { grid-column:1 / -1; min-width:0; }
-      [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { grid-column:1; grid-row:1; }
+      [data-hhr-worklist-layout] > * { flex:0 0 100%; min-width:0; }
+      [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { flex:0 1 auto; max-width:100%; }
       [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] {
         flex:1 0 min(260px, 100%); width:auto !important; height:auto !important;
         min-height:32px; padding:1px 0 !important; gap:6px !important; box-sizing:border-box;
