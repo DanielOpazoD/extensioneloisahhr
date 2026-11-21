@@ -119,6 +119,8 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
 }
 
 [data-hhr-rongorongo-link] {
+  min-inline-size:28px;
+  min-block-size:28px;
   color: #266b60 !important;
 }
 
@@ -129,8 +131,8 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
 
 .hhr-rongorongo-icon {
   display: inline-block;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   flex: none;
   background: currentColor;
   -webkit-mask: var(--hhr-rongorongo-image) center / contain no-repeat;

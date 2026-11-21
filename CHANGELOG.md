@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.133
+
+- Gestión de cuidados incorpora una vista breve de la publicación médica junto a la fila, con hora, profesional, extracto y acceso al Historial.
+- Las listas clínicas presentan un índice plegable de camas, encabezados fijos al desplazar y más énfasis en la cama y el nombre. Las acciones secundarias ganan contraste al enfocar la fila.
+
 ## 0.48.132
 
 - Lista de trabajo médico y Gestión de cuidados muestran el RUN con guion debajo del inicio del nombre. Se ocultan la línea de nombre social y el encabezado Acciones.

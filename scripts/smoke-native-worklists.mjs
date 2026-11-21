@@ -101,7 +101,7 @@ function startFixture(route) {
           const patient = nativeJsx('div', {className:'MuiStack-root', children:[link, ...details]});
           const nativeAction = hasMedicalLink ? nativeJsx('a', { LinkComponent: 'a', href, children: '>' })
             : nativeJsx('button', { ...(discharge ? {encId,patId:3000+id} : {}), children: 'Abrir ficha' });
-          const location = ['AMQI', nativeJsx('br', {}), 'H1', nativeJsx('br', {}), 'H1C2'];
+          const location = ['AMQI', nativeJsx('br', {}), 'H1', nativeJsx('br', {}), id > 8 ? 'H2C1' : 'H1C2'];
           const cells = [location, patient, ...(referral ? [] : ['No GES']), 'Diagnóstico (lateral) (Ingreso) (principal) (solicitud hospitalización)',
             ...(label === 'con novedad' ? ['Hace 1 hora por Profesional de prueba'] : []),
             ...(discharge || referral ? ['Detalle'] : []),
@@ -373,6 +373,19 @@ const verifyLists = async (context, origin, worker) => {
         await page.getByRole('tab', { name, exact: true }).click();
         await page.locator('table[data-hhr-complete-worklist]').waitFor();
         await verifyWorklistWidth(page);
+        if (name === route.sections[0][0]) {
+          const strip = page.locator('[data-hhr-bed-index]');
+          await strip.waitFor();
+          assert.deepEqual(await strip.locator('button').allTextContents(), ['H1C2', 'H2C1']);
+          await strip.getByRole('button', { name: 'Ir a cama H2C1 · AMQI' }).click();
+          const focused = rows.locator('td .hhr-location-bed').filter({ hasText: 'H2C1' }).first();
+          assert.equal(await focused.evaluate(node => node.closest('tr').hasAttribute('data-hhr-bed-target')), true);
+          const sticky = await table.locator('thead th').first().boundingBox();
+          assert.ok(sticky.y >= 0, 'Table headers stay visible after scrolling to a bed');
+          await strip.locator('summary').click();
+          assert.equal(await strip.locator('button').first().isVisible(), false);
+          await strip.locator('summary').click();
+        }
         const first = rows.first();
         assert.equal(await first.locator('td').first().innerText(), 'AMQI\nH1C2');
         assert.equal(await first.getByText('Diagnóstico (lateral)', {exact:true}).count(), 1);
@@ -527,6 +540,12 @@ const verifyLists = async (context, origin, worker) => {
         }));
         assert.equal(await page.getByRole('tab', { name: 'Historial', selected: true }).count(), 1);
         assert.equal(new URL(page.url()).hash, '');
+        const islandDate = await page.evaluate(() => new Intl.DateTimeFormat('en-CA', {
+          timeZone:'Pacific/Easter', year:'numeric', month:'2-digit', day:'2-digit',
+        }).format(new Date()));
+        await page.goto(origin + chart + '#hhr-ultima-publicacion=' + islandDate + 'T09:10');
+        await page.locator('#medical-today[data-hhr-history-novelty-target]').waitFor();
+        assert.equal(await page.locator('#medication[data-hhr-history-novelty-target]').count(), 0);
         await page.goto(origin + route.pathname);
       } else {
         const chart = origin + route.pathname + '/2001/?referralGuid=demo';
