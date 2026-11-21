@@ -47,20 +47,6 @@
       .hhr-location-service { font-weight:400; color:#526561; }
       .hhr-location-bed { font-weight:750; color:#183a34; }
       [data-hhr-patient-name-row] > :nth-child(2) { color:#203b36; font-weight:700; }
-      [data-hhr-bed-index] {
-        margin-block:0 8px; display:flex; align-items:center; gap:8px; padding:4px 8px;
-        border-radius:7px; background:#f2f7f5; color:#395f56;
-        font:600 12px/1.25 system-ui,sans-serif;
-      }
-      [data-hhr-bed-index] summary { flex:none; padding:4px 0; cursor:pointer; }
-      [data-hhr-bed-index] > div { display:flex; gap:4px; overflow-x:auto; min-width:0; }
-      [data-hhr-bed-index]:not([open]) > div { display:none; }
-      [data-hhr-bed-index] button {
-        flex:none; border:1px solid #d6e3de; border-radius:5px; background:#fff; color:#315950;
-        font:inherit; font-variant-numeric:tabular-nums; padding:3px 6px; cursor:pointer;
-      }
-      [data-hhr-bed-index] button:is(:hover,:focus-visible) { border-color:#407d70; background:#e4f2ed; }
-      tr[data-hhr-bed-target] > :is(td,th) { background-color:#e0f1eb !important; }
       table[${marked}] td:nth-child(2) .MuiTypography-root { overflow-wrap:anywhere; }
       td[data-hhr-worklist-doctor] { width:136px; max-width:136px; }
       td[data-hhr-worklist-doctor] :is(.MuiFormControl-root,select) { box-sizing:border-box; width:100%; min-width:0; max-width:136px; }
@@ -146,50 +132,55 @@
         box-shadow:inset 0 -1px 0 #205e5936;
       }
       [data-hhr-worklist-layout] {
+        --hhr-worklist-control-height:28px;
         display:flex !important; flex-flow:row wrap !important;
-        align-items:center; gap:9px 12px !important; padding-block-start:4px;
+        align-items:center; gap:7px 8px !important; padding-block-start:4px;
       }
       [data-hhr-worklist-rail] .MuiTabs-indicator { display:none; }
+      [data-hhr-worklist-rail], [data-hhr-worklist-rail] .MuiTabs-root { min-height:var(--hhr-worklist-control-height); }
       [data-hhr-worklist-rail] [role="tab"] {
-        min-height:30px; min-width:0; padding:4px 9px; border:0; border-radius:6px;
+        min-height:var(--hhr-worklist-control-height); min-width:0; margin-inline-end:2px;
+        padding:3px 8px; border:1px solid transparent; border-radius:6px;
         color:#455c57; background:transparent; cursor:pointer;
         font-size:.8125rem; text-transform:none; white-space:normal;
       }
       [data-hhr-worklist-rail] [role="tab"]:hover { background:#e8efed; }
       [data-hhr-worklist-rail] [role="tab"][aria-selected="true"] {
-        color:#175f57; background:#deefeb; font-weight:650;
+        color:#175f57; background:#deefeb; border-color:#c8ddd7; font-weight:650;
       }
       [data-hhr-worklist-layout] > * { flex:0 0 100%; min-width:0; }
       [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { flex:0 1 auto; max-width:100%; }
       [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] {
-        flex:1 0 min(260px, 100%); width:auto !important; height:auto !important;
-        min-height:32px; padding:1px 0 !important; gap:6px !important; box-sizing:border-box;
+        flex:0 1 278px; width:auto !important; height:auto !important;
+        min-height:var(--hhr-worklist-control-height); padding:0 !important; gap:5px !important; box-sizing:border-box;
         display:flex; align-items:center; background:transparent; box-shadow:none;
-        max-inline-size:460px;
+        max-inline-size:278px;
         margin-inline-end:var(--hhr-worklist-reserve, 0px);
       }
-      [data-hhr-worklist-filterbar] :is(label[for="search-encounter-list"],#search-encounter-list-label),
-      [data-hhr-worklist-layout="care"] > [data-hhr-worklist-filterbar] #select-label-hcp {
+      [data-hhr-worklist-filterbar] :is(label[for="search-encounter-list"],#search-encounter-list-label,#select-label-hcp) {
         position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;
       }
-      [data-hhr-worklist-filterbar] .MuiInputBase-root:has(:is(#search-encounter-list,#select-nurse-station-list)) legend {
-        max-width:0 !important;
-      }
+      [data-hhr-worklist-filterbar] .MuiInputBase-root legend { max-width:0 !important; }
       [data-hhr-worklist-filterbar] .MuiInputBase-root {
-        height:32px; border-radius:7px; background:#fafcfb;
+        height:var(--hhr-worklist-control-height); border-radius:6px; background:#fafcfb;
+        font-size:.8125rem;
       }
       [data-hhr-worklist-filterbar] .MuiOutlinedInput-notchedOutline { border-color:#c9d7d3; }
-      [data-hhr-worklist-filterbar] .MuiFormControl-root:has(#search-encounter-list) { flex:1 1 180px; min-width:78px; }
-      [data-hhr-worklist-filterbar] .MuiFormControl-root:has([role="combobox"]) { flex:0 1 148px; min-width:90px; }
-      [data-hhr-worklist-filterbar] .MuiInputBase-root:has(#search-encounter-list) { min-width:0; }
+      [data-hhr-worklist-filterbar] .MuiFormControl-root:has(#search-encounter-list) { flex:0 1 138px; min-width:72px; }
+      [data-hhr-worklist-filterbar] .MuiFormControl-root:has([role="combobox"]) { flex:0 1 94px; min-width:66px; }
+      [data-hhr-worklist-filterbar] .MuiInputBase-root:has(#search-encounter-list) { min-width:0; max-inline-size:138px; }
       [data-hhr-worklist-filterbar] #search-encounter-list {
-        box-sizing:border-box; min-width:0; flex:1 1 0; padding-block:5px;
+        box-sizing:border-box; min-width:0; flex:1 1 0; padding-block:3px;
       }
       [data-hhr-worklist-filterbar] #search-encounter-list::placeholder { color:transparent; }
+      [data-hhr-worklist-filterbar] .MuiSelect-select[role="combobox"] { padding-block:3px; padding-inline-start:7px; }
       [data-hhr-worklist-filterbar] #long-button {
-        flex:none; min-width:32px; min-height:32px; padding:4px 6px; border:1px solid #c9d7d3;
-        border-radius:7px; background:#fafcfb; color:#315f58; cursor:pointer;
+        box-sizing:border-box; flex:none; min-width:29px; min-height:var(--hhr-worklist-control-height);
+        padding:2px 3px; border:1px solid #c9d7d3; border-radius:6px;
+        background:#fafcfb; color:#315f58; cursor:pointer;
       }
+      [data-hhr-worklist-filterbar] #long-button svg { width:16px; height:16px; }
+      [data-hhr-worklist-filterbar] #long-button svg + svg { width:10px; height:10px; }
       [data-hhr-worklist-filterbar] #long-button:hover { background:#e5f1ed; }
       [data-hhr-worklist-rail] [role="tab"]:focus-visible,
       [data-hhr-worklist-filterbar] #long-button:focus-visible { outline:2px solid #247c73; outline-offset:2px; }
@@ -314,72 +305,9 @@
     };
   };
 
-  function createBedIndex() {
-    const strip = document.createElement('details');
-    strip.dataset.hhrBedIndex = '';
-    strip.open = true;
-    const summary = document.createElement('summary');
-    summary.textContent = 'Camas';
-    const buttons = document.createElement('div');
-    strip.append(summary, buttons);
-    let entries = [];
-    let target;
-    let timer;
-    const clearSelection = () => {
-      clearTimeout(timer);
-      target?.removeAttribute('data-hhr-bed-target');
-      target = undefined;
-    };
-    const select = row => {
-      if (!row.isConnected || !row.getClientRects().length) return;
-      clearSelection();
-      target = row;
-      row.setAttribute('data-hhr-bed-target', '');
-      row.scrollIntoView({ block: 'center', behavior: 'instant' });
-      const action = row.querySelector('[data-hhr-rongorongo-link],td:nth-child(2) a[href],button[data-hhr-copy-run]');
-      action?.focus({ preventScroll: true });
-      timer = setTimeout(clearSelection, 2400);
-    };
-    return {
-      refresh(tables) {
-        const visible = tables.filter(table => table.getClientRects().length && !table.closest('[hidden]'));
-        const seen = new Set();
-        const next = visible.flatMap(table => [...table.querySelectorAll('tbody td[data-hhr-bed-order]')].flatMap(cell => {
-          const bed = cell.querySelector('.hhr-location-bed')?.textContent.trim();
-          const service = cell.querySelector('.hhr-location-service')?.textContent.trim();
-          const row = cell.closest('tr');
-          const key = JSON.stringify([service, bed]);
-          if (!bed || /^sin cama$/i.test(bed) || !row?.getClientRects().length || seen.has(key)) return [];
-          seen.add(key);
-          return [{ row, bed, service }];
-        }));
-        const container = visible[0]?.parentElement;
-        if (!container || !next.length) {
-          strip.remove();
-          entries = [];
-          clearSelection();
-          return;
-        }
-        if (strip.nextElementSibling !== container || strip.parentElement !== container.parentElement) container.before(strip);
-        if (next.length === entries.length && next.every(({ row, bed, service }, i) =>
-          row === entries[i].row && bed === entries[i].bed && service === entries[i].service)) return;
-        entries = next;
-        buttons.replaceChildren(...entries.map(({ row, bed, service }) => {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.textContent = bed;
-          button.setAttribute('aria-label', 'Ir a cama ' + bed + (service ? ' · ' + service : ''));
-          button.addEventListener('click', event => { if (event.isTrusted) select(row); });
-          return button;
-        }));
-      },
-    };
-  }
-
   const create = options => {
     let onWorklist = false;
     const drawerTools = globalThis.HhrWorklistDrawer?.create(options);
-    const bedIndex = createBedIndex();
     let layout;
     const clearLayout = () => {
       if (!layout) return;
@@ -452,7 +380,6 @@
       if (!heading) {
         if (onWorklist) { clear(); clearLayout(); }
         noveltyTooltip.hide();
-        bedIndex.refresh([]);
         onWorklist = false;
         return;
       }
@@ -460,7 +387,6 @@
       markLayout(pathname);
       noveltyTooltip.position();
       if (!style.isConnected) document.head?.append(style);
-      const activeTables = [];
       const banner = document.querySelector('header.MuiAppBar-root');
       const fixed = banner && ['fixed', 'sticky'].includes(getComputedStyle(banner).position);
       const offset = (fixed ? banner.offsetHeight : 0) + 'px';
@@ -475,13 +401,11 @@
         if (result) {
           const kind = /^Mis pacientes de interconsulta/i.test(result[0]) ? 'referrals' : 'results';
           if (table.getAttribute(marked) !== kind) table.setAttribute(marked, kind);
-          activeTables.push(table);
         } else {
           table.removeAttribute(marked);
         }
         table.toggleAttribute(complete, Boolean(result && Number(result[1]) === table.tBodies[0].rows.length));
       }
-      bedIndex.refresh(activeTables);
     };
     return Object.freeze({
       refresh,
@@ -489,7 +413,6 @@
         clear();
         clearLayout();
         noveltyTooltip.dispose();
-        bedIndex.refresh([]);
         drawerTools?.dispose();
         document.querySelectorAll('[data-hhr-bed-item],[data-hhr-bed-link]').forEach(node => node.remove());
         document.querySelectorAll('[data-hhr-menu-icon]').forEach(node => node.removeAttribute('data-hhr-menu-icon'));

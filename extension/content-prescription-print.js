@@ -61,6 +61,7 @@
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
     fetchWeather: () => chrome.runtime.sendMessage({ type: runtimeMessages.RAPA_NUI_WEATHER }),
+    fetchDailyBirths: () => chrome.runtime.sendMessage({ type: runtimeMessages.DAILY_BIRTHS }),
     openFavorites: drawer => createFavoritesDialog(null, null, drawer),
   });
 

@@ -101,7 +101,7 @@
         'aria-haspopup': onClick ? 'dialog' : undefined,
         'aria-label': onClick ? 'Ver ' + (type.toLowerCase() || 'novedad') + ' médica' : type ? 'Abrir ' + type.toLowerCase() + ' médica en Historial' : 'Abrir última publicación médica en Historial' }
         : { role: 'img', 'aria-label': 'Con novedad' }),
-      'data-hhr-novelty-help': type ? type + ' · ' + title : title,
+      'data-hhr-novelty-help': title,
       children: jsx('svg', { viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', stroke: 'currentColor',
         strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true,
         children: jsx('path', { d: path }) }),
@@ -215,8 +215,8 @@
       if (hasNovelty) {
         const elapsed = cells[activity]?.props?.children;
         noveltyTitle = typeof elapsed === 'string' && /^\d+\s+(?:h|días?|semanas?)$/.test(elapsed)
-          ? 'Con novedad · Última publicación médica hace ' + elapsed.replace(/\s+/g, ' ')
-          : 'Con novedad';
+          ? 'Último cambio médico hace ' + elapsed.replace(/\s+/g, ' ')
+          : 'Último cambio médico';
       }
       cells[1] = patientCell(jsx, cells[1], nursing, encId, noveltyTitle, publications?.get(encId), NoveltyLink);
       if (diagnosis >= 0) cells[diagnosis] = compactDiagnosis(jsx, cells[diagnosis]);

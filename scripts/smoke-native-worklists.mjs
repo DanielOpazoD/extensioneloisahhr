@@ -215,8 +215,18 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
     const bytes = await pdf.save();
     self.__worklistOriginalFetch = self.fetch;
     self.__worklistReports = [];
+    self.__worklistBirthsRequests = 0;
     self.fetch = async (input, init) => {
       const url = new URL(input);
+      if (url.hostname === 'es.wikipedia.org') {
+        if (!/^\/api\/rest_v1\/feed\/onthisday\/births\/\d{2}\/\d{2}$/.test(url.pathname) ||
+            init?.credentials !== 'omit' || init?.referrerPolicy !== 'no-referrer' || init?.body) return Response.json({}, { status:400 });
+        self.__worklistBirthsRequests++;
+        return Response.json({births:[
+          {year:1901, pages:[{titles:{ normalized:'Figura de prueba' }, description:'Descripción en español'}]},
+          {year:2002, pages:[{titles:{ normalized:'Otra figura de prueba' }}]},
+        ]});
+      }
       if (url.hostname === 'api.open-meteo.com') {
         if (init?.credentials !== 'omit' || init?.referrerPolicy !== 'no-referrer' || url.searchParams.get('forecast_hours') !== '73') return new Response('', { status: 400 });
         const hour = 1795226400;
@@ -257,12 +267,13 @@ async function verifyWorklistWidth(page) {
     await page.setViewportSize({ width, height: 450 });
     const bounds = await page.evaluate(() => {
       const rect = selector => {
-        const { left, right, width, top, bottom } = document.querySelector(selector).getBoundingClientRect();
-        return { left, right, width, top, bottom };
+        const { left, right, width, height, top, bottom } = document.querySelector(selector).getBoundingClientRect();
+        return { left, right, width, height, top, bottom };
       };
       return { main: rect('main'), filters: rect('#filters'), tabs: rect('[role=tablist]'),
-        panel: rect('#worklist'), table: rect('#worklist table'),
-        search: rect('#search-encounter-list'), station: rect('#filters select'), print: rect('#long-button') };
+        panel: rect('#worklist'), table: rect('#worklist table'), tab: rect('[role=tab][aria-selected=true]'),
+        search: rect('#search-encounter-list'), searchBox: rect('.fixture-search'),
+        station: rect('#filters select'), stationBox: rect('#filters .MuiFormControl-root .MuiInputBase-root'), print: rect('#long-button') };
     });
     const left = bounds.panel.left - bounds.main.left;
     const right = bounds.main.right - bounds.panel.right;
@@ -270,6 +281,9 @@ async function verifyWorklistWidth(page) {
     assert.ok(bounds.filters.top < bounds.panel.top && bounds.filters.right <= bounds.main.right + 1);
     assert.ok(bounds.search.width >= 44 && bounds.search.right <= bounds.station.left + 1 && bounds.station.right <= bounds.print.left + 1,
       `Filter controls overlap at ${width}px: ${JSON.stringify(bounds)}`);
+    assert.ok(bounds.filters.width <= 278 && bounds.searchBox.width <= 138 && bounds.stationBox.width <= 95 && bounds.print.width <= 35);
+    assert.deepEqual([bounds.tab, bounds.searchBox, bounds.stationBox, bounds.print].map(rect => Math.round(rect.height)),
+      [28, 28, 28, 28], 'Tabs and filters use the same control height');
     if (width === 390) {
       assert.ok(bounds.filters.top >= bounds.tabs.bottom);
       const scrollable = await page.locator('.MuiTableContainer-root').evaluate(el => el.scrollWidth > el.clientWidth);
@@ -339,7 +353,22 @@ const verifyLists = async (context, origin, worker) => {
           await mkdir(process.env.HHR_VISUAL_ARTIFACT_DIR, { recursive: true });
           await drawer.screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Menú de Eloísa.png') });
         }
-        assert.match(await drawer.getByRole('link', { name: 'Un día como hoy' }).getAttribute('href'), /#Nacimientos$/);
+        const today = drawer.getByRole('button', { name: 'Un día como hoy' });
+        const existingTabs = context.pages().length;
+        await today.click();
+        const births = drawer.getByRole('dialog', { name: 'Un día como hoy' });
+        await births.getByText('Figura de prueba', { exact:true }).waitFor();
+        await births.getByText('1901', { exact:true }).waitFor();
+        assert.match(await births.getByRole('link', { name: /Wikipedia/ }).getAttribute('href'), /^https:\/\/es\.wikipedia\.org\/wiki\/.+#Nacimientos$/);
+        assert.equal(context.pages().length, existingTabs);
+        await births.getByRole('button', {name:'Cerrar', exact:true}).click();
+        await births.waitFor({state:'detached'});
+        assert.equal(await today.evaluate(button => button === document.activeElement), true);
+        await today.press('Enter');
+        await births.getByText('Figura de prueba', {exact:true}).waitFor();
+        await page.keyboard.press('Escape');
+        await births.waitFor({state:'detached'});
+        assert.equal(await worker.evaluate(() => self.__worklistBirthsRequests), 1);
         const favorites = drawer.getByRole('button', { name: /Favoritos/ });
         await favorites.click();
         const dialog = drawer.getByRole('dialog', { name: 'Favoritos' });
@@ -373,18 +402,12 @@ const verifyLists = async (context, origin, worker) => {
         await page.getByRole('tab', { name, exact: true }).click();
         await page.locator('table[data-hhr-complete-worklist]').waitFor();
         await verifyWorklistWidth(page);
+        assert.equal(await page.locator('[data-hhr-bed-index]').count(), 0);
         if (name === route.sections[0][0]) {
-          const strip = page.locator('[data-hhr-bed-index]');
-          await strip.waitFor();
-          assert.deepEqual(await strip.locator('button').allTextContents(), ['H1C2', 'H2C1']);
-          await strip.getByRole('button', { name: 'Ir a cama H2C1 · AMQI' }).click();
-          const focused = rows.locator('td .hhr-location-bed').filter({ hasText: 'H2C1' }).first();
-          assert.equal(await focused.evaluate(node => node.closest('tr').hasAttribute('data-hhr-bed-target')), true);
+          await rows.last().scrollIntoViewIfNeeded();
           const sticky = await table.locator('thead th').first().boundingBox();
-          assert.ok(sticky.y >= 0, 'Table headers stay visible after scrolling to a bed');
-          await strip.locator('summary').click();
-          assert.equal(await strip.locator('button').first().isVisible(), false);
-          await strip.locator('summary').click();
+          assert.ok(sticky.y >= 0 && sticky.y < 100, 'Table headers stay visible after scrolling');
+          await page.evaluate(() => window.scrollTo(0, 0));
         }
         const first = rows.first();
         assert.equal(await first.locator('td').first().innerText(), 'AMQI\nH1C2');
@@ -397,10 +420,13 @@ const verifyLists = async (context, origin, worker) => {
         assert.equal(await run.count(), 1, 'The displayed RUN must be a single copy button');
         assert.equal(await run.textContent(), '00000001-K');
         assert.equal(await run.evaluate(node => node.closest('a')), null);
-        const nameBounds = await first.locator('td:nth-child(2) strong').boundingBox();
-        const runBounds = await run.boundingBox();
-        assert.ok(Math.abs(nameBounds.x - runBounds.x) <= 1 && runBounds.y >= nameBounds.y + nameBounds.height - 1,
-          'RUN must start directly below the patient name');
+        const alignment = await first.evaluate(row => {
+          const name = row.querySelector('td:nth-child(2) strong').getBoundingClientRect();
+          const run = row.querySelector('button[data-hhr-copy-run]').getBoundingClientRect();
+          return { left:run.left - name.left, top:run.top - name.bottom };
+        });
+        assert.ok(Math.abs(alignment.left) <= 1 && alignment.top >= -1,
+          `${name}: RUN must start directly below the patient name (${JSON.stringify(alignment)})`);
         assert.equal(await rows.getByText(/^Nombre social:/).count(), 0);
         assert.equal(await table.getByRole('columnheader', { name:'Acciones' }).count(), 0);
         assert.equal(await rows.nth(4).getByText(/Pasaporte.*00000005-K/).count(), 1);
@@ -433,7 +459,7 @@ const verifyLists = async (context, origin, worker) => {
             await marker.hover();
             const tooltip = page.locator('#hhr-worklist-novelty-tooltip');
             await tooltip.waitFor();
-            assert.equal(await tooltip.textContent(), 'Con novedad · Última publicación médica hace 1 h');
+            assert.equal(await tooltip.textContent(), 'Último cambio médico hace 1 h');
             const target = await marker.boundingBox();
             const bubble = await tooltip.boundingBox();
             assert.ok(Math.abs(Math.max(target.y - bubble.y - bubble.height, bubble.y - target.y - target.height) - 6) < 2);
