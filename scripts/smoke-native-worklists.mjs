@@ -357,6 +357,11 @@ const verifyLists = async (context, origin, worker) => {
         const focused = page.locator('#medication[data-hhr-history-novelty-target]');
         await focused.waitFor();
         assert.equal(await focused.evaluate(card => document.activeElement === card), true);
+        assert.ok(await focused.evaluate(card => {
+          const tabs = document.querySelector('[role="tablist"]').getBoundingClientRect();
+          const target = card.getBoundingClientRect();
+          return target.top >= tabs.bottom && target.top < innerHeight;
+        }));
         assert.equal(await page.getByRole('tab', { name: 'Historial', selected: true }).count(), 1);
         assert.equal(new URL(page.url()).hash, '');
         await page.goto(origin + route.pathname);

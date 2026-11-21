@@ -57,7 +57,7 @@ function bindNativeTabs(main) {
 }
 
 export const nativeFichaFixture = () =>
-  `<!doctype html><html lang="es"><body><main>${fixture}</main><script>(${bindNativeTabs.toString()})(document.querySelector('main'));</script></body></html>`;
+  `<!doctype html><html lang="es"><head><meta charset="utf-8"></head><body><main>${fixture}</main><script>(${bindNativeTabs.toString()})(document.querySelector('main'));</script></body></html>`;
 
 const screenshot = async (page, name) => {
   if (!process.env.HHR_VISUAL_ARTIFACT_DIR) return;
