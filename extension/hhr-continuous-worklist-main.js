@@ -23,8 +23,12 @@
   }
 
   const withWorklistRows = (jsx, route, nurse) => (type, props, ...rest) => {
+    if (nurse && type === 'div' && props?.children === 'Error al cargar los datos') {
+      return jsx(nurse.failure, { type, props }, rest[0]);
+    }
     if (typeof type === 'function' && props && location.pathname.replace(/\/$/, '') === route.path) {
       if (Array.isArray(props.columns)) {
+        if (nurse && props.isLoading === true) return jsx(nurse.loading, { type, props }, rest[0]);
         if (type !== nurse?.table.A) props = globalThis.HhrWorklistPrintColumn.adapt(jsx, props, route.path);
       } else if (route.id === 25587 && Array.isArray(props.encounterList)) {
         const list = props.encounterList;

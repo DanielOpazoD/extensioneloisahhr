@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.127
+
+- Gestión de cuidados muestra un solo esqueleto de carga con las columnas de la tabla final.
+- La ayuda de novedad aparece junto a su icono y el acceso a la ficha usa la tablilla rongorongo de HHR.
+
 ## 0.48.126
 
 - En Gestión de cuidados, la novedad muestra una indicación en azul o una evolución en violeta cuando coincide con una publicación médica del Historial. El pulso ámbar queda para los demás casos. El icono sigue abriendo el Historial del episodio.

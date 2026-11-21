@@ -21,7 +21,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   for (const file of ['hhr-worklist-print-column','hhr-nursing-novelty','hhr-nursing-worklist','hhr-continuous-worklist-main']) {
     Function(readFileSync('extension/' + file + '.js', 'utf8'))();
   }
-  let setUrl, setFilter, filter = '', activeUrl;
+  let setUrl, setFilter, setReady, ready, filter = '', activeUrl;
   const action = vi.fn();
   vi.stubGlobal('IntersectionObserver', class {
     constructor(callback) { this.callback = callback; }
@@ -36,6 +36,8 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   ] });
   const Tab = ({ label, value, select }) => jsx('button', { onClick: () => select(null,value), children: label });
   const Tabs = ({ children, onChange }) => jsx('nav', { children: children.map(child => React.cloneElement(child, {select:onChange})) });
+  const NativeChart = ({ LinkComponent, ...props }) => jsx(LinkComponent, props);
+  const NativeSkeleton = () => jsx('table', { 'data-native-skeleton': '' });
   const keys = ['incomeEncounterList','noveltyEncounterList','uneventfulEncounterList','recoveredEncounterList'];
   const beds = { 20: 'R1', 21: 'B1UEA', 22: 'H6C2', 23: 'NEO 1', 30: 'H1C1' };
   const lists = [[20,21], [21,22], [22,23], [30]];
@@ -66,11 +68,14 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
           : column === '"lastNursePublishDatetime"' ? 'Hace 5 horas'
           : column === 'patient' ? jsx('a', {href:path+'/'+id, children:[jsx('strong', {children:'Paciente '+id},'name'),
           jsx(Chip,{size:'small',label:id === 20 ? 'Nuevo' : 'Pendiente'},'status'), jsx(Chip,{size:'small',label:'Alta médica'},'discharge'),
-          jsx('span', {children:id === 23 ? 'RUN Materno/progenitor(a): 12345678-9' : 'Número de Identificación: DEMO'+id}, 'id')]}) : column},column))},id)) });
+          jsx('span', {children:id === 23 ? 'RUN Materno/progenitor(a): 12345678-9' : 'Número de Identificación: DEMO'+id}, 'id')]})
+          : column === 'link' ? jsx(NativeChart, { LinkComponent: 'a', href: path+'/'+id, children: '>' }) : column},column))},id)) });
     }
     function Chip({label, ...props}) {return jsx('span', {...props, children:label});}
     function Loader({index}) {
       const entries = index === 1 ? lists[index].map(id => ({ id, lastPhysicianPublishDatetime: publication })) : lists[index];
+      if (!ready) return localJsx.jsx(NativeSkeleton, { columns: [], isLoading: true });
+      if (ready === 'error') return localJsx.jsx('div', { children: 'Error al cargar los datos' });
       return jsx('article', { style:{paddingBlock:12}, children:localJsx.jsx(Rows, {index,[keys[index]]:entries}) });
     }
     exports.default = function Page() {
@@ -84,10 +89,20 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   function App() {
     [activeUrl,setUrl] = useState(new URL(location.href));
     [filter,setFilter] = useState('');
+    [ready,setReady] = useState(false);
     return createElement(exports.default);
   }
   root = createRoot(document.body.appendChild(document.createElement('div')));
   await act(() => root.render(createElement(App)));
+  expect(document.querySelectorAll('table')).toHaveLength(1);
+  expect(document.querySelector('[data-native-skeleton]')).toBeNull();
+  expect(document.querySelector('.hhr-care-loading').textContent).toContain('Entrega de turno');
+  expect(document.querySelector('.hhr-care-loading').textContent).toContain('Imprimir');
+  expect(document.querySelector('.hhr-care-loading').textContent).not.toContain('GES');
+  await act(() => setReady('error'));
+  expect(document.querySelector('.hhr-care-loading')).toBeNull();
+  expect(document.querySelectorAll('[role="alert"]')).toHaveLength(3);
+  await act(() => setReady(true));
   const rows = () => [...document.querySelectorAll('tbody tr')].map(tr=>tr.querySelector('a').getAttribute('href').split('/').pop());
   const noveltyRows = () => [...document.querySelectorAll('[data-hhr-patient-novelty]')].map(marker =>
     marker.parentElement.querySelector('a').getAttribute('href').split('/').pop());
@@ -95,6 +110,9 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(document.querySelectorAll('table')).toHaveLength(1);
   expect(document.querySelectorAll('.hhr-care-source[hidden]')).toHaveLength(3);
   expect(rows()).toEqual(['20','23','22','21']);
+  expect([...document.querySelectorAll('[data-hhr-rongorongo-link]')].map(link=>link.getAttribute('href')))
+    .toEqual(rows().map(episode=>path+'/'+episode));
+  expect(document.querySelector('[data-hhr-rongorongo-link] .hhr-rongorongo-icon')).not.toBeNull();
   expect(noveltyRows()).toEqual(['22','21']);
   expect([...document.querySelectorAll('a[data-hhr-patient-novelty]')].map(link=>link.getAttribute('href'))).toEqual([
     path + '/22#hhr-ultima-publicacion', path + '/21#hhr-ultima-publicacion',

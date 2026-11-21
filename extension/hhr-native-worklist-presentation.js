@@ -141,8 +141,64 @@
       margin-block-start:0 !important;
     }
   `;
+  const createNoveltyTooltip = () => {
+    const selector = '[data-hhr-novelty-help]';
+    const tooltip = document.createElement('div');
+    tooltip.id = 'hhr-worklist-novelty-tooltip';
+    tooltip.setAttribute('role', 'tooltip');
+    let anchor;
+    const hide = () => {
+      anchor?.removeAttribute('aria-describedby');
+      anchor = undefined;
+      tooltip.remove();
+    };
+    const position = () => {
+      if (!anchor) return;
+      if (!anchor.isConnected || !anchor.getClientRects().length) { hide(); return; }
+      const box = anchor.getBoundingClientRect();
+      if (box.bottom <= 0 || box.top >= innerHeight || box.right <= 0 || box.left >= innerWidth) { hide(); return; }
+      const text = anchor.dataset.hhrNoveltyHelp;
+      if (tooltip.textContent !== text) tooltip.textContent = text;
+      const { width, height } = tooltip.getBoundingClientRect();
+      const left = Math.max(8, Math.min(innerWidth - width - 8, box.left + (box.width - width) / 2));
+      const top = box.top >= height + 12 ? box.top - height - 6 : box.bottom + 6;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    };
+    const show = event => {
+      const target = event.target.closest?.(selector);
+      if (!target || target === anchor) return;
+      hide();
+      anchor = target;
+      anchor.setAttribute('aria-describedby', tooltip.id);
+      document.body.append(tooltip);
+      position();
+    };
+    const leave = event => {
+      if (!anchor || !anchor.contains(event.target) || (event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget))) return;
+      hide();
+    };
+    const dismiss = event => {
+      if (event.key === 'Escape') hide();
+    };
+    const events = [['pointerover', show], ['pointerout', leave], ['focusin', show], ['focusout', leave], ['keydown', dismiss]];
+    for (const [type, listener] of events) document.addEventListener(type, listener);
+    window.addEventListener('scroll', position, true);
+    window.addEventListener('resize', position);
+    return {
+      hide, position,
+      dispose() {
+        hide();
+        for (const [type, listener] of events) document.removeEventListener(type, listener);
+        window.removeEventListener('scroll', position, true);
+        window.removeEventListener('resize', position);
+      },
+    };
+  };
+
   const create = () => {
     let onWorklist = false;
+    const noveltyTooltip = createNoveltyTooltip();
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = css;
@@ -178,10 +234,12 @@
       const heading = headings[pathname.replace(/\/$/, '')];
       if (!heading) {
         if (onWorklist) clear();
+        noveltyTooltip.hide();
         onWorklist = false;
         return;
       }
       onWorklist = true;
+      noveltyTooltip.position();
       if (!style.isConnected) document.head?.append(style);
       for (const table of document.querySelectorAll(`${tableSelector},${markedSelector}`)) {
         const container = table.parentElement;
@@ -201,6 +259,7 @@
       refresh,
       dispose() {
         clear();
+        noveltyTooltip.dispose();
         document.querySelectorAll('[data-hhr-bed-item],[data-hhr-bed-link]').forEach(node => node.remove());
         document.querySelectorAll('[data-hhr-menu-icon]').forEach(node => node.removeAttribute('data-hhr-menu-icon'));
         style.remove();
