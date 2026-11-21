@@ -37,6 +37,7 @@ export async function verifyWorklistOverlays(page, total) {
     samples.drawer = sample();
     const beds = paper.querySelector('a[data-hhr-bed-link]');
     const bedLink = beds?.href;
+    const carePlan = paper.querySelector('[data-hhr-menu-icon="plan"]')?.textContent;
     const footerGap = paper.getBoundingClientRect().bottom - beds.getBoundingClientRect().bottom;
     const icons = [...paper.querySelectorAll('[data-hhr-menu-icon]')].map(item => ({
       key: item.dataset.hhrMenuIcon, visible: getComputedStyle(item, '::before').maskImage !== 'none',
@@ -86,7 +87,7 @@ export async function verifyWorklistOverlays(page, total) {
     title.data = original;
     await frame();
     samples.refreshed = sample();
-    return { before, samples, menuStyled, partial, bedLink, footerGap, icons };
+    return { before, samples, menuStyled, partial, bedLink, footerGap, icons, carePlan };
   });
   assert.equal(result.before.heights.length, total);
   assert.equal(result.before.footer, 'none');
@@ -100,6 +101,7 @@ export async function verifyWorklistOverlays(page, total) {
   assert.deepEqual(result.icons.map(icon => icon.key), ['worklist', 'care', 'plan', 'reports', 'beds']);
   assert.ok(result.icons.every(icon => icon.visible));
   assert.equal(result.bedLink, 'https://hospitalizado.rayensalud.cl/#/bed');
+  assert.equal(result.carePlan, 'Ejecución de cuidados');
   const compactPrintMenu = await page.evaluate(() => {
     const popover = document.createElement('div');
     popover.id = 'discharge-action-button';

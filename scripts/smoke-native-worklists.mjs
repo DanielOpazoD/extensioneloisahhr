@@ -404,7 +404,8 @@ const verifyLists = async (context, origin, worker) => {
         const source = drawer.getByRole('link', { name: 'Abrir Open-Meteo' });
         assert.equal(await source.getAttribute('href'), 'https://open-meteo.com/');
         assert.equal(await source.textContent(), '↗');
-        assert.ok((await source.boundingBox()).width <= 24);
+        assert.ok((await source.boundingBox()).width <= 16);
+        assert.equal(await source.evaluate(link => link.closest('.hhr-weather-place').querySelector('strong').textContent), 'Rapa Nui');
         const navigation = drawer.locator('[data-hhr-menu-icon="worklist"]');
         assert.equal(await navigation.evaluate(node => getComputedStyle(node, '::before').width), '16px');
         if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
@@ -421,7 +422,13 @@ const verifyLists = async (context, origin, worker) => {
         assert.equal(await births.getByText('Texto largo que no se replica.').count(), 0);
         assert.match(await births.getByRole('link', { name: /Efemerides\.cl/ }).getAttribute('href'),
           /^https:\/\/www\.efemerides\.cl\/index\.php\?mesConsulta=\d{1,2}$/);
-        assert.match(await births.getByRole('link', { name: /Wikipedia/ }).getAttribute('href'), /^https:\/\/es\.wikipedia\.org\/wiki\/.+#Nacimientos$/);
+        const wiki = births.getByRole('link', { name: 'Abrir nacimientos en Wikipedia' });
+        assert.match(await wiki.getAttribute('href'), /^https:\/\/es\.wikipedia\.org\/wiki\/.+#Nacimientos$/);
+        assert.equal(await wiki.textContent(), '↗');
+        assert.equal(await births.getByRole('link', { name:'Abrir calendario en Efemerides.cl' }).textContent(), '↗');
+        const biography = births.getByRole('link', { name:'Figura de prueba', exact:true });
+        assert.equal(await biography.getAttribute('href'), 'https://es.wikipedia.org/wiki/Figura_de_prueba');
+        assert.equal(await biography.getAttribute('target'), '_blank');
         assert.equal(context.pages().length, existingTabs);
         await births.getByRole('button', {name:'Cerrar', exact:true}).click();
         await births.waitFor({state:'detached'});
@@ -488,6 +495,14 @@ const verifyLists = async (context, origin, worker) => {
         assert.equal(await table.getByRole('columnheader', { name:'Acciones' }).count(), 0);
         assert.equal(await rows.nth(4).getByText(/Pasaporte.*00000005-K/).count(), 1);
         assert.equal(await rows.nth(4).locator('[data-hhr-copy-run]').count(), 0);
+        for (const row of [rows.nth(2), rows.nth(4)]) {
+          const offset = await row.evaluate(tr => {
+            const name = tr.querySelector('[data-hhr-patient-name-row] strong').getBoundingClientRect();
+            const identifier = tr.querySelector('[data-hhr-patient-identifier]').getBoundingClientRect();
+            return identifier.left - name.left;
+          });
+          assert.ok(Math.abs(offset) <= 1, 'Passport and alternative ID use the name indent');
+        }
         if (name === route.sections[0][0]) {
           const copy = route.pathname.endsWith('-nurse') ? rows.nth(1).getByRole('button', { name: 'Copiar RUN 00000002-0' }) : run;
           if (route.pathname.endsWith('-nurse')) await copy.click();

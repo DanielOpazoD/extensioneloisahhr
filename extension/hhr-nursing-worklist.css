@@ -41,12 +41,15 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
   padding:8px 8px 5px; box-shadow:0 2px 7px #214b4112;
 }
 .hhr-drawer-forecast { display:grid; gap:5px; font-size:10px; }
-.hhr-drawer-forecast .hhr-weather-source {
-  display:grid; place-items:center; justify-self:end; width:22px; height:22px;
-  border-radius:5px; color:#3e6c63; font-size:14px; line-height:1; text-decoration:none;
+.hhr-weather-place, .hhr-daily-source-heading {
+  display:flex; align-items:center; gap:4px;
 }
-.hhr-weather-source:is(:hover,:focus-visible) { background:#e0eeea; color:#175f57; }
-.hhr-weather-source:focus-visible { outline:2px solid #247c73; }
+.hhr-source-icon {
+  display:inline-grid; place-items:center; flex:none; width:16px; height:16px; border-radius:3px;
+  color:#52726a; font:11px/1 system-ui,sans-serif; text-decoration:none;
+}
+.hhr-source-icon:is(:hover,:focus-visible) { background:#e0eeea; color:#175f57; }
+.hhr-source-icon:focus-visible { outline:2px solid #247c73; }
 .hhr-weather-hero { display:flex; align-items:center; justify-content:space-between; }
 .hhr-weather-hero strong { display:block; font-size:12px; font-weight:650; }
 .hhr-weather-temperature { display:block; font-size:26px; line-height:1.1; letter-spacing:-.65px; font-weight:600; }
@@ -118,7 +121,8 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
 }
 [data-hhr-daily-births-dialog] .hhr-daily-births-date { grid-column:1; margin:0; color:#536c65; }
 [data-hhr-daily-births-dialog] section + section { margin-block-start:12px; }
-[data-hhr-daily-births-dialog] h3 { margin:0 0 3px; font-size:13px; }
+[data-hhr-daily-births-dialog] h3 { margin:0; font-size:13px; }
+.hhr-daily-source-heading { margin-block-end:3px; }
 [data-hhr-daily-births-dialog] section p { margin:0 0 3px; color:#536a64; }
 [data-hhr-daily-births-dialog] .hhr-daily-events li { display:block; font-weight:600; }
 [data-hhr-daily-births-dialog] ul { margin:0 0 6px; padding:0; list-style:none; }
@@ -128,8 +132,10 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
 }
 [data-hhr-daily-births-dialog] li div { display:grid; gap:1px; }
 [data-hhr-daily-births-dialog] li div span { color:#536a64; font-size:12px; }
-[data-hhr-daily-births-dialog] a, [data-hhr-daily-births-dialog] .hhr-daily-births-year { color:#28665a; }
-[data-hhr-daily-births-dialog] a { font-size:11px; }
+[data-hhr-daily-births-dialog] li a, [data-hhr-daily-births-dialog] .hhr-daily-births-year { color:#28665a; }
+[data-hhr-daily-births-dialog] li a {
+  width:fit-content; font-weight:650; text-decoration-color:#9bb9af; text-underline-offset:2px;
+}
 .hhr-drawer-clock { display:flex; align-items:flex-start; justify-content:space-between; gap:4px; color:#526a64; font-variant-numeric:tabular-nums; }
 
 #hhr-worklist-novelty-tooltip {
