@@ -32,7 +32,7 @@
       .MuiBox-root:has(> .MuiPaper-root #search-encounter-list):has(> [role="tabpanel"]) {
         row-gap:6px;
       }
-      ${filters}:has(~ [role="tabpanel"]) {
+      ${filters}:not([data-hhr-worklist-filterbar]):has(~ [role="tabpanel"]) {
         block-size:auto;
         min-block-size:48px;
         padding-block:4px;
@@ -85,8 +85,8 @@
       }
       ${drawerIcons}
       .MuiDrawer-paper:has(> a[data-hhr-bed-link]), .MuiDrawer-paperAnchorLeft:has(> a[data-hhr-bed-link]) { display:flex; flex-direction:column; }
-      a[data-hhr-bed-link] { flex:none; margin-block-start:auto; padding:12px 16px; border-top:1px solid #dce7e4;
-        background:white; color:#235f59; font:inherit; text-decoration:none; }
+      a[data-hhr-bed-link] { flex:none; padding:7px 12px; border-top:1px solid #e7efed;
+        background:white; color:#235f59; font:12px/1.35 system-ui,sans-serif; text-decoration:none; }
       a[data-hhr-bed-link]:is(:hover,:focus-visible) { background:#e7f4f1; }
       .MuiBox-root:has(> .MuiPaper-root #search-encounter-list):has(> .hhr-hospitalized-panel) {
         row-gap:8px;
@@ -98,12 +98,43 @@
         line-height:1.3; white-space:normal;
       }
       /* Both routes keep the filters and tab panels as siblings, including while loading. */
-      ${filters}:has(~ [role="tabpanel"]), ${filters} ~ [role="tabpanel"] {
+      ${filters}:not([data-hhr-worklist-filterbar]):has(~ [role="tabpanel"]), ${filters} ~ [role="tabpanel"] {
         box-sizing:border-box;
         inline-size:100%;
         /* Use all the space up to 1280px, then grow the gutters up to 7% per side. */
         max-inline-size:clamp(86%, calc(60% + 512px), 100%);
         margin-inline:auto;
+      }
+      [data-hhr-worklist-layout] {
+        display:grid !important; grid-template-columns:auto minmax(0, 1fr);
+        align-items:center; gap:5px 12px !important;
+      }
+      [data-hhr-worklist-layout] > * { grid-column:1 / -1; min-width:0; }
+      [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { grid-column:1; grid-row:1; }
+      [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] {
+        grid-column:2; grid-row:1; min-width:0; width:auto !important; height:auto !important;
+        min-height:32px; padding:1px 0 !important; gap:6px !important; box-sizing:border-box;
+        display:flex; align-items:center; background:transparent; box-shadow:none;
+        max-inline-size:460px;
+        margin-inline-end:var(--hhr-worklist-reserve, 0px);
+      }
+      [data-hhr-worklist-filterbar] :is(label[for="search-encounter-list"],#search-encounter-list-label) {
+        position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;
+      }
+      [data-hhr-worklist-filterbar] .MuiInputBase-root:has(#search-encounter-list) legend { max-width:0 !important; }
+      [data-hhr-worklist-filterbar] .MuiInputBase-root { height:30px; border-radius:5px; }
+      [data-hhr-worklist-filterbar] .MuiFormControl-root:has(#search-encounter-list) { flex:1 1 180px; min-width:78px; }
+      [data-hhr-worklist-filterbar] .MuiFormControl-root:has([role="combobox"]) { flex:0 1 148px; min-width:90px; }
+      [data-hhr-worklist-filterbar] #search-encounter-list { min-width:0; padding-block:5px; }
+      [data-hhr-worklist-filterbar] #search-encounter-list::placeholder { color:transparent; }
+      [data-hhr-worklist-filterbar] #long-button { flex:none; min-width:30px; padding:4px; }
+      @media(max-width:1120px) {
+        [data-hhr-worklist-layout="medical"] > [data-hhr-worklist-rail] { grid-column:1 / -1; }
+        [data-hhr-worklist-layout="medical"] > [data-hhr-worklist-filterbar] { grid-column:1 / -1; grid-row:2; margin-inline-end:0; }
+      }
+      @media(max-width:740px) {
+        [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { grid-column:1 / -1; }
+        [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] { grid-column:1 / -1; grid-row:2; margin-inline-end:0; }
       }
     }
     .hhr-hospitalized-panel { box-sizing:border-box; background:white; border-radius:12px; padding:10px 12px; }
@@ -196,8 +227,35 @@
     };
   };
 
-  const create = () => {
+  const create = options => {
     let onWorklist = false;
+    const drawerTools = globalThis.HhrWorklistDrawer?.create(options);
+    let layout;
+    const clearLayout = () => {
+      if (!layout) return;
+      const { parent, rail, filters } = layout;
+      parent.removeAttribute('data-hhr-worklist-layout');
+      rail.removeAttribute('data-hhr-worklist-rail');
+      filters.removeAttribute('data-hhr-worklist-filterbar');
+      layout = undefined;
+    };
+    const markLayout = pathname => {
+      const control = document.getElementById('search-encounter-list');
+      const filters = control?.closest('.MuiPaper-root');
+      const rail = filters?.previousElementSibling;
+      const parent = filters?.parentElement;
+      if (!rail || !(rail.matches('[role="tablist"]') || rail.querySelector('[role="tablist"]'))) {
+        clearLayout();
+        return;
+      }
+      if (layout?.filters !== filters || layout.rail !== rail) clearLayout();
+      layout = { parent, rail, filters };
+      parent.dataset.hhrWorklistLayout = pathname.replace(/\/$/, '').endsWith('-nurse') ? 'care' : 'medical';
+      rail.dataset.hhrWorklistRail = '';
+      filters.dataset.hhrWorklistFilterbar = '';
+      if (!control.hasAttribute('aria-label')) control.setAttribute('aria-label', 'Buscar por nombre o RUN');
+      filters.querySelector('#long-button[aria-label="more"]')?.setAttribute('aria-label', 'Imprimir');
+    };
     const noveltyTooltip = createNoveltyTooltip();
     const style = document.createElement('style');
     style.id = styleId;
@@ -212,6 +270,7 @@
       }
     };
     const refresh = pathname => {
+      drawerTools?.prune();
       for (const drawer of document.querySelectorAll('.MuiDrawer-paperAnchorLeft, .MuiDrawer-anchorLeft .MuiDrawer-paper')) {
         let hasWorklist = false;
         for (const item of drawer.querySelectorAll('a,button,[role="button"]')) {
@@ -221,7 +280,9 @@
           if (key && item.dataset.hhrMenuIcon !== key) item.dataset.hhrMenuIcon = key;
           if (!key && item.dataset.hhrMenuIcon) delete item.dataset.hhrMenuIcon;
         }
-        if (!hasWorklist || drawer.querySelector('[data-hhr-bed-link]')) continue;
+        if (!hasWorklist) continue;
+        drawerTools?.decorate(drawer);
+        if (drawer.querySelector('[data-hhr-bed-link]')) continue;
         const link = document.createElement('a');
         link.dataset.hhrBedLink = '';
         link.dataset.hhrMenuIcon = 'beds';
@@ -233,12 +294,13 @@
       }
       const heading = headings[pathname.replace(/\/$/, '')];
       if (!heading) {
-        if (onWorklist) clear();
+        if (onWorklist) { clear(); clearLayout(); }
         noveltyTooltip.hide();
         onWorklist = false;
         return;
       }
       onWorklist = true;
+      markLayout(pathname);
       noveltyTooltip.position();
       if (!style.isConnected) document.head?.append(style);
       for (const table of document.querySelectorAll(`${tableSelector},${markedSelector}`)) {
@@ -259,7 +321,9 @@
       refresh,
       dispose() {
         clear();
+        clearLayout();
         noveltyTooltip.dispose();
+        drawerTools?.dispose();
         document.querySelectorAll('[data-hhr-bed-item],[data-hhr-bed-link]').forEach(node => node.remove());
         document.querySelectorAll('[data-hhr-menu-icon]').forEach(node => node.removeAttribute('data-hhr-menu-icon'));
         style.remove();

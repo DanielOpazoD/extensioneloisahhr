@@ -59,7 +59,11 @@
     onNoveltyUnavailable: () => showPageNotice('No se encontró una publicación médica en el historial cargado.', { title: 'Historial' }),
   });
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
-  const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create();
+  const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
+    fetchWeather: () => chrome.runtime.sendMessage({ type: runtimeMessages.RAPA_NUI_WEATHER }),
+    openFavorites: () => createFavoritesDialog(),
+    extensionVersion: uiLifecycle.version,
+  });
 
   const BUTTON_ID = 'hhr-prescription-print-button';
   const INDICATIONS_BUTTON_ID = 'hhr-indications-print-button';
@@ -619,6 +623,11 @@
     const headerBottom = candidates[0]?.rect.bottom || 64;
     const dateRect = document.getElementById('hhr-history-date-navigation')?.getBoundingClientRect();
     const barRect = bar.getBoundingClientRect();
+    const worklistLayout = document.querySelector('[data-hhr-worklist-layout]');
+    if (worklistLayout) {
+      const reserve = Math.max(0, Math.ceil(worklistLayout.getBoundingClientRect().right - barRect.left + 8));
+      worklistLayout.style.setProperty('--hhr-worklist-reserve', reserve + 'px');
+    }
     const top = headerBottom + 5;
     const overlapsDates = dateRect && dateRect.left < barRect.right && dateRect.right > barRect.left &&
       dateRect.bottom > top && dateRect.top < top + barRect.height;

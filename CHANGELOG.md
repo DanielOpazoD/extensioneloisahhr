@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.129
+
+- La búsqueda, el selector nativo y la impresión comparten la fila de pestañas en Gestión de cuidados y Lista de trabajo médico. En pantallas estrechas, los controles pasan a una segunda fila.
+- El menú lateral muestra la hora de Rapa Nui, el pronóstico de 72 horas, Favoritos y un acceso a los nacimientos del día. La versión queda detrás del icono de información.
+- Entrega de turno se abre desde un botón compacto para toda la tabla. Cada fila conserva su propio editor y guardado.
+
 ## 0.48.128
 
 - La tablilla Rongo Rongo reemplaza la flecha que abre la ficha en Pacientes sin médico, Mis pacientes e Interconsulta. El enlace de interconsulta conserva su identificador original.

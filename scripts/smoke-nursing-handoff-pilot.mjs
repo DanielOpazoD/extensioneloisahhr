@@ -47,8 +47,8 @@ try {
     const markup = table ? `
       <button data-hhr-handoff-toggle aria-expanded="false">Entrega de turno</button>
       <span data-hhr-handoff-pending role="status"></span>
-      <table><tbody>${['901001', '901002'].map(id => `<tr><th>Paciente sintético</th><td>
-        <button data-hhr-handoff-episode="${id}">✎</button><div data-hhr-handoff-inline="${id}" hidden></div>
+      <table><tbody>${['901001', '901002'].map(id => `<tr><th>Paciente sintético</th><td data-hhr-handoff-episode="${id}">
+        <div data-hhr-handoff-inline="${id}" hidden></div>
       </td></tr>`).join('')}</tbody></table>
     ` : `
       <table><tr><td>Paciente sintético</td><td>

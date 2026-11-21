@@ -26,13 +26,14 @@
   color:#774718; background:#fff5e7; border-radius:5px; padding:2px 7px; font-size:.83em;
 }
 .hhr-handoff-toolbar button {
-  border:1px solid #b6d1cb; border-radius:6px; background:#edf6f3; color:#14594f;
-  font:inherit; font-weight:600; min-height:30px; padding:3px 11px; cursor:pointer;
+  border:1px solid #d4e4df; border-radius:5px; background:#f5f9f7; color:#14594f;
+  font:600 12px/1.2 system-ui,sans-serif; min-height:25px; padding:3px 8px; cursor:pointer;
 }
 .hhr-handoff-toolbar button[aria-expanded="true"] { background:#155e54; border-color:#155e54; color:white; }
 .hhr-handoff-toolbar button:focus-visible { outline:2px solid #147766; outline-offset:2px; }
 .hhr-handoff-toolbar button:disabled { opacity:.55; cursor:default; }
 [data-hhr-handoff-inline][hidden] { display:none !important; }
+.hhr-worklist-handoff[hidden] { display:none !important; }
 [data-hhr-handoff-inline] {
   min-height:80px; min-width:220px; margin-block:3px; text-align:start;
   background:#f1f7f5; border-inline-start:3px solid #a6cbc1;

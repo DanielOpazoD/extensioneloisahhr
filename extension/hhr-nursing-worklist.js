@@ -12,6 +12,7 @@
     ['assignesDoctor', 'Médico tratante', '136px'], ['isolated', 'Aislado', '6%'],
     ['activity', 'Entrega de turno', '10%'], ['actions', 'Acciones', '5%'], ['link', '', '5%'],
   ].map(([id, label, width]) => ({ id, label, style: { width } }));
+  const loadingVisibleColumns = loadingColumns.filter(column => column.id !== 'activity');
   const emptySource = { columns: [], children: [] };
 
   function joinTables(jsx, tables, handoff = globalThis.HhrNursingHandoffDemo === true) {
@@ -41,13 +42,7 @@
         }
         const detail = cells.get(['stay', 'lastNovelty', '"lastNursePublishDatetime"'][source]);
         if (handoff && valid) {
-          cells.set('activity', jsx('td', { className: 'hhr-worklist-handoff', children: jsx('button', {
-            type: 'button',
-            'data-hhr-handoff-episode': episode,
-            'aria-label': 'Abrir entrega de turno',
-            title: 'Abrir entrega de turno',
-            children: '✎',
-          }) }));
+          cells.set('activity', jsx('td', { className: 'hhr-worklist-handoff', 'data-hhr-handoff-episode': episode }));
         } else if (!handoff && detail?.props) {
           const value = detail.props.children;
           const children = typeof value === 'string' && value.startsWith('Sin registro') ? value : [activity[source], ' ', value];
@@ -147,18 +142,18 @@
       const loading = !result.listLenght && !tables.every(Boolean);
       const columns = expanded ? result.columns.filter(column => handoffColumns.has(column.id)).map(column =>
         column.id === 'activity' ? { ...column, style: { ...column.style, width: '52%' } } : column
-      ) : result.columns.length ? result.columns : loadingColumns;
-      const rows = visited ? result.children.map(row => React.cloneElement(row, { children:
+      ) : (result.columns.length ? result.columns : loadingColumns).map(column =>
+        column.id === 'activity' ? { ...column, style: { ...column.style, display: 'none' } } : column);
+      const rows = result.children.map(row => React.cloneElement(row, { children:
         result.columns.flatMap(({ id }, index) => {
           if (expanded && !handoffColumns.has(id)) return [];
           const cell = row.props.children[index];
-          if (id !== 'activity' || !/^[1-9]\d{0,15}$/.test(row.key)) return [cell];
-          return [React.cloneElement(cell, { children: [
-            jsx('div', { hidden: expanded, children: cell.props.children }, 'pencil'),
-            jsx('div', { hidden: !expanded, 'data-hhr-handoff-inline': row.key }, 'editor'),
-          ] })];
+          if (id !== 'activity') return [cell];
+          return [React.cloneElement(cell, { hidden: !expanded, children:
+            visited && /^[1-9]\d{0,15}$/.test(row.key)
+              ? jsx('div', { hidden: !expanded, 'data-hhr-handoff-inline': row.key }, 'editor') : null })];
         }),
-      })) : result.children;
+      }));
       return jsx(React.Fragment, { children: [
         jsx('div', { className: 'hhr-handoff-toolbar', children: [
           jsx('span', { 'data-hhr-handoff-pending': '', role: 'status', hidden: !expanded }, 'pending'),
@@ -170,13 +165,13 @@
               setVisited(true);
               setExpanded(previous => !previous);
             },
-            children: expanded ? 'Volver a la lista' : 'Entrega de turno',
+            children: expanded ? 'Cerrar entrega' : 'Entrega de turno',
           }, 'toggle'),
         ] }, 'handoff-toolbar'),
           loading ? jsx('div', { className: 'hhr-care-loading', role: 'status', 'aria-label': 'Cargando pacientes hospitalizados',
-            children: jsx(Table, { columns: loadingColumns, listLenght: 5, currentPage: 1, children:
+            children: jsx(Table, { columns: loadingVisibleColumns, listLenght: 5, currentPage: 1, children:
               Array.from({ length: 5 }, (_, i) => jsx('tr', { 'aria-hidden': true, children:
-                loadingColumns.map(({ id }) => jsx('td', { children: jsx('span', { className: 'hhr-care-placeholder' }) }, id)),
+                loadingVisibleColumns.map(({ id }) => jsx('td', { children: jsx('span', { className: 'hhr-care-placeholder' }) }, id)),
               }, i)) }) }, 'loading') : jsx(Table, { ...result, columns, children: rows, currentPage: 1, header: jsx('div', {
           hidden: true, children: 'Pacientes hospitalizados (' + result.listLenght + ')' }) }, 'patients'),
       ] });
