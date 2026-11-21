@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.130
+
+- Favoritos conserva el foco al abrirse desde el menú lateral y permite agregar un enlace con Enter.
+- El pronóstico de Rapa Nui queda siempre visible, con iconos animados según el tiempo y la luz del día. El menú usa un logo Eloísa más pequeño junto al moái de HHR y retira el botón de información.
+
 ## 0.48.129
 
 - La búsqueda, el selector nativo y la impresión comparten la fila de pestañas en Gestión de cuidados y Lista de trabajo médico. En pantallas estrechas, los controles pasan a una segunda fila.

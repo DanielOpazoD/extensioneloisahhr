@@ -193,7 +193,7 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
         const hour = 1795226400;
         const sequence = callback => Array.from({ length: 73 }, (_, i) => callback(i));
         return Response.json({
-          current: { time: hour + 600, temperature_2m: 20, weather_code: 1, wind_speed_10m: 30 },
+          current: { time: hour + 600, temperature_2m: 20, weather_code: 1, wind_speed_10m: 30, is_day: 0 },
           hourly: { time: sequence(i => hour + i * 3600), temperature_2m: sequence(() => 20),
             precipitation_probability: sequence(() => 25), wind_gusts_10m: sequence(() => 39) },
         });
@@ -269,21 +269,52 @@ const verifyLists = async (context, origin, worker) => {
           const drawer = document.createElement('nav');
           drawer.className = 'MuiDrawer-paper MuiDrawer-paperAnchorLeft';
           drawer.id = 'fixture-drawer-tools';
-          drawer.innerHTML = '<button type="button">Lista de trabajo médico</button>' +
+          drawer.tabIndex = -1;
+          drawer.innerHTML = '<header><img alt="Rayen Eloísa" width="135" height="42"></header>' +
+            '<button type="button">Lista de trabajo médico</button>' +
             '<p>20-11-2026, 21:35:27</p><p>Versión: 26.4.7</p>';
           document.body.append(drawer);
+          const keepFocus = event => { if (!drawer.contains(event.target)) drawer.focus(); };
+          document.addEventListener('focusin', keepFocus);
+          drawer.releaseFocus = () => document.removeEventListener('focusin', keepFocus);
         });
         const drawer = page.locator('#fixture-drawer-tools');
         await drawer.locator('time').waitFor();
         assert.match(await drawer.locator('time').textContent(), /\d{2}[-/]\d{2}[-/]\d{4}.*\d{2}:\d{2}/);
         assert.equal(await drawer.getByText('Versión: 26.4.7', { exact: true }).isVisible(), false);
-        await drawer.locator('.hhr-drawer-info summary').click();
-        await drawer.getByText(/Eloísa 26.4.7/).waitFor();
-        await drawer.locator('[data-hhr-drawer-weather] summary').click();
+        assert.equal(await drawer.getByRole('button', { name: 'Información de versiones' }).count(), 0);
         await drawer.getByText('48–72 h', { exact: true }).waitFor();
         assert.equal(await drawer.getByText('Lluvia 25%', { exact: true }).count(), 3);
+        const cloud = drawer.locator('[data-night] .hhr-sky-cloud');
+        assert.equal(await cloud.evaluate(node => getComputedStyle(node).animationName), 'hhr-sky-drift');
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        assert.equal(await cloud.evaluate(node => getComputedStyle(node).animationName), 'none');
+        await page.emulateMedia({ reducedMotion: 'no-preference' });
+        const logo = drawer.locator('img[data-hhr-drawer-logo]');
+        assert.ok((await logo.boundingBox()).width <= 88);
+        assert.ok(await drawer.locator('[data-hhr-drawer-brand]').evaluate(node =>
+          getComputedStyle(node, '::after').backgroundImage.startsWith('url("data:image/png;base64,')));
         assert.match(await drawer.getByRole('link', { name: 'Un día como hoy' }).getAttribute('href'), /#Nacimientos$/);
-        await drawer.evaluate(element => element.remove());
+        const favorites = drawer.getByRole('button', { name: /Favoritos/ });
+        await favorites.click();
+        const dialog = drawer.getByRole('dialog', { name: 'Favoritos' });
+        const url = dialog.getByRole('textbox', { name: 'URL del favorito' });
+        await url.click();
+        assert.equal(await url.evaluate(field => document.activeElement === field), true);
+        await page.keyboard.type('favorito.example.org');
+        assert.equal(await url.inputValue(), 'favorito.example.org');
+        await dialog.getByRole('button', { name: 'Agregar', exact: true }).waitFor({ state: 'visible' });
+        await page.waitForFunction(() => !document.querySelector('.hhr-fav-add')?.disabled);
+        await url.press('Enter');
+        await dialog.getByText('https://favorito.example.org/', { exact: true }).waitFor();
+        await url.press('Escape');
+        await dialog.waitFor({ state: 'detached' });
+        await favorites.click();
+        await dialog.getByText('https://favorito.example.org/', { exact: true }).waitFor();
+        await dialog.getByRole('button', { name: /Eliminar favorito.example.org/ }).click();
+        await dialog.getByText('https://favorito.example.org/', { exact: true }).waitFor({ state: 'detached' });
+        await dialog.getByRole('button', { name: 'Cerrar', exact: true }).first().click();
+        await drawer.evaluate(element => { element.releaseFocus(); element.remove(); });
       }
       const table = page.locator('#worklist table');
       const rows = table.locator('tbody tr');
