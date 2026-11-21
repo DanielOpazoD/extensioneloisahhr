@@ -216,6 +216,7 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
     self.__worklistOriginalFetch = self.fetch;
     self.__worklistReports = [];
     self.__worklistBirthsRequests = 0;
+    self.__worklistEventsRequests = 0;
     self.fetch = async (input, init) => {
       const url = new URL(input);
       if (url.hostname === 'es.wikipedia.org') {
@@ -226,6 +227,18 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
           {year:1901, pages:[{titles:{ normalized:'Figura de prueba' }, description:'Descripción en español'}]},
           {year:2002, pages:[{titles:{ normalized:'Otra figura de prueba' }}]},
         ]});
+      }
+      if (url.hostname === 'www.efemerides.cl') {
+        const dateParts = new Intl.DateTimeFormat('es', {
+          timeZone:'Pacific/Easter', year:'numeric', month:'long', day:'2-digit',
+        }).formatToParts(new Date());
+        const date = Object.fromEntries(dateParts.map(({type,value}) => [type,value]));
+        if (url.pathname !== '/index.php' || !/^\d{1,2}$/.test(url.searchParams.get('mesConsulta')) ||
+            init?.credentials !== 'omit' || init?.referrerPolicy !== 'no-referrer' || init?.body) return new Response('', {status:400});
+        self.__worklistEventsRequests++;
+        return new Response('<title>Efemérides de Chile - ' + date.month + ' ' + date.year + '</title>' +
+          '<table><tr><td class="t2">' + date.day + ' ' + date.month + '</td><td><details>' +
+          '<summary>Conmemoración de prueba</summary><p>Texto largo que no se replica.</p></details></td></tr></table>');
       }
       if (url.hostname === 'api.open-meteo.com') {
         if (init?.credentials !== 'omit' || init?.referrerPolicy !== 'no-referrer' || url.searchParams.get('forecast_hours') !== '73') return new Response('', { status: 400 });
@@ -256,7 +269,11 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
 };
 
 async function printAndCheck(context, worker, button, filename, encId) {
-  const [printed] = await Promise.all([context.waitForEvent('page', {timeout: 15000}), button.click()]);
+  const opening = context.waitForEvent('page', { timeout:15000 }).catch(async error => {
+    const notes = await button.page().locator('.hhr-page-notice').allTextContents();
+    throw new Error('Worklist print did not open: ' + notes.join(' | '), { cause:error });
+  });
+  const [printed] = await Promise.all([opening, button.click()]);
   try {
     assert.deepEqual(await worker.evaluate(() => self.__worklistReports.at(-1)), [filename, String(encId), String(encId + 1000)]);
   } finally { await printed.close(); }
@@ -298,6 +315,47 @@ async function verifyWorklistWidth(page) {
       assert.ok((await doctor.getByRole('combobox').boundingBox()).width <= 137, 'Compact assignment selector');
     }
     else assert.ok(Math.abs(left) < 1, 'Narrow worklists need all the available width');
+  }
+}
+
+async function verifyTableHeader(page, table) {
+  const banner = page.locator('header.MuiAppBar-root');
+  const panel = page.locator('#worklist');
+  const header = table.locator('thead th').first();
+  await banner.evaluate(element => {
+    Object.assign(element.style, { position:'sticky', top:'0px', zIndex:'10' });
+    element.append(document.createComment('Exercise the fixed native app bar'));
+  });
+  try {
+    await table.locator('tbody tr').last().scrollIntoViewIfNeeded();
+    const [afterPageScroll, bar] = await Promise.all([header.boundingBox(), banner.boundingBox()]);
+    assert.ok(Math.abs(afterPageScroll.y - (bar.y + bar.height)) <= 1, 'Page scroll keeps the title below the fixed bar');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await panel.evaluate(element => {
+      Object.assign(element.style, { overflow:'auto', maxHeight:'170px' });
+      element.append(document.createComment('Exercise the native nested scrollport'));
+    });
+    const bounds = await table.evaluate(node => {
+      const th = node.querySelector('thead th').getBoundingClientRect();
+      const first = node.tBodies[0].rows[0].getBoundingClientRect();
+      return { headerTop:th.top, headerBottom:th.bottom, firstRowTop:first.top };
+    });
+    assert.ok(bounds.headerBottom <= bounds.firstRowTop + 1,
+      `The heading must precede the first patient in a nested scroller: ${JSON.stringify(bounds)}`);
+    await panel.evaluate(element => { element.scrollTop = 85; });
+    const [pinned, scrollport] = await Promise.all([header.boundingBox(), panel.boundingBox()]);
+    assert.ok(Math.abs(pinned.y - scrollport.y) <= 1, 'Nested scroll keeps the title at the top of its own scrollport');
+  } finally {
+    await panel.evaluate(element => {
+      element.scrollTop = 0;
+      element.style.removeProperty('overflow');
+      element.style.removeProperty('max-height');
+      if (element.lastChild?.nodeType === Node.COMMENT_NODE) element.lastChild.remove();
+    });
+    await banner.evaluate(element => {
+      element.removeAttribute('style');
+      element.lastChild.remove();
+    });
   }
 }
 
@@ -359,6 +417,10 @@ const verifyLists = async (context, origin, worker) => {
         const births = drawer.getByRole('dialog', { name: 'Un día como hoy' });
         await births.getByText('Figura de prueba', { exact:true }).waitFor();
         await births.getByText('1901', { exact:true }).waitFor();
+        await births.getByText('Conmemoración de prueba', { exact:true }).waitFor();
+        assert.equal(await births.getByText('Texto largo que no se replica.').count(), 0);
+        assert.match(await births.getByRole('link', { name: /Efemerides\.cl/ }).getAttribute('href'),
+          /^https:\/\/www\.efemerides\.cl\/index\.php\?mesConsulta=\d{1,2}$/);
         assert.match(await births.getByRole('link', { name: /Wikipedia/ }).getAttribute('href'), /^https:\/\/es\.wikipedia\.org\/wiki\/.+#Nacimientos$/);
         assert.equal(context.pages().length, existingTabs);
         await births.getByRole('button', {name:'Cerrar', exact:true}).click();
@@ -368,7 +430,7 @@ const verifyLists = async (context, origin, worker) => {
         await births.getByText('Figura de prueba', {exact:true}).waitFor();
         await page.keyboard.press('Escape');
         await births.waitFor({state:'detached'});
-        assert.equal(await worker.evaluate(() => self.__worklistBirthsRequests), 1);
+        assert.deepEqual(await worker.evaluate(() => [self.__worklistBirthsRequests, self.__worklistEventsRequests]), [1,1]);
         const favorites = drawer.getByRole('button', { name: /Favoritos/ });
         await favorites.click();
         const dialog = drawer.getByRole('dialog', { name: 'Favoritos' });
@@ -403,12 +465,7 @@ const verifyLists = async (context, origin, worker) => {
         await page.locator('table[data-hhr-complete-worklist]').waitFor();
         await verifyWorklistWidth(page);
         assert.equal(await page.locator('[data-hhr-bed-index]').count(), 0);
-        if (name === route.sections[0][0]) {
-          await rows.last().scrollIntoViewIfNeeded();
-          const sticky = await table.locator('thead th').first().boundingBox();
-          assert.ok(sticky.y >= 0 && sticky.y < 100, 'Table headers stay visible after scrolling');
-          await page.evaluate(() => window.scrollTo(0, 0));
-        }
+        if (name === route.sections[0][0]) await verifyTableHeader(page, table);
         const first = rows.first();
         assert.equal(await first.locator('td').first().innerText(), 'AMQI\nH1C2');
         assert.equal(await first.getByText('Diagnóstico (lateral)', {exact:true}).count(), 1);

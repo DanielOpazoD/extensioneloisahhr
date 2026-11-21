@@ -117,6 +117,10 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
   background:#eef5f2; font:20px/1 system-ui,sans-serif; cursor:pointer;
 }
 [data-hhr-daily-births-dialog] .hhr-daily-births-date { grid-column:1; margin:0; color:#536c65; }
+[data-hhr-daily-births-dialog] section + section { margin-block-start:12px; }
+[data-hhr-daily-births-dialog] h3 { margin:0 0 3px; font-size:13px; }
+[data-hhr-daily-births-dialog] section p { margin:0 0 3px; color:#536a64; }
+[data-hhr-daily-births-dialog] .hhr-daily-events li { display:block; font-weight:600; }
 [data-hhr-daily-births-dialog] ul { margin:0 0 6px; padding:0; list-style:none; }
 [data-hhr-daily-births-dialog] li {
   display:grid; grid-template-columns:44px minmax(0,1fr); gap:8px; padding-block:6px;

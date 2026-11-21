@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.136
+
+- El encabezado de las tablas clínicas se alinea encima de la primera fila y se fija al desplazar su propio contenedor.
+- «Un día como hoy» añade las conmemoraciones de Efemerides.cl junto a los nacimientos de Wikipedia, según la fecha de Rapa Nui.
+
 ## 0.48.135
 
 - Gestión de cuidados y Lista de trabajo médico comparten una barra más compacta para pestañas, búsqueda, filtros e impresión. Se retira la tira de camas.

@@ -39,7 +39,7 @@
       const heading = el('h2', 'Un día como hoy');
       const close = el('button', '×', { type: 'button', 'aria-label': 'Cerrar', autofocus: '' });
       const content = el('div', '');
-      const status = el('p', 'Cargando nacimientos…', { role: 'status' });
+      const status = el('p', 'Cargando efemérides…', { role: 'status' });
       header.append(heading, close);
       content.append(status);
       dialog.append(header, content);
@@ -59,9 +59,27 @@
       let data;
       try { data = await fetchDailyBirths?.(); } catch { /* Show the same empty state after a transport failure. */ }
       if (!dialog.open || !dialog.isConnected) return;
-      if (data?.label) heading.after(el('p', data.label, { class: 'hhr-daily-births-date' }));
-      if (data?.people?.length) {
-        status.remove();
+      if (!data || data.error) {
+        status.textContent = 'No se pudieron cargar las efemérides.';
+        return;
+      }
+      heading.after(el('p', data.label, { class: 'hhr-daily-births-date' }));
+      status.remove();
+      const events = el('section', '', { class: 'hhr-daily-events' });
+      events.append(el('h3', 'Efemérides de Chile'));
+      if (data.events?.length) {
+        const list = el('ul', '');
+        list.append(...data.events.map(title => el('li', title)));
+        events.append(list);
+      } else {
+        events.append(el('p', data.eventsUnavailable
+          ? 'Efemerides.cl no está disponible.' : 'Efemerides.cl no registra conmemoraciones para hoy.'));
+      }
+      events.append(el('a', 'Efemerides.cl ↗', { href: data.eventsSource, target: '_blank', rel: 'noopener noreferrer' }));
+
+      const births = el('section', '');
+      births.append(el('h3', 'Nacimientos'));
+      if (data.people?.length) {
         const list = el('ul', '');
         for (const { name, year, description } of data.people) {
           const item = el('li', '');
@@ -71,13 +89,13 @@
           item.append(el('span', String(year), { class: 'hhr-daily-births-year' }), details);
           list.append(item);
         }
-        content.append(list);
+        births.append(list);
       } else {
-        status.textContent = data?.unavailable || data?.error || !data ? 'No se pudieron cargar los nacimientos.' : 'No hay nacimientos disponibles para esta fecha.';
+        births.append(el('p', data.unavailable
+          ? 'No se pudieron cargar los nacimientos.' : 'No hay nacimientos disponibles para esta fecha.'));
       }
-      if (data?.source) content.append(el('a', 'Wikipedia · Nacimientos ↗', {
-        href: data.source, target: '_blank', rel: 'noopener noreferrer',
-      }));
+      births.append(el('a', 'Wikipedia ↗', { href: data.source, target: '_blank', rel: 'noopener noreferrer' }));
+      content.append(events, births);
     };
     const weatherCard = () => {
       const card = el('section', '', { 'data-hhr-drawer-weather': '', 'aria-label': 'Tiempo en Rapa Nui' });

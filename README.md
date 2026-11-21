@@ -39,7 +39,7 @@ Gestión de cuidados reúne ingresos, pacientes con novedad y pacientes sin nove
 
 El encabezado de la tabla queda visible durante el desplazamiento. En Gestión de cuidados, el icono de novedad abre una vista breve cuando la publicación se puede identificar en Eloísa. El enlace abre el Historial y resalta la tarjeta cuando coincide una sola publicación médica de esa fecha y hora.
 
-En el menú lateral, «Un día como hoy» abre un diálogo con nacimientos de la fecha de Rapa Nui y un enlace a la fuente.
+En el menú lateral, «Un día como hoy» reúne las conmemoraciones del calendario de Efemerides.cl y los nacimientos de Wikipedia para la fecha de Rapa Nui, con enlaces a ambas fuentes.
 
 La ubicación muestra servicio y cama. Las filas se ordenan por cama desde R1–R4 y NEO1–NEO2 hasta H1C1–H6C2. Las ubicaciones adicionales siguen a las camas de sala y las de urgencias cierran la lista. En interconsultas se aplica el orden dentro de cada servicio. La fila se resalta al pasar el cursor o enfocar sus controles. En Gestión de cuidados, el lápiz junto al nombre abre «Modificación del paciente» en Gestión de Camas. El lápiz reutiliza la pestaña de Camas del profesional, incluso en otra ventana. Si hace falta iniciar sesión, se usa el acceso oficial de Camas. El editor comprueba profesional, establecimiento, episodio, paciente y disponibilidad de la acción nativa. El profesional revisa los datos y decide si guardar.
 

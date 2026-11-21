@@ -305,6 +305,13 @@
     };
   };
 
+  function localScrollport(element) {
+    for (let parent = element.parentElement; parent && parent !== document.body && parent !== document.documentElement; parent = parent.parentElement) {
+      if (/^(auto|scroll|hidden|overlay)$/.test(getComputedStyle(parent).overflowY)) return parent;
+    }
+    return null;
+  }
+
   const create = options => {
     let onWorklist = false;
     const drawerTools = globalThis.HhrWorklistDrawer?.create(options);
@@ -313,7 +320,6 @@
       if (!layout) return;
       const { parent, rail, filters } = layout;
       parent.removeAttribute('data-hhr-worklist-layout');
-      parent.style.removeProperty('--hhr-worklist-sticky-top');
       rail.removeAttribute('data-hhr-worklist-rail');
       filters.removeAttribute('data-hhr-worklist-filterbar');
       layout = undefined;
@@ -351,6 +357,7 @@
       for (const table of document.querySelectorAll(markedSelector)) {
         table.removeAttribute(marked);
         table.removeAttribute(complete);
+        table.style.removeProperty('--hhr-worklist-sticky-top');
       }
     };
     const refresh = pathname => {
@@ -388,11 +395,10 @@
       noveltyTooltip.position();
       if (!style.isConnected) document.head?.append(style);
       const banner = document.querySelector('header.MuiAppBar-root');
-      const fixed = banner && ['fixed', 'sticky'].includes(getComputedStyle(banner).position);
-      const offset = (fixed ? banner.offsetHeight : 0) + 'px';
-      if (layout?.parent.style.getPropertyValue('--hhr-worklist-sticky-top') !== offset) {
-        layout?.parent.style.setProperty('--hhr-worklist-sticky-top', offset);
-      }
+      const bannerStyle = banner && getComputedStyle(banner);
+      const stickyTop = bannerStyle?.position === 'sticky' ? parseFloat(bannerStyle.top) : NaN;
+      const bannerScrollport = Number.isFinite(stickyTop) ? localScrollport(banner) : null;
+      const fixedBottom = bannerStyle?.position === 'fixed' ? banner.getBoundingClientRect().bottom : 0;
       for (const table of document.querySelectorAll(`${tableSelector},${markedSelector}`)) {
         const container = table.parentElement;
         const title = container.parentElement?.previousElementSibling;
@@ -401,8 +407,17 @@
         if (result) {
           const kind = /^Mis pacientes de interconsulta/i.test(result[0]) ? 'referrals' : 'results';
           if (table.getAttribute(marked) !== kind) table.setAttribute(marked, kind);
+          const scrollport = localScrollport(table);
+          const scrollportTop = scrollport ? scrollport.getBoundingClientRect().top + scrollport.clientTop : 0;
+          const stickyBottom = Number.isFinite(stickyTop) && scrollport === bannerScrollport
+            ? stickyTop + banner.offsetHeight : 0;
+          const offset = Math.max(0, fixedBottom ? fixedBottom - scrollportTop : stickyBottom) + 'px';
+          if (table.style.getPropertyValue('--hhr-worklist-sticky-top') !== offset) {
+            table.style.setProperty('--hhr-worklist-sticky-top', offset);
+          }
         } else {
           table.removeAttribute(marked);
+          table.style.removeProperty('--hhr-worklist-sticky-top');
         }
         table.toggleAttribute(complete, Boolean(result && Number(result[1]) === table.tBodies[0].rows.length));
       }
