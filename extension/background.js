@@ -1181,7 +1181,6 @@ const clinicalAntecedentsRuntime = self.HhrClinicalAntecedents.create({
   downloadDau: urgencyDauRuntime.download, prepareDauLogin: urgencyDauRuntime.prepareLogin, getAuthorizationKey: clinicalAuthorizationKey,
 });
 const runtimeRoute = (handle, fallback) => Object.freeze({ handle, fallback });
-
 const handlePatientClinicalBundleRequest = self.HhrPatientClinicalBundleRuntime.create({
   readDevices: handleDeviceReportRequest, readHistory: handleHistoryScalesRequest, readForms: handleScalesReportRequest,
   readAlerts: self.HhrFichaMedicoAlertEntryRuntime.create({ authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); }, resolveSession: resolveFichaClinicalSession, readJson: options => fichaMedicoClinicalClient.readJson(options), clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify }).fetchAlertEntries,
