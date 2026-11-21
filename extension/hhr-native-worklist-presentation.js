@@ -64,6 +64,15 @@
       td[data-hhr-worklist-doctor] .MuiFormControl-root:not(:focus-within) .MuiInputLabel-shrink { opacity:0; }
       td[data-hhr-worklist-doctor] select:not(:hover,:focus) { border-color:transparent; background-color:transparent; }
       .hhr-patient-name-line { display:flex; align-items:center; gap:3px; }
+      td:has([data-hhr-patient-name-row]) { --hhr-patient-icon-width:16px; --hhr-patient-name-gap:6px; }
+      [data-hhr-patient-name-row] { display:flex; align-items:center; column-gap:var(--hhr-patient-name-gap); }
+      [data-hhr-patient-name-row] > * + * { margin-inline-start:0 !important; }
+      .hhr-patient-sex-icon {
+        display:grid; place-items:center; flex:0 0 var(--hhr-patient-icon-width);
+      }
+      td:has([data-hhr-patient-name-row]) > button[data-hhr-copy-run] {
+        margin-inline-start:calc(var(--hhr-patient-icon-width) + var(--hhr-patient-name-gap));
+      }
       button[data-hhr-copy-run] {
         display:block; border:0; padding:1px 0; border-radius:3px; background:transparent; color:#466761;
         font:inherit; font-size:.94em; font-variant-numeric:tabular-nums; cursor:copy;

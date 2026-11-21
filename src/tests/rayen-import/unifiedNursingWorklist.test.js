@@ -99,7 +99,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(document.querySelector('[data-native-skeleton]')).toBeNull();
   expect(document.querySelector('.hhr-care-loading').textContent).not.toContain('Entrega de turno');
   expect(document.querySelector('.hhr-care-loading').textContent).toContain('Imprimir');
-  expect(document.querySelector('.hhr-care-loading').textContent).not.toContain('GES');
+  expect(document.querySelector('.hhr-care-loading').textContent).not.toMatch(/GES|Acciones/);
   await act(() => setReady('novelty-only'));
   expect(document.querySelectorAll('table')).toHaveLength(1);
   expect(document.querySelector('.hhr-care-loading')).not.toBeNull();

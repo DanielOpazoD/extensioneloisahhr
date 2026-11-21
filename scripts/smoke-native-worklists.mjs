@@ -77,11 +77,28 @@ function startFixture(route) {
         const tr = (id) => {
           const encId = 2000 + id;
           const href = route.pathname + '/' + encId + (referral ? '/?referralGuid=demo' : '');
-          const patient = nativeJsx(discharge ? 'span' : 'a', { ...(discharge ? {} : {href}), children: [
-            nativeJsx('strong', {className:'MuiTypography-root', children:'Paciente sintético ' + id}),
-            ...['Género: Femenina', ['RUN: 00.000.001-k', 'RUN: 000000020', 'Número de Identificación: 000000030',
-              'RUN Materno/progenitor(a): 000000040'][id - 1] ?? 'Identificador ' + id].map(text => nativeJsx('span', {className:'MuiTypography-root',children:text})),
-          ], className:'MuiStack-root' });
+          const nursing = route.pathname.endsWith('-nurse');
+          const nameParts = [
+            nativeJsx('span', {administrativeSexId:1, 'aria-hidden':true, children:'♂'}),
+            nativeJsx('strong', {className:'MuiTypography-root', fontWeight:'bold', children:'Paciente sintético ' + id}),
+          ];
+          const identifier = [
+            ['RUN', '00.000.001-k'], ['RUN', '000000020'], ['Número de Identificación', '000000030'],
+            ['RUN Materno/progenitor(a)', '000000040'], ['Pasaporte', '00000005-K'],
+          ][id - 1] ?? ['Identificador', String(id)];
+          const details = [
+            nativeJsx('span', {children: nursing ? 'Nombre social: Nombre alternativo' : ['Nombre social: ', 'Nombre alternativo']}),
+            nativeJsx('span', {children:'Género: Femenina'}),
+            nativeJsx('span', {title:identifier[1], children:nativeJsx('span', {
+              children:nursing ? identifier.join(': ') : [identifier[0], ' ', ': ' + identifier[1]],
+            })}),
+          ];
+          const link = nativeJsx(discharge ? 'span' : 'a', {
+            ...(discharge ? {} : {href}),
+            children: nursing ? nameParts : nativeJsx('span', {className:'fixture-name-line', children:nameParts}),
+            className: nursing ? 'fixture-name-line' : '',
+          });
+          const patient = nativeJsx('div', {className:'MuiStack-root', children:[link, ...details]});
           const nativeAction = hasMedicalLink ? nativeJsx('a', { LinkComponent: 'a', href, children: '>' })
             : nativeJsx('button', { ...(discharge ? {encId,patId:3000+id} : {}), children: 'Abrir ficha' });
           const location = ['AMQI', nativeJsx('br', {}), 'H1', nativeJsx('br', {}), 'H1C2'];
@@ -167,6 +184,8 @@ export const nativeWorklistFixture = pathname => {
     .MuiTableContainer-root { overflow:auto; max-height:400px; }
     table { border-collapse:collapse; width:100%; min-width:550px; text-align:left; }
     td,th { padding:13px 16px; border-bottom:1px solid #ddd; }
+    .fixture-name-line { display:flex; align-items:center; }
+    .fixture-name-line > strong { margin-inline-start:8px; }
     .MuiStack-root { display:flex; flex-direction:column; }
     .MuiStack-root > * + * { margin-top:3px; }
   </style></head><body><header class="MuiAppBar-root">Eloísa</header><main class="MuiBox-root"><div role="tablist">
@@ -362,8 +381,17 @@ const verifyLists = async (context, origin, worker) => {
         assert.equal(await rows.nth(2).locator('[data-hhr-copy-run]').count(), 0);
         assert.equal(await rows.nth(3).locator('[data-hhr-copy-run]').count(), 0);
         const run = first.getByRole('button', { name: 'Copiar RUN 00000001-K' });
+        assert.equal(await run.count(), 1, 'The displayed RUN must be a single copy button');
         assert.equal(await run.textContent(), '00000001-K');
         assert.equal(await run.evaluate(node => node.closest('a')), null);
+        const nameBounds = await first.locator('td:nth-child(2) strong').boundingBox();
+        const runBounds = await run.boundingBox();
+        assert.ok(Math.abs(nameBounds.x - runBounds.x) <= 1 && runBounds.y >= nameBounds.y + nameBounds.height - 1,
+          'RUN must start directly below the patient name');
+        assert.equal(await rows.getByText(/^Nombre social:/).count(), 0);
+        assert.equal(await table.getByRole('columnheader', { name:'Acciones' }).count(), 0);
+        assert.equal(await rows.nth(4).getByText(/Pasaporte.*00000005-K/).count(), 1);
+        assert.equal(await rows.nth(4).locator('[data-hhr-copy-run]').count(), 0);
         if (name === route.sections[0][0]) {
           const copy = route.pathname.endsWith('-nurse') ? rows.nth(1).getByRole('button', { name: 'Copiar RUN 00000002-0' }) : run;
           if (route.pathname.endsWith('-nurse')) await copy.click();

@@ -133,19 +133,27 @@
         return jsx(node.type, { ...node.props, 'data-hhr-new-patient-chip': '' }, node.key ?? undefined);
       }
       const text = node.props.children;
-      if (typeof text === 'string') {
-        if (/^\s*g[eé]nero\s*:/i.test(text)) return null;
-        if (/^\s*RUN\s+materno\s*\/\s*progenitor(?:\(a\))?\s*:/i.test(text)) return null;
-        const labeledRun = /^\s*(?:RUN|RUT)\s*:\s*(\d{1,3}(?:\.\d{3}){1,2}|\d{1,9})\s*-?\s*([\dk])\s*$/i.exec(text);
+      // The medical worklist renders identifier and nickname labels as separate text children.
+      const line = Array.isArray(text) && text.every(part => typeof part === 'string') ? text.join('') : text;
+      if (typeof line === 'string') {
+        if (/^\s*(?:g[eé]nero|nombre social)\s*:/i.test(line)) return null;
+        if (/^\s*RUN\s+materno\s*\/\s*progenitor(?:\(a\))?\s*:/i.test(line)) return null;
+        if (/^\s*(?:RUN|RUT)\s*:?\s*$/i.test(line)) return null;
+        const labeledRun = /^\s*(?:RUN|RUT)\s*:\s*(\d{1,3}(?:\.\d{3}){1,2}|\d{1,9})\s*-?\s*([\dk])\s*$/i.exec(line);
         if (labeledRun && !run) {
           run = labeledRun[1].replace(/\./g, '') + '-' + labeledRun[2].toUpperCase();
           return null;
         }
-        const id = text.match(/^\s*n[uú]mero de identificaci[oó]n\s*:\s*(\S.*)$/i);
+        const id = line.match(/^\s*n[uú]mero de identificaci[oó]n\s*:\s*(\S.*)$/i);
         if (id) return withChildren(jsx, node, id[1].trim());
       }
       const children = present(text);
-      const current = children === node.props.children ? node : withChildren(jsx, node, children);
+      if (children === null && text?.props && typeof node.props.title === 'string') return null;
+      const nameRow = Array.isArray(text) && text[0]?.props &&
+        Object.hasOwn(text[0].props, 'administrativeSexId') && text[1]?.props?.fontWeight === 'bold';
+      const current = nameRow ? jsx(node.type, { ...node.props, 'data-hhr-patient-name-row': '',
+        children: [jsx('span', { className: 'hhr-patient-sex-icon', children: children[0] }, 'sex'), ...children.slice(1)],
+      }, node.key ?? undefined) : children === text ? node : withChildren(jsx, node, children);
       if (!nursing || !node.props.href) return current;
       const edit = editId && node.props.component !== 'div';
       const novelty = noveltyTitle && /^\/dashboard\/encounter-list-nurse\/([1-9]\d*)\/?$/.exec(node.props.href);
@@ -188,7 +196,8 @@
     const activity = nursing ? columns.findIndex(col => col.id === 'lastNovelty' ||
       col.id === '"lastNursePublishDatetime"' || /última atención/i.test(col.label)) : -1;
     const hasNovelty = columns[activity]?.id === 'lastNovelty';
-    const nextColumns = columns.slice();
+    const nextColumns = columns.map(column =>
+      column.id === 'actions' && column.label === 'Acciones' ? { ...column, label: '' } : column);
     if (doctor >= 0) {
       const column = nextColumns[doctor];
       nextColumns[doctor] = { ...column, width: '136px', style: { ...column.style, width: '136px' } };

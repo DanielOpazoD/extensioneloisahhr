@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.132
+
+- Lista de trabajo médico y Gestión de cuidados muestran el RUN con guion debajo del inicio del nombre. Se ocultan la línea de nombre social y el encabezado Acciones.
+
 ## 0.48.131
 
 - Gestión de cuidados conserva una sola tabla de carga hasta que se resuelven las tres fuentes de hospitalizados.
