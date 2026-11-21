@@ -127,6 +127,8 @@ vigente en sus filas. Cada fila guarda por separado y muestra la confirmación d
 el modo vuelven las columnas operativas. Un borrador de la tabla se conserva durante la
 misma vista de Eloísa, incluso al filtrar, y se vincula al profesional, paciente, episodio y turno.
 
+El editor muestra la fecha censal y el turno que informó HHR. Si cambia el turno, «Ver turno vigente» abre la nueva entrega y conserva el borrador anterior como texto de consulta mientras el editor siga abierto. En caso de conflicto, puedes consultar la versión que dejaste de lado y recuperarla como borrador. La confirmación de HHR se muestra con un ✓.
+
 ## Piloto local de entrega de turno
 
 Ejecuta `functions/scripts/runNursingHandoffPilot.cjs` desde el repositorio de HHR con

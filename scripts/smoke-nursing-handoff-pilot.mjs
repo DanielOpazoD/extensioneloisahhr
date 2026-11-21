@@ -5,13 +5,54 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 import { unzipSync } from 'fflate';
 
-const token = crypto.randomUUID();
+const synthetic = process.env.HHR_HANDOFF_SYNTHETIC === '1';
+const sessions = [crypto.randomUUID(), crypto.randomUUID()];
 const root = await mkdtemp(path.join(os.tmpdir(), 'hhr-handoff-smoke-'));
 let context;
 const origin = 'https://fichamedico.rayensalud.cl';
+// Intercept only the synthetic pilot's loopback API, before its worker binds fetch.
+function installSyntheticHandoff() {
+  const realFetch = self.fetch;
+  const notes = new Map();
+  let revision = 0;
+  self.__handoffShift = { date:'2026-11-19', shift:'night' };
+  self.__handoffActors = new Set();
+  self.fetch = async (input, init) => {
+    const url = new URL(input);
+    if (url.hostname !== '127.0.0.1' || !url.pathname.endsWith('/nursingHandoffExtension')) return realFetch(input, init);
+    const { data } = JSON.parse(init.body);
+    self.__handoffActors.add(data.source.practitionerId);
+    const slot = self.__handoffShift;
+    const fail = (status, message, details) => Response.json({ error:{ status, message, details } }, { status:409 });
+    if (data.episode === '901003') return fail('NOT_FOUND', 'Este episodio aún no está en el censo local de pruebas.', slot);
+    if (data.date && (data.date !== slot.date || data.shift !== slot.shift)) {
+      return fail('FAILED_PRECONDITION', 'Cambió el turno o la fecha censal. Abre otra entrega.');
+    }
+    const key = slot.date + '/' + slot.shift + '/' + data.episode;
+    const previous = () => notes.get(key) ?? { text:'', version:'0'.repeat(64) };
+    if (data.action === 'save') {
+      if (data.version !== previous().version) return fail('ABORTED', 'La entrega cambió en HHR.');
+      const value = { text:data.text, version:(++revision).toString(16).padStart(64,'0') };
+      notes.set(key, value);
+      return Response.json({ result:{ ...slot, ...value, confirmed:true } });
+    }
+    if (data.since) await new Promise(resolve => setTimeout(resolve, 150));
+    return Response.json({ result:{ ...slot, ...previous() } });
+  };
+}
+
 try {
   const zip = await readFile('dist/eloisa-hhr-entrega-turno-pruebas.zip');
-  for (const [name, bytes] of Object.entries(unzipSync(zip))) {
+  const files = unzipSync(zip);
+  if (synthetic) {
+    const manifest = JSON.parse(Buffer.from(files['manifest.json']).toString('utf8'));
+    const worker = manifest.background.service_worker;
+    files[worker] = Buffer.concat([
+      Buffer.from("'use strict';\n(" + installSyntheticHandoff.toString() + ")();\n"),
+      files[worker],
+    ]);
+  }
+  for (const [name, bytes] of Object.entries(files)) {
     const dest = path.join(root, name);
     await mkdir(path.dirname(dest), { recursive: true });
     await writeFile(dest, bytes);
@@ -37,12 +78,17 @@ try {
     };
   });
   await context.route(origin + '/**', route => {
-    if (route.request().url().includes('/api/auth/session')) return route.fulfill({ json: {
-      ok: true, session: {
-        token, facilityId: '1', healthCarePractitionerId: '2',
-        healthCarePractitionerRoleId: '3', role: 'Enfermera', fullName: 'Profesional de prueba',
-      },
-    } });
+    if (route.request().url().includes('/api/auth/session')) {
+      const differentProfessional = synthetic && route.request().headers().referer?.includes('handoffObserver=1');
+      return route.fulfill({ json: {
+        ok: true, session: {
+          token: sessions[differentProfessional ? 1 : 0],
+          facilityId: '1', healthCarePractitionerId: differentProfessional ? '4' : '2',
+          healthCarePractitionerRoleId: '3', role: 'Enfermera',
+          fullName: differentProfessional ? 'Segunda profesional de prueba' : 'Profesional de prueba',
+        },
+      } });
+    }
     const table = new URL(route.request().url()).searchParams.has('handoffTable');
     const markup = table ? `
       <button data-hhr-handoff-toggle aria-expanded="false">Entrega de turno</button>
@@ -73,8 +119,12 @@ try {
     return source.frameLocator(frame);
   };
   const missing = await open(page, 'Abrir episodio ausente');
-  await missing.getByText('Este episodio aún no está en el censo local de pruebas.').waitFor();
-  assert.match(await missing.locator('#slot').innerText(), /^(Día|Noche) · \d{2}-\d{2}-\d{4}$/);
+  try {
+    await missing.getByText('Este episodio aún no está en el censo local de pruebas.').waitFor({ timeout: 8000 });
+  } catch (error) {
+    throw new Error('Falló el episodio ausente: ' + await missing.locator('#status').textContent({ timeout: 1000 }), { cause: error });
+  }
+  assert.match(await missing.locator('#slot').innerText(), /^.+ · (Día|Noche)$/);
   assert.equal(await missing.getByRole('button', { name: 'Guardar' }).isVisible(), false);
   await missing.getByRole('button', { name: 'Cerrar', exact: true }).click();
   await page.locator(frame).waitFor({ state: 'detached' });
@@ -102,7 +152,7 @@ try {
   assert.equal(await reopened.getByLabel('Nota del turno').inputValue(), 'Guardado desde Chromium con HHR cerrado');
   const otherPage = await context.newPage();
   await otherPage.setViewportSize({ width: 390, height: 700 });
-  await otherPage.goto(origin + '/dashboard/encounter-list-nurse');
+  await otherPage.goto(origin + '/dashboard/encounter-list-nurse' + (synthetic ? '?handoffObserver=1' : ''));
   const observer = await open(otherPage);
   await observer.getByLabel('Nota del turno').waitFor();
   await observer.getByLabel('Nota del turno').fill('Borrador de otro editor');
@@ -119,6 +169,13 @@ try {
     main.scrollWidth <= main.clientWidth
   )), true);
   assert.equal(await observer.getByRole('button', { name: 'Guardar', exact: true }).isEnabled(), false);
+  await observer.getByRole('button', { name: 'Usar nota de HHR', exact: true }).click();
+  assert.equal(await observer.locator('#recovery-label').textContent(), 'Mi borrador conservado');
+  await observer.locator('#recovery-label').click();
+  assert.equal(await observer.getByLabel('Texto conservado').inputValue(), 'Borrador de otro editor');
+  await observer.getByRole('button', { name: 'Recuperar como borrador', exact: true }).click();
+  assert.equal(await observer.getByLabel('Nota del turno').inputValue(), 'Borrador de otro editor');
+  if (synthetic) assert.deepEqual(await worker.evaluate(() => [...self.__handoffActors].sort()), ['2', '4']);
   console.log('OK: diálogo en Eloísa, episodio ausente, guardado con HHR cerrado, confirmación, reapertura y borrador ante conflicto.');
 
   const grid = await context.newPage();
@@ -148,9 +205,9 @@ try {
   await grid.getByText('2 borradores', { exact: true }).waitFor();
   await second.getByRole('button', { name: 'Guardar', exact: true }).click();
   await second.getByText('✓ Guardado en HHR', { exact: true }).waitFor();
-  await first.getByText('Sin guardar', { exact: true }).waitFor();
+  await first.getByText('Borrador sin guardar', { exact: true }).waitFor();
   await grid.getByText('1 borrador', { exact: true }).waitFor();
-  assert.match(await second.locator('footer #slot').innerText(), /^(Día|Noche) · \d{2}-\d{2}-\d{4}$/);
+  assert.match(await second.locator('footer #slot').innerText(), /^.+ · (Día|Noche)$/);
   await toggle.click();
   assert.equal(await grid.locator(host('901001')).isVisible(), false);
   await toggle.click();
@@ -178,6 +235,24 @@ try {
   assert.equal(await first.getByRole('button', { name: 'Guardar', exact: true }).isEnabled(), true);
   assert.equal(await second.getByRole('button', { name: 'Guardar', exact: true }).isDisabled(), true);
   assert.equal(context.pages().length, tabCount);
+  if (synthetic) {
+    assert.match(await first.locator('#slot').innerText(), /19.* · Noche$/);
+    await worker.evaluate(() => { self.__handoffShift = { date:'2026-11-20', shift:'day' }; });
+    await b.focus();
+    await a.focus();
+    const next = first.getByRole('button', { name:'Ver turno vigente' });
+    await next.waitFor();
+    assert.equal(await a.getAttribute('readonly'), '');
+    assert.equal(await a.inputValue(), 'Solo borrador del primer episodio');
+    await next.click();
+    await first.getByText(/20.* · Día$/).waitFor();
+    assert.match(await first.locator('#recovery-label').textContent(), /Borrador · .*19.* · Noche/);
+    await first.locator('#recovery-label').click();
+    assert.equal(await first.getByLabel('Texto conservado').inputValue(), 'Solo borrador del primer episodio');
+    assert.equal(await a.inputValue(), '');
+    assert.equal(await first.getByRole('button', { name:'Guardar', exact:true }).isDisabled(), true);
+    console.log('OK: turno nocturno fechado, cambio a turno diurno y recuperación del texto sin transferirlo.');
+  }
   console.log('OK: dos entregas en una tabla, guardado por episodio y borrador recuperado tras ocultar o filtrar.');
 } finally {
   await context?.close();
