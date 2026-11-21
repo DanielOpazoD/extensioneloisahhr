@@ -18,6 +18,22 @@ const packageDirectory = await mkdtemp(
 const extensionPath = path.join(packageDirectory, "extension");
 const artifact = packageRayenExtension(process.cwd());
 const files = unzipSync(artifact.zip);
+// The handoff runtime captures fetch when the MV3 worker starts.
+const workerFile = JSON.parse(Buffer.from(files['manifest.json']).toString('utf8')).background.service_worker;
+const mockHandoff = () => {
+  const network = self.fetch;
+  self.fetch = (input, init) => {
+    if (new URL(input).href !== 'https://hhr-hospitalizados.app/api/entrega-turno') return network(input, init);
+    const { data } = JSON.parse(init.body);
+    if (!self.__worklistHandoffFixture || data.action !== 'read' || !['901001','901002'].includes(data.episode)) {
+      throw new Error('Unexpected request to the handoff fixture');
+    }
+    return Promise.resolve(Response.json({
+      result:{ date:'2026-11-21', shift:'night', version:'0'.repeat(64), text:'Nota sintética en HHR' },
+    }));
+  };
+};
+files[workerFile] = Buffer.concat([Buffer.from("'use strict';\n(" + mockHandoff.toString() + ')();\n'), files[workerFile]]);
 assert.equal(Object.keys(files).some(name => name.endsWith("fichamedico-manual-patient-copy.js")), false);
 for (const [name, bytes] of Object.entries(files)) {
   const file = path.join(extensionPath, name);

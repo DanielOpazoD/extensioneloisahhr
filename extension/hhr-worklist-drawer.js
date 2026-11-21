@@ -45,7 +45,7 @@
       const header = el('header', '');
       const heading = el('h2', 'Un día como hoy');
       const close = el('button', '×', { type: 'button', 'aria-label': 'Cerrar', autofocus: '' });
-      const content = el('div', '');
+      const content = el('div', '', { class: 'hhr-daily-body' });
       const status = el('p', 'Cargando efemérides…', { role: 'status' });
       header.append(heading, close);
       content.append(status);
@@ -84,26 +84,49 @@
         events.append(el('p', data.eventsUnavailable
           ? 'Efemerides.cl no está disponible.' : 'Efemerides.cl no registra conmemoraciones para hoy.'));
       }
+      const history = el('section', '', { class: 'hhr-daily-history' });
+      const historyHeading = el('div', '', { class: 'hhr-daily-source-heading' });
+      historyHeading.append(el('h3', 'Hechos históricos'), sourceIcon('Abrir acontecimientos en Wikipedia', data.historySource));
+      history.append(historyHeading);
+      if (data.history?.length) {
+        const list = el('ul', '');
+        for (const { text, year, url } of data.history) {
+          const item = el('li', '');
+          item.append(el('span', String(year), { class: 'hhr-daily-births-year' }),
+            el('a', text, { href: url, target: '_blank', rel: 'noopener noreferrer' }));
+          list.append(item);
+        }
+        history.append(list);
+      } else {
+        history.append(el('p', data.historyUnavailable
+          ? 'No se pudieron cargar los hechos históricos.' : 'Sin hechos destacados para esta fecha.'));
+      }
       const births = el('section', '');
       const birthsHeading = el('div', '', { class: 'hhr-daily-source-heading' });
       birthsHeading.append(el('h3', 'Nacimientos'), sourceIcon('Abrir nacimientos en Wikipedia', data.source));
       births.append(birthsHeading);
       if (data.people?.length) {
         const list = el('ul', '');
+        const extra = el('ul', '');
         for (const { name, year, description, url } of data.people) {
           const item = el('li', '');
           const details = el('div', '');
           details.append(el('a', name, { href: url, target: '_blank', rel: 'noopener noreferrer' }));
           if (description) details.append(el('span', description));
           item.append(el('span', String(year), { class: 'hhr-daily-births-year' }), details);
-          list.append(item);
+          (list.children.length < 3 ? list : extra).append(item);
         }
         births.append(list);
+        if (extra.children.length) {
+          const more = el('details', '', { class: 'hhr-daily-more' });
+          more.append(el('summary', 'Más nacimientos (' + extra.children.length + ')'), extra);
+          births.append(more);
+        }
       } else {
         births.append(el('p', data.unavailable
           ? 'No se pudieron cargar los nacimientos.' : 'No hay nacimientos disponibles para esta fecha.'));
       }
-      content.append(events, births);
+      content.append(history, births, events);
     };
     const weatherCard = () => {
       const card = el('section', '', { 'data-hhr-drawer-weather': '', 'aria-label': 'Tiempo en Rapa Nui' });
@@ -172,6 +195,7 @@
       record.brand = brand;
       headerLogo.setAttribute('data-hhr-drawer-logo', '');
       brand.setAttribute('data-hhr-drawer-brand', '');
+      brand.after(record.stamp);
     };
     const decorate = drawer => {
       if (records.has(drawer)) {
@@ -192,9 +216,13 @@
       const time = el('time', '', { title: 'Hora de Rapa Nui' });
       const weather = weatherCard();
       stamp.append(time);
-      footer.append(weather.card, shortcuts, stamp);
-      drawer.append(footer);
-      const record = { time, weather, footer, native };
+      footer.append(weather.card, shortcuts);
+      const lastMenuItem = [...drawer.querySelectorAll('[data-hhr-menu-icon]:not([data-hhr-bed-link])')].at(-1);
+      const menu = lastMenuItem?.closest('ul,[role="menu"],[role="list"]') || lastMenuItem;
+      if (menu) menu.after(footer);
+      else drawer.append(footer);
+      footer.before(stamp);
+      const record = { time, stamp, weather, footer, native };
       records.set(drawer, record);
       markBrand(drawer, record);
       tick();
@@ -210,8 +238,9 @@
       dailyDialog?.remove();
       dailyDialog = undefined;
       clearInterval(timer);
-      for (const { footer, native, brand, logo } of records.values()) {
+      for (const { footer, stamp, native, brand, logo } of records.values()) {
         footer.remove();
+        stamp.remove();
         brand?.removeAttribute('data-hhr-drawer-brand');
         logo?.removeAttribute('data-hhr-drawer-logo');
         native.forEach(node => node.removeAttribute('data-hhr-drawer-native-clock'));

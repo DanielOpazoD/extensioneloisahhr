@@ -33,7 +33,7 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
   content:''; width:36px; height:42px; flex:none; background:center / contain no-repeat var(--hhr-sidebar-moa);
 }
 [data-hhr-drawer-tools] {
-  margin-block-start:auto; padding:6px 10px 4px; display:grid; gap:5px;
+  padding:4px 10px; display:grid; gap:5px;
   color:#2c4943; font:12px/1.4 system-ui,sans-serif;
 }
 [data-hhr-drawer-weather] {
@@ -106,29 +106,32 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
 }
 .hhr-drawer-shortcuts :is(button,a):hover { background:#eef6f2; }
 [data-hhr-daily-births-dialog] {
-  box-sizing:border-box; width:min(390px, calc(100% - 24px)); max-height:min(540px, calc(100% - 24px));
-  padding:16px 18px; border:1px solid #d7e5df; border-radius:12px; margin:auto;
+  box-sizing:border-box; width:min(416px, calc(100% - 24px)); max-height:min(550px, calc(100% - 24px));
+  padding:0; overflow:hidden; border:1px solid #d7e5df; border-radius:14px; margin:auto;
   color:#28453f; background:#fff; box-shadow:0 14px 45px #214b4138; font:13px/1.4 system-ui,sans-serif;
 }
+[data-hhr-daily-births-dialog][open] { display:grid; grid-template-rows:auto minmax(0,1fr); }
 [data-hhr-daily-births-dialog]::backdrop { background:#132e2945; }
 [data-hhr-daily-births-dialog] header {
-  display:grid; grid-template-columns:1fr auto; gap:2px 8px; align-items:center; margin-block-end:8px;
+  display:grid; grid-template-columns:1fr auto; gap:3px 8px; align-items:center; padding:13px 16px 11px;
+  background:linear-gradient(135deg,#eaf6f0,#f8fbfa); border-bottom:1px solid #deebe5;
 }
-[data-hhr-daily-births-dialog] h2 { margin:0; font-size:17px; }
+[data-hhr-daily-births-dialog] h2 { margin:0; font-size:18px; letter-spacing:-.025em; }
 [data-hhr-daily-births-dialog] header button {
   grid-column:2; grid-row:1; width:28px; height:28px; border:0; border-radius:6px; color:#335d54;
   background:#eef5f2; font:20px/1 system-ui,sans-serif; cursor:pointer;
 }
-[data-hhr-daily-births-dialog] .hhr-daily-births-date { grid-column:1; margin:0; color:#536c65; }
-[data-hhr-daily-births-dialog] section + section { margin-block-start:12px; }
-[data-hhr-daily-births-dialog] h3 { margin:0; font-size:13px; }
-.hhr-daily-source-heading { margin-block-end:3px; }
-[data-hhr-daily-births-dialog] section p { margin:0 0 3px; color:#536a64; }
+.hhr-daily-births-date { grid-column:1; margin:0; color:#4c6b62; font-size:12px; }
+.hhr-daily-body { overflow:auto; overscroll-behavior:contain; padding:9px 15px 12px; }
+.hhr-daily-body section + section { margin-block-start:8px; }
+.hhr-daily-body h3 { margin:0; font-size:13px; }
+.hhr-daily-source-heading { margin-block-end:2px; padding:4px 7px; background:#f1f6f4; border-radius:5px; }
+.hhr-daily-body p { margin:4px 0; color:#536a64; }
 [data-hhr-daily-births-dialog] .hhr-daily-events li { display:block; font-weight:600; }
-[data-hhr-daily-births-dialog] ul { margin:0 0 6px; padding:0; list-style:none; }
+[data-hhr-daily-births-dialog] ul { margin:0; padding:0; list-style:none; }
 [data-hhr-daily-births-dialog] li {
-  display:grid; grid-template-columns:44px minmax(0,1fr); gap:8px; padding-block:6px;
-  border-top:1px solid #e6eeeb; overflow-wrap:anywhere;
+  display:grid; grid-template-columns:39px minmax(0,1fr); gap:8px; padding:5px 3px;
+  border-bottom:1px solid #e6eeeb; overflow-wrap:anywhere;
 }
 [data-hhr-daily-births-dialog] li div { display:grid; gap:1px; }
 [data-hhr-daily-births-dialog] li div span { color:#536a64; font-size:12px; }
@@ -136,7 +139,11 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
 [data-hhr-daily-births-dialog] li a {
   width:fit-content; font-weight:650; text-decoration-color:#9bb9af; text-underline-offset:2px;
 }
-.hhr-drawer-clock { display:flex; align-items:flex-start; justify-content:space-between; gap:4px; color:#526a64; font-variant-numeric:tabular-nums; }
+.hhr-daily-more summary { color:#28665a; cursor:pointer; padding:5px 3px 2px; font-size:12px; }
+.hhr-drawer-clock {
+  text-align:center; padding:1px 8px 5px; color:#526a64;
+  font:11px/1.3 system-ui,sans-serif; font-variant-numeric:tabular-nums;
+}
 
 #hhr-worklist-novelty-tooltip {
   position: fixed;

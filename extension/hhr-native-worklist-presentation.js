@@ -110,7 +110,7 @@
       }
       ${drawerIcons}
       .MuiDrawer-paper:has(> a[data-hhr-bed-link]), .MuiDrawer-paperAnchorLeft:has(> a[data-hhr-bed-link]) { display:flex; flex-direction:column; }
-      a[data-hhr-bed-link] { flex:none; padding:7px 12px; border-top:1px solid #e7efed;
+      a[data-hhr-bed-link] { flex:none; margin-block-start:auto; padding:7px 12px; border-top:1px solid #e7efed;
         background:white; color:#235f59; font:12px/1.35 system-ui,sans-serif; text-decoration:none; }
       a[data-hhr-bed-link]:is(:hover,:focus-visible) { background:#e7f4f1; }
       .MuiBox-root:has(> .MuiPaper-root #search-encounter-list):has(> .hhr-hospitalized-panel) {
@@ -152,13 +152,17 @@
         color:#175f57; background:#deefeb; border-color:#c8ddd7; font-weight:650;
       }
       [data-hhr-worklist-layout] > * { flex:0 0 100%; min-width:0; }
+      [data-hhr-worklist-layout] > [role="tabpanel"] { order:1; }
+      [data-hhr-worklist-layout] > #hhr-clinical-operations-bar {
+        position:relative; inset:auto; flex:0 0 auto; margin-inline-start:auto;
+        z-index:3; animation:none;
+      }
       [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { flex:0 1 auto; max-width:100%; }
       [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] {
         flex:0 1 278px; width:auto !important; height:auto !important;
         min-height:var(--hhr-worklist-control-height); padding:0 !important; gap:5px !important; box-sizing:border-box;
         display:flex; align-items:center; background:transparent; box-shadow:none;
         max-inline-size:278px;
-        margin-inline-end:var(--hhr-worklist-reserve, 0px);
       }
       [data-hhr-worklist-filterbar] :is(label[for="search-encounter-list"],#search-encounter-list-label,#select-label-hcp) {
         position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;
@@ -412,7 +416,7 @@
       const bannerStyle = banner && getComputedStyle(banner);
       const stickyTop = bannerStyle?.position === 'sticky' ? parseFloat(bannerStyle.top) : NaN;
       const bannerScrollport = Number.isFinite(stickyTop) ? localScrollport(banner) : null;
-      const fixedBottom = bannerStyle?.position === 'fixed' ? banner.getBoundingClientRect().bottom : 0;
+      const fixedBottom = bannerStyle?.position === 'fixed' ? banner.offsetHeight + (parseFloat(bannerStyle.top) || 0) : 0;
       for (const table of document.querySelectorAll(`${tableSelector},${markedSelector}`)) {
         const container = table.parentElement;
         const title = container.parentElement?.previousElementSibling;
@@ -422,10 +426,9 @@
           const kind = /^Mis pacientes de interconsulta/i.test(result[0]) ? 'referrals' : 'results';
           if (table.getAttribute(marked) !== kind) table.setAttribute(marked, kind);
           const scrollport = localScrollport(table);
-          const scrollportTop = scrollport ? scrollport.getBoundingClientRect().top + scrollport.clientTop : 0;
           const stickyBottom = Number.isFinite(stickyTop) && scrollport === bannerScrollport
             ? stickyTop + banner.offsetHeight : 0;
-          const offset = Math.max(0, fixedBottom ? fixedBottom - scrollportTop : stickyBottom) + 'px';
+          const offset = Math.max(0, !scrollport && fixedBottom ? fixedBottom : stickyBottom) + 'px';
           if (table.style.getPropertyValue('--hhr-worklist-sticky-top') !== offset) {
             table.style.setProperty('--hhr-worklist-sticky-top', offset);
           }

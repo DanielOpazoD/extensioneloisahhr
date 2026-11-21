@@ -614,7 +614,14 @@
   };
 
   const updateOperationsBarPosition = bar => {
-    if (!bar || window.matchMedia('(max-width: 560px)').matches) return;
+    if (!bar) return;
+    const worklistLayout = document.querySelector('[data-hhr-worklist-layout]');
+    if (worklistLayout) {
+      if (bar.parentElement !== worklistLayout) worklistLayout.append(bar);
+      return;
+    }
+    if (bar.parentElement !== document.body) document.body.append(bar);
+    if (window.matchMedia('(max-width: 560px)').matches) return;
     const sampledElements = typeof document.elementsFromPoint === 'function'
       ? document.elementsFromPoint(Math.max(1, Math.round(window.innerWidth / 2)), 2)
       : [];
@@ -638,11 +645,6 @@
     const headerBottom = candidates[0]?.rect.bottom || 64;
     const dateRect = document.getElementById('hhr-history-date-navigation')?.getBoundingClientRect();
     const barRect = bar.getBoundingClientRect();
-    const worklistLayout = document.querySelector('[data-hhr-worklist-layout]');
-    if (worklistLayout) {
-      const reserve = Math.max(0, Math.ceil(worklistLayout.getBoundingClientRect().right - barRect.left + 8));
-      worklistLayout.style.setProperty('--hhr-worklist-reserve', reserve + 'px');
-    }
     const top = headerBottom + 5;
     const overlapsDates = dateRect && dateRect.left < barRect.right && dateRect.right > barRect.left &&
       dateRect.bottom > top && dateRect.top < top + barRect.height;

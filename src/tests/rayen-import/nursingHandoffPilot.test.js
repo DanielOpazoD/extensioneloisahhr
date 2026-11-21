@@ -9,7 +9,7 @@ const ids = ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00
 const demoProof = crypto.randomUUID();
 const installationKey = 'a'.repeat(64);
 const info = { facId: '1', practitionerId: '2', practitionerRoleId: '3', token: demoProof };
-const setup = async () => {
+const setup = async hosted => {
   const owner = '1:2:3';
   const fields = { owner, sessionKey: 'rayen-session' };
   const store = {};
@@ -17,10 +17,12 @@ const setup = async () => {
     store['hhr-nursing-handoff-' + (i + 1) + ':editor:' + id] = {
       ...fields, id, tabId: i + 1, editorDocument: 'editor-' + i, sourceDocument: 'source-' + i,
       episode: '901001', patientId: '1', run: '11111111-1',
+      inline: i === 0,
     };
   });
   const chrome = {
-    runtime: { getManifest: () => ({ name: 'Eloísa HHR · Entrega de turno (pruebas)' }), getURL: file => extensionOrigin + file },
+    runtime: { getManifest: () => ({ name: hosted ? 'Puente Eloísa HHR' : 'Eloísa HHR · Entrega de turno (pruebas)' }),
+      getURL: file => extensionOrigin + file },
     storage: { session: {
       get: async key => ({ [key]: store[key] }),
       set: async values => Object.assign(store, values),
@@ -32,7 +34,7 @@ const setup = async () => {
   const fetchImpl = vi.fn();
   const getInfo = vi.fn().mockResolvedValue({ info });
   const runtime = globalThis.HhrNursingHandoffPilot.create({
-    chrome, localPilot: { installationKey }, getSessionKey: () => 'rayen-session', getInfo, checkAccess, fetchImpl,
+    chrome, hosted, localPilot: { installationKey }, getSessionKey: () => 'rayen-session', getInfo, checkAccess, fetchImpl,
     getContext: async () => ({ info, patientId: '1', patient: { run: '11111111-1' } }),
   });
   const message = (index, action, overrides, fields) => runtime.operate({ id: ids[index], action, ...fields }, {
@@ -112,5 +114,21 @@ it('limita la nota al marco de la entrega y al documento que lo abrió', async (
   await expect(message(0, 'close', { frameId: 0, documentId: 'source-1' })).resolves.toHaveProperty('error');
   await expect(message(0, 'close', { frameId: 0, documentId: 'source-0' })).resolves.toEqual({ ok: true });
   await expect(message(0, 'read')).resolves.toHaveProperty('error');
+  expect(fetchImpl).not.toHaveBeenCalled();
+});
+
+it('abre la conexión compartida desde el documento de origen y vuelve a verificar su sesión', async () => {
+  const open = vi.fn().mockResolvedValue({ ok:true });
+  const { message, getInfo, fetchImpl } = await setup({ create:() => ({ open }) });
+  const top = { frameId:0, documentId:'source-0', url:source };
+  await expect(message(0, 'connect-inline')).resolves.toHaveProperty('error');
+  await expect(message(0, 'connect-inline', { ...top, documentId:'otra-vista' })).resolves.toHaveProperty('error');
+  await expect(message(1, 'connect-inline', { ...top, documentId:'source-1' })).resolves.toHaveProperty('error');
+  expect(open).not.toHaveBeenCalled();
+  await expect(message(0, 'connect-inline', top)).resolves.toEqual({ ok:true });
+  expect(open).toHaveBeenCalledWith('1:2:3', 1);
+  getInfo.mockResolvedValueOnce({ info:{ ...info, token:'' } });
+  await expect(message(0, 'connect-inline', top)).resolves.toMatchObject({ code:'SOURCE_SESSION_CHANGED' });
+  expect(open).toHaveBeenCalledOnce();
   expect(fetchImpl).not.toHaveBeenCalled();
 });

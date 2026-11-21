@@ -39,7 +39,7 @@ Gestión de cuidados reúne ingresos, pacientes con novedad y pacientes sin nove
 
 El encabezado de la tabla queda visible durante el desplazamiento. En Gestión de cuidados, el icono de novedad abre una vista breve cuando la publicación se puede identificar en Eloísa. El enlace abre el Historial y resalta la tarjeta cuando coincide una sola publicación médica de esa fecha y hora.
 
-En el menú lateral, «Un día como hoy» reúne las conmemoraciones del calendario de Efemerides.cl y los nacimientos de Wikipedia para la fecha de Rapa Nui, con iconos de acceso a ambas fuentes. Presenta hasta ocho biografías enlazadas, ordenadas por las visitas de los últimos 30 días en Wikipedia en español.
+En el menú lateral, «Un día como hoy» reúne las conmemoraciones de Efemerides.cl, hasta tres hechos históricos destacados por Wikipedia en español y hasta ocho nacimientos ordenados por visitas recientes. Cada hecho y nacimiento enlaza a su artículo. La lista de nacimientos muestra tres al abrirse y permite desplegar el resto.
 
 La ubicación muestra servicio y cama. Las filas se ordenan por cama desde R1–R4 y NEO1–NEO2 hasta H1C1–H6C2. Las ubicaciones adicionales siguen a las camas de sala y las de urgencias cierran la lista. En interconsultas se aplica el orden dentro de cada servicio. La fila se resalta al pasar el cursor o enfocar sus controles. En Gestión de cuidados, el lápiz junto al nombre abre «Modificación del paciente» en Gestión de Camas. El lápiz reutiliza la pestaña de Camas del profesional, incluso en otra ventana. Si hace falta iniciar sesión, se usa el acceso oficial de Camas. El editor comprueba profesional, establecimiento, episodio, paciente y disponibilidad de la acción nativa. El profesional revisa los datos y decide si guardar.
 
@@ -128,6 +128,7 @@ En Gestión de cuidados, «Entrega de turno» habilita la edición de todas las 
 vigente en sus filas. Cada fila guarda por separado y muestra la confirmación de HHR. Al cerrar
 el modo vuelven las columnas operativas. Un borrador de la tabla se conserva durante la
 misma vista de Eloísa, incluso al filtrar, y se vincula al profesional, paciente, episodio y turno.
+Si hace falta conectar la cuenta de HHR, la tabla muestra un solo aviso sobre las filas.
 
 El editor muestra la fecha censal y el turno que informó HHR. Si cambia el turno, «Ver turno vigente» abre la nueva entrega y conserva el borrador anterior como texto de consulta mientras el editor siga abierto. En caso de conflicto, puedes consultar la versión que dejaste de lado y recuperarla como borrador. La confirmación de HHR se muestra con un ✓.
 

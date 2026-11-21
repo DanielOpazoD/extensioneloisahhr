@@ -216,16 +216,25 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
     self.__worklistOriginalFetch = self.fetch;
     self.__worklistReports = [];
     self.__worklistBirthsRequests = 0;
+    self.__worklistHistoryRequests = 0;
     self.__worklistEventsRequests = 0;
     self.fetch = async (input, init) => {
       const url = new URL(input);
       if (url.hostname === 'es.wikipedia.org') {
-        if (!/^\/api\/rest_v1\/feed\/onthisday\/births\/\d{2}\/\d{2}$/.test(url.pathname) ||
+        if (!/^\/api\/rest_v1\/feed\/onthisday\/(births|selected)\/\d{2}\/\d{2}$/.test(url.pathname) ||
             init?.credentials !== 'omit' || init?.referrerPolicy !== 'no-referrer' || init?.body) return Response.json({}, { status:400 });
+        if (url.pathname.includes('/selected/')) {
+          self.__worklistHistoryRequests++;
+          return Response.json({ selected:[
+            { year:1969, text:'Alcanza su meta el proyecto de prueba.', pages:[{ titles:{ normalized:'Proyecto de prueba' } }] },
+          ] });
+        }
         self.__worklistBirthsRequests++;
         return Response.json({births:[
           {year:1901, pages:[{titles:{ normalized:'Figura de prueba' }, description:'Descripción en español'}]},
           {year:2002, pages:[{titles:{ normalized:'Otra figura de prueba' }}]},
+          {year:1920, pages:[{titles:{ normalized:'Tercera figura de prueba' }}]},
+          {year:1940, pages:[{titles:{ normalized:'Cuarta figura de prueba' }}]},
         ]});
       }
       if (url.hostname === 'www.efemerides.cl') {
@@ -253,6 +262,10 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
       if (url.origin !== 'https://fichamedicoback.rayensalud.cl') return self.__worklistOriginalFetch(input, init);
       if (url.pathname.endsWith('/claim/getAllInApp')) return Response.json([{claim:'Acceso_Ficha_Clinica', moduleId:6}]);
       const patient = url.pathname.match(/\/patientHeaderData\/(\d+)\/false$/);
+      if (['901001', '901002'].includes(patient?.[1])) return Response.json({
+        patID:Number(patient[1]) + 1000, preferredIdentifierCode:patient[1] === '901001' ? '11111111-1' : '22222222-2',
+        firstGivenName:'Paciente', firstFamilyName:'Sintético',
+      });
       if (patient) return Response.json({patID: Number(patient[1]) + 1000});
       if (url.pathname.startsWith('/api/report/')) {
         self.__worklistReports.push([url.pathname.split('/').pop(), url.searchParams.get('enc_id'), url.searchParams.get('pat_id')]);
@@ -263,6 +276,7 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
   });
   try {
     await verifyLists(context, origin, worker);
+    await verifyTableConnection(context, origin, worker);
   } finally {
     await worker.evaluate(() => { self.fetch = self.__worklistOriginalFetch; delete self.__worklistOriginalFetch; });
   }
@@ -288,6 +302,7 @@ async function verifyWorklistWidth(page) {
         return { left, right, width, height, top, bottom };
       };
       return { main: rect('main'), filters: rect('#filters'), tabs: rect('[role=tablist]'),
+        operations: rect('#hhr-clinical-operations-bar'),
         panel: rect('#worklist'), table: rect('#worklist table'), tab: rect('[role=tab][aria-selected=true]'),
         search: rect('#search-encounter-list'), searchBox: rect('.fixture-search'),
         station: rect('#filters select'), stationBox: rect('#filters .MuiFormControl-root .MuiInputBase-root'), print: rect('#long-button') };
@@ -296,6 +311,9 @@ async function verifyWorklistWidth(page) {
     const right = bounds.main.right - bounds.panel.right;
     assert.ok(Math.abs(left - right) < 1, 'The worklist must stay centered');
     assert.ok(bounds.filters.top < bounds.panel.top && bounds.filters.right <= bounds.main.right + 1);
+    assert.ok(bounds.operations.bottom <= bounds.panel.top + 1 && bounds.operations.right <= bounds.main.right + 1,
+      `The HHR toolbar must stay above the patient panel at ${width}px`);
+    assert.ok(bounds.operations.left >= bounds.filters.right || bounds.operations.top >= bounds.filters.bottom);
     assert.ok(bounds.search.width >= 44 && bounds.search.right <= bounds.station.left + 1 && bounds.station.right <= bounds.print.left + 1,
       `Filter controls overlap at ${width}px: ${JSON.stringify(bounds)}`);
     assert.ok(bounds.filters.width <= 278 && bounds.searchBox.width <= 138 && bounds.stationBox.width <= 95 && bounds.print.width <= 35);
@@ -345,6 +363,13 @@ async function verifyTableHeader(page, table) {
     await panel.evaluate(element => { element.scrollTop = 85; });
     const [pinned, scrollport] = await Promise.all([header.boundingBox(), panel.boundingBox()]);
     assert.ok(Math.abs(pinned.y - scrollport.y) <= 1, 'Nested scroll keeps the title at the top of its own scrollport');
+    await panel.evaluate(element => {
+      element.scrollTop = 0;
+      document.querySelector('header.MuiAppBar-root').style.position = 'fixed';
+      element.append(document.createComment('Fixed banner outside the results scrollport'));
+    });
+    const offset = await table.evaluate(node => node.style.getPropertyValue('--hhr-worklist-sticky-top'));
+    assert.equal(offset, '0px');
   } finally {
     await panel.evaluate(element => {
       element.scrollTop = 0;
@@ -357,6 +382,74 @@ async function verifyTableHeader(page, table) {
       element.lastChild.remove();
     });
   }
+}
+
+async function verifyTableConnection(context, origin, worker) {
+  const page = await context.newPage();
+  const portalUrl = 'https://hhr-hospitalizados.app/conectar-entrega-turno';
+  const mockPortal = route => route.fulfill({ contentType:'text/html', body:'<title>Conexión HHR sintética</title>' });
+  const url = origin + '/dashboard/encounter-list-nurse?handoffConnectionFixture=1';
+  await context.route(portalUrl, mockPortal);
+  try {
+    await worker.evaluate(() => { self.__worklistHandoffFixture = true; });
+    await page.route(url, route => route.fulfill({ contentType:'text/html', body:`<!doctype html>
+      <meta charset="utf-8"><style>body{font:14px system-ui,sans-serif} th,td{padding:4px 8px;text-align:left}</style>
+      <header class="MuiAppBar-root">Gestión de cuidados</header><main>
+      <nav role="tablist"><button role="tab" aria-selected="true">Pacientes hospitalizados</button></nav>
+      <div class="MuiPaper-root"><input id="search-encounter-list" type="search"></div>
+      <section role="tabpanel" class="hhr-hospitalized-panel">
+        <div class="hhr-handoff-toolbar"><button data-hhr-handoff-toggle aria-expanded="false">Entrega de turno</button></div>
+        <table style="width:100%"><thead><tr><th>Paciente</th><th>Entrega de turno</th></tr></thead>
+        <tbody>${['901001','901002'].map(id => `<tr><th>Paciente sintético</th>
+          <td data-hhr-handoff-episode="${id}"><div data-hhr-handoff-inline="${id}" hidden></div></td></tr>`).join('')}</tbody></table>
+      </section></main>` }));
+    await page.goto(url);
+    await page.waitForFunction(() => !!document.documentElement.dataset.hhrPrescriptionPrintScript);
+    const toggle = page.getByRole('button', { name:'Entrega de turno' });
+    await toggle.evaluate(button => button.addEventListener('click', () => {
+      const wasExpanded = button.ariaExpanded === 'true';
+      button.ariaExpanded = String(!wasExpanded);
+      for (const host of document.querySelectorAll('[data-hhr-handoff-inline]')) host.hidden = wasExpanded;
+    }));
+    await toggle.click();
+    await page.locator('[data-hhr-handoff-needs-link]').nth(1).waitFor();
+    const connect = page.getByRole('button', { name:'Conectar HHR', exact:true });
+    assert.equal(await connect.count(), 1);
+    for (const id of ['901001','901002']) {
+      const editor = page.frameLocator(`[data-hhr-handoff-inline="${id}"] iframe`);
+      assert.equal(await editor.locator('#connect').isVisible(), false);
+      assert.equal(await editor.locator('#status').textContent(), '');
+    }
+    await toggle.click();
+    await connect.waitFor({ state:'hidden' });
+    await toggle.click();
+    if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+      await page.locator('main').screenshot({ path:path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Conexión HHR.png') });
+    }
+    const opened = context.waitForEvent('page');
+    await connect.click();
+    const portal = await opened;
+    await portal.waitForURL(portalUrl + '#*');
+    const closed = portal.waitForEvent('close');
+    await portal.evaluate(() => {
+      const requestId = new URLSearchParams(location.hash.slice(1)).get('requestId');
+      window.postMessage({ type:'HHR_NURSING_HANDOFF_LINK_RESULT', requestId, expiresAt:Date.now() + 60_000 }, location.origin);
+    });
+    await closed;
+    await connect.waitFor({ state:'hidden' });
+    for (const id of ['901001','901002']) {
+      const editor = page.frameLocator(`[data-hhr-handoff-inline="${id}"] iframe`);
+      assert.equal(await editor.getByLabel('Nota del turno').inputValue(), 'Nota sintética en HHR');
+    }
+  } finally {
+    await context.unroute(portalUrl, mockPortal);
+    await page.close();
+    await worker.evaluate(() => {
+      delete self.__worklistHandoffFixture;
+      return chrome.storage.session.remove(['hhr-nursing-handoff-access', 'hhr-nursing-handoff-connecting']);
+    });
+  }
+  console.log('[entrega] un solo aviso de conexión para dos episodios; ambas filas recuperan su editor al conectar');
 }
 
 const verifyLists = async (context, origin, worker) => {
@@ -397,6 +490,11 @@ const verifyLists = async (context, origin, worker) => {
         await page.emulateMedia({ reducedMotion: 'no-preference' });
         const logo = drawer.locator('img[data-hhr-drawer-logo]');
         assert.ok((await logo.boundingBox()).width >= 100);
+        const [brandBox, clockBox, menuBox, weatherBox] = await Promise.all(
+          ['[data-hhr-drawer-brand]', 'time', '[data-hhr-menu-icon="worklist"]', '[data-hhr-drawer-weather]']
+            .map(selector => drawer.locator(selector).boundingBox()));
+        assert.ok(clockBox.y >= brandBox.y + brandBox.height && clockBox.y + clockBox.height <= menuBox.y);
+        assert.ok(weatherBox.y - menuBox.y - menuBox.height <= 16, 'Weather follows the sidebar menu without a large gap');
         assert.ok(await drawer.locator('[data-hhr-drawer-brand]').evaluate(node => {
           const mascot = getComputedStyle(node, '::after');
           return parseFloat(mascot.height) >= 40 && mascot.backgroundImage.startsWith('url("data:image/png;base64,');
@@ -429,6 +527,17 @@ const verifyLists = async (context, origin, worker) => {
         const biography = births.getByRole('link', { name:'Figura de prueba', exact:true });
         assert.equal(await biography.getAttribute('href'), 'https://es.wikipedia.org/wiki/Figura_de_prueba');
         assert.equal(await biography.getAttribute('target'), '_blank');
+        const history = births.getByRole('link', { name:'Alcanza su meta el proyecto de prueba.' });
+        assert.equal(await history.getAttribute('href'), 'https://es.wikipedia.org/wiki/Proyecto_de_prueba');
+        assert.match(await births.getByRole('link', { name:'Abrir acontecimientos en Wikipedia' }).getAttribute('href'),
+          /#Acontecimientos$/);
+        const additional = births.getByRole('link', { name:'Cuarta figura de prueba' });
+        assert.equal(await additional.isVisible(), false);
+        if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+          await births.screenshot({ path:path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Un día como hoy.png') });
+        }
+        await births.getByText('Más nacimientos (1)', { exact:true }).click();
+        await additional.waitFor();
         assert.equal(context.pages().length, existingTabs);
         await births.getByRole('button', {name:'Cerrar', exact:true}).click();
         await births.waitFor({state:'detached'});
@@ -437,7 +546,8 @@ const verifyLists = async (context, origin, worker) => {
         await births.getByText('Figura de prueba', {exact:true}).waitFor();
         await page.keyboard.press('Escape');
         await births.waitFor({state:'detached'});
-        assert.deepEqual(await worker.evaluate(() => [self.__worklistBirthsRequests, self.__worklistEventsRequests]), [1,1]);
+        assert.deepEqual(await worker.evaluate(() => [self.__worklistBirthsRequests, self.__worklistEventsRequests,
+          self.__worklistHistoryRequests]), [1,1,1]);
         const favorites = drawer.getByRole('button', { name: /Favoritos/ });
         await favorites.click();
         const dialog = drawer.getByRole('dialog', { name: 'Favoritos' });

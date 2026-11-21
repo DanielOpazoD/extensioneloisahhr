@@ -17,6 +17,38 @@
     const entries = new Map();
     let opening = 0;
     let redraw;
+    const connection = document.createElement('div');
+    connection.className = 'hhr-handoff-connection';
+    connection.hidden = true;
+    const connectionStatus = document.createElement('span');
+    connectionStatus.setAttribute('role', 'status');
+    const connect = document.createElement('button');
+    connect.type = 'button';
+    connect.textContent = 'Conectar HHR';
+    connection.append(connectionStatus, connect);
+    const toggle = () => panel.querySelector('[data-hhr-handoff-toggle]');
+    const linkEntry = () => [...entries.values()].find(entry => entry.visible && entry.linkRequired);
+    const updateConnection = () => {
+      const required = toggle()?.ariaExpanded === 'true' && Boolean(linkEntry());
+      if (required && !connection.isConnected) toggle().before(connection);
+      if (required && connection.hidden) connectionStatus.textContent = 'Conecta tu cuenta de HHR para editar las entregas.';
+      connection.hidden = !required;
+    };
+    connect.addEventListener('click', async event => {
+      const row = linkEntry();
+      if (!event.isTrusted || connect.disabled || !row || connection.hidden) return;
+      connect.disabled = true;
+      try {
+        const result = await chrome.runtime.sendMessage({
+          type: types.NURSING_HANDOFF_EDITOR, id: row.id, action: 'connect-inline',
+        });
+        if (result?.error) connectionStatus.textContent = result.error;
+      } catch {
+        connectionStatus.textContent = 'No se pudo abrir HHR. Intenta de nuevo.';
+      } finally {
+        connect.disabled = false;
+      }
+    });
     const send = (entry, type, value) => entry.frame?.contentWindow?.postMessage({ type, value }, extensionOrigin);
     const updatePending = () => {
       const count = [...entries.values()].filter(entry => entry.dirty).length;
@@ -26,19 +58,23 @@
     };
     const receiveRow = message => {
       if (message.origin !== extensionOrigin ||
-          !['hhr-handoff-row-height', 'hhr-handoff-row-dirty'].includes(message.data?.type)) return;
+          !['hhr-handoff-row-height', 'hhr-handoff-row-dirty', 'hhr-handoff-row-link'].includes(message.data?.type)) return;
       const row = [...entries.values()].find(entry => entry.frame?.contentWindow === message.source);
       if (!row || !panel.contains(row.host)) return;
       const { type, value } = message.data;
       if (type === 'hhr-handoff-row-height' && Number.isFinite(value)) {
-        row.frame.style.height = String(Math.max(72, Math.min(880, Math.ceil(value)))) + 'px';
+        row.frame.style.height = String(Math.max(24, Math.min(880, Math.ceil(value)))) + 'px';
       } else if (type === 'hhr-handoff-row-dirty' && typeof value === 'boolean') {
         row.dirty = value;
         updatePending();
+      } else if (type === 'hhr-handoff-row-link' && typeof value === 'boolean') {
+        row.linkRequired = value;
+        row.host.toggleAttribute('data-hhr-handoff-needs-link', value);
+        updateConnection();
       }
     };
     const drain = () => {
-      if (!panel.isConnected || panel.querySelector('[data-hhr-handoff-toggle]')?.ariaExpanded !== 'true') return;
+      if (!panel.isConnected || toggle()?.ariaExpanded !== 'true') return;
       for (const entry of entries.values()) {
         if (opening >= 3) return;
         if (entry.visible && !entry.started) {
@@ -94,6 +130,7 @@
         entry.visible = isIntersecting;
         send(entry, 'hhr-handoff-row-visible', isIntersecting);
       }
+      updateConnection();
       drain();
     });
     const cleanup = (host, entry) => {
@@ -106,6 +143,7 @@
       if (!panel.isConnected || !sourcePath.test(location.pathname)) {
         observer.disconnect();
         changes.disconnect();
+        connection.remove();
         window.removeEventListener('message', receiveRow);
         for (const [host, entry] of entries) cleanup(host, entry);
         if (table?.panel === panel) table = undefined;
@@ -118,6 +156,7 @@
         observer.observe(host);
       }
       updatePending();
+      updateConnection();
       drain();
     };
     const changes = new MutationObserver(records => {

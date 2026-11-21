@@ -65,4 +65,5 @@ footer { margin-block-start: .75rem; }
 .hhr-handoff-row #status:empty { display:none; }
 .hhr-handoff-row #status[data-tone="ok"] { font-weight:600; }
 .hhr-handoff-row footer { min-height:28px; margin-block-start:5px; }
+.hhr-handoff-row main:has(#edit[hidden]):has(#status:empty) footer { display:none; }
 .hhr-handoff-row footer button { font-size:.85rem; padding:4px 10px; }
