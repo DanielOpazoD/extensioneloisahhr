@@ -91,16 +91,18 @@
     return withChildren(jsx, cell, elapsed.replace(/(\d+)\s+horas?\b/gi, '$1 h'));
   }
 
-  function renderNovelty(jsx, { linkType, href, title, kind, linkRef }) {
+  function renderNovelty(jsx, { linkType, href, title, kind, linkRef, onClick, expanded }) {
     const type = kind === 'indication' ? 'Indicación' : kind === 'evolution' ? 'Evolución' : '';
     const path = kind === 'indication' ? 'M3 2h10v12H3z M5 5h6m-6 3h6m-6 3h3'
       : kind === 'evolution' ? 'M3 2h7l3 3v9H3z M10 2v3h3 M5 10l2 2 4-4' : 'M2 8h3l2-4 2 8 2-4h3';
     return jsx(href ? linkType || 'a' : 'span', {
       'data-hhr-patient-novelty': '', 'data-hhr-novelty-kind': kind,
-      ...(href ? { href, ref: linkRef, 'aria-label': type ? 'Abrir ' + type.toLowerCase() + ' médica en Historial' : 'Abrir última publicación médica en Historial' }
+      ...(href ? { href, ref: linkRef, onClick, 'aria-expanded': expanded,
+        'aria-haspopup': onClick ? 'dialog' : undefined,
+        'aria-label': onClick ? 'Ver ' + (type.toLowerCase() || 'novedad') + ' médica' : type ? 'Abrir ' + type.toLowerCase() + ' médica en Historial' : 'Abrir última publicación médica en Historial' }
         : { role: 'img', 'aria-label': 'Con novedad' }),
       'data-hhr-novelty-help': type ? type + ' · ' + title : title,
-      children: jsx('svg', { viewBox: '0 0 16 16', width: 13, height: 13, fill: 'none', stroke: 'currentColor',
+      children: jsx('svg', { viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', stroke: 'currentColor',
         strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true,
         children: jsx('path', { d: path }) }),
     }, 'novelty');

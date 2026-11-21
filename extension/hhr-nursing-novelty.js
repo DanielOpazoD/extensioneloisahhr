@@ -17,7 +17,26 @@
     return Number.isFinite(instant) ? 'instant:' + instant + ':' + fraction.slice(3) : '';
   }
 
-  function classify(events, publication, publisher) {
+  const hospitalTime = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Pacific/Easter', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  });
+  const tidy = value => typeof value === 'string'
+    ? value.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim() : '';
+  const excerpts = {
+    evolutionResume: entry => entry.OBE_NOTES,
+    patientPharmaIndicationResume: entry => entry.VIRTUAL_MEDICAL_PRODUCT || entry.DESCRIPTOR,
+    patientFreeIndicationResume: entry => entry.INDICATION,
+    nutritionOrderResume: entry => entry.DIET_type || entry.OBSERVATION,
+    restResume: entry => entry.rest_type || entry.OBSERVATION,
+  };
+  function localMinute(publication, key) {
+    if (key.startsWith('wall:')) return publication.slice(0, 16);
+    const parts = Object.fromEntries(hospitalTime.formatToParts(new Date(publication)).map(({ type, value }) => [type, value]));
+    return parts.year + '-' + parts.month + '-' + parts.day + 'T' + parts.hour + ':' + parts.minute;
+  }
+
+  function describe(events, publication, publisher) {
     const key = publicationKey(publication);
     if (!key || !Array.isArray(events)) return undefined;
     const matches = events.filter(event => publicationKey(event?.publishDatetime) === key);
@@ -30,9 +49,24 @@
       medical.test(String(entry?.HCPR_NAME || entry?.HCP_ROLE || '').trim()) &&
       (!key.startsWith('wall:') || (author && nameKey(entry?.HCP_LEGAL || entry?.HCP_NAME) === author)));
     const orders = indications.filter(hasEntries);
-    if (hasEntries('evolutionResume')) return !orders.length && physicianEntered('evolutionResume') ? 'evolution' : undefined;
-    return orders.length && orders.every(physicianEntered) ? 'indication' : undefined;
+    const evolution = hasEntries('evolutionResume');
+    if (evolution ? (orders.length || !physicianEntered('evolutionResume')) : (!orders.length || !orders.every(physicianEntered))) return;
+    const sections = evolution ? ['evolutionResume'] : orders;
+    const entries = sections.flatMap(key => event[key].map(entry => ({ key, entry })));
+    const authorNames = new Set(entries.map(({ entry }) => tidy(entry.HCP_LEGAL || entry.HCP_NAME)).filter(Boolean));
+    const pieces = entries.filter(({ entry }) => ![true, 1, 'true', '1'].some(flag =>
+      entry.ARCHIVED === flag || entry.IS_CROSSED_OUT === flag))
+      .map(({ key, entry }) => tidy(excerpts[key](entry))).filter(Boolean);
+    const excerpt = pieces.join(' · ');
+    return {
+      kind: evolution ? 'evolution' : 'indication',
+      minute: localMinute(publication, key),
+      author: (authorNames.size === 1 ? [...authorNames][0] : authorNames.size === 0 ? tidy(publisher) : '').slice(0, 140),
+      excerpt: excerpt.length > 220 ? excerpt.slice(0, 219).trimEnd() + '…' : excerpt,
+    };
   }
+
+  const classify = (...args) => describe(...args)?.kind;
 
   function createReader(readHistory) {
     const cache = new Map();
@@ -46,7 +80,7 @@
         if (cache.get(episode) !== entry || !isCurrent()) return undefined;
         try {
           const data = await readHistory(episode);
-          return cache.get(episode) === entry && isCurrent() ? classify(data, publication, publisher) : undefined;
+          return cache.get(episode) === entry && isCurrent() ? describe(data, publication, publisher) : undefined;
         } catch (_error) {
           return undefined;
         }

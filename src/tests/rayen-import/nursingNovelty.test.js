@@ -5,7 +5,7 @@ const { classify, createReader } = globalThis.HhrNursingNovelty;
 const stamp = '2026-11-20T09:10:00-05:00';
 const author = 'Profesional de Prueba';
 const evolution = { publishDatetime: '2026-11-20T14:10:00Z',
-  evolutionResume: [{ HCPR_NAME: 'Médico', HCP_LEGAL: author }] };
+  evolutionResume: [{ HCPR_NAME: 'Médico', HCP_LEGAL: author, OBE_NOTES: '<p>Texto sintético &nbsp; para la vista breve.</p>' }] };
 const indication = { publishDatetime: stamp,
   patientFreeIndicationResume: [{ HCP_ROLE: 'Médica cirujana', HCP_NAME: author }] };
 
@@ -49,6 +49,8 @@ it('bounds history reads and ignores a superseded response for the same episode'
   second.resolve([]);
   expect(await old).toBeUndefined();
   expect(await other).toBeUndefined();
-  expect(await newer).toBe('evolution');
+  expect(await newer).toEqual({
+    kind: 'evolution', minute: '2026-11-20T09:12', author, excerpt: 'Texto sintético para la vista breve.',
+  });
   expect(readHistory.mock.calls).toEqual([['1'], ['2'], ['1']]);
 });

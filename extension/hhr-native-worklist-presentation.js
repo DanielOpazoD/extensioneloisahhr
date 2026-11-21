@@ -45,7 +45,22 @@
       table[${marked}] > tbody > tr:is(:hover,:focus-within) > :is(td,th) { background-color:#e7f4f1 !important; }
       .hhr-location-service,.hhr-location-bed { display:block; }
       .hhr-location-service { font-weight:400; color:#526561; }
-      .hhr-location-bed { font-weight:700; }
+      .hhr-location-bed { font-weight:750; color:#183a34; }
+      [data-hhr-patient-name-row] > :nth-child(2) { color:#203b36; font-weight:700; }
+      [data-hhr-bed-index] {
+        margin-block:0 8px; display:flex; align-items:center; gap:8px; padding:4px 8px;
+        border-radius:7px; background:#f2f7f5; color:#395f56;
+        font:600 12px/1.25 system-ui,sans-serif;
+      }
+      [data-hhr-bed-index] summary { flex:none; padding:4px 0; cursor:pointer; }
+      [data-hhr-bed-index] > div { display:flex; gap:4px; overflow-x:auto; min-width:0; }
+      [data-hhr-bed-index]:not([open]) > div { display:none; }
+      [data-hhr-bed-index] button {
+        flex:none; border:1px solid #d6e3de; border-radius:5px; background:#fff; color:#315950;
+        font:inherit; font-variant-numeric:tabular-nums; padding:3px 6px; cursor:pointer;
+      }
+      [data-hhr-bed-index] button:is(:hover,:focus-visible) { border-color:#407d70; background:#e4f2ed; }
+      tr[data-hhr-bed-target] > :is(td,th) { background-color:#e0f1eb !important; }
       table[${marked}] td:nth-child(2) .MuiTypography-root { overflow-wrap:anywhere; }
       td[data-hhr-worklist-doctor] { width:136px; max-width:136px; }
       td[data-hhr-worklist-doctor] :is(.MuiFormControl-root,select) { box-sizing:border-box; width:100%; min-width:0; max-width:136px; }
@@ -199,12 +214,38 @@
     .hhr-worklist-handoff button[data-hhr-handoff-confirmed]::after { content:'✓'; font-size:1rem; }
     .hhr-hospitalized-panel .hhr-worklist-activity { font-size:.8333em; color:#50625e; }
     .MuiTableContainer-root:has(> table[${marked}]) { max-height:none !important; }
+    @media screen {
+      table[${marked}] > thead > tr > th {
+        position:sticky; inset-block-start:var(--hhr-worklist-sticky-top, 0px);
+        z-index:2; background:#eaf1ee;
+      }
+      @media (min-width: 900px) {
+        .MuiTableContainer-root:has(> table[${marked}]) { overflow:visible; }
+      }
+      @media (max-width: 899px) {
+        .MuiTableContainer-root:has(> table[${marked}]) { max-height:72dvh !important; }
+        table[${marked}] > thead > tr > th { inset-block-start:0; }
+      }
+      @media (hover:hover) and (pointer:fine) {
+        table[${marked}] tr:not(:hover,:focus-within) .hhr-worklist-documents button:not(:disabled) { opacity:.22; }
+      }
+    }
     table[${complete}] > tfoot:has(.MuiPagination-root) { display:none !important; }
     td.hhr-worklist-documents { white-space:nowrap; text-align:center; vertical-align:middle; border-bottom:1px solid #ddd; }
     .hhr-worklist-documents button { display:inline-grid; place-items:center; width:28px; height:28px;
       background:transparent; border:0; border-radius:5px; color:#146962; cursor:pointer; vertical-align:middle; }
     .hhr-worklist-documents button:hover, .hhr-worklist-documents button:focus-visible { background:#e2f1ef; }
     .hhr-worklist-documents button:disabled { opacity:.45; cursor:default; }
+    .hhr-worklist-documents svg, [data-hhr-edit-episode] svg { width:16px; height:16px; }
+    .hhr-novelty-preview {
+      position:fixed; inset:auto; margin:0; box-sizing:border-box; width:min(330px, calc(100vw - 16px));
+      max-height:50dvh; overflow:auto; padding:12px; border:1px solid #cbded7; border-radius:9px;
+      background:#fff; color:#24443d; box-shadow:0 8px 24px #12362b26; font:13px/1.42 system-ui,sans-serif;
+    }
+    .hhr-novelty-preview:popover-open { display:grid; gap:5px; }
+    .hhr-novelty-meta { color:#4d685f; font-size:12px; }
+    .hhr-novelty-preview p { margin:2px 0; overflow-wrap:anywhere; }
+    .hhr-novelty-preview a { color:#126559; font-weight:650; width:fit-content; }
     /* A tab that was open during an extension update can retain the old injected button. */
     [data-hhr-patient-code-action="1"] { display:none !important; }
     table[${marked}] > :is(thead,tbody) > tr > :is(th,td) {
@@ -273,14 +314,78 @@
     };
   };
 
+  function createBedIndex() {
+    const strip = document.createElement('details');
+    strip.dataset.hhrBedIndex = '';
+    strip.open = true;
+    const summary = document.createElement('summary');
+    summary.textContent = 'Camas';
+    const buttons = document.createElement('div');
+    strip.append(summary, buttons);
+    let entries = [];
+    let target;
+    let timer;
+    const clearSelection = () => {
+      clearTimeout(timer);
+      target?.removeAttribute('data-hhr-bed-target');
+      target = undefined;
+    };
+    const select = row => {
+      if (!row.isConnected || !row.getClientRects().length) return;
+      clearSelection();
+      target = row;
+      row.setAttribute('data-hhr-bed-target', '');
+      row.scrollIntoView({ block: 'center', behavior: 'instant' });
+      const action = row.querySelector('[data-hhr-rongorongo-link],td:nth-child(2) a[href],button[data-hhr-copy-run]');
+      action?.focus({ preventScroll: true });
+      timer = setTimeout(clearSelection, 2400);
+    };
+    return {
+      refresh(tables) {
+        const visible = tables.filter(table => table.getClientRects().length && !table.closest('[hidden]'));
+        const seen = new Set();
+        const next = visible.flatMap(table => [...table.querySelectorAll('tbody td[data-hhr-bed-order]')].flatMap(cell => {
+          const bed = cell.querySelector('.hhr-location-bed')?.textContent.trim();
+          const service = cell.querySelector('.hhr-location-service')?.textContent.trim();
+          const row = cell.closest('tr');
+          const key = JSON.stringify([service, bed]);
+          if (!bed || /^sin cama$/i.test(bed) || !row?.getClientRects().length || seen.has(key)) return [];
+          seen.add(key);
+          return [{ row, bed, service }];
+        }));
+        const container = visible[0]?.parentElement;
+        if (!container || !next.length) {
+          strip.remove();
+          entries = [];
+          clearSelection();
+          return;
+        }
+        if (strip.nextElementSibling !== container || strip.parentElement !== container.parentElement) container.before(strip);
+        if (next.length === entries.length && next.every(({ row, bed, service }, i) =>
+          row === entries[i].row && bed === entries[i].bed && service === entries[i].service)) return;
+        entries = next;
+        buttons.replaceChildren(...entries.map(({ row, bed, service }) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = bed;
+          button.setAttribute('aria-label', 'Ir a cama ' + bed + (service ? ' · ' + service : ''));
+          button.addEventListener('click', event => { if (event.isTrusted) select(row); });
+          return button;
+        }));
+      },
+    };
+  }
+
   const create = options => {
     let onWorklist = false;
     const drawerTools = globalThis.HhrWorklistDrawer?.create(options);
+    const bedIndex = createBedIndex();
     let layout;
     const clearLayout = () => {
       if (!layout) return;
       const { parent, rail, filters } = layout;
       parent.removeAttribute('data-hhr-worklist-layout');
+      parent.style.removeProperty('--hhr-worklist-sticky-top');
       rail.removeAttribute('data-hhr-worklist-rail');
       filters.removeAttribute('data-hhr-worklist-filterbar');
       layout = undefined;
@@ -347,6 +452,7 @@
       if (!heading) {
         if (onWorklist) { clear(); clearLayout(); }
         noveltyTooltip.hide();
+        bedIndex.refresh([]);
         onWorklist = false;
         return;
       }
@@ -354,6 +460,13 @@
       markLayout(pathname);
       noveltyTooltip.position();
       if (!style.isConnected) document.head?.append(style);
+      const activeTables = [];
+      const banner = document.querySelector('header.MuiAppBar-root');
+      const fixed = banner && ['fixed', 'sticky'].includes(getComputedStyle(banner).position);
+      const offset = (fixed ? banner.offsetHeight : 0) + 'px';
+      if (layout?.parent.style.getPropertyValue('--hhr-worklist-sticky-top') !== offset) {
+        layout?.parent.style.setProperty('--hhr-worklist-sticky-top', offset);
+      }
       for (const table of document.querySelectorAll(`${tableSelector},${markedSelector}`)) {
         const container = table.parentElement;
         const title = container.parentElement?.previousElementSibling;
@@ -362,11 +475,13 @@
         if (result) {
           const kind = /^Mis pacientes de interconsulta/i.test(result[0]) ? 'referrals' : 'results';
           if (table.getAttribute(marked) !== kind) table.setAttribute(marked, kind);
+          activeTables.push(table);
         } else {
           table.removeAttribute(marked);
         }
         table.toggleAttribute(complete, Boolean(result && Number(result[1]) === table.tBodies[0].rows.length));
       }
+      bedIndex.refresh(activeTables);
     };
     return Object.freeze({
       refresh,
@@ -374,6 +489,7 @@
         clear();
         clearLayout();
         noveltyTooltip.dispose();
+        bedIndex.refresh([]);
         drawerTools?.dispose();
         document.querySelectorAll('[data-hhr-bed-item],[data-hhr-bed-link]').forEach(node => node.remove());
         document.querySelectorAll('[data-hhr-menu-icon]').forEach(node => node.removeAttribute('data-hhr-menu-icon'));

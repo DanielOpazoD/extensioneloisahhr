@@ -3,7 +3,8 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const event = (id, role, category) => `<div id="${id}" class="MuiCard-root" style="background:white;border-radius:10px;margin-bottom:12px;padding:16px">
-  <div class="MuiCardHeader-root"><span class="MuiCardHeader-title">Profesional de prueba</span><span class="MuiCardHeader-subheader">${role}</span></div>
+  <div class="MuiCardHeader-root"><span class="MuiCardHeader-title">Profesional de prueba</span><span class="MuiCardHeader-subheader">${role}</span>
+    <span class="MuiCardHeader-action">${id === 'medical-today' ? '09:10 hrs' : '10:07 hrs'}</span></div>
   <div class="MuiCardContent-root"><p class="MuiTypography-root">${category}</p><div class="MuiStack-root"><div class="MuiStack-root" style="display:flex;gap:8px">
     <p class="MuiTypography-root" style="flex:1;margin:0">${'Texto sintético para verificar el ancho de lectura de una evolución. '.repeat(8)}</p>
     <div class="MuiChip-root" style="flex:none">Etiqueta</div></div></div></div></div>`;

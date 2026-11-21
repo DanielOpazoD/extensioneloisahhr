@@ -180,12 +180,14 @@
       if (disposed) return;
       if (encounterId !== nextEncounterId) { cancelNovelty(); clear(); }
       encounterId = nextEncounterId;
-      if (nextEncounterId && location.hash === NOVELTY_HASH &&
+      const targetMinute = location.hash.startsWith(NOVELTY_HASH + '=')
+        ? location.hash.slice(NOVELTY_HASH.length + 1) : '';
+      if (nextEncounterId && (location.hash === NOVELTY_HASH || /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(targetMinute)) &&
           location.pathname.replace(/\/$/, '') === '/dashboard/encounter-list-nurse/' + nextEncounterId) {
         cancelNovelty();
         clearHighlight();
         history.replaceState(history.state, '', location.pathname + location.search);
-        novelty = { tab: null, opened: false };
+        novelty = { tab: null, opened: false, minute: targetMinute };
         noveltyTimeout = setTimeout(() => {
           cancelNovelty();
           onNoveltyUnavailable();
@@ -251,9 +253,21 @@
       if (novelty) {
         // Historial renders the newest groups and publications first. Match
         // the role in the native header, independently of the event category.
-        const card = groups.flatMap(group => [...group.element.querySelectorAll(':scope > .MuiCard-root')])
-          .find(element => element.getClientRects().length && medicalRole.test(
-            element.querySelector(':scope > .MuiCardHeader-root .MuiCardHeader-subheader')?.textContent.trim() || ''));
+        const minute = novelty.minute;
+        const candidateGroups = minute ? groups.filter(group => {
+          const [year, month, day] = minute.slice(0, 10).split('-');
+          return group.label.replaceAll('/', '-').endsWith(day + '-' + month + '-' + year);
+        }) : groups;
+        const matches = candidateGroups.flatMap(group => [...group.element.querySelectorAll(':scope > .MuiCard-root')])
+          .filter(element => {
+            const header = element.querySelector(':scope > .MuiCardHeader-root');
+            if (!element.getClientRects().length || !medicalRole.test(
+              header?.querySelector('.MuiCardHeader-subheader')?.textContent.trim() || '')) return false;
+            if (!minute) return true;
+            const action = header.querySelector('.MuiCardHeader-action');
+            return /^\s*(\d{2}:\d{2})(?:\s*(?:hrs?|h))?\.?\s*$/i.exec(action?.textContent || '')?.[1] === minute.slice(11);
+          });
+        const card = minute && matches.length !== 1 ? undefined : matches[0];
         if (card) {
           cancelNovelty();
           highlighted = { card, tabIndex: card.getAttribute('tabindex') };

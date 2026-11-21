@@ -43,7 +43,8 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   const lists = [[20,21], [21,22], [22,23], [30]];
   const publication = '2026-11-20T09:10:00-05:00';
   const historyRead = vi.fn(async path => ({ data: path.includes('/21/') ? [{
-    publishDatetime: publication, evolutionResume: [{ HCPR_NAME: 'Médico' }],
+    publishDatetime: publication, evolutionResume: [{ HCPR_NAME: 'Médico', HCP_LEGAL: 'Profesional de prueba',
+      OBE_NOTES: '<p>Texto de la evolución sintética</p>' }],
   }] : [{
     publishDatetime: publication, patientPharmaIndicationResume: [{ HCP_ROLE: 'Médica' }],
   }] }));
@@ -124,6 +125,18 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   ]);
   expect([...document.querySelectorAll('a[data-hhr-patient-novelty]')].map(link=>link.dataset.hhrNoveltyKind))
     .toEqual(['indication', 'evolution']);
+  const evolution = document.querySelector('a[data-hhr-novelty-kind="evolution"]');
+  const preview = evolution.nextElementSibling;
+  expect(preview.getAttribute('popover')).toBe('auto');
+  expect(preview.textContent).toContain('09:10 · Profesional de prueba');
+  expect(preview.textContent).toContain('Texto de la evolución sintética');
+  expect(preview.querySelector('a').getAttribute('href')).toBe(path + '/21#hhr-ultima-publicacion=2026-11-20T09:10');
+  preview.showPopover = vi.fn();
+  const activation = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+  await act(() => evolution.dispatchEvent(activation));
+  expect(activation.defaultPrevented).toBe(true);
+  expect(preview.showPopover).toHaveBeenCalledOnce();
+  expect(document.activeElement).toBe(preview.querySelector('a'));
   expect(historyRead.mock.calls.map(([url]) => url)).toEqual([
     '/encounter/22/getPatientEncounterHistoryReportServer/false/0/0/-14',
     '/encounter/21/getPatientEncounterHistoryReportServer/false/0/0/-14',

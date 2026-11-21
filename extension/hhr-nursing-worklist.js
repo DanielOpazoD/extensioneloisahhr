@@ -72,6 +72,8 @@
     function NoveltyLink({ episode, publication, publisher, ...marker }) {
       const read = React.useContext(ReadNovelty);
       const linkRef = React.useRef(null);
+      const previewRef = React.useRef(null);
+      const [expanded, setExpanded] = React.useState(false);
       const [resolved, setResolved] = React.useState();
       React.useEffect(() => {
         const link = linkRef.current;
@@ -82,16 +84,62 @@
           observer.disconnect();
           const current = () => active && link.isConnected &&
             location.pathname.replace(/\/$/, '') === '/dashboard/encounter-list-nurse';
-          void read(episode, publication, publisher, current).then(kind => {
-            if (current()) setResolved({ episode, publication, publisher, kind });
+          void read(episode, publication, publisher, current).then(detail => {
+            if (current()) setResolved({ episode, publication, publisher, detail });
           });
         });
         observer.observe(link);
         return () => { active = false; observer.disconnect(); };
       }, [episode, publication, publisher, read]);
-      const kind = resolved?.episode === episode && resolved.publication === publication &&
-        resolved.publisher === publisher ? resolved.kind : undefined;
-      return globalThis.HhrWorklistPrintColumn.renderNovelty(jsx, { ...marker, kind, linkRef });
+      const detail = resolved?.episode === episode && resolved.publication === publication &&
+        resolved.publisher === publisher ? resolved.detail : undefined;
+      const open = event => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+        const preview = previewRef.current;
+        if (typeof preview?.showPopover !== 'function') return;
+        event.preventDefault();
+        if (preview.matches(':popover-open')) { preview.hidePopover(); return; }
+        preview.showPopover();
+        const anchor = linkRef.current.getBoundingClientRect();
+        const { width, height } = preview.getBoundingClientRect();
+        const above = anchor.top - height - 8;
+        preview.style.left = Math.max(8, Math.min(innerWidth - width - 8, anchor.left)) + 'px';
+        preview.style.top = Math.max(8, Math.min(innerHeight - height - 8, above >= 8 ? above : anchor.bottom + 8)) + 'px';
+        preview.querySelector('a').focus({ preventScroll: true });
+      };
+      React.useEffect(() => {
+        if (!expanded) return;
+        const preview = previewRef.current;
+        const close = event => {
+          if (!(event.target instanceof Node) || !preview.contains(event.target)) preview.hidePopover();
+        };
+        window.addEventListener('scroll', close, true);
+        window.addEventListener('resize', close);
+        return () => {
+          window.removeEventListener('scroll', close, true);
+          window.removeEventListener('resize', close);
+        };
+      }, [expanded]);
+      return jsx(React.Fragment, { children: [
+        globalThis.HhrWorklistPrintColumn.renderNovelty(jsx, { ...marker, kind: detail?.kind, linkRef, onClick: open, expanded }),
+        jsx('div', {
+          ref: previewRef, popover: 'auto', className: 'hhr-novelty-preview', role: 'dialog', 'aria-label': 'Novedad médica',
+          onToggle: event => setExpanded(event.currentTarget.matches(':popover-open')),
+          onKeyDown: event => {
+            if (event.key === 'Escape') {
+              event.currentTarget.hidePopover();
+              linkRef.current?.focus({ preventScroll: true });
+            }
+          },
+          children: [
+            jsx('strong', { children: detail?.kind === 'evolution' ? 'Evolución' : detail?.kind === 'indication' ? 'Indicación' : 'Novedad médica' }, 'type'),
+            jsx('span', { className: 'hhr-novelty-meta',
+              children: [detail?.minute.slice(11), detail?.author].filter(Boolean).join(' · ') || marker.title }, 'meta'),
+            jsx('p', { children: detail?.excerpt || 'Abre el Historial para leer la publicación.' }, 'excerpt'),
+            jsx('a', { href: detail ? marker.href + '=' + detail.minute : marker.href, children: 'Abrir en Historial ↗' }, 'history'),
+          ],
+        }, publication),
+      ] });
     }
     function Capture(props) {
       const source = React.useContext(Source);
