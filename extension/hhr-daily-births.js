@@ -71,9 +71,8 @@
 
   async function historyFor(fetchImpl, month, day) {
     const feed = wikipedia + '/api/rest_v1/feed/onthisday/';
-    const signal = AbortSignal.timeout(4500);
     const load = async type => {
-      const response = await retrieve(fetchImpl, feed + type + '/' + month + '/' + day, signal);
+      const response = await retrieve(fetchImpl, feed + type + '/' + month + '/' + day, AbortSignal.timeout(3500));
       const entries = (await response.json())[type];
       if (!Array.isArray(entries)) throw new Error('No se reconoció la lista de hechos históricos.');
       const result = [];

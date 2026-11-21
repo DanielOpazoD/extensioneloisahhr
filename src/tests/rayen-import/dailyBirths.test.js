@@ -99,4 +99,7 @@ it('falls back to linked events and keeps the calendar and births available if h
     history:[{ year:1904, text:'Abre el Canal de prueba.', url:'https://es.wikipedia.org/wiki/Canal_de_prueba' }],
     historyUnavailable:false,
   });
+  const requests = fetch.mock.calls.filter(([url]) => /\/(?:selected|events)\/11\/25$/.test(url));
+  expect(requests.map(([url]) => new URL(url).pathname.split('/').at(-3))).toEqual(['selected', 'events']);
+  expect(requests[0][1].signal).not.toBe(requests[1][1].signal);
 });

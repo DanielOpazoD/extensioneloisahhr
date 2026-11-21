@@ -617,6 +617,7 @@
     if (!bar) return;
     const worklistLayout = document.querySelector('[data-hhr-worklist-layout]');
     if (worklistLayout) {
+      bar.style.removeProperty('--hhr-ops-top');
       if (bar.parentElement !== worklistLayout) worklistLayout.append(bar);
       return;
     }
