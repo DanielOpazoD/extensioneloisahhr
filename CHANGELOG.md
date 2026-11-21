@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.126
+
+- En Gestión de cuidados, la novedad muestra una indicación en azul o una evolución en violeta cuando coincide con una publicación médica del Historial. El pulso ámbar queda para los demás casos. El icono sigue abriendo el Historial del episodio.
+
 ## 0.48.125
 
 - El icono de novedad abre el Historial del episodio y resalta la publicación médica más reciente entre las tarjetas cargadas por Eloísa.

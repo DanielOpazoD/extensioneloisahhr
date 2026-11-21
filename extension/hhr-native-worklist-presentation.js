@@ -70,6 +70,10 @@
       }
       a[data-hhr-patient-novelty]:hover { background:#ffe0ab; }
       a[data-hhr-patient-novelty]:focus-visible { outline:2px solid #775119; outline-offset:2px; }
+      a[data-hhr-novelty-kind="indication"] { color:#0d6378; background:#e0f3f6; }
+      a[data-hhr-novelty-kind="indication"]:hover { background:#c2e7ee; }
+      a[data-hhr-novelty-kind="evolution"] { color:#65478b; background:#eee7f8; }
+      a[data-hhr-novelty-kind="evolution"]:hover { background:#dfd1f1; }
       button[data-hhr-edit-episode] { opacity:0; display:inline-grid; place-items:center; flex:none;
         inline-size:25px; block-size:25px; border:0; border-radius:4px; padding:2px; background:transparent; color:#166963; cursor:pointer; }
       tr:is(:hover,:focus-within) button[data-hhr-edit-episode], button[data-hhr-edit-episode]:focus-visible { opacity:1; }

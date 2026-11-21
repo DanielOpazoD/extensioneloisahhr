@@ -88,7 +88,22 @@
     return withChildren(jsx, cell, elapsed.replace(/(\d+)\s+horas?\b/gi, '$1 h'));
   }
 
-  function patientCell(jsx, cell, nursing, editId, noveltyTitle) {
+  function renderNovelty(jsx, { linkType, href, title, kind, linkRef }) {
+    const type = kind === 'indication' ? 'Indicación' : kind === 'evolution' ? 'Evolución' : '';
+    const path = kind === 'indication' ? 'M3 2h10v12H3z M5 5h6m-6 3h6m-6 3h3'
+      : kind === 'evolution' ? 'M3 2h7l3 3v9H3z M10 2v3h3 M5 10l2 2 4-4' : 'M2 8h3l2-4 2 8 2-4h3';
+    return jsx(href ? linkType || 'a' : 'span', {
+      'data-hhr-patient-novelty': '', 'data-hhr-novelty-kind': kind,
+      ...(href ? { href, ref: linkRef, 'aria-label': type ? 'Abrir ' + type.toLowerCase() + ' médica en Historial' : 'Abrir última publicación médica en Historial' }
+        : { role: 'img', 'aria-label': 'Con novedad' }),
+      title: type ? type + ' · ' + title : title,
+      children: jsx('svg', { viewBox: '0 0 16 16', width: 13, height: 13, fill: 'none', stroke: 'currentColor',
+        strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true,
+        children: jsx('path', { d: path }) }),
+    }, 'novelty');
+  }
+
+  function patientCell(jsx, cell, nursing, editId, noveltyTitle, publication, NoveltyLink) {
     function present(node) {
       if (Array.isArray(node)) {
         const next = node.map(present);
@@ -115,14 +130,14 @@
       const novelty = noveltyTitle && /^\/dashboard\/encounter-list-nurse\/([1-9]\d*)\/?$/.exec(node.props.href);
       if (!edit && !novelty) return current;
       const canOpenHistory = novelty && edit && novelty[1] === editId;
+      const marker = {
+        linkType: node.props.component, title: noveltyTitle,
+        href: canOpenHistory ? node.props.href + '#hhr-ultima-publicacion' : undefined,
+      };
       return jsx('span', { className: 'hhr-patient-name-line', children: [current,
-        novelty && jsx(canOpenHistory ? node.props.component || 'a' : 'span', {
-          'data-hhr-patient-novelty': '',
-          ...(canOpenHistory ? { href: node.props.href + '#hhr-ultima-publicacion',
-            'aria-label': 'Abrir última publicación médica en Historial' } : { role: 'img', 'aria-label': 'Con novedad' }),
-          title: noveltyTitle, children: jsx('svg', { viewBox: '0 0 16 16',
-            width: 13, height: 13, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round',
-            strokeLinejoin: 'round', 'aria-hidden': true, children: jsx('path', { d: 'M2 8h3l2-4 2 8 2-4h3' }) }) }, 'novelty'),
+        novelty && (canOpenHistory && publication && NoveltyLink
+          ? jsx(NoveltyLink, { ...marker, episode: editId, ...publication }, 'novelty')
+          : renderNovelty(jsx, marker)),
         edit && jsx('button', { type: 'button', 'data-hhr-edit-episode': editId, title: 'Modificar paciente en Gestión de Camas',
           'aria-label': 'Modificar paciente en Gestión de Camas', children: jsx('svg', { viewBox: '0 0 24 24',
             width: 15, height: 15, fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, 'aria-hidden': true,
@@ -132,7 +147,7 @@
     return withChildren(jsx, cell, present(cell.props.children));
   }
 
-  const adapt = (jsx, props, route) => {
+  const adapt = (jsx, props, route, { publications, NoveltyLink } = {}) => {
     const { columns, children: rows } = props;
     if (!Array.isArray(columns) || !Array.isArray(rows) || !Number.isInteger(props.listLenght) ||
         columns[0]?.id !== 'location' || columns[1]?.id !== 'patient') return props;
@@ -166,7 +181,7 @@
           ? 'Con novedad · Última publicación médica hace ' + elapsed.replace(/\s+/g, ' ')
           : 'Con novedad';
       }
-      cells[1] = patientCell(jsx, cells[1], nursing, encId, noveltyTitle);
+      cells[1] = patientCell(jsx, cells[1], nursing, encId, noveltyTitle, publications?.get(encId), NoveltyLink);
       if (diagnosis >= 0) cells[diagnosis] = compactDiagnosis(jsx, cells[diagnosis]);
       if (cells[doctor]?.props) {
         const cell = cells[doctor];
@@ -185,5 +200,5 @@
     });
     return { ...props, columns: nextColumns, children: orderRows(adaptedRows) };
   };
-  globalThis.HhrWorklistPrintColumn = Object.freeze({ adapt, orderRows });
+  globalThis.HhrWorklistPrintColumn = Object.freeze({ adapt, orderRows, renderNovelty });
 })();
