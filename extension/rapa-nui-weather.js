@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const endpoint = 'https://api.open-meteo.com/v1/forecast?latitude=-27.15&longitude=-109.43' +
-    '&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,wind_gusts_10m' +
+    '&current=temperature_2m,weather_code,wind_speed_10m,is_day&hourly=temperature_2m,precipitation_probability,wind_gusts_10m' +
     '&forecast_hours=73&timeformat=unixtime&timezone=Pacific%2FEaster';
   const valid = values => values.length && values.every(Number.isFinite);
   const round = Math.round;
@@ -21,7 +21,8 @@
       rain: round(Math.max(...rain.slice(start, start + 24))),
       gust: round(Math.max(...gusts.slice(start, start + 24))),
     }));
-    return { current: round(current.temperature_2m), code: current.weather_code, wind: round(current.wind_speed_10m), bands };
+    return { current: round(current.temperature_2m), code: current.weather_code,
+      wind: round(current.wind_speed_10m), isDay: current.is_day !== 0, bands };
   }
 
   let recent;

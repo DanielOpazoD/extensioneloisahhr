@@ -61,8 +61,7 @@
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
     fetchWeather: () => chrome.runtime.sendMessage({ type: runtimeMessages.RAPA_NUI_WEATHER }),
-    openFavorites: () => createFavoritesDialog(),
-    extensionVersion: uiLifecycle.version,
+    openFavorites: drawer => createFavoritesDialog(null, null, drawer),
   });
 
   const BUTTON_ID = 'hhr-prescription-print-button';

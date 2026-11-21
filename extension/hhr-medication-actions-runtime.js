@@ -148,11 +148,11 @@
       }
     };
 
-    const createFavoritesDialog = (existingRoot = null, onBack) => {
+    const createFavoritesDialog = (existingRoot = null, onBack, drawer) => {
       const focusReturnTarget = documentRef.activeElement;
       if (!existingRoot && !closeModal()) return;
       ensureStyles();
-      const root = existingRoot || documentRef.createElement('div');
+      const root = existingRoot || documentRef.createElement(drawer ? 'dialog' : 'div');
       if (!existingRoot) root.id = modalId;
       const markup = `
         <div class="hhr-rx-backdrop" aria-hidden="true"></div>
@@ -165,11 +165,11 @@
           <div class="hhr-rx-body">
             <div class="hhr-fav-list"></div>
             <div class="hhr-rx-format-title">Agregar favorito</div>
-            <div class="hhr-fav-form">
+            <form class="hhr-fav-form" novalidate>
               <input class="hhr-rx-search hhr-fav-name" type="text" maxlength="60" placeholder="Nombre" aria-label="Nombre del favorito">
               <input class="hhr-rx-search hhr-fav-url" type="url" maxlength="300" placeholder="https://…" aria-label="URL del favorito">
-              <button class="hhr-rx-action hhr-rx-action-primary hhr-fav-add" type="button">Agregar</button>
-            </div>
+              <button class="hhr-rx-action hhr-rx-action-primary hhr-fav-add" type="submit">Agregar</button>
+            </form>
             <div class="hhr-connection-feedback hhr-fav-feedback" role="status" aria-live="polite"></div>
           </div>
           <footer class="hhr-rx-footer">
@@ -186,7 +186,18 @@
         main.innerHTML = '<div class="hhr-center-toolbar"><h2 class="hhr-center-heading">Favoritos</h2><button class="hhr-center-action hhr-fav-back" type="button">Volver a ajustes</button></div>';
         main.append(view); main.querySelector('.hhr-fav-back').addEventListener('click', () => onBack?.());
       } else {
-        root.innerHTML = markup; root.dataset.routeIndependent = 'true'; documentRef.body.appendChild(root); view = root;
+        root.innerHTML = markup;
+        root.dataset.routeIndependent = 'true';
+        if (drawer) {
+          root.dataset.hhrDrawerFavorites = '';
+          root.setAttribute('aria-labelledby', 'hhr-rx-title');
+          const section = root.querySelector('.hhr-rx-dialog');
+          section.removeAttribute('role');
+          section.removeAttribute('aria-modal');
+          section.removeAttribute('aria-labelledby');
+        }
+        (drawer || documentRef.body).appendChild(root);
+        view = root;
       }
       const list = view.querySelector('.hhr-fav-list');
       const nameInput = view.querySelector('.hhr-fav-name');
@@ -194,19 +205,20 @@
       const feedback = view.querySelector('.hhr-fav-feedback');
       const addButton = view.querySelector('.hhr-fav-add');
       if (!existingRoot) {
-      const dismiss = modalDismissWithFocusRestore(root, focusReturnTarget);
-      root.__hhrDismiss = dismiss;
-      root.querySelector('.hhr-rx-cancel').addEventListener('click', dismiss);
-      root.querySelector('.hhr-rx-close').addEventListener('click', dismiss);
-      root.querySelector('.hhr-rx-backdrop').addEventListener('click', dismiss);
-      root.addEventListener('keydown', event => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          dismiss();
-          return;
-        }
-        trapModalFocus(root, event);
-      });
+        const dismiss = modalDismissWithFocusRestore(root, focusReturnTarget);
+        root.__hhrDismiss = dismiss;
+        root.querySelector('.hhr-rx-cancel').addEventListener('click', dismiss);
+        root.querySelector('.hhr-rx-close').addEventListener('click', dismiss);
+        root.querySelector('.hhr-rx-backdrop').addEventListener('click', dismiss);
+        root.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            if (drawer) event.stopPropagation();
+            dismiss();
+            return;
+          }
+          if (!drawer) trapModalFocus(root, event);
+        });
       }
 
       let favorites = [];
@@ -263,7 +275,8 @@
         });
       };
 
-      addButton.addEventListener('click', async () => {
+      view.querySelector('.hhr-fav-form').addEventListener('submit', async event => {
+        event.preventDefault();
         if (favoritesMutationPending) return;
         const url = normalizeFavoriteUrl(urlInput.value);
         if (!url) {
@@ -290,7 +303,9 @@
         nameInput.focus();
       });
 
+      if (drawer) root.showModal();
       if (!existingRoot) root.querySelector('.hhr-rx-close').focus();
+      setFavoritesMutationPending(true);
       readFavorites().then(async stored => {
         if (!view.isConnected) return;
         if (stored === undefined) {
@@ -300,6 +315,7 @@
         }
         if (stored) {
           favorites = stored;
+          setFavoritesMutationPending(false);
           renderList();
           return;
         }
@@ -308,6 +324,7 @@
         ];
         const saved = await writeFavorites(defaults);
         if (!view.isConnected) return;
+        setFavoritesMutationPending(false);
         if (!saved) {
           setLiveRegion(feedback, 'No se pudieron inicializar los favoritos.', 'error');
           renderList();
