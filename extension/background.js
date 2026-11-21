@@ -1187,7 +1187,6 @@ const handlePatientClinicalBundleRequest = self.HhrPatientClinicalBundleRuntime.
   readAlerts: self.HhrFichaMedicoAlertEntryRuntime.create({ authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); }, resolveSession: resolveFichaClinicalSession, readJson: options => fichaMedicoClinicalClient.readJson(options), clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify }).fetchAlertEntries,
   readFluidBalance: self.HhrFichaMedicoFluidBalanceRuntime.create({ authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); }, resolveSession: resolveFichaClinicalSession, readJson: options => fichaMedicoClinicalClient.readJson(options), clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify }).fetchFluidBalance,
 });
-
 const worklistPatientEditor = self.HhrWorklistPatientEditor.create({
   chrome, getContext: getClinicalReportContext, getInfo: getFichaFetchInfo, checkAccess: checkWorklistChartAccess,
 });
