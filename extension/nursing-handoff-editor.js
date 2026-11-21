@@ -10,11 +10,21 @@
   const save = byId('save');
   const connect = byId('connect');
   const disconnect = byId('disconnect');
+  const currentShift = byId('current-shift');
+  const recovery = byId('recovery');
+  const recoveryText = byId('recovery-text');
+  const recoveryVersions = byId('recovery-versions');
+  const recovered = [];
+  const restoreDraft = byId('restore-draft');
+  const slotDate = new Intl.DateTimeFormat('es-CL', {
+    timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short',
+  });
   let slot;
   let base;
   let pendingVersion;
   let remote;
   let saving = false;
+  let ended = false;
   let available = false;
   let ready = false;
   let hosted = false;
@@ -34,7 +44,10 @@
         !['day', 'night'].includes(value.shift)) return;
     const { date, shift } = value;
     slot = { date, shift };
-    byId('slot').textContent = (shift === 'day' ? 'Día' : 'Noche') + ' · ' + date.split('-').reverse().join('-');
+    const label = slotDate.format(new Date(date + 'T00:00:00Z')).replaceAll('.', '');
+    const capitalized = label.charAt(0).toUpperCase() + label.slice(1);
+    byId('slot').textContent = capitalized + ' · ' + (shift === 'day' ? 'Día' : 'Noche');
+    byId('slot').title = date;
   };
   const send = (action, data = {}) => chrome.runtime.sendMessage({
     type: HhrRayenMessageContract.types.NURSING_HANDOFF_EDITOR, id, action, ...data,
@@ -49,8 +62,8 @@
     save.hidden = edit.hidden;
     save.disabled = saving || !available || !ready || Boolean(remote) || !changed;
     disconnect.disabled = saving;
-    note.readOnly = saving;
-    if (inline && base && reportedDirty !== changed) {
+    note.readOnly = saving || ended;
+    if (inline && reportedDirty !== changed) {
       reportedDirty = changed;
       window.parent.postMessage({ type: 'hhr-handoff-row-dirty', value: changed }, 'https://fichamedico.rayensalud.cl');
     }
@@ -94,6 +107,32 @@
     edit.hidden = false;
     updateButtons();
   };
+  const showDraft = () => show(dirty() ? 'Borrador sin guardar' : '', dirty() ? 'draft' : '');
+  const selectedRecovery = () => recovered[Number(recoveryVersions.value)];
+  const showRecovery = () => {
+    const version = selectedRecovery();
+    if (!version) return;
+    recoveryText.value = version.text;
+    restoreDraft.hidden = ended || version.slot !== slot || !version.canRestore;
+  };
+  const preserveText = (label, text, canRestore) => {
+    const index = recovered.findIndex(entry => entry.slot === slot && entry.text === text);
+    if (index >= 0) recovered.splice(index, 1);
+    recovered.unshift({ label, text, canRestore, slot });
+    recoveryVersions.replaceChildren(...recovered.map((entry, position) => new Option(entry.label, position)));
+    recoveryVersions.hidden = recovered.length < 2;
+    byId('recovery-label').textContent = recovered.length === 1 ? label : 'Textos conservados (' + recovered.length + ')';
+    recovery.open = false;
+    recovery.hidden = false;
+    showRecovery();
+  };
+  const clearRecovery = () => {
+    recovered.length = 0;
+    recoveryVersions.replaceChildren();
+    recoveryText.value = '';
+    recovery.hidden = true;
+  };
+  recoveryVersions.addEventListener('change', showRecovery);
   const raise = result => {
     if (result.code === 'HHR_LINK_REQUIRED') {
       ready = false;
@@ -106,8 +145,19 @@
       connect.hidden = disconnect.hidden = true;
       byId('patient').textContent = '';
       byId('slot').textContent = '';
+      clearRecovery();
     }
-    if (result.code === 'FAILED_PRECONDITION') available = false;
+    if (result.code === 'FAILED_PRECONDITION') {
+      available = false;
+      ended = Boolean(slot && /^Cambió el turno/i.test(result.error));
+      currentShift.hidden = !ended;
+      restoreDraft.hidden = true;
+      if (ended) {
+        show(dirty() ? 'Cambió el turno. Tu borrador pertenece al turno anterior.' : 'Cambió el turno.', 'draft');
+        updateButtons();
+        return;
+      }
+    }
     if (result.code === 'NOT_FOUND') {
       pinSlot(result.slot);
       ready = false;
@@ -140,7 +190,7 @@
       if (dirty()) {
         draftVersion = result.draft.version;
         if (draftVersion !== result.version) notifyRemote(result);
-        else show('Borrador recuperado');
+        else show('Borrador recuperado', 'draft');
       } else saveDraft();
       updateButtons();
     } else if (pendingVersion !== result.version) {
@@ -153,7 +203,7 @@
     } else {
       edit.hidden = false;
       conflict.hidden = !remote;
-      if (status.dataset.tone === 'error' && !remote) show(dirty() ? 'Sin guardar' : '');
+      if (status.dataset.tone === 'error' && !remote) showDraft();
       updateButtons();
     }
     if (!inline || document.activeElement === note) void follow(generation, true);
@@ -179,7 +229,7 @@
   });
   note.addEventListener('focus', resumeRow);
   note.addEventListener('input', () => {
-    if (!remote) show(dirty() ? 'Sin guardar' : '');
+    if (!remote) showDraft();
     updateButtons();
     saveDraft();
   });
@@ -214,16 +264,46 @@
     if (available) setTimeout(() => void follow(generation), 2000);
   });
   byId('keep').addEventListener('click', () => {
-    if (remote) accept(remote, note.value);
+    if (!remote || ended || !available) return;
+    preserveText('Versión de HHR conservada', remote.text, true);
+    accept(remote, note.value);
     saveDraft();
-    show(dirty() ? 'Sin guardar' : '');
+    showDraft();
     note.focus();
   });
   byId('use-remote').addEventListener('click', () => {
-    if (remote) accept(remote);
+    if (!remote || ended || !available) return;
+    preserveText('Mi borrador conservado', note.value, true);
+    accept(remote);
     saveDraft();
     show('Nota al día');
     note.focus();
+  });
+  restoreDraft.addEventListener('click', () => {
+    const version = selectedRecovery();
+    if (ended || !available || saving || remote || !version?.canRestore || version.slot !== slot) return;
+    const text = version.text;
+    preserveText('Texto antes de recuperar', note.value, true);
+    note.value = text;
+    saveDraft();
+    updateButtons();
+    showDraft();
+    note.focus();
+  });
+  currentShift.addEventListener('click', () => {
+    if (!ended || saving) return;
+    if (dirty()) preserveText('Borrador · ' + byId('slot').textContent, note.value, false);
+    currentShift.hidden = conflict.hidden = edit.hidden = true;
+    byId('slot').textContent = '';
+    byId('slot').removeAttribute('title');
+    note.value = '';
+    base = slot = remote = pendingVersion = draftVersion = undefined;
+    ended = false;
+    available = true;
+    ready = false;
+    updateButtons();
+    show('Cargando turno vigente…', 'pending');
+    void follow(++polling);
   });
   edit.addEventListener('submit', async event => {
     event.preventDefault();
@@ -232,7 +312,7 @@
     ++polling;
     saving = true;
     updateButtons();
-    show('Guardando…');
+    show('Guardando…', 'pending');
     const { date, shift, version } = base;
     const result = await send('save', { date, shift, version, text: note.value });
     saving = false;

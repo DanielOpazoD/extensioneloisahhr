@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.134
+
+- Entrega de turno muestra la fecha censal y el turno confirmado por HHR. Si cambia el turno durante la edición, permite consultar el vigente y conserva el texto anterior abierto para revisión.
+- El editor distingue borrador, guardado en curso y guardado confirmado. Tras un conflicto, conserva la otra versión para consultarla y recuperarla durante la edición.
+
 ## 0.48.133
 
 - Gestión de cuidados incorpora una vista breve de la publicación médica junto a la fila, con hora, profesional, extracto y acceso al Historial.

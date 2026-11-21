@@ -34,9 +34,16 @@
         </div>
       </div>
     </div>
+    <details id="recovery" hidden>
+      <summary id="recovery-label">Texto conservado</summary>
+      <select id="recovery-versions" aria-label="Versión conservada" hidden></select>
+      <textarea id="recovery-text" aria-label="Texto conservado" rows="3" readonly></textarea>
+      <button type="button" class="quiet" id="restore-draft" hidden>Recuperar como borrador</button>
+    </details>
     <footer>
       <div class="handoff-receipt"><p id="status" role="status"></p></div>
       <button type="button" id="connect" hidden>Conectar HHR</button>
+      <button type="button" id="current-shift" hidden>Ver turno vigente</button>
       <button type="submit" form="edit" id="save" aria-keyshortcuts="Control+Enter Meta+Enter" hidden>Guardar</button>
     </footer>
     <div id="discard" hidden>
