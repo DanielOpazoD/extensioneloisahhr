@@ -138,7 +138,7 @@
       [data-hhr-worklist-layout] > * { grid-column:1 / -1; min-width:0; }
       [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { grid-column:1; grid-row:1; }
       [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] {
-        grid-column:2; grid-row:1; min-width:0; width:auto !important; height:auto !important;
+        flex:1 0 min(260px, 100%); width:auto !important; height:auto !important;
         min-height:32px; padding:1px 0 !important; gap:6px !important; box-sizing:border-box;
         display:flex; align-items:center; background:transparent; box-shadow:none;
         max-inline-size:460px;
@@ -169,13 +169,9 @@
       [data-hhr-worklist-filterbar] #long-button:hover { background:#e5f1ed; }
       [data-hhr-worklist-rail] [role="tab"]:focus-visible,
       [data-hhr-worklist-filterbar] #long-button:focus-visible { outline:2px solid #247c73; outline-offset:2px; }
-      @media(max-width:1120px) {
-        [data-hhr-worklist-layout="medical"] > [data-hhr-worklist-rail] { grid-column:1 / -1; }
-        [data-hhr-worklist-layout="medical"] > [data-hhr-worklist-filterbar] { grid-column:1 / -1; grid-row:2; margin-inline-end:0; }
-      }
       @media(max-width:740px) {
-        [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { grid-column:1 / -1; }
-        [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] { grid-column:1 / -1; grid-row:2; margin-inline-end:0; }
+        [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { flex-basis:100%; }
+        [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] { margin-inline-end:0; }
       }
     }
     .hhr-hospitalized-panel { box-sizing:border-box; background:white; border-radius:12px; padding:10px 12px; }

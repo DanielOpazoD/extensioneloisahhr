@@ -249,7 +249,7 @@ async function verifyWorklistWidth(page) {
     const right = bounds.main.right - bounds.panel.right;
     assert.ok(Math.abs(left - right) < 1, 'The worklist must stay centered');
     assert.ok(bounds.filters.top < bounds.panel.top && bounds.filters.right <= bounds.main.right + 1);
-    assert.ok(bounds.search.right <= bounds.station.left + 1 && bounds.station.right <= bounds.print.left + 1,
+    assert.ok(bounds.search.width >= 44 && bounds.search.right <= bounds.station.left + 1 && bounds.station.right <= bounds.print.left + 1,
       `Filter controls overlap at ${width}px: ${JSON.stringify(bounds)}`);
     if (width === 390) {
       assert.ok(bounds.filters.top >= bounds.tabs.bottom);
