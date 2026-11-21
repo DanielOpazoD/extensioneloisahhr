@@ -273,8 +273,19 @@ const verifyLists = async (context, origin, worker) => {
           const markers = rows.getByRole('link', { name: 'Abrir última publicación médica en Historial' });
           assert.equal(await markers.count(), name === 'Pacientes con novedad' ? total : 0);
           if (name === 'Pacientes con novedad') {
-            assert.equal((await markers.first().boundingBox()).height, 17);
-            assert.equal(await markers.first().getAttribute('title'), 'Con novedad · Última publicación médica hace 1 h');
+            const marker = markers.first();
+            assert.equal((await marker.boundingBox()).height, 17);
+            await marker.hover();
+            const tooltip = page.getByRole('tooltip');
+            await tooltip.waitFor();
+            assert.equal(await tooltip.textContent(), 'Con novedad · Última publicación médica hace 1 h');
+            const target = await marker.boundingBox();
+            const bubble = await tooltip.boundingBox();
+            assert.ok(Math.abs(Math.max(target.y - bubble.y - bubble.height, bubble.y - target.y - target.height) - 6) < 2);
+            assert.ok(bubble.x < target.x + target.width && bubble.x + bubble.width > target.x);
+            await marker.focus();
+            await marker.press('Escape');
+            await tooltip.waitFor({ state: 'detached' });
           }
           assert.equal(await rows.locator('button[id="fade-button"]').count(), total);
           assert.equal(await rows.locator('button[id="fade-button"]:visible').count(), 0);

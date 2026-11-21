@@ -96,11 +96,22 @@
       'data-hhr-patient-novelty': '', 'data-hhr-novelty-kind': kind,
       ...(href ? { href, ref: linkRef, 'aria-label': type ? 'Abrir ' + type.toLowerCase() + ' médica en Historial' : 'Abrir última publicación médica en Historial' }
         : { role: 'img', 'aria-label': 'Con novedad' }),
-      title: type ? type + ' · ' + title : title,
+      'data-hhr-novelty-help': type ? type + ' · ' + title : title,
       children: jsx('svg', { viewBox: '0 0 16 16', width: 13, height: 13, fill: 'none', stroke: 'currentColor',
         strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true,
         children: jsx('path', { d: path }) }),
     }, 'novelty');
+  }
+
+  function chartAction(jsx, cell, route, episode) {
+    const link = cell?.props?.children;
+    const href = link?.props?.href;
+    if (!link?.props?.LinkComponent || typeof href !== 'string' ||
+        href.replace(/\/$/, '') !== route + '/' + episode) return cell;
+    return withChildren(jsx, cell, jsx(link.type, {
+      ...link.props, 'aria-label': 'Abrir ficha clínica', 'data-hhr-rongorongo-link': '',
+      children: jsx('span', { className: 'hhr-rongorongo-icon', 'aria-hidden': true }),
+    }, link.key ?? undefined));
   }
 
   function patientCell(jsx, cell, nursing, editId, noveltyTitle, publication, NoveltyLink) {
@@ -172,6 +183,7 @@
     const adaptedRows = rows.map(row => {
       const cells = row.props.children.slice();
       const { encId, patientId } = encounterForRow(cells, discharge, route);
+      if (nursing && encId) cells[cells.length - 1] = chartAction(jsx, cells.at(-1), route, encId);
       cells[0] = compactLocation(jsx, cells[0]);
       if (activity >= 0) cells[activity] = compactActivity(jsx, cells[activity]);
       let noveltyTitle;

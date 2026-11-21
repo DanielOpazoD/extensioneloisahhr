@@ -6,6 +6,13 @@
   const activity = ['Estadía', 'Última novedad', 'Última atención'];
   const columnIds = ['location', 'patient', 'hhrPrint', 'diagnosisAdmission', 'crd', 'assignesDoctor', 'isolated', 'activity', 'actions', 'link'];
   const handoffColumns = new Set(['location', 'patient', 'hhrPrint', 'diagnosisAdmission', 'activity']);
+  const loadingColumns = [
+    ['location', 'Ubicación', '8%'], ['patient', 'Paciente', '20%'], ['hhrPrint', 'Imprimir', '1%'],
+    ['diagnosisAdmission', 'Diagnóstico Ingreso', '35%'], ['crd', 'CRD', '5%'],
+    ['assignesDoctor', 'Médico tratante', '136px'], ['isolated', 'Aislado', '6%'],
+    ['activity', 'Entrega de turno', '10%'], ['actions', 'Acciones', '5%'], ['link', '', '5%'],
+  ].map(([id, label, width]) => ({ id, label, style: { width } }));
+  const emptySource = { columns: [], children: [] };
 
   function joinTables(jsx, tables, handoff = globalThis.HhrNursingHandoffDemo === true) {
     const headers = new Map();
@@ -107,6 +114,22 @@
       }, [registry, source, adapted]);
       return registry && source != null ? null : jsx(Table, adapted);
     }
+    function NativeLoading({ type, props }) {
+      return React.useContext(Source) == null ? jsx(type, props) : null;
+    }
+    function SourceFailure({ type, props } = {}) {
+      const index = React.useContext(Source);
+      const registry = React.useContext(Registry);
+      React.useLayoutEffect(() => {
+        if (index == null || !registry) return;
+        registry.set(index, emptySource);
+        return () => registry.set(index, null);
+      }, [index, registry]);
+      return index == null ? jsx(type, props) : jsx('p', {
+        role: 'alert', className: 'hhr-care-error',
+        children: 'No se pudo cargar la lista de ' + sources[index].toLowerCase() + '.',
+      });
+    }
     function makeRegistry() {
       let tables = [null, null, null];
       const listeners = new Set();
@@ -121,10 +144,10 @@
       const [expanded, setExpanded] = React.useState(false);
       const [visited, setVisited] = React.useState(false);
       const result = joinTables(jsx, tables, true);
-      if (!result.listLenght && !tables.every(Boolean)) return null;
+      const loading = !result.listLenght && !tables.every(Boolean);
       const columns = expanded ? result.columns.filter(column => handoffColumns.has(column.id)).map(column =>
         column.id === 'activity' ? { ...column, style: { ...column.style, width: '52%' } } : column
-      ) : result.columns;
+      ) : result.columns.length ? result.columns : loadingColumns;
       const rows = visited ? result.children.map(row => React.cloneElement(row, { children:
         result.columns.flatMap(({ id }, index) => {
           if (expanded && !handoffColumns.has(id)) return [];
@@ -150,7 +173,11 @@
             children: expanded ? 'Volver a la lista' : 'Entrega de turno',
           }, 'toggle'),
         ] }, 'handoff-toolbar'),
-        jsx(Table, { ...result, columns, children: rows, currentPage: 1, header: jsx('div', {
+          loading ? jsx('div', { className: 'hhr-care-loading', role: 'status', 'aria-label': 'Cargando pacientes hospitalizados',
+            children: jsx(Table, { columns: loadingColumns, listLenght: 5, currentPage: 1, children:
+              Array.from({ length: 5 }, (_, i) => jsx('tr', { 'aria-hidden': true, children:
+                loadingColumns.map(({ id }) => jsx('td', { children: jsx('span', { className: 'hhr-care-placeholder' }) }, id)),
+              }, i)) }) }, 'loading') : jsx(Table, { ...result, columns, children: rows, currentPage: 1, header: jsx('div', {
           hidden: true, children: 'Pacientes hospitalizados (' + result.listLenght + ')' }) }, 'patients'),
       ] });
     }
@@ -166,13 +193,13 @@
       state = { failed: false };
       static getDerivedStateFromError() { return { failed: true }; }
       render() {
-        return this.state.failed ? jsx('div', { role: 'alert', children: 'No se pudo cargar la lista de ' + sources[this.props.index].toLowerCase() + '.' }) : this.props.children;
+        return this.state.failed ? jsx(SourceFailure, {}) : this.props.children;
       }
     }
     function SourcePanel({ registry, index, children }) {
       const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get);
       // Keep each native loader mounted for refreshes, but remove its empty layout from the table's flow.
-      return jsx('div', { hidden: Boolean(tables[index]), className: 'hhr-care-source', children });
+      return jsx('div', { hidden: Boolean(tables[index] && tables[index] !== emptySource), className: 'hhr-care-source', children });
     }
     function Hospitalized({ active, loaded }) {
       const [registry] = React.useState(makeRegistry);
@@ -185,9 +212,9 @@
       }));
       return jsx('section', { role: 'tabpanel', id: 'hhr-care-panel-0', 'aria-labelledby': 'hhr-care-tab-0',
         className: 'hhr-hospitalized-panel', children: jsx(Registry.Provider, { value: registry, children: [
-          ...sources.map((name, index) => jsx(Source.Provider, { value: index,
-            children: jsx(SourcePanel, { registry, index, children: jsx(SourceError, { index, children: jsx(React.Suspense, {
-              fallback: jsx('span', { role: 'status', children: 'Cargando ' + name.toLowerCase() + '…' }),
+          ...sources.map((_, index) => jsx(Source.Provider, { value: index,
+            children: jsx(SourcePanel, { registry, index, children: jsx(SourceError, { children: jsx(React.Suspense, {
+              fallback: null,
               children: index === active ? loaded : jsx(getPage(), {}),
             }) }) }) }, index)),
           jsx(ReadNovelty.Provider, { value: readNovelty, children: jsx(Combined, { registry }) }, 'table'),
@@ -228,6 +255,8 @@
       navigation: { ...navigation, useSearchParams },
       table: { ...require(65672), A: Capture },
       novelty: Novelty,
+      loading: NativeLoading,
+      failure: SourceFailure,
       layout(jsxs, type, props, ...rest) {
         const items = props?.children;
         if (!Array.isArray(items) || ![0, 1, 2, 3].every(i => items[i + 2]?.props?.index === i)) return jsxs(type, props, ...rest);
