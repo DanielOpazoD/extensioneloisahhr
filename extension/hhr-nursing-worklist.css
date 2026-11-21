@@ -22,6 +22,30 @@
   font-size: .86rem;
 }
 
+[data-hhr-drawer-native-clock] { display:none !important; }
+[data-hhr-drawer-tools] {
+  margin-block-start:auto; padding:6px 10px 4px; display:grid; gap:5px;
+  color:#2c4943; font:12px/1.4 system-ui,sans-serif;
+}
+[data-hhr-drawer-tools] summary { cursor:pointer; color:#276457; }
+[data-hhr-drawer-weather] { background:#f1f8f5; border:1px solid #e1eee8; border-radius:6px; padding:5px 7px; }
+[data-hhr-drawer-weather] summary { font-weight:600; }
+.hhr-drawer-forecast { display:grid; gap:5px; margin-block-start:5px; font-size:10px; }
+.hhr-drawer-forecast a { color:#48736a; }
+.hhr-drawer-forecast-slots { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:3px; }
+.hhr-drawer-forecast-slots > div { display:grid; gap:1px; border-inline-start:1px solid #cfdfd8; padding-inline-start:3px; }
+.hhr-drawer-shortcuts { display:flex; flex-wrap:wrap; align-items:center; gap:3px 6px; }
+.hhr-drawer-shortcuts :is(button,a) {
+  color:#275c52; text-decoration:none; background:transparent; border:0; font:inherit; cursor:pointer;
+  padding:4px 2px; border-radius:4px;
+}
+.hhr-drawer-shortcuts :is(button,a):hover { background:#eef6f2; }
+.hhr-drawer-clock { display:flex; align-items:flex-start; justify-content:space-between; gap:4px; color:#526a64; font-variant-numeric:tabular-nums; }
+.hhr-drawer-info { text-align:end; }
+.hhr-drawer-info summary { list-style:none; display:block; font-size:14px; }
+.hhr-drawer-info summary::-webkit-details-marker { display:none; }
+.hhr-drawer-info span { display:block; font-size:10px; line-height:1.25; }
+
 #hhr-worklist-novelty-tooltip {
   position: fixed;
   z-index: 1400;

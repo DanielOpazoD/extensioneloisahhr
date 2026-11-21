@@ -96,7 +96,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   await act(() => root.render(createElement(App)));
   expect(document.querySelectorAll('table')).toHaveLength(1);
   expect(document.querySelector('[data-native-skeleton]')).toBeNull();
-  expect(document.querySelector('.hhr-care-loading').textContent).toContain('Entrega de turno');
+  expect(document.querySelector('.hhr-care-loading').textContent).not.toContain('Entrega de turno');
   expect(document.querySelector('.hhr-care-loading').textContent).toContain('Imprimir');
   expect(document.querySelector('.hhr-care-loading').textContent).not.toContain('GES');
   await act(() => setReady('error'));
@@ -126,7 +126,8 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(document.querySelector('[data-hhr-new-patient-chip]')?.textContent).toBe('Nuevo');
   expect(document.body.textContent).not.toContain('Pendiente');
   expect(document.querySelector('[data-hhr-discharge-chip]')?.textContent).toBe('Alta médica');
-  expect(document.querySelectorAll('button[data-hhr-handoff-episode]')).toHaveLength(4);
+  expect(document.querySelectorAll('button[data-hhr-handoff-episode]')).toHaveLength(0);
+  expect(document.querySelectorAll('td[data-hhr-handoff-episode][hidden]')).toHaveLength(4);
   expect(document.body.textContent).not.toContain('Última novedad');
   expect(document.body.textContent).not.toContain('Última atención');
   expect(document.body.textContent).not.toMatch(/Hace |por Profesional|RUN Materno|Número de Identificación/);
@@ -190,5 +191,5 @@ it('muestra Entrega de turno para cada episodio del piloto', () => {
   const row = jsx('tr', { children: [jsx('td', { children: 'Paciente sintético' })] }, '123');
   const result = globalThis.HhrNursingWorklist.joinTables(jsx, [{ columns, children: [row] }], true);
   expect(result.columns.map(col => col.label)).toEqual(['Paciente', 'Entrega de turno']);
-  expect(result.children[0].props.children[1].props.children.props['data-hhr-handoff-episode']).toBe('123');
+  expect(result.children[0].props.children[1].props['data-hhr-handoff-episode']).toBe('123');
 });

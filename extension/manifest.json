@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "118",
   "name": "Rayen → HHR · Puente de censo",
-  "version": "0.48.128",
+  "version": "0.48.129",
   "description": "Conecta Eloísa con HHR y ofrece herramientas de recetas y exámenes.",
   "permissions": [
     "tabs",
@@ -14,6 +14,7 @@
     "scripting"
   ],
   "host_permissions": [
+    "https://api.open-meteo.com/*",
     "https://fichamedico.rayensalud.cl/*",
     "https://urgencia.saludenred.cl/*",
     "https://api.saludenred.cl/*",
@@ -257,6 +258,7 @@
         "hhr-prescription-ui-lifecycle.js",
         "hhr-history-date-navigation.js",
         "hhr-native-ficha-presentation.js",
+        "hhr-worklist-drawer.js",
         "hhr-native-worklist-presentation.js",
         "content-prescription-print.js",
         "nursing-handoff-dialog.js"

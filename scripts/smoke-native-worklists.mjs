@@ -136,7 +136,8 @@ function startFixture(route) {
   const tabs = [...document.querySelectorAll('[role=tab]')];
   let current = other;
   let page = 1;
-  const render = () => renderList(current, page, document.querySelector('input').checked);
+  const filter = document.querySelector('input[type=checkbox]');
+  const render = () => renderList(current, page, filter.checked);
   tabs.forEach((tab, index) => {
     tab.onclick = () => {
       current = index ? route.sections[index - 1] : other;
@@ -145,7 +146,7 @@ function startFixture(route) {
       render();
     };
   });
-  document.querySelector('input').onchange = render;
+  filter.onchange = render;
   document.querySelector('[data-next]').onclick = () => { page = 2; render(); };
   render();
 }
@@ -156,7 +157,9 @@ export const nativeWorklistFixture = pathname => {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
     body { font:14px/1.5 system-ui,sans-serif; }
     main { margin:16px; display:flex; flex-direction:column; gap:32px; }
-    #filters { height:70px; padding-block:16px; box-sizing:border-box; }
+    #filters { height:70px; padding-block:16px; box-sizing:border-box; display:flex; align-items:center; }
+    .fixture-search { display:flex; align-items:center; min-width:0; flex:1; }
+    .fixture-search input { width:100%; }
     .heading { margin:0; padding-block:16px; }
     .MuiTableContainer-root { overflow:auto; max-height:400px; }
     table { border-collapse:collapse; width:100%; min-width:550px; text-align:left; }
@@ -165,8 +168,10 @@ export const nativeWorklistFixture = pathname => {
     .MuiStack-root > * + * { margin-top:3px; }
   </style></head><body><main class="MuiBox-root"><div role="tablist">
     ${[route.other, ...route.sections.map(s => s[0])].map((tab, i) => `<button role="tab" aria-selected="${i === 0}" aria-controls="worklist">${tab}</button>`).join('')}
-  </div><div class="MuiPaper-root" id="filters"><label><input type="checkbox">Filtrar estación</label>
-  <input id="search-encounter-list" aria-label="Buscar paciente"><output></output></div>
+  </div><div class="MuiPaper-root" id="filters">
+  <label for="search-encounter-list">Nombre del Paciente / RUN</label>
+  <div class="MuiInputBase-root fixture-search"><span aria-hidden="true">⌕</span><input id="search-encounter-list" aria-label="Buscar paciente"></div>
+  <label><input type="checkbox">Filtrar estación</label><button id="long-button" aria-label="more">⎙</button><output></output></div>
   <div id="worklist" role="tabpanel"><p class="heading"></p><div><div class="MuiTableContainer-root"><table>
   <thead><tr><th>Ubicación</th><th>Paciente</th><th>Diagnóstico de ingreso</th><th>Médico tratante</th><th>Acciones</th></tr></thead>
   <tbody></tbody><tfoot><tr><td colspan="5"><nav class="MuiPagination-root"><button data-next>Página 2</button></nav></td></tr></tfoot>
@@ -183,6 +188,16 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
     self.__worklistReports = [];
     self.fetch = async (input, init) => {
       const url = new URL(input);
+      if (url.hostname === 'api.open-meteo.com') {
+        if (init?.credentials !== 'omit' || init?.referrerPolicy !== 'no-referrer' || url.searchParams.get('forecast_hours') !== '73') return new Response('', { status: 400 });
+        const hour = 1795226400;
+        const sequence = callback => Array.from({ length: 73 }, (_, i) => callback(i));
+        return Response.json({
+          current: { time: hour + 600, temperature_2m: 20, weather_code: 1, wind_speed_10m: 30 },
+          hourly: { time: sequence(i => hour + i * 3600), temperature_2m: sequence(() => 20),
+            precipitation_probability: sequence(() => 25), wind_gusts_10m: sequence(() => 39) },
+        });
+      }
       if (url.origin !== 'https://fichamedicoback.rayensalud.cl') return self.__worklistOriginalFetch(input, init);
       if (url.pathname.endsWith('/claim/getAllInApp')) return Response.json([{claim:'Acceso_Ficha_Clinica', moduleId:6}]);
       const patient = url.pathname.match(/\/patientHeaderData\/(\d+)\/false$/);
@@ -213,22 +228,27 @@ async function verifyWorklistWidth(page) {
     await page.setViewportSize({ width, height: 450 });
     const bounds = await page.evaluate(() => {
       const rect = selector => {
-        const { left, right, width } = document.querySelector(selector).getBoundingClientRect();
-        return { left, right, width };
+        const { left, right, width, top, bottom } = document.querySelector(selector).getBoundingClientRect();
+        return { left, right, width, top, bottom };
       };
-      return { main: rect('main'), filters: rect('#filters'), panel: rect('#worklist'), table: rect('#worklist table') };
+      return { main: rect('main'), filters: rect('#filters'), tabs: rect('[role=tablist]'),
+        panel: rect('#worklist'), table: rect('#worklist table'),
+        search: rect('#search-encounter-list'), station: rect('#filters input[type=checkbox]'), print: rect('#long-button') };
     });
     const left = bounds.panel.left - bounds.main.left;
     const right = bounds.main.right - bounds.panel.right;
     assert.ok(Math.abs(left - right) < 1, 'The worklist must stay centered');
-    assert.deepEqual(bounds.filters, bounds.panel);
+    assert.ok(bounds.filters.top < bounds.panel.top && bounds.filters.right <= bounds.main.right + 1);
+    assert.ok(bounds.search.right <= bounds.station.left + 1 && bounds.station.right <= bounds.print.left + 1);
     if (width === 390) {
+      assert.ok(bounds.filters.top >= bounds.tabs.bottom);
       const scrollable = await page.locator('.MuiTableContainer-root').evaluate(el => el.scrollWidth > el.clientWidth);
       assert.ok(scrollable, 'Small screens retain native horizontal scrolling');
     } else {
-      assert.deepEqual(bounds.table, bounds.panel);
+      assert.equal(bounds.table.width, bounds.panel.width);
     }
     if (width === 1800) {
+      assert.ok(bounds.filters.left >= bounds.tabs.right && bounds.filters.top < bounds.tabs.bottom);
       assert.ok(left >= 70 && left <= 125, 'Wide worklists need moderate side margins');
       const doctor = page.locator('td[data-hhr-worklist-doctor]').first();
       assert.ok((await doctor.getByRole('combobox').boundingBox()).width <= 137, 'Compact assignment selector');
@@ -244,6 +264,27 @@ const verifyLists = async (context, origin, worker) => {
       await page.setViewportSize({ width: 1100, height: 450 });
       await page.goto(origin + route.pathname);
       await page.waitForFunction(() => document.documentElement.dataset.hhrPrescriptionPrintState === 'operations-ready');
+      if (!route.pathname.endsWith('-nurse')) {
+        await page.evaluate(() => {
+          const drawer = document.createElement('nav');
+          drawer.className = 'MuiDrawer-paper MuiDrawer-paperAnchorLeft';
+          drawer.id = 'fixture-drawer-tools';
+          drawer.innerHTML = '<button type="button">Lista de trabajo médico</button>' +
+            '<p>20-11-2026, 21:35:27</p><p>Versión: 26.4.7</p>';
+          document.body.append(drawer);
+        });
+        const drawer = page.locator('#fixture-drawer-tools');
+        await drawer.locator('time').waitFor();
+        assert.match(await drawer.locator('time').textContent(), /\d{2}[-/]\d{2}[-/]\d{4}.*\d{2}:\d{2}/);
+        assert.equal(await drawer.getByText('Versión: 26.4.7', { exact: true }).isVisible(), false);
+        await drawer.locator('.hhr-drawer-info summary').click();
+        await drawer.getByText(/Eloísa 26.4.7/).waitFor();
+        await drawer.locator('[data-hhr-drawer-weather] summary').click();
+        await drawer.getByText('48–72 h', { exact: true }).waitFor();
+        assert.equal(await drawer.getByText('Lluvia 25%', { exact: true }).count(), 3);
+        assert.match(await drawer.getByRole('link', { name: 'Un día como hoy' }).getAttribute('href'), /#Nacimientos$/);
+        await drawer.evaluate(element => element.remove());
+      }
       const table = page.locator('#worklist table');
       const rows = table.locator('tbody tr');
       const pager = page.locator('[data-next]');
@@ -265,13 +306,7 @@ const verifyLists = async (context, origin, worker) => {
         if (name === 'Pacientes sin novedad') await verifyEditShortcut(context, page, rows.nth(2), worker);
         const referral = name === 'Mis pacientes de interconsulta';
         assert.equal(await page.locator('.heading').isVisible(), referral);
-        const spacing = await page.evaluate(() => {
-          const filters = document.getElementById('filters').getBoundingClientRect();
-          const tabs = document.querySelector('[role="tablist"]').getBoundingClientRect();
-          const panel = document.getElementById('worklist').getBoundingClientRect();
-          return [filters.top - tabs.bottom, panel.top - filters.bottom, filters.height];
-        });
-        assert.deepEqual(spacing, [6, 6, 48]);
+        assert.equal(await page.getByRole('button', { name: 'Imprimir', exact: true }).count(), 1);
         if (route.pathname.endsWith('-nurse')) {
           const markers = rows.getByRole('link', { name: 'Abrir última publicación médica en Historial' });
           assert.equal(await markers.count(), name === 'Pacientes con novedad' ? total : 0);

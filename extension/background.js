@@ -4,7 +4,7 @@
 // MV3 requires initial imports. Excel/PDF stay here until their separate offscreen migrations.
 importScripts(
   'message-contract.js', 'build-identity.js', 'hhr-origin-policy.js', 'exalab-background.js', 'exalab-session-transport.js', 'exalab-auto-runtime.js', 'eloisa-patient-code-contract.js', 'fichamedico-manual-patient-code-runtime.js',
-  'encounter-navigation.js', 'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js',
+  'encounter-navigation.js', 'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js', 'rapa-nui-weather.js',
   'hhr-request-forms.js',
   'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
   'connection-relay-recovery.js', 'fichamedico-transport-runtime.js', 'fichamedico-history-read-model.js', 'fichamedico-device-evidence-runtime.js', 'clinical-read-error-contract.js', 'fichamedico-clinical-client.js', 'tab-encounter-authorization.js', 'fichamedico-patient-flow-runtime.js',
@@ -1187,7 +1187,6 @@ const handlePatientClinicalBundleRequest = self.HhrPatientClinicalBundleRuntime.
   readAlerts: self.HhrFichaMedicoAlertEntryRuntime.create({ authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); }, resolveSession: resolveFichaClinicalSession, readJson: options => fichaMedicoClinicalClient.readJson(options), clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify }).fetchAlertEntries,
   readFluidBalance: self.HhrFichaMedicoFluidBalanceRuntime.create({ authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); }, resolveSession: resolveFichaClinicalSession, readJson: options => fichaMedicoClinicalClient.readJson(options), clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify }).fetchFluidBalance,
 });
-
 const worklistPatientEditor = self.HhrWorklistPatientEditor.create({
   chrome, getContext: getClinicalReportContext, getInfo: getFichaFetchInfo, checkAccess: checkWorklistChartAccess,
 });
@@ -1196,6 +1195,7 @@ const nursingHandoffPilot = self.HhrNursingHandoffPilot.create({
   getSessionKey: fichaSessionCacheKey,
 });
 const runtimeMessageRoutes = Object.freeze({
+  [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),
   [RUNTIME_MESSAGES.NURSING_HANDOFF_OPEN]: runtimeRoute(nursingHandoffPilot.start, 'No se pudo abrir la entrega.'),
   [RUNTIME_MESSAGES.NURSING_HANDOFF_EDITOR]: runtimeRoute(nursingHandoffPilot.operate, 'No se pudo acceder a la entrega.'),
   [RUNTIME_MESSAGES.EXTENSION_HEALTH_REQUEST]: runtimeRoute(
