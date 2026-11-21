@@ -123,6 +123,12 @@
         await store.remove(key);
         return { ok: true };
       }
+      if (action === 'connect-inline') {
+        if (!connection || !context.inline || !context.editorDocument || sender.frameId !== 0 ||
+            sender.documentId !== context.sourceDocument || !source.test(sender.url)) return error('Editor no autorizado.');
+        const verified = await verifySource(context);
+        return verified.error ? verified : connection.open(context.owner, context.tabId);
+      }
       if (!(sender.frameId > 0) || sender.url !== chrome.runtime.getURL(editor) + '#' + id ||
           (context.editorDocument ? context.editorDocument !== sender.documentId : action !== 'context')) {
         return error('Editor no autorizado.');

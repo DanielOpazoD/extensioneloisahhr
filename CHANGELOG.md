@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.138
+
+- «Un día como hoy» añade hechos históricos enlazados de Wikipedia en español y agrupa los nacimientos adicionales en una sección desplegable.
+- El reloj queda bajo los logos y el pronóstico se acerca a las opciones del menú lateral.
+- La barra de HHR se alinea con los filtros y deja libre el encabezado de las tablas.
+- La entrega de turno muestra un solo acceso a la conexión con HHR sobre la tabla.
+
 ## 0.48.137
 
 - Alinea pasaportes y otros números de identificación debajo del inicio del nombre en ambas listas.

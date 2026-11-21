@@ -33,6 +33,7 @@
   let refresh;
   let draftVersion;
   let reportedDirty;
+  let linkRequired = false;
   let polling = 0;
   const dirty = () => base && note.value !== base.text.replace(/\r\n?/g, '\n');
   const show = (text, tone = '') => {
@@ -132,12 +133,19 @@
     recoveryText.value = '';
     recovery.hidden = true;
   };
+  const reportLink = required => {
+    if (!inline || required === linkRequired) return;
+    linkRequired = required;
+    window.parent.postMessage({ type: 'hhr-handoff-row-link', value: required }, 'https://fichamedico.rayensalud.cl');
+  };
   recoveryVersions.addEventListener('change', showRecovery);
   const raise = result => {
-    if (result.code === 'HHR_LINK_REQUIRED') {
+    const needsLink = result.code === 'HHR_LINK_REQUIRED';
+    reportLink(needsLink);
+    if (needsLink) {
       ready = false;
       disconnect.hidden = true;
-      connect.hidden = false;
+      connect.hidden = inline;
     }
     if (['UNAUTHENTICATED', 'PERMISSION_DENIED', 'SOURCE_SESSION_CHANGED'].includes(result.code)) {
       available = false;
@@ -162,7 +170,8 @@
       pinSlot(result.slot);
       ready = false;
     }
-    show(result.error, 'error');
+    if (inline && needsLink) showDraft();
+    else show(result.error, 'error');
     updateButtons();
   };
   const notifyRemote = value => {
@@ -183,6 +192,7 @@
       return;
     }
     ready = true;
+    reportLink(false);
     connect.hidden = true;
     disconnect.hidden = !hosted;
     if (!base && inline && result.draft) {
