@@ -59,6 +59,7 @@ function startFixture(route) {
       const rows = Array.from({ length: count }, (_, i) => ({ id: i + 1 }));
       const referral = label === 'Interconsulta';
       const discharge = label === 'pacientes con alta';
+      const hasMedicalLink = !route.pathname.endsWith('-nurse') && !discharge;
       jsx(props => {
         const list = referral ? props[key][0].patientList : props[key];
         const matches = list.filter(row => !filter || row.id % 2 === 1);
@@ -80,7 +81,8 @@ function startFixture(route) {
             nativeJsx('strong', {className:'MuiTypography-root', children:'Paciente sintético ' + id}),
             ...['Datos de prueba', 'Identificador ' + id].map(text => nativeJsx('span', {className:'MuiTypography-root',children:text})),
           ], className:'MuiStack-root' });
-          const nativeAction = nativeJsx('button', { ...(discharge ? {encId,patId:3000+id} : {}), children: 'Abrir ficha' });
+          const nativeAction = hasMedicalLink ? nativeJsx('a', { LinkComponent: 'a', href, children: '>' })
+            : nativeJsx('button', { ...(discharge ? {encId,patId:3000+id} : {}), children: 'Abrir ficha' });
           const location = ['AMQI', nativeJsx('br', {}), 'H1', nativeJsx('br', {}), 'H1C2'];
           const cells = [location, patient, ...(referral ? [] : ['No GES']), 'Diagnóstico (lateral) (Ingreso) (principal) (solicitud hospitalización)',
             ...(label === 'con novedad' ? ['Hace 1 hora por Profesional de prueba'] : []),
@@ -123,7 +125,8 @@ function startFixture(route) {
               };
             };
           }
-          row.lastElementChild.querySelector('button').onclick = () => { document.querySelector('output').value = String(id); };
+          const action = row.lastElementChild.querySelector('button');
+          if (action) action.onclick = () => { document.querySelector('output').value = String(id); };
         }
       }, { [tag]: value, [key]: referral ? [{patientList:rows}] : rows });
     };
@@ -327,8 +330,18 @@ const verifyLists = async (context, origin, worker) => {
         const identities = await rows.locator('td:nth-child(2) strong').allTextContents();
         assert.deepEqual(identities, Array.from({ length: total }, (_, i) => 'Paciente sintético ' + (i + 1)));
         await rows.last().getByRole('combobox').selectOption('Profesional de prueba');
-        await rows.last().getByRole('button', { name: 'Abrir ficha' }).click();
-        assert.equal(await page.locator('output').textContent(), String(total));
+        const chartLinks = rows.locator('[data-hhr-rongorongo-link]');
+        if (!route.pathname.endsWith('-nurse') && name !== 'Pacientes egresados de alta') {
+          assert.equal(await chartLinks.count(), total);
+          const chart = rows.last().getByRole('link', { name: 'Abrir ficha clínica' });
+          assert.equal(await chart.getAttribute('href'), route.pathname + '/' + (2000 + total) + (referral ? '/?referralGuid=demo' : ''));
+          assert.ok(await chart.locator('.hhr-rongorongo-icon').evaluate(icon =>
+            getComputedStyle(icon).maskImage.startsWith('url("data:image/png;base64,')));
+        } else {
+          assert.equal(await chartLinks.count(), 0);
+          await rows.last().getByRole('button', { name: 'Abrir ficha' }).click();
+          assert.equal(await page.locator('output').textContent(), String(total));
+        }
         await page.getByRole('checkbox').check();
         assert.equal(await rows.count(), Math.ceil(total / 2));
         assert.equal(await rows.nth(1).locator('td:nth-child(2) strong').textContent(), 'Paciente sintético 3');
@@ -375,6 +388,14 @@ const verifyLists = async (context, origin, worker) => {
         }));
         assert.equal(await page.getByRole('tab', { name: 'Historial', selected: true }).count(), 1);
         assert.equal(new URL(page.url()).hash, '');
+        await page.goto(origin + route.pathname);
+      } else {
+        const chart = origin + route.pathname + '/2001/?referralGuid=demo';
+        await page.route(url => url.href === chart, request => request.fulfill({ contentType: 'text/html', body: nativeFichaFixture() }));
+        await page.getByRole('tab', { name: 'Mis pacientes de interconsulta', exact: true }).click();
+        await rows.first().getByRole('link', { name: 'Abrir ficha clínica' }).press('Enter');
+        await page.waitForURL(chart);
+        await page.getByRole('tab', { name: 'Resumen', selected: true }).waitFor();
         await page.goto(origin + route.pathname);
       }
       await page.getByRole('tab', { name: route.sections[0][0] }).click();
