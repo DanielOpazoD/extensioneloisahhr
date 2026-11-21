@@ -102,6 +102,30 @@ img[data-hhr-drawer-logo] { max-width:108px !important; max-height:39px; height:
   padding:4px 2px; border-radius:4px;
 }
 .hhr-drawer-shortcuts :is(button,a):hover { background:#eef6f2; }
+[data-hhr-daily-births-dialog] {
+  box-sizing:border-box; width:min(390px, calc(100% - 24px)); max-height:min(540px, calc(100% - 24px));
+  padding:16px 18px; border:1px solid #d7e5df; border-radius:12px; margin:auto;
+  color:#28453f; background:#fff; box-shadow:0 14px 45px #214b4138; font:13px/1.4 system-ui,sans-serif;
+}
+[data-hhr-daily-births-dialog]::backdrop { background:#132e2945; }
+[data-hhr-daily-births-dialog] header {
+  display:grid; grid-template-columns:1fr auto; gap:2px 8px; align-items:center; margin-block-end:8px;
+}
+[data-hhr-daily-births-dialog] h2 { margin:0; font-size:17px; }
+[data-hhr-daily-births-dialog] header button {
+  grid-column:2; grid-row:1; width:28px; height:28px; border:0; border-radius:6px; color:#335d54;
+  background:#eef5f2; font:20px/1 system-ui,sans-serif; cursor:pointer;
+}
+[data-hhr-daily-births-dialog] .hhr-daily-births-date { grid-column:1; margin:0; color:#536c65; }
+[data-hhr-daily-births-dialog] ul { margin:0 0 6px; padding:0; list-style:none; }
+[data-hhr-daily-births-dialog] li {
+  display:grid; grid-template-columns:44px minmax(0,1fr); gap:8px; padding-block:6px;
+  border-top:1px solid #e6eeeb; overflow-wrap:anywhere;
+}
+[data-hhr-daily-births-dialog] li div { display:grid; gap:1px; }
+[data-hhr-daily-births-dialog] li div span { color:#536a64; font-size:12px; }
+[data-hhr-daily-births-dialog] a, [data-hhr-daily-births-dialog] .hhr-daily-births-year { color:#28665a; }
+[data-hhr-daily-births-dialog] a { font-size:11px; }
 .hhr-drawer-clock { display:flex; align-items:flex-start; justify-content:space-between; gap:4px; color:#526a64; font-variant-numeric:tabular-nums; }
 
 #hhr-worklist-novelty-tooltip {

@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.135
+
+- Gestión de cuidados y Lista de trabajo médico comparten una barra más compacta para pestañas, búsqueda, filtros e impresión. Se retira la tira de camas.
+- El tooltip de novedades indica «Último cambio médico hace…».
+- «Un día como hoy» muestra nacimientos de la fecha en Rapa Nui en un diálogo dentro de Eloísa.
+
 ## 0.48.134
 
 - Entrega de turno muestra la fecha censal y el turno confirmado por HHR. Si cambia el turno durante la edición, permite consultar el vigente y conserva el texto anterior abierto para revisión.

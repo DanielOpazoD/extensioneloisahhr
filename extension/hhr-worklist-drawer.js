@@ -5,7 +5,6 @@
   const clock = new Intl.DateTimeFormat('es-CL', {
     timeZone: zone, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   });
-  const calendar = new Intl.DateTimeFormat('es', { timeZone: zone, day: 'numeric', month: 'long' });
   const weatherCondition = code => {
     if (code === 0) return ['clear', 'Despejado'];
     if (code < 3) return ['partly', 'Parcialmente nublado'];
@@ -22,21 +21,63 @@
     return node;
   };
 
-  function create({ fetchWeather, openFavorites } = {}) {
+  function create({ fetchWeather, fetchDailyBirths, openFavorites } = {}) {
     const records = new Map();
     let timer;
+    let dailyDialog;
     const tick = () => {
-      const now = new Date();
-      const dateInfo = clock.format(now);
-      const parts = calendar.formatToParts(now);
-      const part = type => parts.find(p => p.type === type)?.value;
-      const article = part('day') + '_de_' + part('month');
-      for (const { time, curiosity, weather } of records.values()) {
+      const dateInfo = clock.format(new Date());
+      for (const { time, weather } of records.values()) {
         if (time.textContent !== dateInfo) time.textContent = dateInfo;
-        const url = 'https://es.wikipedia.org/wiki/' + encodeURIComponent(article) + '#Nacimientos';
-        if (curiosity.href !== url) curiosity.href = url;
         void weather.refresh();
       }
+    };
+    const openDailyBirths = async (drawer, trigger) => {
+      if (dailyDialog?.open) return;
+      const dialog = el('dialog', '', { 'data-hhr-daily-births-dialog': '', 'aria-label': 'Un día como hoy' });
+      const header = el('header', '');
+      const heading = el('h2', 'Un día como hoy');
+      const close = el('button', '×', { type: 'button', 'aria-label': 'Cerrar', autofocus: '' });
+      const content = el('div', '');
+      const status = el('p', 'Cargando nacimientos…', { role: 'status' });
+      header.append(heading, close);
+      content.append(status);
+      dialog.append(header, content);
+      close.addEventListener('click', () => dialog.close());
+      dialog.addEventListener('keydown', event => {
+        if (event.key === 'Escape') event.stopPropagation();
+      });
+      dialog.addEventListener('close', () => {
+        dialog.remove();
+        if (dailyDialog === dialog) dailyDialog = undefined;
+        if (trigger.isConnected) trigger.focus({ preventScroll: true });
+      }, { once: true });
+      drawer.append(dialog);
+      dailyDialog = dialog;
+      dialog.showModal();
+
+      let data;
+      try { data = await fetchDailyBirths?.(); } catch { /* Show the same empty state after a transport failure. */ }
+      if (!dialog.open || !dialog.isConnected) return;
+      if (data?.label) heading.after(el('p', data.label, { class: 'hhr-daily-births-date' }));
+      if (data?.people?.length) {
+        status.remove();
+        const list = el('ul', '');
+        for (const { name, year, description } of data.people) {
+          const item = el('li', '');
+          const details = el('div', '');
+          details.append(el('strong', name));
+          if (description) details.append(el('span', description));
+          item.append(el('span', String(year), { class: 'hhr-daily-births-year' }), details);
+          list.append(item);
+        }
+        content.append(list);
+      } else {
+        status.textContent = data?.unavailable || data?.error || !data ? 'No se pudieron cargar los nacimientos.' : 'No hay nacimientos disponibles para esta fecha.';
+      }
+      if (data?.source) content.append(el('a', 'Wikipedia · Nacimientos ↗', {
+        href: data.source, target: '_blank', rel: 'noopener noreferrer',
+      }));
     };
     const weatherCard = () => {
       const card = el('section', '', { 'data-hhr-drawer-weather': '', 'aria-label': 'Tiempo en Rapa Nui' });
@@ -121,7 +162,8 @@
       const shortcuts = el('div', '', { class: 'hhr-drawer-shortcuts' });
       const favorite = el('button', '☆ Favoritos', { type: 'button' });
       favorite.addEventListener('click', event => { if (event.isTrusted) openFavorites?.(drawer); });
-      const curiosity = el('a', 'Un día como hoy', { target: '_blank', rel: 'noopener noreferrer', title: 'Nacimientos de hoy' });
+      const curiosity = el('button', 'Un día como hoy', { type: 'button', 'aria-haspopup': 'dialog' });
+      curiosity.addEventListener('click', event => { if (event.isTrusted) void openDailyBirths(drawer, curiosity); });
       shortcuts.append(favorite, curiosity);
       const stamp = el('div', '', { class: 'hhr-drawer-clock' });
       const time = el('time', '', { title: 'Hora de Rapa Nui' });
@@ -129,7 +171,7 @@
       stamp.append(time);
       footer.append(weather.card, shortcuts, stamp);
       drawer.append(footer);
-      const record = { time, curiosity, weather, footer, native };
+      const record = { time, weather, footer, native };
       records.set(drawer, record);
       markBrand(drawer, record);
       tick();
@@ -137,9 +179,13 @@
     };
     const prune = () => {
       for (const drawer of records.keys()) if (!drawer.isConnected) records.delete(drawer);
+      if (dailyDialog && !dailyDialog.isConnected) dailyDialog = undefined;
       if (!records.size) { clearInterval(timer); timer = undefined; }
     };
     return { decorate, prune, dispose() {
+      dailyDialog?.close();
+      dailyDialog?.remove();
+      dailyDialog = undefined;
       clearInterval(timer);
       for (const { footer, native, brand, logo } of records.values()) {
         footer.remove();
