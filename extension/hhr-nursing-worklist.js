@@ -138,8 +138,14 @@
       const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get);
       const [expanded, setExpanded] = React.useState(false);
       const [visited, setVisited] = React.useState(false);
-      const result = joinTables(jsx, tables, true);
-      const loading = !result.listLenght && !tables.every(Boolean);
+      const loading = !tables.every(Boolean);
+      const lastSettled = React.useRef(null);
+      React.useLayoutEffect(() => {
+        if (!loading) lastSettled.current = tables;
+      }, [loading, tables]);
+      // Keep open editors mounted during refresh, while exposing only the loading table.
+      const settled = loading ? lastSettled.current : tables;
+      const result = joinTables(jsx, settled || [], true);
       const columns = expanded ? result.columns.filter(column => handoffColumns.has(column.id)).map(column =>
         column.id === 'activity' ? { ...column, style: { ...column.style, width: '52%' } } : column
       ) : (result.columns.length ? result.columns : loadingColumns).map(column =>
@@ -159,7 +165,7 @@
           jsx('span', { 'data-hhr-handoff-pending': '', role: 'status', hidden: !expanded }, 'pending'),
           jsx('button', {
             type: 'button', 'data-hhr-handoff-toggle': '', 'aria-expanded': expanded,
-            disabled: !result.listLenght && !expanded,
+            disabled: !expanded && (loading || !result.listLenght),
             onClick: event => {
               if (!event.isTrusted) return;
               setVisited(true);
@@ -172,8 +178,11 @@
             children: jsx(Table, { columns: loadingVisibleColumns, listLenght: 5, currentPage: 1, children:
               Array.from({ length: 5 }, (_, i) => jsx('tr', { 'aria-hidden': true, children:
                 loadingVisibleColumns.map(({ id }) => jsx('td', { children: jsx('span', { className: 'hhr-care-placeholder' }) }, id)),
-              }, i)) }) }, 'loading') : jsx(Table, { ...result, columns, children: rows, currentPage: 1, header: jsx('div', {
-          hidden: true, children: 'Pacientes hospitalizados (' + result.listLenght + ')' }) }, 'patients'),
+              }, i)) }) }, 'loading') : null,
+        settled && jsx('div', { className: 'hhr-care-results', hidden: loading, children:
+          jsx(Table, { ...result, columns, children: rows, currentPage: 1, header: jsx('div', {
+            hidden: true, children: 'Pacientes hospitalizados (' + result.listLenght + ')' }) }),
+        }, 'patients'),
       ] });
     }
     function useSearchParams() {

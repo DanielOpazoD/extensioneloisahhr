@@ -185,6 +185,21 @@
     } finally { button.disabled = false; }
   };
   document.addEventListener('click', onWorklistEdit, true);
+  const onWorklistCopyRun = async event => {
+    const button = event.target.closest?.('button[data-hhr-copy-run]');
+    const run = button?.dataset.hhrCopyRun;
+    if (!event.isTrusted || !uiLifecycle.owns() ||
+        !/^\/dashboard\/encounter-list(?:-nurse)?\/?$/.test(location.pathname) ||
+        !/^\d{1,9}-[\dK]$/.test(run) || !button.closest('table[data-hhr-compact-worklist]')) return;
+    event.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(run);
+      if (active) showPageNotice('RUN copiado.', { title: 'Portapapeles', duration: 1600 });
+    } catch {
+      if (active) showPageNotice('No se pudo copiar el RUN.', { title: 'Portapapeles', error: true });
+    }
+  };
+  document.addEventListener('click', onWorklistCopyRun, true);
   const pendingWorklistPrints = new Set();
   const onWorklistPrint = async event => {
     const button = event.target.closest?.('button[data-hhr-print-document]');
@@ -833,6 +848,7 @@
       active = false;
       document.removeEventListener('click', onWorklistPrint, true);
       document.removeEventListener('click', onWorklistEdit, true);
+      document.removeEventListener('click', onWorklistCopyRun, true);
       observer.disconnect();
       window.removeEventListener('popstate', scheduleEnsureButton);
       window.removeEventListener('hashchange', scheduleEnsureButton);

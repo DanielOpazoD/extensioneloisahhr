@@ -79,7 +79,8 @@ function startFixture(route) {
           const href = route.pathname + '/' + encId + (referral ? '/?referralGuid=demo' : '');
           const patient = nativeJsx(discharge ? 'span' : 'a', { ...(discharge ? {} : {href}), children: [
             nativeJsx('strong', {className:'MuiTypography-root', children:'Paciente sintético ' + id}),
-            ...['Datos de prueba', 'Identificador ' + id].map(text => nativeJsx('span', {className:'MuiTypography-root',children:text})),
+            ...['Género: Femenina', ['RUN: 00.000.001-k', 'RUN: 000000020', 'Número de Identificación: 000000030',
+              'RUN Materno/progenitor(a): 000000040'][id - 1] ?? 'Identificador ' + id].map(text => nativeJsx('span', {className:'MuiTypography-root',children:text})),
           ], className:'MuiStack-root' });
           const nativeAction = hasMedicalLink ? nativeJsx('a', { LinkComponent: 'a', href, children: '>' })
             : nativeJsx('button', { ...(discharge ? {encId,patId:3000+id} : {}), children: 'Abrir ficha' });
@@ -156,7 +157,8 @@ export const nativeWorklistFixture = pathname => {
   if (!route) return null;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
     body { font:14px/1.5 system-ui,sans-serif; }
-    main { margin:16px; display:flex; flex-direction:column; gap:32px; }
+    header.MuiAppBar-root { height:56px; margin:-8px -8px 0; padding-inline:16px; display:flex; align-items:center; }
+    main { margin:6px 16px 16px; display:flex; flex-direction:column; gap:32px; }
     #filters { height:70px; padding-block:16px; box-sizing:border-box; display:flex; align-items:center; }
     .fixture-search { display:flex; align-items:center; min-width:0; flex:1; }
     .fixture-search input { width:100%; }
@@ -166,12 +168,14 @@ export const nativeWorklistFixture = pathname => {
     td,th { padding:13px 16px; border-bottom:1px solid #ddd; }
     .MuiStack-root { display:flex; flex-direction:column; }
     .MuiStack-root > * + * { margin-top:3px; }
-  </style></head><body><main class="MuiBox-root"><div role="tablist">
+  </style></head><body><header class="MuiAppBar-root">Eloísa</header><main class="MuiBox-root"><div role="tablist">
     ${[route.other, ...route.sections.map(s => s[0])].map((tab, i) => `<button role="tab" aria-selected="${i === 0}" aria-controls="worklist">${tab}</button>`).join('')}
   </div><div class="MuiPaper-root" id="filters">
   <label for="search-encounter-list">Nombre del Paciente / RUN</label>
   <div class="MuiInputBase-root fixture-search"><span aria-hidden="true">⌕</span><input id="search-encounter-list" aria-label="Buscar paciente"></div>
-  <label><input type="checkbox">Filtrar estación</label><button id="long-button" aria-label="more">⎙</button><output></output></div>
+  <label><input type="checkbox">Filtrar estación</label>
+  ${pathname.endsWith('-nurse') ? '<div class="MuiInputBase-root"><label id="select-label-hcp">Estaciones de enfermería</label><div id="select-nurse-station-list" role="combobox" aria-expanded="false" aria-labelledby="select-label-nurse-station select-nurse-station-list">Todos</div></div>' : ''}
+  <button id="long-button" aria-label="more">⎙</button><output></output></div>
   <div id="worklist" role="tabpanel"><p class="heading"></p><div><div class="MuiTableContainer-root"><table>
   <thead><tr><th>Ubicación</th><th>Paciente</th><th>Diagnóstico de ingreso</th><th>Médico tratante</th><th>Acciones</th></tr></thead>
   <tbody></tbody><tfoot><tr><td colspan="5"><nav class="MuiPagination-root"><button data-next>Página 2</button></nav></td></tr></tfoot>
@@ -258,6 +262,7 @@ async function verifyWorklistWidth(page) {
 }
 
 const verifyLists = async (context, origin, worker) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
   for (const route of routes) {
     const page = await context.newPage();
     try {
@@ -270,7 +275,9 @@ const verifyLists = async (context, origin, worker) => {
           drawer.className = 'MuiDrawer-paper MuiDrawer-paperAnchorLeft';
           drawer.id = 'fixture-drawer-tools';
           drawer.tabIndex = -1;
-          drawer.innerHTML = '<header><img alt="Rayen Eloísa" width="135" height="42"></header>' +
+          drawer.style.cssText = 'position:fixed; inset:0 auto 0 0; z-index:1300; width:216px; background:white;';
+          const demoLogo = '<svg xmlns="http://www.w3.org/2000/svg" width="135" height="42"><text x="4" y="27" fill="#19695f" font-family="sans-serif" font-size="21">Eloísa demo</text></svg>';
+          drawer.innerHTML = '<header><img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></header>' +
             '<button type="button">Lista de trabajo médico</button>' +
             '<p>20-11-2026, 21:35:27</p><p>Versión: 26.4.7</p>';
           document.body.append(drawer);
@@ -291,9 +298,21 @@ const verifyLists = async (context, origin, worker) => {
         assert.equal(await cloud.evaluate(node => getComputedStyle(node).animationName), 'none');
         await page.emulateMedia({ reducedMotion: 'no-preference' });
         const logo = drawer.locator('img[data-hhr-drawer-logo]');
-        assert.ok((await logo.boundingBox()).width <= 88);
-        assert.ok(await drawer.locator('[data-hhr-drawer-brand]').evaluate(node =>
-          getComputedStyle(node, '::after').backgroundImage.startsWith('url("data:image/png;base64,')));
+        assert.ok((await logo.boundingBox()).width >= 100);
+        assert.ok(await drawer.locator('[data-hhr-drawer-brand]').evaluate(node => {
+          const mascot = getComputedStyle(node, '::after');
+          return parseFloat(mascot.height) >= 40 && mascot.backgroundImage.startsWith('url("data:image/png;base64,');
+        }));
+        const source = drawer.getByRole('link', { name: 'Abrir Open-Meteo' });
+        assert.equal(await source.getAttribute('href'), 'https://open-meteo.com/');
+        assert.equal(await source.textContent(), '↗');
+        assert.ok((await source.boundingBox()).width <= 24);
+        const navigation = drawer.locator('[data-hhr-menu-icon="worklist"]');
+        assert.equal(await navigation.evaluate(node => getComputedStyle(node, '::before').width), '16px');
+        if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+          await mkdir(process.env.HHR_VISUAL_ARTIFACT_DIR, { recursive: true });
+          await drawer.screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Menú de Eloísa.png') });
+        }
         assert.match(await drawer.getByRole('link', { name: 'Un día como hoy' }).getAttribute('href'), /#Nacimientos$/);
         const favorites = drawer.getByRole('button', { name: /Favoritos/ });
         await favorites.click();
@@ -331,6 +350,22 @@ const verifyLists = async (context, origin, worker) => {
         const first = rows.first();
         assert.equal(await first.locator('td').first().innerText(), 'AMQI\nH1C2');
         assert.equal(await first.getByText('Diagnóstico (lateral)', {exact:true}).count(), 1);
+        assert.equal(await rows.getByText(/^Género:/).count(), 0);
+        assert.equal(await rows.nth(2).getByText('000000030', { exact: true }).count(), 1);
+        assert.equal(await rows.nth(2).locator('[data-hhr-copy-run]').count(), 0);
+        assert.equal(await rows.nth(3).locator('[data-hhr-copy-run]').count(), 0);
+        const run = first.getByRole('button', { name: 'Copiar RUN 00000001-K' });
+        assert.equal(await run.textContent(), '00000001-K');
+        assert.equal(await run.evaluate(node => node.closest('a')), null);
+        if (name === route.sections[0][0]) {
+          const copy = route.pathname.endsWith('-nurse') ? rows.nth(1).getByRole('button', { name: 'Copiar RUN 00000002-0' }) : run;
+          if (route.pathname.endsWith('-nurse')) await copy.click();
+          else await copy.press('Enter');
+          const expected = await copy.textContent();
+          await page.waitForFunction(async value => (await navigator.clipboard.readText()) === value, expected);
+          assert.equal(new URL(page.url()).pathname, route.pathname);
+          assert.match(await page.locator('header.MuiAppBar-root').evaluate(header => getComputedStyle(header).backgroundImage), /linear-gradient/);
+        }
         await first.hover();
         assert.equal(await first.locator('td').last().evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(231, 244, 241)');
         assert.equal(await first.locator('[data-hhr-edit-episode]').count(), route.pathname.endsWith('-nurse') ? 1 : 0);
@@ -339,6 +374,9 @@ const verifyLists = async (context, origin, worker) => {
         assert.equal(await page.locator('.heading').isVisible(), referral);
         assert.equal(await page.getByRole('button', { name: 'Imprimir', exact: true }).count(), 1);
         if (route.pathname.endsWith('-nurse')) {
+          const filter = page.locator('#filters').getByRole('combobox', { name: 'Estaciones de enfermería Todos' });
+          assert.equal(await filter.count(), 1);
+          assert.equal(await page.locator('#select-label-hcp').evaluate(label => getComputedStyle(label).clipPath), 'inset(50%)');
           const markers = rows.getByRole('link', { name: 'Abrir última publicación médica en Historial' });
           assert.equal(await markers.count(), name === 'Pacientes con novedad' ? total : 0);
           if (name === 'Pacientes con novedad') {

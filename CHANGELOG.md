@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.131
+
+- Gestión de cuidados conserva una sola tabla de carga hasta que se resuelven las tres fuentes de hospitalizados.
+- Las listas clínicas tienen controles y pestañas más definidos, más espacio bajo la barra y un selector de estaciones sin rótulo visible.
+- La lista omite la línea de género y muestra el RUN con guion y un acceso para copiarlo.
+- El menú lateral presenta un logo y un moái más grandes. La fuente del pronóstico queda en un icono.
+
 ## 0.48.130
 
 - Favoritos conserva el foco al abrirse desde el menú lateral y permite agregar un enlace con Enter.

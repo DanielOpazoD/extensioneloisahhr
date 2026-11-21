@@ -118,6 +118,7 @@
   }
 
   function patientCell(jsx, cell, nursing, editId, noveltyTitle, publication, NoveltyLink) {
+    let run;
     function present(node) {
       if (Array.isArray(node)) {
         const next = node.map(present);
@@ -133,7 +134,13 @@
       }
       const text = node.props.children;
       if (typeof text === 'string') {
+        if (/^\s*g[eé]nero\s*:/i.test(text)) return null;
         if (/^\s*RUN\s+materno\s*\/\s*progenitor(?:\(a\))?\s*:/i.test(text)) return null;
+        const labeledRun = /^\s*(?:RUN|RUT)\s*:\s*(\d{1,3}(?:\.\d{3}){1,2}|\d{1,9})\s*-?\s*([\dk])\s*$/i.exec(text);
+        if (labeledRun && !run) {
+          run = labeledRun[1].replace(/\./g, '') + '-' + labeledRun[2].toUpperCase();
+          return null;
+        }
         const id = text.match(/^\s*n[uú]mero de identificaci[oó]n\s*:\s*(\S.*)$/i);
         if (id) return withChildren(jsx, node, id[1].trim());
       }
@@ -158,7 +165,11 @@
             children: jsx('path', { d: 'M4 20l4-1 12-12-3-3L5 16z M14 7l3 3' }) }) }, 'edit'),
       ] }, node.key ?? 'name');
     }
-    return withChildren(jsx, cell, present(cell.props.children));
+    const children = present(cell.props.children);
+    if (!run) return withChildren(jsx, cell, children);
+    return withChildren(jsx, cell, [children, jsx('button', {
+      type: 'button', 'data-hhr-copy-run': run, 'aria-label': 'Copiar RUN ' + run, title: 'Copiar RUN', children: run,
+    }, 'copy-run')]);
   }
 
   const adapt = (jsx, props, route, { publications, NoveltyLink } = {}) => {
