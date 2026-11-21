@@ -42,10 +42,22 @@ const fixture = `
   </div>
   <div id="native-history-view" style="padding-top:104px" hidden><div id="native-history-layout">
     <aside>Filtros nativos</aside><div id="native-timeline">
-      ${group('Hoy',event('medical-today','Médico','Evolución')+event('nurse','Enfermera(o)','Evolución')+event('administration','Paramédico','Administrador de medicamentos')+event('medication','Médico','Fármacos')+event('procedure-today','Médico','Procedimientos'))}
+      ${group('Hoy',event('nurse','Enfermera(o)','Evolución')+event('medication','Médico','Fármacos')+event('medical-today','Médico','Evolución')+event('administration','Paramédico','Administrador de medicamentos')+event('procedure-today','Médico','Procedimientos'))}
       ${group('Ayer',event('procedure-yesterday','Médico','Procedimientos'))}
       ${group('01-01-2025',event('medical-old','Médico','Evolución'))}
     </div></div></div>`;
+
+function bindNativeTabs(main) {
+  main.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener('click',()=>{
+    main.querySelectorAll('[role="tab"]').forEach(other=>other.setAttribute('aria-selected',String(other===tab)));
+    main.querySelector('#native-summary-view').hidden=tab.id!=='encounter-event-tab-summary';
+    main.querySelector('#native-history-view').hidden=tab.id!=='encounter-event-tab-history';
+    window.scrollTo(0,0);
+  }));
+}
+
+export const nativeFichaFixture = () =>
+  `<!doctype html><html lang="es"><head><meta charset="utf-8"></head><body><main>${fixture}</main><script>(${bindNativeTabs.toString()})(document.querySelector('main'));</script></body></html>`;
 
 const screenshot = async (page, name) => {
   if (!process.env.HHR_VISUAL_ARTIFACT_DIR) return;
@@ -58,13 +70,8 @@ export const verifyNativeFicha = async page => {
   const viewport = page.viewportSize();
   await page.locator('main').evaluate((main, html) => {
     main.innerHTML=html; main.style.background='#f3f5f4';
-    main.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener('click',()=>{
-      main.querySelectorAll('[role="tab"]').forEach(other=>other.setAttribute('aria-selected',String(other===tab)));
-      main.querySelector('#native-summary-view').hidden=tab.id!=='encounter-event-tab-summary';
-      main.querySelector('#native-history-view').hidden=tab.id!=='encounter-event-tab-history';
-      window.scrollTo(0,0);
-    }));
   },fixture);
+  await page.locator('main').evaluate(bindNativeTabs);
   for(const width of [1280,840,707,390]) {
     await page.setViewportSize({width,height:900});
     await page.getByRole('tab',{name:'Resumen',exact:true}).click();

@@ -112,10 +112,14 @@
       const current = children === node.props.children ? node : withChildren(jsx, node, children);
       if (!nursing || !node.props.href) return current;
       const edit = editId && node.props.component !== 'div';
-      const novelty = noveltyTitle && /^\/dashboard\/encounter-list-nurse\/[1-9]\d*\/?$/.test(node.props.href);
+      const novelty = noveltyTitle && /^\/dashboard\/encounter-list-nurse\/([1-9]\d*)\/?$/.exec(node.props.href);
       if (!edit && !novelty) return current;
+      const canOpenHistory = novelty && edit && novelty[1] === editId;
       return jsx('span', { className: 'hhr-patient-name-line', children: [current,
-        novelty && jsx('span', { 'data-hhr-patient-novelty': '', role: 'img', 'aria-label': 'Con novedad',
+        novelty && jsx(canOpenHistory ? node.props.component || 'a' : 'span', {
+          'data-hhr-patient-novelty': '',
+          ...(canOpenHistory ? { href: node.props.href + '#hhr-ultima-publicacion',
+            'aria-label': 'Abrir última publicación médica en Historial' } : { role: 'img', 'aria-label': 'Con novedad' }),
           title: noveltyTitle, children: jsx('svg', { viewBox: '0 0 16 16',
             width: 13, height: 13, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round',
             strokeLinejoin: 'round', 'aria-hidden': true, children: jsx('path', { d: 'M2 8h3l2-4 2 8 2-4h3' }) }) }, 'novelty'),

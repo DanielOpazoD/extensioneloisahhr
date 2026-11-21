@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.125
+
+- El icono de novedad abre el Historial del episodio y resalta la publicación médica más reciente entre las tarjetas cargadas por Eloísa.
+
 ## 0.48.124
 
 - En Gestión de cuidados, un icono ámbar junto al nombre identifica los pacientes con novedad y muestra el tiempo desde la última publicación médica cuando Eloísa lo informa.

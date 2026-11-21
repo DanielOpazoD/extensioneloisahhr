@@ -68,6 +68,8 @@
         display:inline-grid; place-items:center; flex:none; width:17px; height:17px;
         border-radius:50%; color:#775119; background:#fff0d8;
       }
+      a[data-hhr-patient-novelty]:hover { background:#ffe0ab; }
+      a[data-hhr-patient-novelty]:focus-visible { outline:2px solid #775119; outline-offset:2px; }
       button[data-hhr-edit-episode] { opacity:0; display:inline-grid; place-items:center; flex:none;
         inline-size:25px; block-size:25px; border:0; border-radius:4px; padding:2px; background:transparent; color:#166963; cursor:pointer; }
       tr:is(:hover,:focus-within) button[data-hhr-edit-episode], button[data-hhr-edit-episode]:focus-visible { opacity:1; }
