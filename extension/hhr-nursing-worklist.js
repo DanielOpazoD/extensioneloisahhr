@@ -64,16 +64,48 @@
     const navigation = require(20063);
     const Source = React.createContext(null);
     const Registry = React.createContext(null);
+    const Novelty = React.createContext(null);
+    const ReadNovelty = React.createContext(null);
     const Table = require(65672).A;
+    function NoveltyLink({ episode, publication, publisher, ...marker }) {
+      const read = React.useContext(ReadNovelty);
+      const linkRef = React.useRef(null);
+      const [resolved, setResolved] = React.useState();
+      React.useEffect(() => {
+        const link = linkRef.current;
+        if (!read || !link || typeof IntersectionObserver !== 'function') return;
+        let active = true;
+        const observer = new IntersectionObserver(entries => {
+          if (!entries.some(entry => entry.isIntersecting)) return;
+          observer.disconnect();
+          const current = () => active && link.isConnected &&
+            location.pathname.replace(/\/$/, '') === '/dashboard/encounter-list-nurse';
+          void read(episode, publication, publisher, current).then(kind => {
+            if (current()) setResolved({ episode, publication, publisher, kind });
+          });
+        });
+        observer.observe(link);
+        return () => { active = false; observer.disconnect(); };
+      }, [episode, publication, publisher, read]);
+      const kind = resolved?.episode === episode && resolved.publication === publication &&
+        resolved.publisher === publisher ? resolved.kind : undefined;
+      return globalThis.HhrWorklistPrintColumn.renderNovelty(jsx, { ...marker, kind, linkRef });
+    }
     function Capture(props) {
       const source = React.useContext(Source);
       const registry = React.useContext(Registry);
+      const novelty = React.useContext(Novelty);
+      const adapted = React.useMemo(() => {
+        const publications = novelty && new Map(novelty.flatMap(row => row?.lastPhysicianPublishDatetime
+          ? [[String(row.id), { publication: row.lastPhysicianPublishDatetime, publisher: row.legalHcpName }]] : []));
+        return globalThis.HhrWorklistPrintColumn.adapt(jsx, props, '/dashboard/encounter-list-nurse', { publications, NoveltyLink });
+      }, [props, novelty]);
       React.useLayoutEffect(() => {
         if (!registry || source == null) return;
-        registry.set(source, props);
+        registry.set(source, adapted);
         return () => registry.set(source, null);
-      }, [registry, source, props]);
-      return registry && source != null ? null : jsx(Table, props);
+      }, [registry, source, adapted]);
+      return registry && source != null ? null : jsx(Table, adapted);
     }
     function makeRegistry() {
       let tables = [null, null, null];
@@ -144,6 +176,13 @@
     }
     function Hospitalized({ active, loaded }) {
       const [registry] = React.useState(makeRegistry);
+      const [readNovelty] = React.useState(() => globalThis.HhrNursingNovelty?.createReader(async episode => {
+        const response = await require(40767).A('/encounter/' + episode +
+          '/getPatientEncounterHistoryReportServer/false/0/0/-14', {
+          method: 'GET', headers: { 'Content-Type': 'application/json' },
+        });
+        return response?.status === 'error' ? undefined : response?.data;
+      }));
       return jsx('section', { role: 'tabpanel', id: 'hhr-care-panel-0', 'aria-labelledby': 'hhr-care-tab-0',
         className: 'hhr-hospitalized-panel', children: jsx(Registry.Provider, { value: registry, children: [
           ...sources.map((name, index) => jsx(Source.Provider, { value: index,
@@ -151,7 +190,7 @@
               fallback: jsx('span', { role: 'status', children: 'Cargando ' + name.toLowerCase() + '…' }),
               children: index === active ? loaded : jsx(getPage(), {}),
             }) }) }) }, index)),
-          jsx(Combined, { registry }, 'table'),
+          jsx(ReadNovelty.Provider, { value: readNovelty, children: jsx(Combined, { registry }) }, 'table'),
         ] }) });
     }
     function Layout({ type, props }) {
@@ -188,6 +227,7 @@
     return {
       navigation: { ...navigation, useSearchParams },
       table: { ...require(65672), A: Capture },
+      novelty: Novelty,
       layout(jsxs, type, props, ...rest) {
         const items = props?.children;
         if (!Array.isArray(items) || ![0, 1, 2, 3].every(i => items[i + 2]?.props?.index === i)) return jsxs(type, props, ...rest);

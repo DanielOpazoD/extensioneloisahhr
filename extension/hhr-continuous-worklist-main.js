@@ -22,10 +22,10 @@
     }
   }
 
-  const withWorklistRows = (jsx, route) => (type, props, ...rest) => {
+  const withWorklistRows = (jsx, route, nurse) => (type, props, ...rest) => {
     if (typeof type === 'function' && props && location.pathname.replace(/\/$/, '') === route.path) {
       if (Array.isArray(props.columns)) {
-        props = globalThis.HhrWorklistPrintColumn.adapt(jsx, props, route.path);
+        if (type !== nurse?.table.A) props = globalThis.HhrWorklistPrintColumn.adapt(jsx, props, route.path);
       } else if (route.id === 25587 && Array.isArray(props.encounterList)) {
         const list = props.encounterList;
         // Interconsultas groups its patients by service and paginates each group.
@@ -37,7 +37,12 @@
       } else if (route.id === 61188) {
         const key = ['incomeEncounterList', 'noveltyEncounterList', 'uneventfulEncounterList', 'recoveredEncounterList']
           .find(name => Array.isArray(props[name]));
-        if (key) props = { ...props, [key]: WorklistRows.from(props[key]) };
+        if (key) {
+          props = { ...props, [key]: WorklistRows.from(props[key]) };
+          if (key === 'noveltyEncounterList' && nurse) {
+            return jsx(nurse.novelty.Provider, { value: props[key], children: jsx(type, props, ...rest) }, rest[0]);
+          }
+        }
       }
     }
     return jsx(type, props, ...rest);
@@ -62,7 +67,7 @@
             } };
             if (args[0] === 20063) return nursing().navigation;
             if (args[0] === 65672) return nursing().table;
-            if (args[0] === jsxModule && result.jsxs) return { ...result, jsx: withWorklistRows(result.jsx, route),
+            if (args[0] === jsxModule && result.jsxs) return { ...result, jsx: withWorklistRows(result.jsx, route, nursing()),
               jsxs: (...args) => nursing().layout(result.jsxs, ...args) };
           }
           if (args[0] !== jsxModule || typeof result?.jsx !== 'function') return result;

@@ -12,16 +12,22 @@ afterEach(async () => {
   document.body.replaceChildren();
   delete self.webpackChunk_N_E;
   delete globalThis.IS_REACT_ACT_ENVIRONMENT;
+  vi.unstubAllGlobals();
 });
 
 it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egresos desde enlaces anteriores', async () => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   history.replaceState(null, '', path + '?tab=2');
-  for (const file of ['hhr-worklist-print-column','hhr-nursing-worklist','hhr-continuous-worklist-main']) {
+  for (const file of ['hhr-worklist-print-column','hhr-nursing-novelty','hhr-nursing-worklist','hhr-continuous-worklist-main']) {
     Function(readFileSync('extension/' + file + '.js', 'utf8'))();
   }
   let setUrl, setFilter, filter = '', activeUrl;
   const action = vi.fn();
+  vi.stubGlobal('IntersectionObserver', class {
+    constructor(callback) { this.callback = callback; }
+    observe() { queueMicrotask(() => this.callback([{ isIntersecting: true }])); }
+    disconnect() {}
+  });
   const session = { facilityId: 8, healthCarePractitionerId: 2 };
   const jsx = runtime.jsx;
   const Table = ({ columns, children }) => jsx('table', { children: [
@@ -33,7 +39,14 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   const keys = ['incomeEncounterList','noveltyEncounterList','uneventfulEncounterList','recoveredEncounterList'];
   const beds = { 20: 'R1', 21: 'B1UEA', 22: 'H6C2', 23: 'NEO 1', 30: 'H1C1' };
   const lists = [[20,21], [21,22], [22,23], [30]];
+  const publication = '2026-11-20T09:10:00-05:00';
+  const historyRead = vi.fn(async path => ({ data: path.includes('/21/') ? [{
+    publishDatetime: publication, evolutionResume: [{ HCPR_NAME: 'Médico' }],
+  }] : [{
+    publishDatetime: publication, patientPharmaIndicationResume: [{ HCP_ROLE: 'Médica' }],
+  }] }));
   const mocks = { 12115:React, 95155:runtime, 65672:{A:Table}, 26466:{A:Tab}, 68175:{A:Tabs}, 575:{A:()=>()=>{}},
+    40767:{A:historyRead},
     20063:{useSearchParams:()=>new URLSearchParams(activeUrl.search), useRouter:()=>({replace: next=>setUrl(new URL(next,location.href))})} };
   const req = id => mocks[id];
   req.m = {};
@@ -44,7 +57,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
     function Rows(props) {
       const { index } = props;
       const columns = ['location','patient','ges','diagnosisAdmission',...(index === 0 ? ['stay'] : ['crd', index === 1 ? 'lastNovelty' : '"lastNursePublishDatetime"']), 'assignesDoctor', 'isolated', 'actions','link'].map(id=>({id,label:id}));
-      const visible = props[keys[index]].filter(id=>!filter || String(id).includes(filter)).slice(0,10);
+      const visible = props[keys[index]].map(row => row.id ?? row).filter(id=>!filter || String(id).includes(filter)).slice(0,10);
       return localJsx.jsx(NativeTable, { columns, listLenght:visible.length, children:visible.map(id =>
         jsx('tr', {children: columns.map(({id: column})=>jsx('td', {children: column === 'actions' ? jsx('button', {
           onClick:()=>action(index,id), children:'Acción '+id
@@ -57,7 +70,8 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
     }
     function Chip({label, ...props}) {return jsx('span', {...props, children:label});}
     function Loader({index}) {
-      return jsx('article', { style:{paddingBlock:12}, children:localJsx.jsx(Rows, {index,[keys[index]]:lists[index]}) });
+      const entries = index === 1 ? lists[index].map(id => ({ id, lastPhysicianPublishDatetime: publication })) : lists[index];
+      return jsx('article', { style:{paddingBlock:12}, children:localJsx.jsx(Rows, {index,[keys[index]]:entries}) });
     }
     exports.default = function Page() {
       const index = Number(nav.useSearchParams().get('tab'));
@@ -84,6 +98,12 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(noveltyRows()).toEqual(['22','21']);
   expect([...document.querySelectorAll('a[data-hhr-patient-novelty]')].map(link=>link.getAttribute('href'))).toEqual([
     path + '/22#hhr-ultima-publicacion', path + '/21#hhr-ultima-publicacion',
+  ]);
+  expect([...document.querySelectorAll('a[data-hhr-patient-novelty]')].map(link=>link.dataset.hhrNoveltyKind))
+    .toEqual(['indication', 'evolution']);
+  expect(historyRead.mock.calls.map(([url]) => url)).toEqual([
+    '/encounter/22/getPatientEncounterHistoryReportServer/false/0/0/-14',
+    '/encounter/21/getPatientEncounterHistoryReportServer/false/0/0/-14',
   ]);
   expect(document.querySelector('[data-hhr-new-patient-chip]')?.textContent).toBe('Nuevo');
   expect(document.body.textContent).not.toContain('Pendiente');
