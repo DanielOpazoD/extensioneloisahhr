@@ -276,7 +276,7 @@ const verifyLists = async (context, origin, worker) => {
             const marker = markers.first();
             assert.equal((await marker.boundingBox()).height, 17);
             await marker.hover();
-            const tooltip = page.getByRole('tooltip');
+            const tooltip = page.locator('#hhr-worklist-novelty-tooltip');
             await tooltip.waitFor();
             assert.equal(await tooltip.textContent(), 'Con novedad · Última publicación médica hace 1 h');
             const target = await marker.boundingBox();
