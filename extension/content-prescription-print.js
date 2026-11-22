@@ -62,7 +62,6 @@
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
     fetchWeather: () => chrome.runtime.sendMessage({ type: runtimeMessages.RAPA_NUI_WEATHER }),
     fetchDailyBirths: () => chrome.runtime.sendMessage({ type: runtimeMessages.DAILY_BIRTHS }),
-    renderFavorites: panel => renderFavorites(panel),
   });
 
   const BUTTON_ID = 'hhr-prescription-print-button';
@@ -364,27 +363,14 @@
     ensureNursingMedicalEpicrisisPrintItem,
   } = dischargeActionsRuntime;
 
-  const medicationActionsRuntime = medicationActionsOwner.create({
+  const { hasVisibleNursingRole } = medicationActionsOwner.create({
     documentRef: document,
-    windowRef: window,
-    chromeApi: chrome,
-    modalId: MODAL_ID,
     normalizedText,
     currentRouteEncounterId,
     createFeedbackModal,
     sendMessage,
     runtimeMessages,
-    closeModal,
-    ensureStyles,
-    modalDismissWithFocusRestore,
-    trapModalFocus,
-    setLiveRegion,
   });
-  const {
-    hasVisibleNursingRole,
-    createFavoritesDialog,
-    renderFavorites,
-  } = medicationActionsRuntime;
 
   const centerShellRuntime = centerShellOwner.create({
     modalId: MODAL_ID,
@@ -605,8 +591,7 @@
         imagingCenterRuntime.renderImagingCenter(root, targetEncId);
       }
       else if (activeModule === 'settings') globalThis.HhrCenterSettings.render({ root,
-        operationsBar: document.getElementById(OPERATIONS_BAR_ID),
-        openFavorites: panel => createFavoritesDialog(panel, () => createOperationsCenterModal('settings', targetEncId, null, panel)) });
+        operationsBar: document.getElementById(OPERATIONS_BAR_ID) });
       else if (activeModule === 'home') renderHomeCenter(root, targetEncId);
       else renderConnectionCenter(root, targetEncId);
     };

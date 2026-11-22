@@ -11,10 +11,6 @@ type MedicationActionsRuntime = {
   downloadIndications: (encId: string, button: HTMLButtonElement) => Promise<void>;
   hasVisibleNursingRole: () => boolean;
   findToolbarAnchor: (heading: Element) => Element;
-  readFavorites: () => Promise<Array<{ name: string; url: string }> | null | undefined>;
-  writeFavorites: (list: Array<{ name: string; url: string }>) => Promise<boolean>;
-  normalizeFavoriteUrl: (raw: string) => string;
-  createFavoritesDialog: () => void;
 };
 
 type MedicationActionsOwner = {
@@ -37,54 +33,11 @@ const makeRuntime = (
   options: {
     currentEncounter?: string;
     sendMessage?: (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
-    storedFavorites?: Array<{ name: string; url: string }> | null;
-    storageReadError?: boolean;
-    storageWriteError?: boolean;
-    deferWrites?: boolean;
   } = {}
 ) => {
-  const writes: Array<Array<{ name: string; url: string }>> = [];
-  const pendingWrites: Array<() => void> = [];
   const feedback = vi.fn();
-  const liveRegion = vi.fn((element: HTMLElement, text: string, state = '') => {
-    element.textContent = text;
-    element.dataset.state = state;
-  });
-  const runtimeState: { lastError?: { message: string } } = {};
-  const chromeApi = {
-    runtime: runtimeState,
-    storage: {
-      local: {
-        get: vi.fn((_key: string, callback: (stored: Record<string, unknown>) => void) => {
-          if (options.storageReadError) runtimeState.lastError = { message: 'read failed' };
-          callback(
-            options.storedFavorites === null ? {} : { hhrFavorites: options.storedFavorites || [] }
-          );
-          delete runtimeState.lastError;
-        }),
-        set: vi.fn(
-          (
-            stored: { hhrFavorites: Array<{ name: string; url: string }> },
-            callback: () => void
-          ) => {
-            writes.push(stored.hhrFavorites.map(item => ({ ...item })));
-            const finishWrite = () => {
-              if (options.storageWriteError) runtimeState.lastError = { message: 'write failed' };
-              callback();
-              delete runtimeState.lastError;
-            };
-            if (options.deferWrites) pendingWrites.push(finishWrite);
-            else finishWrite();
-          }
-        ),
-      },
-    },
-  };
   const runtime = owner().create({
     documentRef: document,
-    windowRef: window,
-    chromeApi,
-    modalId: 'hhr-prescription-print-modal',
     normalizedText,
     currentRouteEncounterId: () => options.currentEncounter || '141',
     createFeedbackModal: feedback,
@@ -94,28 +47,8 @@ const makeRuntime = (
       HOSPITALIZED_REGIMEN_OPTIONS_REQUEST: 'RAYEN_HOSPITALIZED_REGIMEN_OPTIONS_REQUEST',
       HOSPITALIZED_REGIMEN_PRINT_REQUEST: 'RAYEN_HOSPITALIZED_REGIMEN_PRINT_REQUEST',
     },
-    closeModal: () => true,
-    ensureStyles: vi.fn(),
-    modalDismissWithFocusRestore: (root: HTMLElement, target: Element | null) => () => {
-      root.remove();
-      if (target instanceof HTMLElement) target.focus();
-    },
-    trapModalFocus: vi.fn(),
-    setLiveRegion: liveRegion,
   });
-  return {
-    runtime,
-    feedback,
-    liveRegion,
-    chromeApi,
-    writes,
-    releaseNextWrite: () => pendingWrites.shift()?.(),
-  };
-};
-
-const flushPromises = async () => {
-  await Promise.resolve();
-  await Promise.resolve();
+  return { runtime, feedback };
 };
 
 describe('HHR medication actions runtime', () => {
@@ -158,8 +91,6 @@ describe('HHR medication actions runtime', () => {
       'const downloadIndications =',
       'const hasVisibleNursingRole =',
       'const findToolbarAnchor =',
-      "const FAVORITES_STORAGE_KEY = 'hhrFavorites'",
-      'const createFavoritesDialog =',
     ].forEach(definition => {
       expect(runtimeSource).toContain(definition);
       expect(contentSource).not.toContain(definition);
@@ -212,134 +143,5 @@ describe('HHR medication actions runtime', () => {
 
   it('does not expose the retired regimen and Braden tool', () => {
     expect(makeRuntime().runtime).not.toHaveProperty('createRegimenQuickDialog');
-  });
-
-  it('preserves favorites storage, validation, rendering and listeners', async () => {
-    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
-    const { runtime, liveRegion, writes } = makeRuntime({
-      storedFavorites: [{ name: 'Guía', url: 'https://example.test/guia' }],
-    });
-
-    expect(runtime.normalizeFavoriteUrl('example.com')).toBe('https://example.com/');
-    expect(runtime.normalizeFavoriteUrl('javascript:alert(1)')).toBe('');
-    runtime.createFavoritesDialog();
-    await flushPromises();
-    const root = document.getElementById('hhr-prescription-print-modal') as HTMLElement;
-    expect(root.dataset.routeIndependent).toBe('true');
-    (root.querySelector('.hhr-fav-open') as HTMLButtonElement).click();
-    expect(open).toHaveBeenCalledWith('https://example.test/guia', '_blank', 'noopener');
-
-    const name = root.querySelector('.hhr-fav-name') as HTMLInputElement;
-    const url = root.querySelector('.hhr-fav-url') as HTMLInputElement;
-    const add = root.querySelector('.hhr-fav-add') as HTMLButtonElement;
-    url.value = 'https://[invalido';
-    add.click();
-    expect(liveRegion).toHaveBeenLastCalledWith(
-      expect.any(HTMLElement),
-      'Ingresa una dirección web válida (http o https).',
-      'error'
-    );
-
-    name.value = 'Portal';
-    url.value = 'portal.test';
-    add.click();
-    await flushPromises();
-    expect(writes.at(-1)).toEqual([
-      { name: 'Guía', url: 'https://example.test/guia' },
-      { name: 'Portal', url: 'https://portal.test/' },
-    ]);
-    expect(document.activeElement).toBe(name);
-    expect(root.querySelectorAll('.hhr-fav-row')).toHaveLength(2);
-
-    (root.querySelector('.hhr-fav-remove') as HTMLButtonElement).click();
-    await flushPromises();
-    expect(root.querySelectorAll('.hhr-fav-row')).toHaveLength(1);
-    expect(writes.at(-1)).toEqual([{ name: 'Portal', url: 'https://portal.test/' }]);
-  });
-
-  it('keeps favorites unchanged when storage reads or writes fail', async () => {
-    const failedRead = makeRuntime({
-      storedFavorites: [{ name: 'Privado', url: 'https://private.test/' }],
-      storageReadError: true,
-    });
-    failedRead.runtime.createFavoritesDialog();
-    await flushPromises();
-    let root = document.getElementById('hhr-prescription-print-modal') as HTMLElement;
-    expect(root.querySelectorAll('.hhr-fav-row')).toHaveLength(0);
-    expect(failedRead.writes).toHaveLength(0);
-    expect(failedRead.liveRegion).toHaveBeenCalledWith(
-      expect.any(HTMLElement),
-      'No se pudieron leer los favoritos guardados.',
-      'error'
-    );
-
-    root.remove();
-    const failedWrite = makeRuntime({
-      storedFavorites: [{ name: 'Guía', url: 'https://example.test/guia' }],
-      storageWriteError: true,
-    });
-    failedWrite.runtime.createFavoritesDialog();
-    await flushPromises();
-    root = document.getElementById('hhr-prescription-print-modal') as HTMLElement;
-    const name = root.querySelector('.hhr-fav-name') as HTMLInputElement;
-    const url = root.querySelector('.hhr-fav-url') as HTMLInputElement;
-    name.value = 'Portal';
-    url.value = 'portal.test';
-    (root.querySelector('.hhr-fav-add') as HTMLButtonElement).click();
-    await flushPromises();
-    expect(root.querySelectorAll('.hhr-fav-row')).toHaveLength(1);
-    expect(name.value).toBe('Portal');
-    expect(url.value).toBe('portal.test');
-    expect(failedWrite.liveRegion).toHaveBeenLastCalledWith(
-      expect.any(HTMLElement),
-      'No se pudo guardar el favorito.',
-      'error'
-    );
-
-    (root.querySelector('.hhr-fav-remove') as HTMLButtonElement).click();
-    await flushPromises();
-    expect(root.querySelectorAll('.hhr-fav-row')).toHaveLength(1);
-    expect(failedWrite.liveRegion).toHaveBeenLastCalledWith(
-      expect.any(HTMLElement),
-      'No se pudo eliminar el favorito.',
-      'error'
-    );
-  });
-
-  it('serializes favorite mutations while storage writes are pending', async () => {
-    const deferred = makeRuntime({
-      storedFavorites: [{ name: 'Guía', url: 'https://example.test/guia' }],
-      deferWrites: true,
-    });
-    deferred.runtime.createFavoritesDialog();
-    await flushPromises();
-    const root = document.getElementById('hhr-prescription-print-modal') as HTMLElement;
-    const name = root.querySelector('.hhr-fav-name') as HTMLInputElement;
-    const url = root.querySelector('.hhr-fav-url') as HTMLInputElement;
-    const add = root.querySelector('.hhr-fav-add') as HTMLButtonElement;
-
-    name.value = 'Primero';
-    url.value = 'primero.test';
-    add.click();
-    expect(add.disabled).toBe(true);
-    name.value = 'Segundo';
-    url.value = 'segundo.test';
-    add.click();
-    expect(deferred.writes).toHaveLength(1);
-
-    deferred.releaseNextWrite();
-    await flushPromises();
-    expect(add.disabled).toBe(false);
-    expect(root.querySelectorAll('.hhr-fav-row')).toHaveLength(2);
-
-    const removeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('.hhr-fav-remove'));
-    removeButtons[0].click();
-    expect(removeButtons.every(button => button.disabled)).toBe(true);
-    removeButtons[1].click();
-    expect(deferred.writes).toHaveLength(2);
-
-    deferred.releaseNextWrite();
-    await flushPromises();
-    expect(root.querySelectorAll('.hhr-fav-row')).toHaveLength(1);
   });
 });

@@ -41,6 +41,8 @@ Gestión de cuidados reúne ingresos, pacientes con novedad y pacientes sin nove
 
 El encabezado de la tabla queda visible durante el desplazamiento. En Gestión de cuidados, el icono de novedad abre una vista breve cuando la publicación se puede identificar en Eloísa. El enlace abre el Historial y resalta la tarjeta cuando coincide una sola publicación médica de esa fecha y hora.
 
+En el menú lateral y en Ajustes de Centro HHR, «Favoritos» reúne los accesos fijos a SysLab, MMRAD y Gmail. Los iconos se incluyen en el paquete a partir de los favicons de los tres sitios y los enlaces se abren en otra pestaña.
+
 En el menú lateral, «Un día como hoy» reúne las conmemoraciones de Efemerides.cl, hasta tres hechos históricos destacados por Wikipedia en español y hasta ocho nacimientos ordenados por visitas recientes. Cada hecho y nacimiento enlaza a su artículo. La lista de nacimientos muestra tres al abrirse y permite desplegar el resto.
 
 La ubicación muestra servicio y cama. Las filas se ordenan por cama desde R1–R4 y NEO1–NEO2 hasta H1C1–H6C2. Las ubicaciones adicionales siguen a las camas de sala y las de urgencias cierran la lista. En interconsultas se aplica el orden dentro de cada servicio. La fila se resalta al pasar el cursor o enfocar sus controles. En Gestión de cuidados, el lápiz junto al nombre abre «Modificación del paciente» en Gestión de Camas. El lápiz reutiliza la pestaña de Camas del profesional, incluso en otra ventana. Si hace falta iniciar sesión, se usa el acceso oficial de Camas. El editor comprueba profesional, establecimiento, episodio, paciente y disponibilidad de la acción nativa. El profesional revisa los datos y decide si guardar.
@@ -70,7 +72,7 @@ seleccionar una impresora o guardar el documento como PDF.
 
 La barra principal usa iconos para recetas y exámenes, sin subtítulo de conexión.
 Exámenes abre directamente «Ver resultados», «Solicitar laboratorio» o «Solicitar imágenes».
-La barra conserva HHR, Receta, Exámenes y sesión; Favoritos y las preferencias de presentación
+La barra conserva HHR, Receta, Exámenes y sesión. Las preferencias de presentación
 están dentro de Ajustes de Centro HHR.
 El estado sigue disponible en el indicador de color, el texto accesible y la ayuda al pasar
 el cursor; el panel de conexiones

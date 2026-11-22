@@ -24,11 +24,10 @@
     return link;
   };
 
-  function create({ fetchWeather, fetchDailyBirths, renderFavorites } = {}) {
+  function create({ fetchWeather, fetchDailyBirths } = {}) {
     const records = new Map();
     let timer;
     let dailyDialog;
-    let nextId = 0;
     const tick = () => { for (const { weather } of records.values()) void weather.refresh(); };
     const openDailyBirths = async (drawer, trigger) => {
       if (dailyDialog?.open) return;
@@ -209,39 +208,13 @@
       }
       const tools = el('section', '', { 'data-hhr-drawer-tools': '', 'aria-label': 'Herramientas de Eloísa' });
       const icons = globalThis.HhrUI?.icons;
-      const shortcut = (label, icon, attributes = {}) => {
-        const button = el('button', '', { type: 'button', class: 'hhr-drawer-shortcut', ...attributes });
-        if (icon) button.innerHTML = icon;
-        button.append(el('span', label));
-        return button;
-      };
-      const favoritesPanel = el('div', '', {
-        id: 'hhr-drawer-favorites-' + ++nextId, class: 'hhr-drawer-favorites',
-        role: 'region', 'aria-label': 'Favoritos', hidden: '',
+      const curiosity = el('button', '', {
+        type: 'button', class: 'hhr-drawer-shortcut', 'aria-haspopup': 'dialog',
       });
-      const favorite = shortcut('Favoritos', icons?.star, {
-        'aria-expanded': 'false', 'aria-controls': favoritesPanel.id,
-      });
-      const chevron = el('span', '', { class: 'hhr-drawer-chevron', 'aria-hidden': 'true' });
-      chevron.innerHTML = icons?.chevronDown || '';
-      favorite.append(chevron);
-      const setExpanded = open => {
-        favorite.setAttribute('aria-expanded', String(open));
-        favoritesPanel.hidden = !open;
-        if (open && !favoritesPanel.hasChildNodes()) renderFavorites?.(favoritesPanel);
-      };
-      favorite.addEventListener('click', event => { if (event.isTrusted) setExpanded(favoritesPanel.hidden); });
-      tools.addEventListener('keydown', event => {
-        if (event.key !== 'Escape' || favoritesPanel.hidden ||
-            !(favorite.contains(event.target) || favoritesPanel.contains(event.target))) return;
-        event.preventDefault();
-        event.stopPropagation();
-        setExpanded(false);
-        favorite.focus();
-      });
-      const curiosity = shortcut('Un día como hoy', icons?.calendar, { 'aria-haspopup': 'dialog' });
+      curiosity.innerHTML = icons?.calendar || '';
+      curiosity.append(el('span', 'Un día como hoy'));
       curiosity.addEventListener('click', event => { if (event.isTrusted) void openDailyBirths(drawer, curiosity); });
-      tools.append(favorite, favoritesPanel, curiosity);
+      tools.append(globalThis.HhrFavoriteLinks.create(), curiosity);
       const weather = weatherCard();
       drawer.setAttribute('data-hhr-drawer-enhanced', '');
       drawer.append(tools, weather.card);

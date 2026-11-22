@@ -526,7 +526,8 @@ Ahora cada puente reemplaza su escuchador anterior.
 
 El inicio y la navegación ofrecen **Recetas**, **Laboratorio** e **Imágenes**, junto con
 **Sesión**. El acceso **Abrir HHR** permanece en el encabezado para abrir el censo y el
-registro clínico completo. La barra flotante conserva Recetas, Exámenes, favoritos y sesión.
+registro clínico completo. La barra flotante conserva Recetas, Exámenes y sesión.
+Los accesos fijos de Favoritos están en el menú lateral y en Ajustes de Centro HHR.
 El inicio usa tres tarjetas equivalentes y una altura acotada; la navegación móvil distribuye
 sus cinco accesos sin huecos.
 

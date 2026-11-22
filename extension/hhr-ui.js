@@ -78,11 +78,7 @@
     imaging: strokeIcon(
       '<circle cx="12" cy="12" r="3.2"/><path d="M4 8V6a2 2 0 0 1 2-2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 16v2a2 2 0 0 1-2 2h-2"/><path d="M8 20H6a2 2 0 0 1-2-2v-2"/>'
     ),
-    star: strokeIcon(
-      '<path d="m12 3 2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9l-5.4 2.9 1.1-6.1L3.2 9.4l6.1-.8L12 3Z"/>'
-    ),
     calendar: strokeIcon('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v5m10-5v5M3 10h18m-12 5h2m3 0h2m-7 3h2"/>'),
-    chevronDown: strokeIcon('<path d="m7 10 5 5 5-5"/>'),
     chevronsRight: strokeIcon('<path d="m7 7 5 5-5 5"/><path d="m13 7 5 5-5 5"/>'),
   };
 
