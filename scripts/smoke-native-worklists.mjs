@@ -486,12 +486,50 @@ async function verifyTableConnection(context, origin, worker) {
   console.log('[entrega] 0 editores antes de validar el acceso, 1 aviso tras reinyección y 2 editores después de conectar');
 }
 
+async function verifyToolbarReload(page, url) {
+  await page.addInitScript(() => {
+    if (!new URL(location.href).searchParams.has('toolbarReloadFixture')) return;
+    const frames = [];
+    self.toolbarFrames = frames;
+    addEventListener('DOMContentLoaded', () => {
+      const filters = document.getElementById('filters');
+      const placeholder = document.createComment('Delayed Rayen controls');
+      filters.replaceWith(placeholder);
+      self.mountToolbarFilters = () => placeholder.replaceWith(filters);
+    }, { once:true });
+    const record = () => {
+      const bar = document.getElementById('hhr-clinical-operations-bar');
+      if (bar?.getClientRects().length && getComputedStyle(bar).visibility === 'visible' && Number(getComputedStyle(bar).opacity)) {
+        const { x, y } = bar.getBoundingClientRect();
+        frames.push({ x, y, docked: bar.parentElement.hasAttribute('data-hhr-worklist-layout') });
+      }
+      if (frames.length < 120) requestAnimationFrame(record);
+    };
+    requestAnimationFrame(record);
+  });
+  await page.goto(url + '?toolbarReloadFixture=1');
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.hhrPrescriptionPrintState === 'operations-ready');
+  await page.evaluate(async () => {
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    self.mountToolbarFilters();
+  });
+  await page.waitForFunction(() => self.toolbarFrames.some(frame => frame.docked));
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const frames = await page.evaluate(() => self.toolbarFrames);
+  assert.ok(frames.length >= 2, 'Capture the first visible frames and the final toolbar position');
+  const last = frames.at(-1);
+  assert.ok(frames.every(({ x, y, docked }) => docked && Math.abs(x - last.x) < 1 && Math.abs(y - last.y) < 1),
+    `The bar must be docked and at its final position from the first visible frame: ${JSON.stringify(frames.slice(0, 6))}`);
+}
+
 const verifyLists = async (context, origin, worker) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
   for (const route of routes) {
     const page = await context.newPage();
     try {
       await page.setViewportSize({ width: 1100, height: 450 });
+      await verifyToolbarReload(page, origin + route.pathname);
       await page.goto(origin + route.pathname);
       await page.waitForFunction(() => document.documentElement.dataset.hhrPrescriptionPrintState === 'operations-ready');
       if (!route.pathname.endsWith('-nurse')) {
@@ -503,8 +541,8 @@ const verifyLists = async (context, origin, worker) => {
           drawer.tabIndex = -1;
           drawer.style.cssText = 'position:fixed; inset:0 auto 0 0; z-index:1300; width:216px; background:white;';
           const demoLogo = '<svg xmlns="http://www.w3.org/2000/svg" width="135" height="42"><text x="4" y="27" fill="#19695f" font-family="sans-serif" font-size="21">Eloísa demo</text></svg>';
-          drawer.innerHTML = '<header style="width:188px;max-width:188px"><a href="#home" style="width:165px">' +
-            '<img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></a></header>' +
+          drawer.innerHTML = '<header style="width:188px;max-width:188px;overflow:hidden"><a href="#home" style="width:165px">' +
+            '<img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></a><span hidden></span></header>' +
             '<ul>' + ['Lista de trabajo médico', 'Gestión de cuidados', 'Ejecución plan de cuidados', 'Informes']
               .map(label => '<li style="padding-inline:15px"><button type="button" style="padding-inline:16px"><span>' +
                 label + '</span></button></li>').join('') + '</ul>' +
@@ -544,8 +582,24 @@ const verifyLists = async (context, origin, worker) => {
           }));
         assert.deepEqual(alignments[0], alignments[1], 'Beds matches the text and icon in the native menu');
         const drawerBox = await drawer.boundingBox();
-        assert.ok(Math.abs(drawerBox.x - brandBox.x) <= 1 && Math.abs(drawerBox.width - brandBox.width) <= 1,
-          'The logo band and its rule span the full drawer');
+        const image = await drawer.screenshot();
+        const colors = await drawer.evaluate(async (node, png) => {
+          const image = new Image();
+          image.src = 'data:image/png;base64,' + png;
+          await image.decode();
+          const canvas = document.createElement('canvas');
+          canvas.width = image.naturalWidth;
+          canvas.height = image.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(image, 0, 0);
+          const panel = node.getBoundingClientRect();
+          const brand = node.querySelector('[data-hhr-drawer-brand]').getBoundingClientRect();
+          const y = Math.round(brand.bottom - panel.top);
+          const pixel = (x, row) => [...ctx.getImageData(x, row, 1, 1).data];
+          return [pixel(canvas.width - 4, y - 5), pixel(canvas.width - 4, y - 1)];
+        }, image.toString('base64'));
+        assert.deepEqual(colors, [[243, 248, 246, 255], [227, 238, 234, 255]],
+          'The painted background and rule must reach the right edge through clipped native wrappers');
         const footer = drawer.locator('footer');
         assert.equal(await footer.isVisible(), false);
         await footer.evaluate(node => {

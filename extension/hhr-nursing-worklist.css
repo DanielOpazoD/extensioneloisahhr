@@ -25,11 +25,15 @@
 }
 
 [data-hhr-drawer-native-clock] { display:none !important; }
-[data-hhr-drawer-enhanced] { display:flex; flex-direction:column; overflow-y:auto; background:#fcfefd; }
+[data-hhr-drawer-enhanced] {
+  display:flex; flex-direction:column; overflow-y:auto;
+  background:#fcfefd linear-gradient(to bottom, #f3f8f6 0 calc(100% - 1px), #e3eeea 0)
+    0 var(--hhr-drawer-brand-top, 0px) / 100% var(--hhr-drawer-brand-height, 0px) no-repeat local !important;
+}
 [data-hhr-drawer-brand] {
   box-sizing:border-box; display:flex !important; flex:none; align-items:center; justify-content:center; gap:10px;
   inline-size:100% !important; max-inline-size:none !important; margin-inline:0 !important; min-height:62px;
-  padding:8px 12px; border-bottom:1px solid #e3eeea; background:#f3f8f6;
+  padding:8px 12px;
 }
 [data-hhr-drawer-brand] a:has(img[data-hhr-drawer-logo]) { display:inline-flex; inline-size:auto !important; }
 img[data-hhr-drawer-logo] { max-width:114px !important; max-height:38px; height:auto !important; object-fit:contain; }

@@ -170,6 +170,18 @@
       };
       return { card, refresh };
     };
+    // Paint on the drawer itself, beyond any narrower or clipped native logo wrappers.
+    const paintBrandBand = (drawer, brand) => {
+      const box = brand?.getBoundingClientRect();
+      if (!box?.height) {
+        drawer.style.removeProperty('--hhr-drawer-brand-top');
+        drawer.style.removeProperty('--hhr-drawer-brand-height');
+        return;
+      }
+      const top = box.top - drawer.getBoundingClientRect().top - drawer.clientTop + drawer.scrollTop;
+      drawer.style.setProperty('--hhr-drawer-brand-top', top + 'px');
+      drawer.style.setProperty('--hhr-drawer-brand-height', box.height + 'px');
+    };
     const markBrand = (drawer, record) => {
       const images = [...drawer.querySelectorAll('img')].filter(img => !img.closest('li,[data-hhr-drawer-tools]'));
       const menu = drawer.querySelector('[data-hhr-menu-icon="worklist"],[data-hhr-menu-icon="care"]');
@@ -184,8 +196,12 @@
         brand = brand.parentElement;
       }
       if (record.brand !== brand) {
+        if (record.brand) record.resize.unobserve(record.brand);
         record.brand?.removeAttribute('data-hhr-drawer-brand');
-        brand?.setAttribute('data-hhr-drawer-brand', '');
+        if (brand) {
+          brand.setAttribute('data-hhr-drawer-brand', '');
+          record.resize.observe(brand);
+        }
         record.brand = brand;
       }
       if (record.logo !== (brand ? logo : undefined)) {
@@ -193,6 +209,7 @@
         if (brand) logo?.setAttribute('data-hhr-drawer-logo', '');
         record.logo = brand ? logo : undefined;
       }
+      paintBrandBand(drawer, brand);
     };
     const hideNativeClock = (drawer, record) => {
       const native = new Set();
@@ -233,13 +250,17 @@
       drawer.setAttribute('data-hhr-drawer-enhanced', '');
       drawer.append(tools, weather.card);
       const record = { weather, tools, native: new Set() };
+      record.resize = new ResizeObserver(() => paintBrandBand(drawer, record.brand));
+      record.resize.observe(drawer);
       records.set(drawer, record);
       markBrand(drawer, record);
       hideNativeClock(drawer, record);
       tick();
       timer ??= setInterval(tick, 10_000);
     };
-    const removeDecoration = (drawer, { weather, tools, native, brand, logo }) => {
+    const removeDecoration = (drawer, { weather, tools, native, brand, logo, resize }) => {
+      resize.disconnect();
+      paintBrandBand(drawer);
       tools.remove();
       weather.card.remove();
       drawer.removeAttribute('data-hhr-drawer-enhanced');

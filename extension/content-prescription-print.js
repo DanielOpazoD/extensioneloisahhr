@@ -602,6 +602,12 @@
   const updateOperationsBarPosition = bar => {
     if (!bar) return;
     const worklistLayout = document.querySelector('[data-hhr-worklist-layout]');
+    const waitingForWorklist = !worklistLayout && worklistPresentation?.isWorklist(window.location.pathname);
+    bar.toggleAttribute('data-hhr-ops-awaiting-layout', Boolean(waitingForWorklist));
+    if (waitingForWorklist) {
+      if (bar.parentElement !== document.body) document.body.append(bar);
+      return;
+    }
     if (worklistLayout) {
       bar.style.removeProperty('--hhr-ops-top');
       if (bar.parentElement !== worklistLayout) worklistLayout.append(bar);
@@ -725,7 +731,6 @@
         onOpenBrand: () => centerShellRuntime.openCenterModule(undefined, bar.dataset.encounterId, brandButton),
         onExamSelect: (module, trigger, flow) => centerShellRuntime.openCenterModule(module, bar.dataset.encounterId, trigger, flow),
       });
-      document.body.appendChild(bar);
     }
     bar.dataset.encounterId = encId || '';
     [barPart(bar, '.hhr-exams-lab'), barPart(bar, '.hhr-exams-results')].filter(Boolean).forEach(labButton => {
@@ -809,7 +814,12 @@
   // controls still use the debounced operations UI refresh.
   const observer = new MutationObserver(records => {
     if (!active || !uiLifecycle.owns()) return;
-    worklistPresentation?.refresh(window.location.pathname, records);
+    const pathname = window.location.pathname;
+    worklistPresentation?.refresh(pathname, records);
+    const bar = document.getElementById(OPERATIONS_BAR_ID);
+    if (bar && (worklistPresentation?.isWorklist(pathname) || bar.hasAttribute('data-hhr-ops-awaiting-layout'))) {
+      updateOperationsBarPosition(bar);
+    }
     if (records.some(record => {
       if (record.type !== 'characterData') return true;
       const label = record.target.parentElement;

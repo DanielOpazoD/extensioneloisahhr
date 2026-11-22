@@ -154,7 +154,7 @@
       [data-hhr-worklist-layout] > [role="tabpanel"] { order:1; }
       [data-hhr-worklist-layout] > #hhr-clinical-operations-bar {
         position:relative; inset:auto; flex:0 0 auto; margin-inline-start:auto;
-        z-index:3; animation:none;
+        z-index:3;
       }
       [data-hhr-worklist-layout] > [data-hhr-worklist-rail] { flex:0 1 auto; max-width:100%; }
       [data-hhr-worklist-layout] > [data-hhr-worklist-filterbar] {
@@ -456,6 +456,7 @@
       }
     };
     return Object.freeze({
+      isWorklist: pathname => Object.hasOwn(headings, pathname.replace(/\/$/, '')),
       refresh(pathname, records) {
         const full = pathname !== currentPath || !records;
         currentPath = pathname;
