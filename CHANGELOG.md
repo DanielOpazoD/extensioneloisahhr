@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.145
+
+- Pinta el fondo y la línea de los logos directamente en el panel lateral, incluso cuando Eloísa recorta el contenedor interior.
+- Muestra la barra de la extensión en la fila de controles desde su primer fotograma en las listas de pacientes.
+
 ## 0.48.144
 
 - Extiende el encabezado de los logos al ancho del menú y elimina el separador sobre Favoritos.
