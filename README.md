@@ -35,14 +35,23 @@ nativo de DAU; HHR verifica además su configuración actual.
 La huella identifica una compilación; tras editar una carpeta descomprimida hay que volver
 a empaquetar y recargar Chrome. Una carpeta fuente sin empaquetar no afirma una identidad.
 
-### Entrega de turno con equipo registrado en pruebas
+### Entrega de turno con equipo registrado
 
-`node scripts/build-handoff-device-pilot.mjs` genera el ZIP de pruebas para el deploy
-preview del PR de HHR #1901. Con los endpoints de `hhr-pruebas` habilitados, abre
-Entrega de turno en Eloísa y elige «Registrar equipo» por primera vez. Confirma
-usando la cuenta individual de enfermería de HHR con el mismo RUN. En usos
-posteriores, inicia sesión en Eloísa y edita directamente. La acción «Desconectar»
-retira la llave del equipo.
+El ZIP publicado abre HHR Hospitalizados para registrar el equipo una sola vez.
+Confirma con tu cuenta individual habilitada de enfermería o con tu cuenta
+administradora institucional. Después usa Eloísa en el mismo perfil de Chrome.
+La entrega solo confirma el guardado al recibir respuesta de HHR. «Desconectar»
+revoca la llave del equipo.
+
+Guarda y verifica las entregas abiertas antes de reemplazar o recargar la
+extensión. Esta versión usa una identidad fija en Chrome. Si vienes del ZIP
+estándar anterior, guarda una copia de esa carpeta hasta verificar el acceso
+con la versión nueva y desactiva la copia anterior en `chrome://extensions`.
+
+`node scripts/build-handoff-device-pilot.mjs` genera un ZIP aislado con
+`HHR_HANDOFF_TEST_ORIGIN`, `HHR_HANDOFF_TEST_ENDPOINT` y
+`HHR_HANDOFF_TEST_PUBLIC_KEY` propios del entorno de pruebas. Usa un backend
+con datos sintéticos y una identidad de Chrome distinta de la publicada.
 
 ## Controles de la interfaz
 
