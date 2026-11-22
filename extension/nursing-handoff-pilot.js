@@ -22,7 +22,10 @@
   }) {
     const store = chrome.storage.session;
     const isPilot = chrome.runtime.getManifest().name === name;
-    const connection = !isPilot && hosted?.create(chrome);
+    const connection = !isPilot && hosted?.create(chrome, tabId => {
+      void chrome.tabs.sendMessage(tabId, { type: 'RAYEN_NURSING_HANDOFF_ACCESS_CHANGED' }, { frameId: 0 })
+        .catch(() => {});
+    });
     const endpoint = connection ? hosted.endpoint : 'http://127.0.0.1:' + (localPilot?.port ?? 5001) +
       '/demo-hhr-handoff/southamerica-east1/nursingHandoffExtension';
     const enabled = Boolean(connection || (isPilot && localPilot?.installationKey));
@@ -54,12 +57,31 @@
       }
       return getContext(episode, info, null, sender);
     };
-    async function start({ encId, inline }, sender) {
+    async function sourceSession(sender) {
       if (!enabled || sender.frameId !== 0 || !source.test(sender.url) ||
-          !source.test(sender.tab?.url) || !number(encId)) return error('Abre la lista de Gestión de cuidados.');
+          !source.test(sender.tab?.url)) return error('Abre la lista de Gestión de cuidados.');
       const session = await getInfo(sender);
       if (session.error) return error(session.error);
       if (!session.info?.token || !identity(session.info)) return error('Inicia sesión en Hospitalizados de Eloísa.');
+      return session;
+    }
+
+    async function table({ action }, sender) {
+      if (action !== 'status' && action !== 'connect') return error('Operación no autorizada.');
+      const session = await sourceSession(sender);
+      if (session.error) return session;
+      const access = await checkAccess(session.info);
+      if (access.error) return error(access.error);
+      const owner = identity(session.info);
+      if (!connection || await connection.authorized(owner)) return { ok: true };
+      return action === 'connect' ? connection.open(owner, sender.tab.id) : needsHhr();
+    }
+
+    async function start({ encId, inline }, sender) {
+      if (!number(encId)) return error('Abre la lista de Gestión de cuidados.');
+      const session = await sourceSession(sender);
+      if (session.error) return session;
+      if (inline === true && connection && !await connection.authorized(identity(session.info))) return needsHhr();
       const result = await getPatient(String(encId), session.info, sender);
       if (result.error) return error(result.error);
       const access = await checkAccess(result.info);
@@ -122,12 +144,6 @@
       if (action === 'close' && sender.frameId === 0 && sender.documentId === context.sourceDocument) {
         await store.remove(key);
         return { ok: true };
-      }
-      if (action === 'connect-inline') {
-        if (!connection || !context.inline || !context.editorDocument || sender.frameId !== 0 ||
-            sender.documentId !== context.sourceDocument || !source.test(sender.url)) return error('Editor no autorizado.');
-        const verified = await verifySource(context);
-        return verified.error ? verified : connection.open(context.owner, context.tabId);
       }
       if (!(sender.frameId > 0) || sender.url !== chrome.runtime.getURL(editor) + '#' + id ||
           (context.editorDocument ? context.editorDocument !== sender.documentId : action !== 'context')) {
@@ -198,6 +214,7 @@
     // HHR commits to the same census document even when two rows belong to different patients.
     let saving = Promise.resolve();
     return {
+      table,
       start,
       operate(message, sender) {
         if (message.action !== 'save' || !(sender.frameId > 0) ||

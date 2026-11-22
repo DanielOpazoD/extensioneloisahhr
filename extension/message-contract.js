@@ -46,6 +46,7 @@
     HOSPITALIZED_PRESCRIPTION_OPTIONS_REQUEST: 'RAYEN_HOSPITALIZED_PRESCRIPTION_OPTIONS_REQUEST',
     HOSPITALIZED_PRESCRIPTION_PRINT_REQUEST:
       'RAYEN_HOSPITALIZED_PRESCRIPTION_PRINT_REQUEST',
+    NURSING_HANDOFF_TABLE: 'RAYEN_NURSING_HANDOFF_TABLE',
     NURSING_HANDOFF_OPEN: 'RAYEN_NURSING_HANDOFF_OPEN',
     RAPA_NUI_WEATHER: 'RAYEN_RAPA_NUI_WEATHER',
     DAILY_BIRTHS: 'RAYEN_DAILY_BIRTHS',
@@ -135,6 +136,7 @@
       encIds: 'array',
       printFormat: 'string?', preview: 'boolean?',
     },
+    [types.NURSING_HANDOFF_TABLE]: { action: 'handoff-table-action' },
     [types.NURSING_HANDOFF_OPEN]: { encId: 'id', inline: 'boolean?' },
     [types.NURSING_HANDOFF_EDITOR]: { id: 'string', action: 'string', date: 'string?', shift: 'string?', since: 'string?', version: 'string?', text: 'string?', expiresAt: 'number?' },
     [types.WORKLIST_PATIENT_EDIT]: { encId: 'id' },
@@ -176,7 +178,7 @@
   // Mirrors the extension-owned editor, the source list, and the HHR portal relay.
   // Sender, session and episode checks belong to the worker's handoff handler.
   const handoffEditorActions = Object.freeze({
-    context: {}, close: {}, connect: {}, disconnect: {}, 'connect-inline': {},
+    context: {}, close: {}, connect: {}, disconnect: {},
     'hosted-result': { expiresAt: 'number?' },
     read: { date: 'string?', shift: 'string?', since: 'string?' },
     draft: { date: 'string', shift: 'string', version: 'string', text: 'string?' },
@@ -210,6 +212,7 @@
     const kind = optional ? descriptor.slice(0, -1) : descriptor;
     if (value == null) return optional;
     if (kind === 'array') return Array.isArray(value);
+    if (kind === 'handoff-table-action') return value === 'status' || value === 'connect';
     if (kind === 'object') return typeof value === 'object' && !Array.isArray(value);
     if (scalarRules[kind]) return scalarRules[kind](value);
     if (kind === 'rut-body') return typeof value === 'string' && /^\d{5,9}$/.test(value);

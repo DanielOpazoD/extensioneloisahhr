@@ -40,7 +40,7 @@ describe('shared Rayen runtime-message contract', () => {
   it('registers every service-worker request type once', () => {
     const values = Object.values(contract.types);
 
-    expect(values).toHaveLength(74);
+    expect(values).toHaveLength(75);
     expect(contract.types.RAPA_NUI_WEATHER).toBe('RAYEN_RAPA_NUI_WEATHER');
     expect(contract.types.DAILY_BIRTHS).toBe('RAYEN_DAILY_BIRTHS');
     expect(contract.validateRuntimeMessage({ type: contract.types.DAILY_BIRTHS }).ok).toBe(true);
@@ -289,6 +289,16 @@ describe('shared Rayen runtime-message contract', () => {
     errorSpy.mockRestore();
   });
 
+  it('limits table connection requests to status and connect, without a patient or editor', () => {
+    const type = contract.types.NURSING_HANDOFF_TABLE;
+    for (const action of ['status', 'connect']) {
+      expect(contract.validateRuntimeMessage({ type, action }).ok).toBe(true);
+    }
+    for (const action of [undefined, 'read', 'save']) {
+      expect(contract.validateRuntimeMessage({ type, action }).ok).toBe(false);
+    }
+  });
+
   it('validates the editor action and its fields without changing the authorized sender', async () => {
     const type = contract.types.NURSING_HANDOFF_EDITOR;
     const id = 'id-sintético';
@@ -297,10 +307,10 @@ describe('shared Rayen runtime-message contract', () => {
     for (const message of [
       { action:'read' }, { action:'read', ...fields, since:fields.version },
       { action:'draft', ...fields }, { action:'save', ...fields, text:'' },
-      { action:'connect-inline' }, { action:'hosted-result' }, { action:'close' },
+      { action:'hosted-result' }, { action:'close' },
     ]) expect(contract.validateRuntimeMessage({ type, id, ...message }).ok).toBe(true);
     for (const message of [
-      { action:'otra-acción' }, { action:'draft' }, { action:'save', ...fields },
+      { action:'otra-acción' }, { action:'connect-inline' }, { action:'draft' }, { action:'save', ...fields },
       { action:'hosted-result', expiresAt:'mañana' },
     ]) expect(contract.validateRuntimeMessage({ type, id, ...message })).toMatchObject({
       ok:false, known:true, response:{ code:'INVALID_MESSAGE' },

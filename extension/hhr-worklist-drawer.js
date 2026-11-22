@@ -171,33 +171,47 @@
       return { card, refresh };
     };
     const markBrand = (drawer, record) => {
-      if (record.logo?.isConnected) return;
-      record.brand?.removeAttribute('data-hhr-drawer-brand');
-      record.logo?.removeAttribute('data-hhr-drawer-logo');
       const images = [...drawer.querySelectorAll('img')].filter(img => !img.closest('li,[data-hhr-drawer-tools]'));
       const menu = drawer.querySelector('[data-hhr-menu-icon="worklist"],[data-hhr-menu-icon="care"]');
       const logo = images.find(img =>
-        /rayen|elo[ií]sa|logo/i.test((img.getAttribute('alt') || '') + ' ' + (img.getAttribute('src') || '')));
-      const headerLogo = logo || images.find(img => menu && (img.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING));
-      const brand = headerLogo?.closest('a') || headerLogo?.parentElement;
-      if (!brand || brand === drawer) return;
-      record.logo = headerLogo;
-      record.brand = brand;
-      headerLogo.setAttribute('data-hhr-drawer-logo', '');
-      brand.setAttribute('data-hhr-drawer-brand', '');
+        /rayen|elo[ií]sa|logo/i.test((img.getAttribute('alt') || '') + ' ' + (img.getAttribute('src') || ''))) ||
+        images.find(img => menu && (img.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING));
+      const link = logo?.closest('a');
+      let brand = drawer.contains(link) ? link : logo?.parentElement;
+      if (brand === drawer) brand = undefined;
+      while (brand && brand.parentElement !== drawer && brand.parentElement.childElementCount === 1 &&
+             !brand.parentElement.textContent.trim()) {
+        brand = brand.parentElement;
+      }
+      if (record.brand !== brand) {
+        record.brand?.removeAttribute('data-hhr-drawer-brand');
+        brand?.setAttribute('data-hhr-drawer-brand', '');
+        record.brand = brand;
+      }
+      if (record.logo !== (brand ? logo : undefined)) {
+        record.logo?.removeAttribute('data-hhr-drawer-logo');
+        if (brand) logo?.setAttribute('data-hhr-drawer-logo', '');
+        record.logo = brand ? logo : undefined;
+      }
     };
     const hideNativeClock = (drawer, record) => {
-      for (const node of record.native) if (!drawer.contains(node)) {
-        node.removeAttribute('data-hhr-drawer-native-clock');
-        record.native.delete(node);
-      }
+      const native = new Set();
       for (const node of drawer.querySelectorAll('time,p,span,div')) {
-        if (node.children.length || node.closest('[data-hhr-drawer-tools],dialog')) continue;
-        if (!node.matches('time') &&
-            !/^(?:Versión:\s*\S+|\d{2}[-/]\d{2}[-/]\d{4},?\s+\d{2}:\d{2}(?::\d{2})?)$/.test(node.textContent.trim())) continue;
-        node.setAttribute('data-hhr-drawer-native-clock', '');
-        record.native.add(node);
+        if (node.children.length || node.closest('[data-hhr-drawer-tools],dialog,button,a,[role="button"],[role="link"]')) continue;
+        if (node.matches('time') ||
+            /^(?:Versión:\s*\S+|\d{2}[-/]\d{2}[-/]\d{4},?\s+\d{2}:\d{2}(?::\d{2})?)$/.test(node.textContent.trim())) native.add(node);
       }
+      // A wrapper that serves only the retired footer should not leave a divider or empty space.
+      for (const node of native) {
+        const parent = node.parentElement;
+        if (!parent || parent === drawer || !parent.matches(':is(div,footer,section):not([role],[tabindex],[contenteditable])') ||
+            [...parent.childNodes].some(child => child.nodeType === Node.TEXT_NODE && child.textContent.trim()) ||
+            [...parent.children].some(child => !native.has(child) && !child.matches('hr:empty:not([tabindex],[contenteditable])'))) continue;
+        native.add(parent);
+      }
+      for (const node of record.native) if (!native.has(node)) node.removeAttribute('data-hhr-drawer-native-clock');
+      for (const node of native) if (!record.native.has(node)) node.setAttribute('data-hhr-drawer-native-clock', '');
+      record.native = native;
     };
     const decorate = drawer => {
       if (records.has(drawer)) {

@@ -1,5 +1,7 @@
 (() => {
   'use strict';
+  if (globalThis.__hhrNursingHandoffMounted) return;
+  globalThis.__hhrNursingHandoffMounted = true;
   const { types } = HhrRayenMessageContract;
   const extensionOrigin = chrome.runtime.getURL('').slice(0, -1);
   const editorUrl = chrome.runtime.getURL('nursing-handoff-editor.html');
@@ -11,7 +13,7 @@
     type: types.NURSING_HANDOFF_EDITOR, id, action: 'close',
   }).catch(() => {});
   let active;
-  let table;
+  const tables = new WeakSet();
 
   function watchTable(panel) {
     const entries = new Map();
@@ -27,28 +29,68 @@
     connect.textContent = 'Conectar HHR';
     connection.append(connectionStatus, connect);
     const toggle = () => panel.querySelector('[data-hhr-handoff-toggle]');
-    const linkEntry = () => [...entries.values()].find(entry => entry.visible && entry.linkRequired);
-    const updateConnection = () => {
-      const required = toggle()?.ariaExpanded === 'true' && Boolean(linkEntry());
-      if (required && !connection.isConnected) toggle().before(connection);
-      if (required && connection.hidden) connectionStatus.textContent = 'Conecta tu cuenta de HHR para editar las entregas.';
-      connection.hidden = !required;
+    const isExpanded = () => panel.isConnected && sourcePath.test(location.pathname) &&
+      toggle()?.ariaExpanded === 'true';
+    let state = 'closed';
+    let checkId = 0;
+    const placeConnection = () => {
+      const button = toggle();
+      if (!connection.hidden && button && connection.nextElementSibling !== button) button.before(connection);
+    };
+    const setState = (next, message = '') => {
+      state = next;
+      panel.dataset.hhrHandoffState = next;
+      connection.hidden = next === 'closed' || next === 'ready';
+      if (connectionStatus.textContent !== message) connectionStatus.textContent = message;
+      connect.hidden = next === 'checking';
+      if (next === 'link') connect.textContent = 'Conectar HHR';
+      else if (next === 'error') connect.textContent = 'Reintentar';
+      placeConnection();
+    };
+    const requestAccess = action => chrome.runtime.sendMessage({ type: types.NURSING_HANDOFF_TABLE, action })
+      .catch(() => ({ error: 'No se pudo comprobar la conexión a HHR. Intenta de nuevo.' }));
+    const checkConnection = async (force = false) => {
+      if (!isExpanded() || (!force && state === 'checking')) return;
+      const current = ++checkId;
+      setState('checking', 'Comprobando conexión…');
+      const result = await requestAccess('status');
+      if (current !== checkId || !isExpanded()) return;
+      if (result?.ok) {
+        setState('ready');
+        drain();
+      } else if (result?.code === 'HHR_LINK_REQUIRED') {
+        setState('link', 'Conecta tu cuenta de HHR para editar las entregas.');
+      } else {
+        setState('error', result?.error || 'No se pudo comprobar la conexión a HHR.');
+      }
     };
     connect.addEventListener('click', async event => {
-      const row = linkEntry();
-      if (!event.isTrusted || connect.disabled || !row || connection.hidden) return;
+      if (!event.isTrusted || connect.disabled || !isExpanded()) return;
+      if (state === 'error') {
+        void checkConnection();
+        return;
+      }
+      if (state !== 'link') return;
       connect.disabled = true;
       try {
-        const result = await chrome.runtime.sendMessage({
-          type: types.NURSING_HANDOFF_EDITOR, id: row.id, action: 'connect-inline',
-        });
-        if (result?.error) connectionStatus.textContent = result.error;
-      } catch {
-        connectionStatus.textContent = 'No se pudo abrir HHR. Intenta de nuevo.';
+        const result = await requestAccess('connect');
+        if (state === 'link' && isExpanded()) {
+          if (result?.error) connectionStatus.textContent = result.error;
+          else void checkConnection();
+        }
       } finally {
         connect.disabled = false;
       }
     });
+    const reconnect = () => {
+      if (state === 'link') void checkConnection();
+    };
+    const receiveAccess = message => {
+      if (message?.type === 'RAYEN_NURSING_HANDOFF_ACCESS_CHANGED' && ['checking', 'link'].includes(state)) {
+        // A receipt may supersede a status request issued just before the grant.
+        void checkConnection(true);
+      }
+    };
     const send = (entry, type, value) => entry.frame?.contentWindow?.postMessage({ type, value }, extensionOrigin);
     const updatePending = () => {
       const count = [...entries.values()].filter(entry => entry.dirty).length;
@@ -67,14 +109,12 @@
       } else if (type === 'hhr-handoff-row-dirty' && typeof value === 'boolean') {
         row.dirty = value;
         updatePending();
-      } else if (type === 'hhr-handoff-row-link' && typeof value === 'boolean') {
-        row.linkRequired = value;
-        row.host.toggleAttribute('data-hhr-handoff-needs-link', value);
-        updateConnection();
+      } else if (type === 'hhr-handoff-row-link' && value === true && state === 'ready') {
+        void checkConnection();
       }
     };
     const drain = () => {
-      if (!panel.isConnected || toggle()?.ariaExpanded !== 'true') return;
+      if (state !== 'ready' || !isExpanded()) return;
       for (const entry of entries.values()) {
         if (opening >= 3) return;
         if (entry.visible && !entry.started) {
@@ -100,6 +140,13 @@
       if (!host.isConnected || entries.get(host) !== entry || rowEpisode() !== episode ||
           host.dataset.hhrHandoffInline !== episode) {
         if (opened?.id) void revoke(opened.id);
+        return;
+      }
+      if (state !== 'ready' || opened?.code === 'HHR_LINK_REQUIRED') {
+        if (opened?.id) void revoke(opened.id);
+        host.replaceChildren();
+        entry.started = false;
+        if (state === 'ready') void checkConnection();
         return;
       }
       if (!opened?.id) {
@@ -130,7 +177,6 @@
         entry.visible = isIntersecting;
         send(entry, 'hhr-handoff-row-visible', isIntersecting);
       }
-      updateConnection();
       drain();
     });
     const cleanup = (host, entry) => {
@@ -144,9 +190,12 @@
         observer.disconnect();
         changes.disconnect();
         connection.remove();
+        delete panel.dataset.hhrHandoffState;
         window.removeEventListener('message', receiveRow);
+        window.removeEventListener('focus', reconnect);
+        chrome.runtime.onMessage.removeListener(receiveAccess);
         for (const [host, entry] of entries) cleanup(host, entry);
-        if (table?.panel === panel) table = undefined;
+        tables.delete(panel);
         return;
       }
       for (const [host, entry] of entries) if (!panel.contains(host)) cleanup(host, entry);
@@ -156,8 +205,17 @@
         observer.observe(host);
       }
       updatePending();
-      updateConnection();
-      drain();
+      if (!isExpanded()) {
+        if (state !== 'closed') {
+          checkId += 1;
+          setState('closed');
+        }
+      } else if (state === 'closed') {
+        void checkConnection();
+      } else {
+        placeConnection();
+        drain();
+      }
     };
     const changes = new MutationObserver(records => {
       if (panel.isConnected && !records.some(record => panel.contains(record.target))) return;
@@ -165,15 +223,19 @@
     });
     changes.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-expanded'] });
     window.addEventListener('message', receiveRow);
+    window.addEventListener('focus', reconnect);
+    chrome.runtime.onMessage.addListener(receiveAccess);
     reconcile();
-    return { panel };
   }
 
   document.addEventListener('click', async event => {
     if (!event.isTrusted || !sourcePath.test(location.pathname)) return;
     const toggle = event.target.closest?.('[data-hhr-handoff-toggle]');
     const panel = toggle?.closest('.hhr-hospitalized-panel');
-    if (panel && 'IntersectionObserver' in window && table?.panel !== panel) table = watchTable(panel);
+    if (panel && 'IntersectionObserver' in window && !tables.has(panel)) {
+      tables.add(panel);
+      watchTable(panel);
+    }
     const button = event.target.closest?.('button[data-hhr-handoff-episode]');
     if (!button || !button.closest('.hhr-hospitalized-panel')) return;
     event.stopPropagation();

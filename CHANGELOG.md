@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.144
+
+- Extiende el encabezado de los logos al ancho del menú y elimina el separador sobre Favoritos.
+- Entrega de turno comprueba una vez el acceso a HHR antes de cargar las filas y ofrece un solo botón de conexión.
+
 ## 0.48.143
 
 - Favoritos muestra accesos fijos a SysLab, MMRAD y Gmail con los iconos de cada sitio, en el menú lateral y en Ajustes de Centro HHR.
