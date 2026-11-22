@@ -8,10 +8,10 @@ const extensionOrigin = 'chrome-extension://demo/';
 const ids = ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'];
 const demoProof = crypto.randomUUID();
 const installationKey = 'a'.repeat(64);
-const info = { facId: '1', practitionerId: '2', practitionerRoleId: '3', token: demoProof };
+const info = { facId: '1', practitionerId: '2', practitionerRoleId: '3', token: demoProof, professionalRun: '22222222-2' };
 const setup = async hosted => {
   const owner = '1:2:3';
-  const fields = { owner, sessionKey: 'rayen-session' };
+  const fields = { owner, accountOwner: info.professionalRun, sessionKey: 'rayen-session' };
   const store = {};
   ids.forEach((id, i) => {
     store['hhr-nursing-handoff-' + (i + 1) + ':editor:' + id] = {
@@ -140,4 +140,22 @@ it('comprueba y abre la conexión de la tabla sin leer pacientes y con la sesió
   expect(open).toHaveBeenCalledOnce();
   expect(getContext).not.toHaveBeenCalled();
   expect(fetchImpl).not.toHaveBeenCalled();
+});
+
+it('un equipo registrado guarda directamente con la llave y rechaza un cambio de RUN', async () => {
+  const key = { deviceId: ids[0], proof: 'b'.repeat(64), professionalRun: info.professionalRun };
+  const authorized = vi.fn().mockResolvedValue(key);
+  const open = vi.fn();
+  const { message, fetchImpl, getInfo } = await setup({
+    endpoint: 'https://example.test/handoff', registeredMode: true, create: () => ({ authorized, open }),
+  });
+  fetchImpl.mockResolvedValue(Response.json({ result: { confirmed: true, date: '2026-11-19', shift: 'day' } }));
+  await expect(message(0, 'save')).resolves.toMatchObject({ confirmed: true });
+  expect(authorized).toHaveBeenCalledWith(info.professionalRun);
+  expect(JSON.parse(fetchImpl.mock.calls[0][1].body).data).toMatchObject({ ...key, action: 'save', patientRun: '11111111-1' });
+  expect(fetchImpl.mock.calls[0][1].body).not.toContain(demoProof);
+  expect(open).not.toHaveBeenCalled();
+  getInfo.mockResolvedValue({ info: { ...info, professionalRun: '11111111-1' } });
+  await expect(message(0, 'save')).resolves.toMatchObject({ code: 'SOURCE_SESSION_CHANGED' });
+  expect(fetchImpl).toHaveBeenCalledOnce();
 });

@@ -37,13 +37,13 @@
       const button = toggle();
       if (!connection.hidden && button && connection.nextElementSibling !== button) button.before(connection);
     };
-    const setState = (next, message = '') => {
+    const setState = (next, message = '', registration = false) => {
       state = next;
       panel.dataset.hhrHandoffState = next;
       connection.hidden = next === 'closed' || next === 'ready';
       if (connectionStatus.textContent !== message) connectionStatus.textContent = message;
       connect.hidden = next === 'checking';
-      if (next === 'link') connect.textContent = 'Conectar HHR';
+      if (next === 'link') connect.textContent = registration ? 'Registrar equipo' : 'Conectar HHR';
       else if (next === 'error') connect.textContent = 'Reintentar';
       placeConnection();
     };
@@ -59,7 +59,7 @@
         setState('ready');
         drain();
       } else if (result?.code === 'HHR_LINK_REQUIRED') {
-        setState('link', 'Conecta tu cuenta de HHR para editar las entregas.');
+        setState('link', result.registration ? result.error : 'Conecta tu cuenta de HHR para editar las entregas.', result.registration);
       } else {
         setState('error', result?.error || 'No se pudo comprobar la conexión a HHR.');
       }
@@ -87,6 +87,10 @@
     };
     const receiveAccess = message => {
       if (message?.type === 'RAYEN_NURSING_HANDOFF_ACCESS_CHANGED' && ['checking', 'link'].includes(state)) {
+        if (message.registrationError) {
+          setState('link', message.registrationError, true);
+          return;
+        }
         // A receipt may supersede a status request issued just before the grant.
         void checkConnection(true);
       }

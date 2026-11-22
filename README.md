@@ -35,6 +35,15 @@ nativo de DAU; HHR verifica además su configuración actual.
 La huella identifica una compilación; tras editar una carpeta descomprimida hay que volver
 a empaquetar y recargar Chrome. Una carpeta fuente sin empaquetar no afirma una identidad.
 
+### Entrega de turno con equipo registrado en pruebas
+
+`node scripts/build-handoff-device-pilot.mjs` genera el ZIP de pruebas para el deploy
+preview del PR de HHR #1901. Con los endpoints de `hhr-pruebas` habilitados, abre
+Entrega de turno en Eloísa y elige «Registrar equipo» por primera vez. Confirma
+usando la cuenta individual de enfermería de HHR con el mismo RUN. En usos
+posteriores, inicia sesión en Eloísa y edita directamente. La acción «Desconectar»
+retira la llave del equipo.
+
 ## Controles de la interfaz
 
 Gestión de cuidados reúne ingresos, pacientes con novedad y pacientes sin novedad en «Pacientes hospitalizados», y mantiene «Egresos» aparte. La tabla de carga sigue visible hasta que responden las tres fuentes. Si un episodio aparece en varias listas se presenta una vez, con preferencia por la fila con novedad. Ambas vistas y las cuatro subsecciones de Lista de trabajo médico muestran los resultados filtrados en tablas compactas. En cada fila, «Imprimir» reúne dos iconos para el informe vigente de indicaciones y la receta completa del episodio. Sustituye GES y, en interconsultas, queda junto a «Paciente». El buscador, el filtro nativo y la impresión comparten la barra compacta de pestañas. Las listas alinean el RUN, el pasaporte y el número de identificación con el inicio del nombre. El RUN usa guion y se copia con un clic. Se omiten las líneas de género y nombre social y el encabezado Acciones. Se ocultan los rótulos de resultados y el icono «Familiar esperando por información». En interconsultas sigue visible el servicio de cada grupo. La tabla mantiene la densidad al abrir el panel lateral de Rayen, desplegar un menú o completar el CUDYR.

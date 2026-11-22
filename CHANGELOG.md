@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.147
+
+- Añade un paquete de pruebas para editar entregas desde Eloísa después de registrar el equipo una sola vez en HHR.
+
 ## 0.48.146
 
 - En Gestión de cuidados, los rótulos de Pacientes hospitalizados y Egresos muestran el total según los filtros vigentes.

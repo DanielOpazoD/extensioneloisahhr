@@ -12,7 +12,7 @@ const session = () => {
     remove: async key => { entries.delete(key); },
   };
 };
-const setup = () => {
+const setup = (api = globalThis.HhrNursingHandoffConnection, options) => {
   let tabId = 20;
   const tabs = new Map([[2, { id: 2, windowId: 1, url: 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse' }]]);
   const chrome = {
@@ -31,7 +31,7 @@ const setup = () => {
     },
     windows: { update: vi.fn(async () => {}) },
   };
-  const runtime = globalThis.HhrNursingHandoffConnection.create(chrome);
+  const runtime = api.create(chrome, undefined, options);
   return { runtime, chrome, tabs };
 };
 
@@ -75,4 +75,36 @@ it('keeps the existing HHR tab untouched when a connection is cancelled', async 
   expect(await runtime.authorized('owner-A')).toBeNull();
   expect(tabs.get(21).url).toBe(host + '/censo');
   expect(tabs.has(22)).toBe(false);
+});
+
+it('conserva la llave individual al iniciar de nuevo y solo la usa con el RUN confirmado', async () => {
+  const namespace = { HhrNursingHandoffDevicePilot: { origin: host, endpoint: host + '/pruebas' } };
+  Function('globalThis', readFileSync('extension/nursing-handoff-connection.js', 'utf8'))(namespace);
+  const api = namespace.HhrNursingHandoffConnection;
+  const keys = new Map();
+  const persistent = {
+    get: async owner => keys.get(owner),
+    set: async (owner, value) => keys.set(owner, value),
+    remove: async owner => keys.delete(owner),
+  };
+  const checkRegistered = vi.fn().mockResolvedValueOnce({ error: 'RUN distinto' })
+    .mockResolvedValue({ authorized: true });
+  const { runtime, tabs } = setup(api, { persistent, checkRegistered });
+  const owner = '11111111-1';
+  const register = async tabId => {
+    await runtime.open(owner, 2);
+    const tab = tabs.get(tabId);
+    const parameters = new URLSearchParams(new URL(tab.url).hash.slice(1));
+    expect(parameters.get('registerDevice')).toBe('1');
+    await runtime.receive({ id: parameters.get('requestId'), registered: true }, { frameId: 0, tab, url: tab.url });
+  };
+  await register(21);
+  expect(await runtime.authorized(owner)).toBeNull();
+  await register(22);
+  const { runtime: restarted } = setup(api, { persistent, checkRegistered });
+  const grant = await restarted.authorized(owner);
+  expect(grant).toMatchObject({ professionalRun: owner, proof: expect.stringMatching(/^[a-f0-9]{64}$/) });
+  expect(await restarted.authorized('22222222-2')).toBeNull();
+  await restarted.forget(owner, grant.proof);
+  expect(await restarted.authorized(owner)).toBeNull();
 });
