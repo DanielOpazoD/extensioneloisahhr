@@ -1,10 +1,6 @@
 /** Display-only utilities for the Eloísa sidebar. */
 (() => {
   'use strict';
-  const zone = 'Pacific/Easter';
-  const clock = new Intl.DateTimeFormat('es-CL', {
-    timeZone: zone, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  });
   const weatherCondition = code => {
     if (code === 0) return ['clear', 'Despejado'];
     if (code < 3) return ['partly', 'Parcialmente nublado'];
@@ -28,17 +24,12 @@
     return link;
   };
 
-  function create({ fetchWeather, fetchDailyBirths, openFavorites } = {}) {
+  function create({ fetchWeather, fetchDailyBirths, renderFavorites } = {}) {
     const records = new Map();
     let timer;
     let dailyDialog;
-    const tick = () => {
-      const dateInfo = clock.format(new Date());
-      for (const { time, weather } of records.values()) {
-        if (time.textContent !== dateInfo) time.textContent = dateInfo;
-        void weather.refresh();
-      }
-    };
+    let nextId = 0;
+    const tick = () => { for (const { weather } of records.values()) void weather.refresh(); };
     const openDailyBirths = async (drawer, trigger) => {
       if (dailyDialog?.open) return;
       const dialog = el('dialog', '', { 'data-hhr-daily-births-dialog': '', 'aria-label': 'Un día como hoy' });
@@ -195,41 +186,83 @@
       record.brand = brand;
       headerLogo.setAttribute('data-hhr-drawer-logo', '');
       brand.setAttribute('data-hhr-drawer-brand', '');
-      brand.after(record.stamp);
+    };
+    const hideNativeClock = (drawer, record) => {
+      for (const node of record.native) if (!drawer.contains(node)) {
+        node.removeAttribute('data-hhr-drawer-native-clock');
+        record.native.delete(node);
+      }
+      for (const node of drawer.querySelectorAll('time,p,span,div')) {
+        if (node.children.length || node.closest('[data-hhr-drawer-tools],dialog')) continue;
+        if (!node.matches('time') &&
+            !/^(?:Versión:\s*\S+|\d{2}[-/]\d{2}[-/]\d{4},?\s+\d{2}:\d{2}(?::\d{2})?)$/.test(node.textContent.trim())) continue;
+        node.setAttribute('data-hhr-drawer-native-clock', '');
+        record.native.add(node);
+      }
     };
     const decorate = drawer => {
       if (records.has(drawer)) {
-        markBrand(drawer, records.get(drawer));
+        const record = records.get(drawer);
+        markBrand(drawer, record);
+        hideNativeClock(drawer, record);
         return;
       }
-      const native = [...drawer.querySelectorAll('p,span,div')].filter(node =>
-        !node.children.length && /^(?:Versión:\s*\S+|\d{2}[-/]\d{2}[-/]\d{4},?\s+\d{2}:\d{2}(?::\d{2})?)$/.test(node.textContent.trim()));
-      native.forEach(node => node.setAttribute('data-hhr-drawer-native-clock', ''));
-      const footer = el('section', '', { 'data-hhr-drawer-tools': '', 'aria-label': 'Herramientas de Eloísa' });
-      const shortcuts = el('div', '', { class: 'hhr-drawer-shortcuts' });
-      const favorite = el('button', '☆ Favoritos', { type: 'button' });
-      favorite.addEventListener('click', event => { if (event.isTrusted) openFavorites?.(drawer); });
-      const curiosity = el('button', 'Un día como hoy', { type: 'button', 'aria-haspopup': 'dialog' });
+      const tools = el('section', '', { 'data-hhr-drawer-tools': '', 'aria-label': 'Herramientas de Eloísa' });
+      const icons = globalThis.HhrUI?.icons;
+      const shortcut = (label, icon, attributes = {}) => {
+        const button = el('button', '', { type: 'button', class: 'hhr-drawer-shortcut', ...attributes });
+        if (icon) button.innerHTML = icon;
+        button.append(el('span', label));
+        return button;
+      };
+      const favoritesPanel = el('div', '', {
+        id: 'hhr-drawer-favorites-' + ++nextId, class: 'hhr-drawer-favorites',
+        role: 'region', 'aria-label': 'Favoritos', hidden: '',
+      });
+      const favorite = shortcut('Favoritos', icons?.star, {
+        'aria-expanded': 'false', 'aria-controls': favoritesPanel.id,
+      });
+      const chevron = el('span', '', { class: 'hhr-drawer-chevron', 'aria-hidden': 'true' });
+      chevron.innerHTML = icons?.chevronDown || '';
+      favorite.append(chevron);
+      const setExpanded = open => {
+        favorite.setAttribute('aria-expanded', String(open));
+        favoritesPanel.hidden = !open;
+        if (open && !favoritesPanel.hasChildNodes()) renderFavorites?.(favoritesPanel);
+      };
+      favorite.addEventListener('click', event => { if (event.isTrusted) setExpanded(favoritesPanel.hidden); });
+      tools.addEventListener('keydown', event => {
+        if (event.key !== 'Escape' || favoritesPanel.hidden ||
+            !(favorite.contains(event.target) || favoritesPanel.contains(event.target))) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setExpanded(false);
+        favorite.focus();
+      });
+      const curiosity = shortcut('Un día como hoy', icons?.calendar, { 'aria-haspopup': 'dialog' });
       curiosity.addEventListener('click', event => { if (event.isTrusted) void openDailyBirths(drawer, curiosity); });
-      shortcuts.append(favorite, curiosity);
-      const stamp = el('div', '', { class: 'hhr-drawer-clock' });
-      const time = el('time', '', { title: 'Hora de Rapa Nui' });
+      tools.append(favorite, favoritesPanel, curiosity);
       const weather = weatherCard();
-      stamp.append(time);
-      footer.append(weather.card, shortcuts);
-      const lastMenuItem = [...drawer.querySelectorAll('[data-hhr-menu-icon]:not([data-hhr-bed-link])')].at(-1);
-      const menu = lastMenuItem?.closest('ul,[role="menu"],[role="list"]') || lastMenuItem;
-      if (menu) menu.after(footer);
-      else drawer.append(footer);
-      footer.before(stamp);
-      const record = { time, stamp, weather, footer, native };
+      drawer.setAttribute('data-hhr-drawer-enhanced', '');
+      drawer.append(tools, weather.card);
+      const record = { weather, tools, native: new Set() };
       records.set(drawer, record);
       markBrand(drawer, record);
+      hideNativeClock(drawer, record);
       tick();
       timer ??= setInterval(tick, 10_000);
     };
+    const removeDecoration = (drawer, { weather, tools, native, brand, logo }) => {
+      tools.remove();
+      weather.card.remove();
+      drawer.removeAttribute('data-hhr-drawer-enhanced');
+      brand?.removeAttribute('data-hhr-drawer-brand');
+      logo?.removeAttribute('data-hhr-drawer-logo');
+      native.forEach(node => node.removeAttribute('data-hhr-drawer-native-clock'));
+      records.delete(drawer);
+    };
     const prune = () => {
-      for (const drawer of records.keys()) if (!drawer.isConnected) records.delete(drawer);
+      for (const [drawer, record] of records) if (!drawer.isConnected) removeDecoration(drawer, record);
       if (dailyDialog && !dailyDialog.isConnected) dailyDialog = undefined;
       if (!records.size) { clearInterval(timer); timer = undefined; }
     };
@@ -238,14 +271,7 @@
       dailyDialog?.remove();
       dailyDialog = undefined;
       clearInterval(timer);
-      for (const { footer, stamp, native, brand, logo } of records.values()) {
-        footer.remove();
-        stamp.remove();
-        brand?.removeAttribute('data-hhr-drawer-brand');
-        logo?.removeAttribute('data-hhr-drawer-logo');
-        native.forEach(node => node.removeAttribute('data-hhr-drawer-native-clock'));
-      }
-      records.clear();
+      records.forEach((record, drawer) => removeDecoration(drawer, record));
     } };
   }
   globalThis.HhrWorklistDrawer = { create };

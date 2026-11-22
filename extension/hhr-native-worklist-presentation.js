@@ -106,22 +106,12 @@
         inline-size:25px; block-size:25px; border:0; border-radius:4px; padding:2px; background:transparent; color:#166963; cursor:pointer; }
       tr:is(:hover,:focus-within) button[data-hhr-edit-episode], button[data-hhr-edit-episode]:focus-visible { opacity:1; }
       @media (hover:none) { button[data-hhr-edit-episode] { opacity:1; } }
-      [data-hhr-menu-icon] { display:flex; align-items:center; column-gap:9px; }
-      [data-hhr-menu-icon]:not([data-hhr-bed-link]) {
-        border-radius:7px; color:#344f4a; font:500 13px/1.35 system-ui,sans-serif;
-      }
-      [data-hhr-menu-icon]:not([data-hhr-bed-link]):is(:hover,:focus-visible) { background:#eaf4f2; color:#195f57; }
-      [data-hhr-menu-icon]:focus-visible { outline:2px solid #247c73; outline-offset:-2px; }
       [data-hhr-menu-icon]::before {
         content:""; flex:none; width:16px; height:16px; background:#397a72;
         -webkit-mask:var(--hhr-menu-icon) center / contain no-repeat;
         mask:var(--hhr-menu-icon) center / contain no-repeat;
       }
       ${drawerIcons}
-      .MuiDrawer-paper:has(> a[data-hhr-bed-link]), .MuiDrawer-paperAnchorLeft:has(> a[data-hhr-bed-link]) { display:flex; flex-direction:column; }
-      a[data-hhr-bed-link] { flex:none; margin-block-start:auto; padding:7px 12px; border-top:1px solid #e7efed;
-        background:white; color:#235f59; font:12px/1.35 system-ui,sans-serif; text-decoration:none; }
-      a[data-hhr-bed-link]:is(:hover,:focus-visible) { background:#e7f4f1; }
       .MuiBox-root:has(> .MuiPaper-root #search-encounter-list):has(> .hhr-hospitalized-panel) {
         row-gap:8px;
       }
@@ -400,16 +390,30 @@
           if (!key && item.dataset.hhrMenuIcon) delete item.dataset.hhrMenuIcon;
         }
         if (!hasWorklist) continue;
+        const reports = drawer.querySelector('[data-hhr-menu-icon="reports"]');
+        const last = reports || [...drawer.querySelectorAll('[data-hhr-menu-icon]:not([data-hhr-bed-link])')].at(-1);
+        const item = last?.closest('li');
+        const inList = item && drawer.contains(item);
+        const anchor = inList ? item : last;
+        const current = drawer.querySelector('[data-hhr-bed-link]');
+        const currentItem = current?.closest('[data-hhr-bed-item]') || current;
+        if (anchor && (!currentItem || currentItem.previousElementSibling !== anchor)) {
+          currentItem?.remove();
+          const link = document.createElement('a');
+          link.dataset.hhrBedLink = '';
+          link.dataset.hhrMenuIcon = 'beds';
+          link.href = 'https://hospitalizado.rayensalud.cl/#/bed';
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = 'Gestión de Camas';
+          if (inList) {
+            const row = document.createElement('li');
+            row.dataset.hhrBedItem = '';
+            row.append(link);
+            anchor.after(row);
+          } else anchor.after(link);
+        }
         drawerTools?.decorate(drawer);
-        if (drawer.querySelector('[data-hhr-bed-link]')) continue;
-        const link = document.createElement('a');
-        link.dataset.hhrBedLink = '';
-        link.dataset.hhrMenuIcon = 'beds';
-        link.href = 'https://hospitalizado.rayensalud.cl/#/bed';
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.textContent = 'Gestión de Camas';
-        drawer.append(link);
       }
     };
     const refreshTables = pathname => {

@@ -62,7 +62,7 @@
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
     fetchWeather: () => chrome.runtime.sendMessage({ type: runtimeMessages.RAPA_NUI_WEATHER }),
     fetchDailyBirths: () => chrome.runtime.sendMessage({ type: runtimeMessages.DAILY_BIRTHS }),
-    openFavorites: drawer => createFavoritesDialog(null, null, drawer),
+    renderFavorites: panel => renderFavorites(panel),
   });
 
   const BUTTON_ID = 'hhr-prescription-print-button';
@@ -383,6 +383,7 @@
   const {
     hasVisibleNursingRole,
     createFavoritesDialog,
+    renderFavorites,
   } = medicationActionsRuntime;
 
   const centerShellRuntime = centerShellOwner.create({

@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.142
+
+- Reorganiza el menú de Eloísa con Gestión de Camas debajo de Informes y el tiempo al pie. Retira el reloj y la fecha del panel.
+- Favoritos se despliega dentro del menú y conserva el foco al abrir, editar y cerrar.
+
 ## 0.48.141
 
 - Separa el refresco de listas y menú de las mutaciones ajenas a esas vistas.
