@@ -38,11 +38,6 @@
       #hhr-prescription-print-button svg, #hhr-indications-print-button svg { width: 25px; height: 25px; fill: currentColor; }
       ${ui.tokenRule('#hhr-prescription-print-modal')}
       #hhr-prescription-print-modal { position: fixed; inset: 0; z-index: 2147483646; font-family: var(--hhr-font); }
-      #hhr-prescription-print-modal[data-hhr-drawer-favorites] {
-        width: 100%; height: 100%; max-width: none; max-height: none;
-        margin: 0; padding: 0; border: 0; background: transparent; overflow: hidden;
-      }
-      #hhr-prescription-print-modal[data-hhr-drawer-favorites]::backdrop { background: transparent; }
       #hhr-prescription-print-modal [hidden] { display: none !important; }
       #hhr-prescription-print-modal ::-webkit-scrollbar { width: 10px; height: 10px; }
       #hhr-prescription-print-modal ::-webkit-scrollbar-track { background: transparent; }

@@ -148,11 +148,11 @@
       }
     };
 
-    const createFavoritesDialog = (existingRoot = null, onBack, drawer) => {
+    const createFavoritesDialog = (existingRoot = null, onBack) => {
       const focusReturnTarget = documentRef.activeElement;
       if (!existingRoot && !closeModal()) return;
       ensureStyles();
-      const root = existingRoot || documentRef.createElement(drawer ? 'dialog' : 'div');
+      const root = existingRoot || documentRef.createElement('div');
       if (!existingRoot) root.id = modalId;
       const markup = `
         <div class="hhr-rx-backdrop" aria-hidden="true"></div>
@@ -162,16 +162,7 @@
             <h2 class="hhr-rx-title" id="hhr-rx-title">Favoritos</h2>
             <p class="hhr-rx-subtitle">Accesos rápidos a páginas web. Se guardan solo en este navegador.</p>
           </header>
-          <div class="hhr-rx-body">
-            <div class="hhr-fav-list"></div>
-            <div class="hhr-rx-format-title">Agregar favorito</div>
-            <form class="hhr-fav-form" novalidate>
-              <input class="hhr-rx-search hhr-fav-name" type="text" maxlength="60" placeholder="Nombre" aria-label="Nombre del favorito">
-              <input class="hhr-rx-search hhr-fav-url" type="url" maxlength="300" placeholder="https://…" aria-label="URL del favorito">
-              <button class="hhr-rx-action hhr-rx-action-primary hhr-fav-add" type="submit">Agregar</button>
-            </form>
-            <div class="hhr-connection-feedback hhr-fav-feedback" role="status" aria-live="polite"></div>
-          </div>
+          <div class="hhr-rx-body"></div>
           <footer class="hhr-rx-footer">
             <button class="hhr-rx-action hhr-rx-cancel" type="button">Cerrar</button>
           </footer>
@@ -188,22 +179,9 @@
       } else {
         root.innerHTML = markup;
         root.dataset.routeIndependent = 'true';
-        if (drawer) {
-          root.dataset.hhrDrawerFavorites = '';
-          root.setAttribute('aria-labelledby', 'hhr-rx-title');
-          const section = root.querySelector('.hhr-rx-dialog');
-          section.removeAttribute('role');
-          section.removeAttribute('aria-modal');
-          section.removeAttribute('aria-labelledby');
-        }
-        (drawer || documentRef.body).appendChild(root);
-        view = root;
+        documentRef.body.appendChild(root);
+        view = root.querySelector('.hhr-rx-body');
       }
-      const list = view.querySelector('.hhr-fav-list');
-      const nameInput = view.querySelector('.hhr-fav-name');
-      const urlInput = view.querySelector('.hhr-fav-url');
-      const feedback = view.querySelector('.hhr-fav-feedback');
-      const addButton = view.querySelector('.hhr-fav-add');
       if (!existingRoot) {
         const dismiss = modalDismissWithFocusRestore(root, focusReturnTarget);
         root.__hhrDismiss = dismiss;
@@ -213,14 +191,32 @@
         root.addEventListener('keydown', event => {
           if (event.key === 'Escape') {
             event.preventDefault();
-            if (drawer) event.stopPropagation();
             dismiss();
             return;
           }
-          if (!drawer) trapModalFocus(root, event);
+          trapModalFocus(root, event);
         });
+        root.querySelector('.hhr-rx-close').focus();
       }
+      renderFavorites(view);
+    };
 
+    const renderFavorites = view => {
+      view.innerHTML = `
+        <div class="hhr-fav-list"></div>
+        <div class="hhr-rx-format-title">Agregar favorito</div>
+        <form class="hhr-fav-form" novalidate>
+          <input class="hhr-rx-search hhr-fav-name" type="text" maxlength="60" placeholder="Nombre" aria-label="Nombre del favorito">
+          <input class="hhr-rx-search hhr-fav-url" type="url" maxlength="300" placeholder="https://…" aria-label="URL del favorito">
+          <button class="hhr-rx-action hhr-rx-action-primary hhr-fav-add" type="submit">Agregar</button>
+        </form>
+        <div class="hhr-connection-feedback hhr-fav-feedback" role="status" aria-live="polite"></div>
+      `;
+      const list = view.querySelector('.hhr-fav-list');
+      const nameInput = view.querySelector('.hhr-fav-name');
+      const urlInput = view.querySelector('.hhr-fav-url');
+      const feedback = view.querySelector('.hhr-fav-feedback');
+      const addButton = view.querySelector('.hhr-fav-add');
       let favorites = [];
       let favoritesMutationPending = false;
       const setFavoritesMutationPending = pending => {
@@ -303,8 +299,6 @@
         nameInput.focus();
       });
 
-      if (drawer) root.showModal();
-      if (!existingRoot) root.querySelector('.hhr-rx-close').focus();
       setFavoritesMutationPending(true);
       readFavorites().then(async stored => {
         if (!view.isConnected) return;
@@ -344,6 +338,7 @@
       writeFavorites,
       normalizeFavoriteUrl,
       createFavoritesDialog,
+      renderFavorites,
     });
   };
 

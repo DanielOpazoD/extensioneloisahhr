@@ -461,6 +461,7 @@ const verifyLists = async (context, origin, worker) => {
       await page.goto(origin + route.pathname);
       await page.waitForFunction(() => document.documentElement.dataset.hhrPrescriptionPrintState === 'operations-ready');
       if (!route.pathname.endsWith('-nurse')) {
+        await page.setViewportSize({ width: 1100, height: 660 });
         await page.evaluate(() => {
           const drawer = document.createElement('nav');
           drawer.className = 'MuiDrawer-paper MuiDrawer-paperAnchorLeft';
@@ -469,7 +470,8 @@ const verifyLists = async (context, origin, worker) => {
           drawer.style.cssText = 'position:fixed; inset:0 auto 0 0; z-index:1300; width:216px; background:white;';
           const demoLogo = '<svg xmlns="http://www.w3.org/2000/svg" width="135" height="42"><text x="4" y="27" fill="#19695f" font-family="sans-serif" font-size="21">Eloísa demo</text></svg>';
           drawer.innerHTML = '<header><img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></header>' +
-            '<button type="button">Lista de trabajo médico</button>' +
+            '<ul>' + ['Lista de trabajo médico', 'Gestión de cuidados', 'Ejecución plan de cuidados', 'Informes']
+              .map(label => '<li><button type="button">' + label + '</button></li>').join('') + '</ul>' +
             '<p>20-11-2026, 21:35:27</p><p>Versión: 26.4.7</p>';
           document.body.append(drawer);
           const keepFocus = event => { if (!drawer.contains(event.target)) drawer.focus(); };
@@ -477,8 +479,9 @@ const verifyLists = async (context, origin, worker) => {
           drawer.releaseFocus = () => document.removeEventListener('focusin', keepFocus);
         });
         const drawer = page.locator('#fixture-drawer-tools');
-        await drawer.locator('time').waitFor();
-        assert.match(await drawer.locator('time').textContent(), /\d{2}[-/]\d{2}[-/]\d{4}.*\d{2}:\d{2}/);
+        await drawer.locator('[data-hhr-drawer-tools]').waitFor();
+        assert.equal(await drawer.locator('time').count(), 0);
+        assert.equal(await drawer.getByText('20-11-2026, 21:35:27', { exact:true }).isVisible(), false);
         assert.equal(await drawer.getByText('Versión: 26.4.7', { exact: true }).isVisible(), false);
         assert.equal(await drawer.getByRole('button', { name: 'Información de versiones' }).count(), 0);
         await drawer.getByText('48–72 h', { exact: true }).waitFor();
@@ -490,11 +493,14 @@ const verifyLists = async (context, origin, worker) => {
         await page.emulateMedia({ reducedMotion: 'no-preference' });
         const logo = drawer.locator('img[data-hhr-drawer-logo]');
         assert.ok((await logo.boundingBox()).width >= 100);
-        const [brandBox, clockBox, menuBox, weatherBox] = await Promise.all(
-          ['[data-hhr-drawer-brand]', 'time', '[data-hhr-menu-icon="worklist"]', '[data-hhr-drawer-weather]']
+        const [brandBox, menuBox, reportsBox, bedsBox, weatherBox] = await Promise.all(
+          ['[data-hhr-drawer-brand]', '[data-hhr-menu-icon="worklist"]', '[data-hhr-menu-icon="reports"]',
+            '[data-hhr-bed-link]', '[data-hhr-drawer-weather]']
             .map(selector => drawer.locator(selector).boundingBox()));
-        assert.ok(clockBox.y >= brandBox.y + brandBox.height && clockBox.y + clockBox.height <= menuBox.y);
-        assert.ok(weatherBox.y - menuBox.y - menuBox.height <= 16, 'Weather follows the sidebar menu without a large gap');
+        assert.ok(menuBox.y >= brandBox.y + brandBox.height && bedsBox.y >= reportsBox.y + reportsBox.height);
+        assert.ok(Math.abs(reportsBox.x - bedsBox.x) <= 1 && Math.abs(reportsBox.height - bedsBox.height) <= 1);
+        const drawerBox = await drawer.boundingBox();
+        assert.ok(Math.abs(drawerBox.y + drawerBox.height - weatherBox.y - weatherBox.height - 10) <= 1);
         assert.ok(await drawer.locator('[data-hhr-drawer-brand]').evaluate(node => {
           const mascot = getComputedStyle(node, '::after');
           return parseFloat(mascot.height) >= 40 && mascot.backgroundImage.startsWith('url("data:image/png;base64,');
@@ -550,24 +556,46 @@ const verifyLists = async (context, origin, worker) => {
           self.__worklistHistoryRequests]), [1,1,1]);
         const favorites = drawer.getByRole('button', { name: /Favoritos/ });
         await favorites.click();
-        const dialog = drawer.getByRole('dialog', { name: 'Favoritos' });
-        const url = dialog.getByRole('textbox', { name: 'URL del favorito' });
+        const panel = drawer.getByRole('region', { name: 'Favoritos' });
+        await panel.waitFor();
+        assert.equal(await favorites.getAttribute('aria-expanded'), 'true');
+        assert.equal(await drawer.locator('dialog[open]').count(), 0, 'Favorites expand within the native focus trap');
+        const url = panel.getByRole('textbox', { name: 'URL del favorito' });
         await url.click();
         assert.equal(await url.evaluate(field => document.activeElement === field), true);
         await page.keyboard.type('favorito.example.org');
         assert.equal(await url.inputValue(), 'favorito.example.org');
-        await dialog.getByRole('button', { name: 'Agregar', exact: true }).waitFor({ state: 'visible' });
+        await panel.getByRole('button', { name: 'Agregar', exact: true }).waitFor({ state: 'visible' });
         await page.waitForFunction(() => !document.querySelector('.hhr-fav-add')?.disabled);
         await url.press('Enter');
-        await dialog.getByText('https://favorito.example.org/', { exact: true }).waitFor();
+        await panel.getByText('https://favorito.example.org/', { exact: true }).waitFor();
+        const expandedWeather = await drawer.locator('[data-hhr-drawer-weather]').boundingBox();
+        assert.ok(Math.abs(drawerBox.y + drawerBox.height - expandedWeather.y - expandedWeather.height - 10) <= 1);
+        if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+          await page.setViewportSize({ width:1100, height:780 });
+          await drawer.screenshot({path:path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Favoritos desplegados.png')});
+        }
+        await page.setViewportSize({ width:390, height:450 });
         await url.press('Escape');
-        await dialog.waitFor({ state: 'detached' });
+        await panel.waitFor({ state:'hidden' });
+        assert.equal(await favorites.getAttribute('aria-expanded'), 'false');
+        assert.equal(await favorites.evaluate(button => document.activeElement === button), true);
         await favorites.click();
-        await dialog.getByText('https://favorito.example.org/', { exact: true }).waitFor();
-        await dialog.getByRole('button', { name: /Eliminar favorito.example.org/ }).click();
-        await dialog.getByText('https://favorito.example.org/', { exact: true }).waitFor({ state: 'detached' });
-        await dialog.getByRole('button', { name: 'Cerrar', exact: true }).first().click();
+        await panel.getByText('https://favorito.example.org/', { exact: true }).waitFor();
+        await panel.getByRole('button', { name: /Eliminar favorito.example.org/ }).click();
+        await panel.getByText('https://favorito.example.org/', { exact: true }).waitFor({ state: 'detached' });
+        await favorites.click();
+        await panel.waitFor({ state:'hidden' });
+        await drawer.evaluate(async element => {
+          element.remove();
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          document.body.append(element);
+        });
+        await favorites.waitFor();
+        assert.equal(await favorites.count(), 1);
+        assert.equal(await drawer.locator('[data-hhr-drawer-weather]').count(), 1);
         await drawer.evaluate(element => { element.releaseFocus(); element.remove(); });
+        await page.setViewportSize({ width:1100, height:450 });
       }
       const table = page.locator('#worklist table');
       const rows = table.locator('tbody tr');

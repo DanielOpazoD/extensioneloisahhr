@@ -13,7 +13,7 @@ export async function verifyWorklistOverlays(page, total) {
     drawer.classList.add('MuiDrawer-anchorLeft');
     const paper = document.createElement('div');
     paper.className = 'MuiDrawer-paper';
-    paper.style.height = '420px';
+    paper.style.height = '560px';
     paper.innerHTML = '<ul>' + ['Lista de trabajo médico', 'Gestión de cuidados', 'Ejecución plan de cuidados', 'Informes']
       .map(text => '<li><button>' + text + '</button></li>').join('') + '</ul>';
     drawer.append(paper);
@@ -38,7 +38,9 @@ export async function verifyWorklistOverlays(page, total) {
     const beds = paper.querySelector('a[data-hhr-bed-link]');
     const bedLink = beds?.href;
     const carePlan = paper.querySelector('[data-hhr-menu-icon="plan"]')?.textContent;
-    const footerGap = paper.getBoundingClientRect().bottom - beds.getBoundingClientRect().bottom;
+    const immediatelyAfterReports = beds?.closest('li')?.previousElementSibling?.textContent === 'Informes';
+    const weather = paper.querySelector('[data-hhr-drawer-weather]');
+    const footerGap = paper.getBoundingClientRect().bottom - weather.getBoundingClientRect().bottom;
     const icons = [...paper.querySelectorAll('[data-hhr-menu-icon]')].map(item => ({
       key: item.dataset.hhrMenuIcon, visible: getComputedStyle(item, '::before').maskImage !== 'none',
     }));
@@ -108,7 +110,7 @@ export async function verifyWorklistOverlays(page, total) {
     await frame();
     const afterResults = table.style.getPropertyValue(property);
     feedback.remove();
-    return { before, samples, menuStyled, partial, bedLink, footerGap, icons, carePlan, afterDialog, afterResults, expectedOffset };
+    return { before, samples, menuStyled, partial, bedLink, footerGap, immediatelyAfterReports, icons, carePlan, afterDialog, afterResults, expectedOffset };
   });
   assert.equal(result.before.heights.length, total);
   assert.equal(result.before.footer, 'none');
@@ -118,7 +120,8 @@ export async function verifyWorklistOverlays(page, total) {
   assert.deepEqual(result.partial.heights, result.before.heights);
   assert.notEqual(result.partial.footer, 'none');
   assert.equal(result.menuStyled, false);
-  assert.ok(Math.abs(result.footerGap) < 2, 'Gestión de Camas at the bottom of the drawer');
+  assert.equal(result.immediatelyAfterReports, true, 'Gestión de Camas follows Informes in tab order');
+  assert.ok(Math.abs(result.footerGap - 10) <= 1, 'Weather at the bottom of the drawer');
   assert.deepEqual(result.icons.map(icon => icon.key), ['worklist', 'care', 'plan', 'reports', 'beds']);
   assert.ok(result.icons.every(icon => icon.visible));
   assert.equal(result.bedLink, 'https://hospitalizado.rayensalud.cl/#/bed');
