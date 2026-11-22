@@ -4,6 +4,7 @@ import * as runtime from 'react/jsx-runtime';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 
 const path = '/dashboard/encounter-list-nurse';
 let root;
@@ -60,6 +61,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
     function Rows(props) {
       const { index } = props;
       const columns = ['location','patient','ges','diagnosisAdmission',...(index === 0 ? ['stay'] : ['crd', index === 1 ? 'lastNovelty' : '"lastNursePublishDatetime"']), 'assignesDoctor', 'isolated', 'actions','link'].map(id=>({id,label:id}));
+      if (ready === 'unknown-table') columns[0].id = 'native-location';
       const visible = props[keys[index]].map(row => row.id ?? row).filter(id=>!filter || String(id).includes(filter)).slice(0,10);
       return localJsx.jsx(NativeTable, { columns, listLenght:visible.length, children:visible.map(id =>
         jsx('tr', {children: columns.map(({id: column})=>jsx('td', {children: column === 'actions' ? jsx('button', {
@@ -82,6 +84,9 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
     }
     exports.default = function Page() {
       const index = Number(nav.useSearchParams().get('tab'));
+      if (ready === 'unknown-layout') return localJsx.jsxs('main', { children:[
+        jsx('h1',{children:'Gestión de cuidados nativa'}), jsx(Loader,{session,index}),
+      ] });
       return localJsx.jsxs('main',{children:[jsx('nav',{}),jsx('input',{'aria-label':'Buscar'}),
         ...keys.map((_,i)=>jsx(Panel,{index:i,children:index === i && jsx(Loader,{session,index:i})},i))]});
     };
@@ -185,6 +190,45 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(noveltyRows()).toEqual([]);
   await act(()=>click('Pacientes hospitalizados'));
   expect(rows()).toEqual(['20','23','22','21']);
+  await act(()=>setReady('unknown-table'));
+  expect(document.querySelector('.hhr-hospitalized-panel')).toBeNull();
+  expect(document.querySelector('thead th').textContent).toBe('location');
+  expect(rows()).toEqual(['20','21']);
+  await act(()=>click('Acción 20'));
+  expect(action).toHaveBeenCalledWith(0,20);
+  await act(()=>setReady('unknown-layout'));
+  expect(document.querySelector('h1').textContent).toBe('Gestión de cuidados nativa');
+  expect(rows()).toEqual(['20','21']);
+});
+
+it.each(['missing', 'changed'])('mantiene los imports nativos cuando la tabla interna de Rayen está %s', (kind) => {
+  const context = { location:{ pathname:path } };
+  context.self = context;
+  for (const file of ['hhr-worklist-print-column','hhr-nursing-worklist','hhr-continuous-worklist-main']) {
+    runInNewContext(readFileSync('extension/' + file + '.js', 'utf8'), context);
+  }
+  const navigation = { useSearchParams:() => new URLSearchParams(), useRouter:() => ({ replace() {} }) };
+  const modules = {
+    12115:React, 95155:runtime, 20063:navigation, 65673:{ A:() => 'Tabla nativa' },
+    26466:{ A:() => null }, 68175:{ A:() => null }, 575:{ A:() => () => {} }, 40767:{ A:async () => ({data:[]}) },
+  };
+  if (kind === 'changed') modules[65672] = { A:'otro tipo de exportación' };
+  const require = id => {
+    if (!Object.hasOwn(modules, id)) throw new Error('Módulo de prueba ausente');
+    return modules[id];
+  };
+  require.m = {};
+  context.webpackChunk_N_E.at(-1)[2](require);
+  require.m[61188] = (_module, exports, local) => {
+    exports.navigation = local(20063);
+    exports.jsx = local(95155);
+    exports.default = local(65673).A;
+  };
+  const exports = {};
+  require.m[61188]({}, exports, require);
+  expect(exports.navigation).toBe(navigation);
+  expect(exports.jsx).toBe(runtime);
+  expect(exports.default()).toBe('Tabla nativa');
 });
 
 it('ordena las camas visibles y mantiene ambos episodios cuando comparten ubicación', () => {

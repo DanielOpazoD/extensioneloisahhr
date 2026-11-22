@@ -194,7 +194,8 @@
     const referral = ges < 0 && columns.some(column => column.id === 'referralReason');
     if (ges < 0 && !referral) return props;
     const index = referral ? 2 : ges;
-    if (rows.some(row => !Array.isArray(row?.props?.children) || !row.props.children[index]?.type)) return props;
+    if (rows.some(row => !Array.isArray(row?.props?.children) ||
+        [0, 1, index].some(column => !row.props.children[column]?.type || !row.props.children[column].props))) return props;
     const discharge = route === '/dashboard/encounter-list' && columns.some(col => col.id === 'medicalDischargeDatetime');
     const diagnosis = columns.findIndex(column => column.id === 'diagnosisAdmission');
     const doctor = columns.findIndex(column => ['assignment', 'assignesDoctor'].includes(column.id));

@@ -14,6 +14,7 @@
   ].map(([id, label, width]) => ({ id, label, style: { width } }));
   const loadingVisibleColumns = loadingColumns.filter(column => column.id !== 'activity');
   const emptySource = { columns: [], children: [] };
+  const unsupportedTable = Symbol('unsupported nursing table');
 
   function joinTables(jsx, tables, handoff = globalThis.HhrNursingHandoffDemo === true) {
     const headers = new Map();
@@ -61,13 +62,26 @@
 
   function create(require, getPage) {
     const React = require(12115);
-    const { jsx } = require(95155);
+    const { jsx, jsxs } = require(95155);
     const navigation = require(20063);
+    const tableModule = require(65672);
+    const Table = tableModule?.A;
+    const Tab = require(26466)?.A;
+    const Tabs = require(68175)?.A;
+    const usePageStore = require(575)?.A;
+    const request = require(40767)?.A;
+    const { adapt, orderRows, renderNovelty } = globalThis.HhrWorklistPrintColumn || {};
+    const isComponent = value => typeof value === 'function' || typeof value?.$$typeof === 'symbol';
+    const hooks = ['createContext', 'useContext', 'useEffect', 'useLayoutEffect', 'useMemo',
+      'useRef', 'useState', 'useSyncExternalStore', 'cloneElement', 'isValidElement', 'Component'];
+    if (hooks.some(name => typeof React?.[name] !== 'function') || !React.Fragment || !React.Suspense ||
+        ![Table, Tab, Tabs].every(isComponent) ||
+        ![jsx, jsxs, navigation?.useSearchParams, navigation?.useRouter, usePageStore,
+          request, adapt, orderRows, renderNovelty].every(value => typeof value === 'function')) return null;
     const Source = React.createContext(null);
     const Registry = React.createContext(null);
     const Novelty = React.createContext(null);
     const ReadNovelty = React.createContext(null);
-    const Table = require(65672).A;
     function NoveltyLink({ episode, publication, publisher, ...marker }) {
       const read = React.useContext(ReadNovelty);
       const linkRef = React.useRef(null);
@@ -120,7 +134,7 @@
         };
       }, [expanded]);
       return jsx(React.Fragment, { children: [
-        globalThis.HhrWorklistPrintColumn.renderNovelty(jsx, { ...marker, kind: detail?.kind, linkRef, onClick: open, expanded }),
+        renderNovelty(jsx, { ...marker, kind: detail?.kind, linkRef, onClick: open, expanded }),
         jsx('div', {
           ref: previewRef, popover: 'auto', className: 'hhr-novelty-preview', role: 'dialog', 'aria-label': 'Novedad médica',
           onToggle: event => setExpanded(event.currentTarget.matches(':popover-open')),
@@ -147,13 +161,13 @@
       const adapted = React.useMemo(() => {
         const publications = novelty && new Map(novelty.flatMap(row => row?.lastPhysicianPublishDatetime
           ? [[String(row.id), { publication: row.lastPhysicianPublishDatetime, publisher: row.legalHcpName }]] : []));
-        return globalThis.HhrWorklistPrintColumn.adapt(jsx, props, '/dashboard/encounter-list-nurse', { publications, NoveltyLink });
+        return adapt(jsx, props, '/dashboard/encounter-list-nurse', { publications, NoveltyLink });
       }, [props, novelty]);
       React.useLayoutEffect(() => {
         if (!registry || source == null) return;
-        registry.set(source, adapted);
+        registry.set(source, adapted === props ? unsupportedTable : adapted);
         return () => registry.set(source, null);
-      }, [registry, source, adapted]);
+      }, [registry, source, adapted, props]);
       return registry && source != null ? null : jsx(Table, adapted);
     }
     function NativeLoading({ type, props }) {
@@ -181,15 +195,18 @@
         set(i, value) { tables = tables.slice(); tables[i] = value; listeners.forEach(fn => fn()); },
       };
     }
-    function Combined({ registry }) {
+    function Combined({ registry, onIncompatible }) {
       const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get);
       const [expanded, setExpanded] = React.useState(false);
       const [visited, setVisited] = React.useState(false);
       const loading = !tables.every(Boolean);
+      const incompatible = tables.includes(unsupportedTable);
       const lastSettled = React.useRef(null);
       React.useLayoutEffect(() => {
-        if (!loading) lastSettled.current = tables;
-      }, [loading, tables]);
+        if (incompatible) onIncompatible(true);
+        else if (!loading) lastSettled.current = tables;
+      }, [incompatible, loading, tables, onIncompatible]);
+      if (incompatible) return null;
       // Keep open editors mounted during refresh, while exposing only the loading table.
       const settled = loading ? lastSettled.current : tables;
       const result = joinTables(jsx, settled || [], true);
@@ -253,10 +270,10 @@
       // Keep each native loader mounted for refreshes, but remove its empty layout from the table's flow.
       return jsx('div', { hidden: Boolean(tables[index] && tables[index] !== emptySource), className: 'hhr-care-source', children });
     }
-    function Hospitalized({ active, loaded }) {
+    function Hospitalized({ active, loaded, onIncompatible }) {
       const [registry] = React.useState(makeRegistry);
       const [readNovelty] = React.useState(() => globalThis.HhrNursingNovelty?.createReader(async episode => {
-        const response = await require(40767).A('/encounter/' + episode +
+        const response = await request('/encounter/' + episode +
           '/getPatientEncounterHistoryReportServer/false/0/0/-14', {
           method: 'GET', headers: { 'Content-Type': 'application/json' },
         });
@@ -269,20 +286,26 @@
               fallback: null,
               children: index === active ? loaded : jsx(getPage(), {}),
             }) }) }) }, index)),
-          jsx(ReadNovelty.Provider, { value: readNovelty, children: jsx(Combined, { registry }) }, 'table'),
+          jsx(ReadNovelty.Provider, { value: readNovelty, children: jsx(Combined, { registry, onIncompatible }) }, 'table'),
         ] }) });
     }
-    function Layout({ type, props }) {
+    function Layout({ type, props, panels }) {
       const source = React.useContext(Source);
       const params = navigation.useSearchParams();
       const router = navigation.useRouter();
-      const resetPage = require(575).A(state => state.setCurrentPage);
+      const resetPage = usePageStore(state => state.setCurrentPage);
+      const [useNative, setUseNative] = React.useState(false);
       const items = props.children;
-      if (source != null) return items[2 + source].props.children;
+      if (source != null) return panels[source].props.children;
+      if (typeof params?.get !== 'function') return jsx(type, props);
       const active = Number(params.get('tab')) || 0;
-      if (active < 0 || active > 3 || !Number.isInteger(active)) return jsx(type, props);
+      if (useNative || active < 0 || active > 3 || !Number.isInteger(active)) return jsx(type, props);
       const discharged = active === 3;
-      const tabs = jsx(require(68175).A, {
+      const loaded = panels[active].props.children;
+      const session = loaded?.props?.session;
+      if (typeof router?.replace !== 'function' || typeof resetPage !== 'function' ||
+          (!discharged && !session?.facilityId)) return jsx(type, props);
+      const tabs = jsx(Tabs, {
         value: discharged ? 3 : 0, 'aria-label': 'Gestión de cuidados',
         onChange: (_, value) => {
           const query = new URLSearchParams(params);
@@ -292,27 +315,30 @@
           router.replace(location.pathname + '?' + query);
         },
         children: [[0, 'Pacientes hospitalizados'], [3, 'Egresos']].map(([value, label]) =>
-          jsx(require(26466).A, { value, label, id: 'hhr-care-tab-' + value, 'aria-controls': 'hhr-care-panel-' + value,
+          jsx(Tab, { value, label, id: 'hhr-care-tab-' + value, 'aria-controls': 'hhr-care-panel-' + value,
             sx: { textTransform: 'none', paddingX: 0, mr: 2 } }, value)),
       });
-      let panel = React.cloneElement(items[5], { id: 'hhr-care-panel-3', 'aria-labelledby': 'hhr-care-tab-3' });
+      let panel = React.cloneElement(panels[3], { id: 'hhr-care-panel-3', 'aria-labelledby': 'hhr-care-tab-3' });
       if (!discharged) {
-        const session = items[2 + active].props.children.props.session;
         const scope = [session.facilityId, session.healthCarePractitionerId, session.healthCarePractitionerRoleId].join('-');
-        panel = jsx(Hospitalized, { active, loaded: items[2 + active].props.children }, scope);
+        panel = jsx(Hospitalized, { active, loaded, onIncompatible: setUseNative }, scope);
       }
       return jsx(type, { ...props, children: [tabs, items[1], panel, ...items.slice(6)] });
     }
     return {
       navigation: { ...navigation, useSearchParams },
-      table: { ...require(65672), A: Capture },
+      table: { ...tableModule, A: Capture },
       novelty: Novelty,
       loading: NativeLoading,
       failure: SourceFailure,
       layout(jsxs, type, props, ...rest) {
         const items = props?.children;
-        if (!Array.isArray(items) || ![0, 1, 2, 3].every(i => items[i + 2]?.props?.index === i)) return jsxs(type, props, ...rest);
-        return jsx(Layout, { type, props }, ...rest);
+        if (!Array.isArray(items)) return jsxs(type, props, ...rest);
+        const panels = items.slice(2, 6);
+        if (panels.length !== 4 || !panels.every((panel, i) => React.isValidElement(panel) && panel.props.index === i)) {
+          return jsxs(type, props, ...rest);
+        }
+        return jsx(Layout, { type, props, panels }, ...rest);
       },
     };
   }
