@@ -22,14 +22,23 @@
   }) {
     const store = chrome.storage.session;
     const isPilot = chrome.runtime.getManifest().name === name;
-    const connection = !isPilot && hosted?.create(chrome, tabId => {
-      void chrome.tabs.sendMessage(tabId, { type: 'RAYEN_NURSING_HANDOFF_ACCESS_CHANGED' }, { frameId: 0 })
+    const registration = !isPilot && hosted?.registeredMode === true;
+    const connectionOwner = info => {
+      if (!registration) return identity(info);
+      const value = typeof info?.professionalRun === 'string'
+        ? info.professionalRun.replace(/[.\s-]/g, '').toUpperCase() : '';
+      return /^[1-9]\d{6,7}[0-9K]$/.test(value) ? value.slice(0, -1) + '-' + value.slice(-1) : null;
+    };
+    const connection = !isPilot && hosted?.create(chrome, (tabId, registrationError) => {
+      void chrome.tabs.sendMessage(tabId, { type: 'RAYEN_NURSING_HANDOFF_ACCESS_CHANGED', registrationError }, { frameId: 0 })
         .catch(() => {});
-    });
+    }, { checkRegistered: call });
     const endpoint = connection ? hosted.endpoint : 'http://127.0.0.1:' + (localPilot?.port ?? 5001) +
       '/demo-hhr-handoff/southamerica-east1/nursingHandoffExtension';
     const enabled = Boolean(connection || (isPilot && localPilot?.installationKey));
-    const needsHhr = () => error('Conecta tu cuenta de HHR para continuar.', 'HHR_LINK_REQUIRED');
+    const needsHhr = () => registration
+      ? { ...error('Registra este equipo para editar las entregas.', 'HHR_LINK_REQUIRED'), registration: true }
+      : error('Conecta tu cuenta de HHR para continuar.', 'HHR_LINK_REQUIRED');
     const load = async key => (await store.get(key))[key];
     const draftWrites = new Map();
     async function writeDraft(context, { date, shift, version, text }) {
@@ -62,7 +71,7 @@
           !source.test(sender.tab?.url)) return error('Abre la lista de Gestión de cuidados.');
       const session = await getInfo(sender);
       if (session.error) return error(session.error);
-      if (!session.info?.token || !identity(session.info)) return error('Inicia sesión en Hospitalizados de Eloísa.');
+      if (!session.info?.token || !identity(session.info) || !connectionOwner(session.info)) return error('Inicia sesión en Hospitalizados de Eloísa.');
       return session;
     }
 
@@ -72,8 +81,16 @@
       if (session.error) return session;
       const access = await checkAccess(session.info);
       if (access.error) return error(access.error);
-      const owner = identity(session.info);
-      if (!connection || await connection.authorized(owner)) return { ok: true };
+      const owner = connectionOwner(session.info);
+      if (!connection) return { ok: true };
+      const key = await connection.authorized(owner);
+      if (key && !registration) return { ok: true };
+      if (key) {
+        const result = await call({ action: 'status', ...key });
+        if (result.authorized === true) return { ok: true };
+        if (result.code !== 'UNAUTHENTICATED') return result;
+        await connection.forget(owner, key.proof);
+      }
       return action === 'connect' ? connection.open(owner, sender.tab.id) : needsHhr();
     }
 
@@ -81,7 +98,7 @@
       if (!number(encId)) return error('Abre la lista de Gestión de cuidados.');
       const session = await sourceSession(sender);
       if (session.error) return session;
-      if (inline === true && connection && !await connection.authorized(identity(session.info))) return needsHhr();
+      if (inline === true && connection && !await connection.authorized(connectionOwner(session.info))) return needsHhr();
       const result = await getPatient(String(encId), session.info, sender);
       if (result.error) return error(result.error);
       const access = await checkAccess(result.info);
@@ -92,7 +109,7 @@
       const sessionKey = await getSessionKey(result.info, sender);
       await store.set({ [editorKey(sender.tab.id, id)]: {
         id, tabId: sender.tab.id, sourceDocument: sender.documentId, episode: String(encId), owner, sessionKey,
-        patientId: result.patientId, run: result.patient.run, name: result.patient.name, inline: inline === true,
+        accountOwner: connectionOwner(result.info), patientId: result.patientId, run: result.patient.run, name: result.patient.name, inline: inline === true,
       } });
       return { ok: true, id };
     }
@@ -100,7 +117,7 @@
     async function call(data) {
       try {
         const response = await fetchImpl(endpoint, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', credentials: 'omit', redirect: 'error', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data }), signal: AbortSignal.timeout(24_000),
         });
         const body = await response.json();
@@ -118,6 +135,7 @@
       const ficha = { tab, frameId: 0, url: tab.url, id: chrome.runtime.id };
       const session = await getInfo(ficha);
       if (!session.info?.token || identity(session.info) !== context.owner ||
+          (registration && connectionOwner(session.info) !== context.accountOwner) ||
           await getSessionKey(session.info, ficha) !== context.sessionKey) {
         return error('Cambió la sesión de Eloísa. Abre la entrega desde la lista.', 'SOURCE_SESSION_CHANGED');
       }
@@ -157,16 +175,21 @@
       if (verified.error) return verified;
       if (action === 'context') {
         await store.set({ [key]: { ...context, editorDocument: sender.documentId } });
-        return { name: context.name, hosted: Boolean(connection), inline: context.inline === true };
+        return { name: context.name, hosted: Boolean(connection), registration, inline: context.inline === true };
       }
 
       if (action === 'connect') return connection ?
-        connection.open(context.owner, context.tabId) : error('El piloto local usa el censo de pruebas.');
-      const access = connection && await connection.authorized(context.owner);
+        connection.open(context.accountOwner ?? context.owner, context.tabId) : error('El piloto local usa el censo de pruebas.');
+      const access = connection && await connection.authorized(context.accountOwner ?? context.owner);
       if (action === 'disconnect') {
         if (!access) return { disconnected: true };
-        await connection.forget(context.owner, access.proof);
+        const owner = context.accountOwner ?? context.owner;
+        if (!registration) await connection.forget(owner, access.proof);
         const result = await call({ action, ...access });
+        if (registration) {
+          if (result.disconnected !== true && result.code !== 'UNAUTHENTICATED') return result;
+          await connection.forget(owner, access.proof);
+        }
         return { disconnected: true, remoteConfirmed: result.disconnected === true };
       }
       if (connection && !access) return needsHhr();
@@ -180,7 +203,7 @@
         version: message.version, text: message.text,
       });
       if (connection && result.code === 'UNAUTHENTICATED') {
-        await connection.forget(context.owner, access.proof);
+        await connection.forget(context.accountOwner ?? context.owner, access.proof);
         return needsHhr();
       }
       if (!result.error && action === 'read') {

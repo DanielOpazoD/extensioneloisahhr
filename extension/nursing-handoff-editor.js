@@ -141,6 +141,7 @@
   recoveryVersions.addEventListener('change', showRecovery);
   const raise = result => {
     const needsLink = result.code === 'HHR_LINK_REQUIRED';
+    if (result.registration) connect.textContent = 'Registrar equipo';
     reportLink(needsLink);
     if (needsLink) {
       ready = false;
