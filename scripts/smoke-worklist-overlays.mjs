@@ -87,7 +87,28 @@ export async function verifyWorklistOverlays(page, total) {
     title.data = original;
     await frame();
     samples.refreshed = sample();
-    return { before, samples, menuStyled, partial, bedLink, footerGap, icons, carePlan };
+    const table = panel.querySelector('table');
+    const property = '--hhr-worklist-sticky-top';
+    const expectedOffset = table.style.getPropertyValue(property);
+    const feedback = document.createElement('div');
+    feedback.setAttribute('role', 'dialog');
+    document.body.append(feedback);
+    document.documentElement.removeAttribute('data-hhr-prescription-print-state');
+    table.style.setProperty(property, '-1px');
+    feedback.textContent = 'Cambio sintético en un diálogo';
+    await new Promise(resolve => {
+      const observer = new MutationObserver(() => {
+        observer.disconnect();
+        resolve();
+      });
+      observer.observe(document.documentElement, { attributes:true, attributeFilter:['data-hhr-prescription-print-state'] });
+    });
+    const afterDialog = table.style.getPropertyValue(property);
+    panel.append(document.createComment('Cambio en los resultados'));
+    await frame();
+    const afterResults = table.style.getPropertyValue(property);
+    feedback.remove();
+    return { before, samples, menuStyled, partial, bedLink, footerGap, icons, carePlan, afterDialog, afterResults, expectedOffset };
   });
   assert.equal(result.before.heights.length, total);
   assert.equal(result.before.footer, 'none');
@@ -102,6 +123,8 @@ export async function verifyWorklistOverlays(page, total) {
   assert.ok(result.icons.every(icon => icon.visible));
   assert.equal(result.bedLink, 'https://hospitalizado.rayensalud.cl/#/bed');
   assert.equal(result.carePlan, 'Ejecución de cuidados');
+  assert.equal(result.afterDialog, '-1px', 'A dialog mutation must not recalculate the results table');
+  assert.equal(result.afterResults, result.expectedOffset, 'A result mutation refreshes the header before paint');
   const compactPrintMenu = await page.evaluate(() => {
     const popover = document.createElement('div');
     popover.id = 'discharge-action-button';

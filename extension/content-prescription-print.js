@@ -758,6 +758,7 @@
     });
   };
 
+  let resized = false;
   const ensureButton = () => {
     if (!document.body) return;
     const encId = helper.resolveEncounterId(window.location.href);
@@ -794,7 +795,8 @@
     if (modal?.isConnected) globalThis.HhrCenterPatientContext?.refreshRoute(modal, encId);
     nativePresentation?.refresh(encId);
     historyNavigation?.refresh(encId);
-    worklistPresentation?.refresh(window.location.pathname);
+    worklistPresentation?.refresh(window.location.pathname, resized ? undefined : []);
+    resized = false;
     ensureOperationsBar(encId);
     ensureCorrectedDischargePrintItems();
     ensureNursingMedicalEpicrisisPrintItem(nursingContext);
@@ -821,7 +823,7 @@
   // controls still use the debounced operations UI refresh.
   const observer = new MutationObserver(records => {
     if (!active || !uiLifecycle.owns()) return;
-    worklistPresentation?.refresh(window.location.pathname);
+    worklistPresentation?.refresh(window.location.pathname, records);
     if (records.some(record => {
       if (record.type !== 'characterData') return true;
       const label = record.target.parentElement;
@@ -835,7 +837,11 @@
   window.addEventListener('popstate', scheduleEnsureButton);
   window.addEventListener('hashchange', scheduleEnsureButton);
   window.addEventListener('hhr:fichamedico-locationchange', scheduleEnsureButton);
-  window.addEventListener('resize', scheduleEnsureButton);
+  const onResize = () => {
+    resized = true;
+    scheduleEnsureButton();
+  };
+  window.addEventListener('resize', onResize);
   window.addEventListener('focus', scheduleEnsureButton);
   window.addEventListener('pageshow', scheduleEnsureButton);
   const onVisibilityChange = () => {
@@ -857,7 +863,7 @@
       window.removeEventListener('popstate', scheduleEnsureButton);
       window.removeEventListener('hashchange', scheduleEnsureButton);
       window.removeEventListener('hhr:fichamedico-locationchange', scheduleEnsureButton);
-      window.removeEventListener('resize', scheduleEnsureButton);
+      window.removeEventListener('resize', onResize);
       window.removeEventListener('focus', scheduleEnsureButton);
       window.removeEventListener('pageshow', scheduleEnsureButton);
       document.removeEventListener('visibilitychange', onVisibilityChange);
