@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.140
+
+- Gestión de cuidados conserva la vista nativa si cambian los módulos o la estructura de las listas de Rayen.
+
 ## 0.48.139
 
 - Gestión de cuidados combina filas y abre la entrega con el mismo episodio verificado en los enlaces nativos que usa la impresión. Ante enlaces ambiguos, conserva el acceso nativo y desactiva las acciones clínicas de la extensión.
