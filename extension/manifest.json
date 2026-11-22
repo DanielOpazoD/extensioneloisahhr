@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "118",
   "name": "Rayen → HHR · Puente de censo",
-  "version": "0.48.142",
+  "version": "0.48.143",
   "description": "Conecta Eloísa con HHR y ofrece herramientas de recetas y exámenes.",
   "permissions": [
     "tabs",
@@ -88,7 +88,10 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "nursing-handoff-editor.html"
+        "nursing-handoff-editor.html",
+        "icons/shortcut-syslab.png",
+        "icons/shortcut-mmrad.png",
+        "icons/shortcut-gmail.png"
       ],
       "matches": [
         "https://fichamedico.rayensalud.cl/*"
@@ -225,6 +228,7 @@
         "message-contract.js",
         "health-push-ordering-runtime.js",
         "hhr-ui.js",
+        "hhr-favorite-links.js",
         "hhr-lab-request-styles.js",
         "hhr-center-styles.js",
         "hhr-center-preferences.js",

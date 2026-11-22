@@ -471,7 +471,8 @@ const verifyLists = async (context, origin, worker) => {
           const demoLogo = '<svg xmlns="http://www.w3.org/2000/svg" width="135" height="42"><text x="4" y="27" fill="#19695f" font-family="sans-serif" font-size="21">Eloísa demo</text></svg>';
           drawer.innerHTML = '<header><img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></header>' +
             '<ul>' + ['Lista de trabajo médico', 'Gestión de cuidados', 'Ejecución plan de cuidados', 'Informes']
-              .map(label => '<li><button type="button">' + label + '</button></li>').join('') + '</ul>' +
+              .map(label => '<li style="padding-inline:15px"><button type="button" style="padding-inline:16px"><span>' +
+                label + '</span></button></li>').join('') + '</ul>' +
             '<p>20-11-2026, 21:35:27</p><p>Versión: 26.4.7</p>';
           document.body.append(drawer);
           const keepFocus = event => { if (!drawer.contains(event.target)) drawer.focus(); };
@@ -499,6 +500,14 @@ const verifyLists = async (context, origin, worker) => {
             .map(selector => drawer.locator(selector).boundingBox()));
         assert.ok(menuBox.y >= brandBox.y + brandBox.height && bedsBox.y >= reportsBox.y + reportsBox.height);
         assert.ok(Math.abs(reportsBox.x - bedsBox.x) <= 1 && Math.abs(reportsBox.height - bedsBox.height) <= 1);
+        const alignments = await drawer.locator('[data-hhr-menu-icon="reports"],[data-hhr-menu-icon="beds"]').evaluateAll(items =>
+          items.map(item => {
+            const label = document.createRange();
+            label.selectNodeContents(item);
+            return [label.getBoundingClientRect().x, getComputedStyle(item).paddingInlineStart,
+              getComputedStyle(item, '::before').width];
+          }));
+        assert.deepEqual(alignments[0], alignments[1], 'Beds matches the text and icon in the native menu');
         const drawerBox = await drawer.boundingBox();
         assert.ok(Math.abs(drawerBox.y + drawerBox.height - weatherBox.y - weatherBox.height - 10) <= 1);
         assert.ok(await drawer.locator('[data-hhr-drawer-brand]').evaluate(node => {
@@ -554,38 +563,41 @@ const verifyLists = async (context, origin, worker) => {
         await births.waitFor({state:'detached'});
         assert.deepEqual(await worker.evaluate(() => [self.__worklistBirthsRequests, self.__worklistEventsRequests,
           self.__worklistHistoryRequests]), [1,1,1]);
-        const favorites = drawer.getByRole('button', { name: /Favoritos/ });
-        await favorites.click();
-        const panel = drawer.getByRole('region', { name: 'Favoritos' });
-        await panel.waitFor();
-        assert.equal(await favorites.getAttribute('aria-expanded'), 'true');
-        assert.equal(await drawer.locator('dialog[open]').count(), 0, 'Favorites expand within the native focus trap');
-        const url = panel.getByRole('textbox', { name: 'URL del favorito' });
-        await url.click();
-        assert.equal(await url.evaluate(field => document.activeElement === field), true);
-        await page.keyboard.type('favorito.example.org');
-        assert.equal(await url.inputValue(), 'favorito.example.org');
-        await panel.getByRole('button', { name: 'Agregar', exact: true }).waitFor({ state: 'visible' });
-        await page.waitForFunction(() => !document.querySelector('.hhr-fav-add')?.disabled);
-        await url.press('Enter');
-        await panel.getByText('https://favorito.example.org/', { exact: true }).waitFor();
-        const expandedWeather = await drawer.locator('[data-hhr-drawer-weather]').boundingBox();
-        assert.ok(Math.abs(drawerBox.y + drawerBox.height - expandedWeather.y - expandedWeather.height - 10) <= 1);
+        const favorites = drawer.getByRole('navigation', { name: 'Favoritos' });
+        await favorites.waitFor();
+        assert.equal(await favorites.getByRole('textbox').count(), 0);
+        assert.equal(await favorites.getByRole('button').count(), 0);
+        assert.deepEqual(await favorites.getByRole('link').allTextContents(), ['SysLab', 'MMRAD', 'Gmail']);
+        assert.equal(await drawer.locator('dialog[open]').count(), 0);
+        for (const [name, href] of [
+          ['SysLab', 'http://10.4.69.90/syslab/'],
+          ['MMRAD', 'https://ris.mmrad.cl/web/guest'],
+          ['Gmail', 'https://mail.google.com/'],
+        ]) {
+          const shortcut = favorites.getByRole('link', { name, exact: true });
+          assert.ok(await shortcut.locator('img').evaluate(async img => {
+            await img.decode();
+            return img.naturalWidth === 32 && img.src.startsWith('chrome-extension:');
+          }));
+          assert.equal(await shortcut.getAttribute('href'), href);
+          const serveShortcut = route => route.fulfill({ contentType: 'text/html', body: '<title>' + name + '</title>' });
+          await context.route(href, serveShortcut);
+          try {
+            const [tab] = await Promise.all([context.waitForEvent('page'), shortcut.press('Enter')]);
+            try {
+              await tab.waitForURL(href);
+              assert.equal(await tab.title(), name);
+              assert.equal(await tab.evaluate(() => !!window.opener || !!document.referrer), false);
+            } finally { await tab.close(); }
+          } finally { await context.unroute(href, serveShortcut); }
+        }
         if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
-          await page.setViewportSize({ width:1100, height:780 });
-          await drawer.screenshot({path:path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Favoritos desplegados.png')});
+          await drawer.screenshot({ path:path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Favoritos.png') });
         }
         await page.setViewportSize({ width:390, height:450 });
-        await url.press('Escape');
-        await panel.waitFor({ state:'hidden' });
-        assert.equal(await favorites.getAttribute('aria-expanded'), 'false');
-        assert.equal(await favorites.evaluate(button => document.activeElement === button), true);
-        await favorites.click();
-        await panel.getByText('https://favorito.example.org/', { exact: true }).waitFor();
-        await panel.getByRole('button', { name: /Eliminar favorito.example.org/ }).click();
-        await panel.getByText('https://favorito.example.org/', { exact: true }).waitFor({ state: 'detached' });
-        await favorites.click();
-        await panel.waitFor({ state:'hidden' });
+        const lastShortcut = favorites.getByRole('link', { name: 'Gmail' });
+        await lastShortcut.focus();
+        assert.equal(await lastShortcut.evaluate(link => document.activeElement === link), true);
         await drawer.evaluate(async element => {
           element.remove();
           await new Promise(resolve => requestAnimationFrame(resolve));

@@ -54,12 +54,10 @@ export const verifyDirectWorkflows = async (page, worker) => {
     await root.locator('.hhr-imaging-canvas').focus(); await page.keyboard.press('Enter');
     assert.equal(await root.locator('.hhr-imaging-mark').count(), 1);
     await nav('settings');
-    await root.getByRole('button', { name: 'Favoritos', exact: true }).click();
-    await root.getByRole('textbox', { name: 'Nombre del favorito' }).fill('Enlace de prueba');
-    await root.getByRole('textbox', { name: 'URL del favorito' }).fill('https://example.org/');
-    await root.getByRole('button', { name: 'Agregar', exact: true }).click();
-    await root.locator('.hhr-fav-open').filter({ hasText: 'Enlace de prueba' }).waitFor();
-    await root.getByRole('button', { name: 'Volver a ajustes' }).click();
+    const favorites = root.getByRole('navigation', { name: 'Favoritos' });
+    assert.deepEqual(await favorites.getByRole('link').allTextContents(), ['SysLab', 'MMRAD', 'Gmail']);
+    assert.equal(await favorites.getByRole('textbox').count(), 0);
+    assert.equal(await favorites.getByRole('button').count(), 0);
     await root.getByLabel('Densidad', { exact: true }).selectOption('compact');
     assert.equal(await root.getAttribute('data-density'), 'compact');
     await root.getByLabel('Densidad', { exact: true }).selectOption('normal');

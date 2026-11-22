@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.143
+
+- Favoritos muestra accesos fijos a SysLab, MMRAD y Gmail con los iconos de cada sitio, en el menú lateral y en Ajustes de Centro HHR.
+- Alinea el icono y el texto de Gestión de Camas con los de Informes.
+
 ## 0.48.142
 
 - Reorganiza el menú de Eloísa con Gestión de Camas debajo de Informes y el tiempo al pie. Retira el reloj y la fecha del panel.
