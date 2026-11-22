@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.141
+
+- Separa el refresco de listas y menú de las mutaciones ajenas a esas vistas.
+- Define los mensajes del editor de entrega por acción y mantiene los detalles de excepciones fuera de las respuestas y los logs.
+- Documenta los responsables, destinos y pruebas de los principales flujos.
+
 ## 0.48.140
 
 - Gestión de cuidados conserva la vista nativa si cambian los módulos o la estructura de las listas de Rayen.

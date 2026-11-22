@@ -14,6 +14,15 @@
   const tableSelector = '.MuiTableContainer-root > table';
   const markedSelector = `table[${marked}],table[${complete}]`;
   const filters = '.MuiPaper-root:has(#search-encounter-list)';
+  const drawers = '.MuiDrawer-paperAnchorLeft, .MuiDrawer-anchorLeft .MuiDrawer-paper';
+  const tableScope = '#search-encounter-list,[role="tablist"],[role="tabpanel"],.MuiTableContainer-root,header.MuiAppBar-root';
+  const affects = (records, selector, ignored) => records.some(({ target, addedNodes, removedNodes }) => {
+    const element = target.nodeType === Node.ELEMENT_NODE ? target : target.parentElement;
+    if (ignored && element?.closest(ignored)) return false;
+    if (element?.closest(selector)) return true;
+    return [...addedNodes, ...removedNodes].some(node => node.nodeType === Node.ELEMENT_NODE &&
+      (!ignored || !node.matches(ignored)) && (node.matches(selector) || node.querySelector(selector)));
+  });
   // The native family-information button uses the same Announcement glyph for pending and idle requests.
   const announcementPath = 'M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m-7 9h-2V5h2zm0 4h-2v-2h2z';
   const carePlanLabel = 'Ejecución de cuidados';
@@ -321,6 +330,7 @@
 
   const create = options => {
     let onWorklist = false;
+    let currentPath;
     const drawerTools = globalThis.HhrWorklistDrawer?.create(options);
     const renamedLabels = new Map();
     let layout;
@@ -368,10 +378,10 @@
         table.style.removeProperty('--hhr-worklist-sticky-top');
       }
     };
-    const refresh = pathname => {
+    const refreshDrawer = () => {
       drawerTools?.prune();
       for (const node of renamedLabels.keys()) if (!node.isConnected) renamedLabels.delete(node);
-      for (const drawer of document.querySelectorAll('.MuiDrawer-paperAnchorLeft, .MuiDrawer-anchorLeft .MuiDrawer-paper')) {
+      for (const drawer of document.querySelectorAll(drawers)) {
         let hasWorklist = false;
         for (const item of drawer.querySelectorAll('a,button,[role="button"]')) {
           const label = item.textContent.trim().replace(/\s+/g, ' ');
@@ -401,6 +411,8 @@
         link.textContent = 'Gestión de Camas';
         drawer.append(link);
       }
+    };
+    const refreshTables = pathname => {
       const heading = headings[pathname.replace(/\/$/, '')];
       if (!heading) {
         if (onWorklist) { clear(); clearLayout(); }
@@ -440,7 +452,12 @@
       }
     };
     return Object.freeze({
-      refresh,
+      refresh(pathname, records) {
+        const full = pathname !== currentPath || !records;
+        currentPath = pathname;
+        if (full || affects(records, drawers + ', .MuiDrawer-anchorLeft')) refreshDrawer();
+        if (full || (onWorklist && affects(records, tableScope, overlay))) refreshTables(pathname);
+      },
       dispose() {
         clear();
         clearLayout();

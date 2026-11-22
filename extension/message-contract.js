@@ -173,6 +173,15 @@
       recoveryToken: 'string?',
     },
   });
+  // Mirrors the extension-owned editor, the source list, and the HHR portal relay.
+  // Sender, session and episode checks belong to the worker's handoff handler.
+  const handoffEditorActions = Object.freeze({
+    context: {}, close: {}, connect: {}, disconnect: {}, 'connect-inline': {},
+    'hosted-result': { expiresAt: 'number?' },
+    read: { date: 'string?', shift: 'string?', since: 'string?' },
+    draft: { date: 'string', shift: 'string', version: 'string', text: 'string?' },
+    save: { date: 'string', shift: 'string', version: 'string', text: 'string' },
+  });
   const knownTypes = new Set(Object.values(types));
   const cleanMessage = value => String(value || '').replace(/\s+/g, ' ').trim();
   const scalarRules = Object.freeze({ string: value => typeof value === 'string', number: value => typeof value === 'number' && Number.isFinite(value), boolean: value => typeof value === 'boolean' });
@@ -231,7 +240,16 @@
         response: responses.error('El tipo de mensaje no está registrado.', 'UNKNOWN_MESSAGE'),
       };
     }
-    const rules = fieldRules[type] || {};
+    let rules = fieldRules[type] || {};
+    if (type === types.NURSING_HANDOFF_EDITOR) {
+      if (typeof message.action !== 'string' || !Object.hasOwn(handoffEditorActions, message.action)) {
+        return {
+          ok: false, known: true, type,
+          response: responses.error('La acción del editor de entregas no es válida.', 'INVALID_MESSAGE'),
+        };
+      }
+      rules = { ...rules, ...handoffEditorActions[message.action] };
+    }
     for (const [field, descriptor] of Object.entries(rules)) {
       if (!fieldMatches(message[field], descriptor)) {
         return {
@@ -253,17 +271,11 @@
       .then(response =>
         sendResponse(response == null ? responses.error(fallbackMessage) : response)
       )
-      .catch(error => {
+      .catch(() => {
         if (typeof logError === 'function') {
-          logError('[HHR] Falló una operación asíncrona de la extensión:', error);
+          logError('[HHR] Falló una operación asíncrona de la extensión.', fallbackMessage);
         }
-        sendResponse(
-          responses.error(
-            cleanMessage(fallbackMessage) +
-              ' ' +
-              cleanMessage(error && error.message ? error.message : error)
-          )
-        );
+        sendResponse(responses.error(fallbackMessage, 'OPERATION_FAILED'));
       });
     return true;
   };

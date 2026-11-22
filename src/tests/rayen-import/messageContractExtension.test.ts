@@ -271,7 +271,7 @@ describe('shared Rayen runtime-message contract', () => {
     const failedResponse = vi.fn();
     const failedRouter = contract.createRuntimeRouter({
       [contract.types.EXTENSION_HEALTH_REQUEST]: {
-        handle: () => Promise.reject(new Error('canal cerrado')),
+        handle: () => Promise.reject(new Error('detalle interno sintético')),
         fallback: 'No se pudo verificar la extensión.',
       },
     });
@@ -280,11 +280,38 @@ describe('shared Rayen runtime-message contract', () => {
     ).toBe(true);
     await vi.waitFor(() =>
       expect(failedResponse).toHaveBeenCalledWith({
-        error: 'No se pudo verificar la extensión. canal cerrado',
+        code: 'OPERATION_FAILED', error: 'No se pudo verificar la extensión.',
       })
     );
-    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledExactlyOnceWith(
+      '[HHR] Falló una operación asíncrona de la extensión.', 'No se pudo verificar la extensión.'
+    );
     errorSpy.mockRestore();
+  });
+
+  it('validates the editor action and its fields without changing the authorized sender', async () => {
+    const type = contract.types.NURSING_HANDOFF_EDITOR;
+    const id = 'id-sintético';
+    const sender = { tab: { id: 12 }, frameId: 7, documentId:'editor-sintético' };
+    const fields = { date:'2026-11-21', shift:'night', version:'a'.repeat(64) };
+    for (const message of [
+      { action:'read' }, { action:'read', ...fields, since:fields.version },
+      { action:'draft', ...fields }, { action:'save', ...fields, text:'' },
+      { action:'connect-inline' }, { action:'hosted-result' }, { action:'close' },
+    ]) expect(contract.validateRuntimeMessage({ type, id, ...message }).ok).toBe(true);
+    for (const message of [
+      { action:'otra-acción' }, { action:'draft' }, { action:'save', ...fields },
+      { action:'hosted-result', expiresAt:'mañana' },
+    ]) expect(contract.validateRuntimeMessage({ type, id, ...message })).toMatchObject({
+      ok:false, known:true, response:{ code:'INVALID_MESSAGE' },
+    });
+    const handle = vi.fn(() => ({ code:'SOURCE_SESSION_CHANGED', error:'Cambió la sesión.' }));
+    const router = contract.createRuntimeRouter({ [type]:{ handle, fallback:'No se pudo continuar.' } });
+    const message = { type, id, action:'read' };
+    await expect(new Promise(resolve => router(message, sender, resolve))).resolves.toEqual({
+      code:'SOURCE_SESSION_CHANGED', error:'Cambió la sesión.',
+    });
+    expect(handle).toHaveBeenCalledExactlyOnceWith(message, sender);
   });
 
   it('does not invoke a handler when a known payload is invalid', async () => {
