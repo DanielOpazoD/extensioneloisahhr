@@ -30,7 +30,8 @@
     }
     visit(cells[1]);
     visit(cells.at(-1));
-    return ids.size === 1 ? { encId: [...ids][0] } : {};
+    const [encId] = ids;
+    return ids.size === 1 && /^[1-9]\d{0,15}$/.test(encId) ? { encId } : {};
   }
 
   function withChildren(jsx, element, children) {

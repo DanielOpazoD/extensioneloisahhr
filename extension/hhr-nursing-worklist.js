@@ -20,20 +20,19 @@
     const children = [];
     const episodes = new Set();
     // When an admission also appears in follow-up, keep the whole follow-up row
-    // with its CRD and assignment actions. Native nursing row keys are encounter.id.
+    // with its CRD and assignment actions. Only the adapted native link identifies the episode.
     for (const source of [1, 2, 0]) {
       const table = tables[source];
       if (!table) continue;
       for (const col of table.columns) headers.set(col.id, col);
       headers.set('activity', { id: 'activity', label: handoff ? 'Entrega de turno' : 'Actividad', style: { width: '10%' } });
       for (const [position, row] of table.children.entries()) {
-        const episode = String(row.key ?? '');
-        const valid = /^[1-9]\d*$/.test(episode);
-        if (valid && episodes.has(episode)) continue;
-        if (valid) episodes.add(episode);
         const cells = new Map();
         const native = row.props.children;
         table.columns.forEach(({ id }, index) => cells.set(id, native[index]));
+        const episode = cells.get('hhrPrint')?.props['data-hhr-worklist-episode'];
+        if (episode && episodes.has(episode)) continue;
+        if (episode) episodes.add(episode);
         // The admissions renderer declares an Actions header but emits only
         // the final chart link. Keep that link in its own column.
         if (source === 0 && native.length + 1 === table.columns.length) {
@@ -41,14 +40,14 @@
           cells.set('link', native.at(-1));
         }
         const detail = cells.get(['stay', 'lastNovelty', '"lastNursePublishDatetime"'][source]);
-        if (handoff && valid) {
+        if (handoff && episode) {
           cells.set('activity', jsx('td', { className: 'hhr-worklist-handoff', 'data-hhr-handoff-episode': episode }));
         } else if (!handoff && detail?.props) {
           const value = detail.props.children;
           const children = typeof value === 'string' && value.startsWith('Sin registro') ? value : [activity[source], ' ', value];
           cells.set('activity', jsx(detail.type, { ...detail.props, className: 'hhr-worklist-activity', children }));
         }
-        children.push({ row, cells, key: valid ? episode : source + '-' + position });
+        children.push({ row, cells, key: episode ? 'episode-' + episode : source + '-' + position + '-' + (row.key ?? '') });
       }
     }
     const columns = columnIds.map(id => headers.get(id)).filter(Boolean);
@@ -203,9 +202,10 @@
           if (expanded && !handoffColumns.has(id)) return [];
           const cell = row.props.children[index];
           if (id !== 'activity') return [cell];
+          const episode = cell.props['data-hhr-handoff-episode'];
           return [React.cloneElement(cell, { hidden: !expanded, children:
-            visited && /^[1-9]\d{0,15}$/.test(row.key)
-              ? jsx('div', { hidden: !expanded, 'data-hhr-handoff-inline': row.key }, 'editor') : null })];
+            visited && episode
+              ? jsx('div', { hidden: !expanded, 'data-hhr-handoff-inline': episode }, 'editor') : null })];
         }),
       }));
       return jsx(React.Fragment, { children: [
