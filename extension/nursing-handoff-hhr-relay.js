@@ -1,7 +1,8 @@
 (() => {
   'use strict';
   const origin = location.origin;
-  if (location.origin !== origin) return;
+  if (origin !== 'https://hhr-hospitalizados.app' &&
+      !/^https:\/\/(?:(?:deploy-preview-\d+--)?)testinghhr\.netlify\.app$/.test(origin)) return;
   window.addEventListener('message', event => {
     if (event.source !== window || event.origin !== origin ||
         event.data?.type !== 'HHR_NURSING_HANDOFF_LINK_RESULT' ||
