@@ -1196,6 +1196,7 @@ const nursingHandoffPilot = self.HhrNursingHandoffPilot.create({
 const runtimeMessageRoutes = Object.freeze({
   [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),
   [RUNTIME_MESSAGES.DAILY_BIRTHS]: runtimeRoute(() => self.HhrDailyBirths.read(), 'Nacimientos no disponibles.'),
+  [RUNTIME_MESSAGES.NURSING_HANDOFF_TABLE]: runtimeRoute(nursingHandoffPilot.table, 'No se pudo comprobar la conexión a HHR.'),
   [RUNTIME_MESSAGES.NURSING_HANDOFF_OPEN]: runtimeRoute(nursingHandoffPilot.start, 'No se pudo abrir la entrega.'),
   [RUNTIME_MESSAGES.NURSING_HANDOFF_EDITOR]: runtimeRoute(nursingHandoffPilot.operate, 'No se pudo acceder a la entrega.'),
   [RUNTIME_MESSAGES.EXTENSION_HEALTH_REQUEST]: runtimeRoute(

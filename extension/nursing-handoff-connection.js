@@ -11,7 +11,7 @@
     try { return new URL(value).origin === origin; } catch { return false; }
   };
 
-  function create(chrome) {
+  function create(chrome, onAuthorized) {
     const store = chrome.storage.session;
     const get = async key => (await store.get(key))[key];
     let opening;
@@ -77,6 +77,7 @@
           expiresAt <= Date.now() + 4 * 60 * 60_000) {
         const { owner, deviceId, proof } = pending;
         await changeAccess(() => store.set({ [accessKey]: { owner, deviceId, proof, expiresAt } }));
+        onAuthorized?.(pending.sourceTab);
       }
       await store.remove(pendingKey);
       const source = await chrome.tabs.update(pending.sourceTab, { active: true }).catch(() => null);

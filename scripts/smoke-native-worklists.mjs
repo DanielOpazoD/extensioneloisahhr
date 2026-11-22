@@ -411,18 +411,50 @@ async function verifyTableConnection(context, origin, worker) {
       button.ariaExpanded = String(!wasExpanded);
       for (const host of document.querySelectorAll('[data-hhr-handoff-inline]')) host.hidden = wasExpanded;
     }));
+    await worker.evaluate(async url => {
+      const [tab] = await chrome.tabs.query({ url });
+      await chrome.scripting.executeScript({ target:{ tabId:tab.id }, files:['nursing-handoff-dialog.js'] });
+      await chrome.scripting.executeScript({ target:{ tabId:tab.id }, func:() => {
+        const original = chrome.runtime.sendMessage.bind(chrome.runtime);
+        self.__handoffOpens = 0;
+        self.__handoffChecks = 0;
+        chrome.runtime.sendMessage = async (...args) => {
+          if (args[0]?.type === 'RAYEN_NURSING_HANDOFF_OPEN') self.__handoffOpens++;
+          if (args[0]?.type === 'RAYEN_NURSING_HANDOFF_TABLE' && args[0].action === 'status') {
+            self.__handoffChecks++;
+            if (self.__handoffChecks === 1) await new Promise(resolve => { self.__finishHandoffCheck = resolve; });
+          }
+          return original(...args);
+        };
+      } });
+    }, url);
+    const released = () => worker.evaluate(async url => {
+      const [tab] = await chrome.tabs.query({ url });
+      const [state] = await chrome.scripting.executeScript({ target:{ tabId:tab.id },
+        func:() => [self.__handoffOpens, self.__handoffChecks, Boolean(self.__finishHandoffCheck)] });
+      return state.result;
+    }, url);
+    const release = () => worker.evaluate(async url => {
+      const [tab] = await chrome.tabs.query({ url });
+      await chrome.scripting.executeScript({ target:{ tabId:tab.id }, func:() => self.__finishHandoffCheck?.() });
+    }, url);
     await toggle.click();
-    await page.locator('[data-hhr-handoff-needs-link]').nth(1).waitFor();
+    await page.waitForFunction(() => Boolean(document.querySelector('[data-hhr-handoff-state="checking"], .hhr-handoff-connection:not([hidden])')));
+    const before = await released();
+    assert.deepEqual(before, [0, 1, true], 'Check access once, without opening an editor');
+    assert.equal(await page.locator('[data-hhr-handoff-inline] > *').count(), 0);
+    await release();
     const connect = page.getByRole('button', { name:'Conectar HHR', exact:true });
+    await connect.waitFor();
     assert.equal(await connect.count(), 1);
-    for (const id of ['901001','901002']) {
-      const editor = page.frameLocator(`[data-hhr-handoff-inline="${id}"] iframe`);
-      assert.equal(await editor.locator('#connect').isVisible(), false);
-      assert.equal(await editor.locator('#status').textContent(), '');
-    }
+    assert.equal(await page.locator('[data-hhr-handoff-inline] > *').count(), 0);
+    assert.equal((await released())[0], 0);
     await toggle.click();
     await connect.waitFor({ state:'hidden' });
     await toggle.click();
+    await connect.waitFor();
+    assert.equal(await connect.count(), 1);
+    assert.equal(await page.locator('[data-hhr-handoff-inline] > *').count(), 0);
     if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
       await page.locator('main').screenshot({ path:path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Conexión HHR.png') });
     }
@@ -439,7 +471,9 @@ async function verifyTableConnection(context, origin, worker) {
     await connect.waitFor({ state:'hidden' });
     for (const id of ['901001','901002']) {
       const editor = page.frameLocator(`[data-hhr-handoff-inline="${id}"] iframe`);
-      assert.equal(await editor.getByLabel('Nota del turno').inputValue(), 'Nota sintética en HHR');
+      const note = editor.getByLabel('Nota del turno');
+      await note.waitFor();
+      assert.equal(await note.inputValue(), 'Nota sintética en HHR');
     }
   } finally {
     await context.unroute(portalUrl, mockPortal);
@@ -449,7 +483,7 @@ async function verifyTableConnection(context, origin, worker) {
       return chrome.storage.session.remove(['hhr-nursing-handoff-access', 'hhr-nursing-handoff-connecting']);
     });
   }
-  console.log('[entrega] un solo aviso de conexión para dos episodios; ambas filas recuperan su editor al conectar');
+  console.log('[entrega] 0 editores antes de validar el acceso, 1 aviso tras reinyección y 2 editores después de conectar');
 }
 
 const verifyLists = async (context, origin, worker) => {
@@ -469,11 +503,12 @@ const verifyLists = async (context, origin, worker) => {
           drawer.tabIndex = -1;
           drawer.style.cssText = 'position:fixed; inset:0 auto 0 0; z-index:1300; width:216px; background:white;';
           const demoLogo = '<svg xmlns="http://www.w3.org/2000/svg" width="135" height="42"><text x="4" y="27" fill="#19695f" font-family="sans-serif" font-size="21">Eloísa demo</text></svg>';
-          drawer.innerHTML = '<header><img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></header>' +
+          drawer.innerHTML = '<header style="width:188px;max-width:188px"><a href="#home" style="width:165px">' +
+            '<img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></a></header>' +
             '<ul>' + ['Lista de trabajo médico', 'Gestión de cuidados', 'Ejecución plan de cuidados', 'Informes']
               .map(label => '<li style="padding-inline:15px"><button type="button" style="padding-inline:16px"><span>' +
                 label + '</span></button></li>').join('') + '</ul>' +
-            '<p>20-11-2026, 21:35:27</p><p>Versión: 26.4.7</p>';
+            '<footer style="border-top:1px solid #ddd"><hr><p>20-11-2026, 21:35:27</p><p>Versión: 26.4.7</p></footer>';
           document.body.append(drawer);
           const keepFocus = event => { if (!drawer.contains(event.target)) drawer.focus(); };
           document.addEventListener('focusin', keepFocus);
@@ -509,6 +544,26 @@ const verifyLists = async (context, origin, worker) => {
           }));
         assert.deepEqual(alignments[0], alignments[1], 'Beds matches the text and icon in the native menu');
         const drawerBox = await drawer.boundingBox();
+        assert.ok(Math.abs(drawerBox.x - brandBox.x) <= 1 && Math.abs(drawerBox.width - brandBox.width) <= 1,
+          'The logo band and its rule span the full drawer');
+        const footer = drawer.locator('footer');
+        assert.equal(await footer.isVisible(), false);
+        await footer.evaluate(node => {
+          const button = document.createElement('button');
+          button.setAttribute('aria-label', 'Control nativo');
+          const version = document.createElement('span');
+          version.textContent = 'Versión: 26.4.8';
+          button.append(version);
+          node.append(button);
+        });
+        const nativeControl = footer.getByRole('button', { name:'Control nativo' });
+        await nativeControl.waitFor();
+        assert.equal(await nativeControl.getByText('Versión: 26.4.8', { exact:true }).isVisible(), true);
+        assert.equal(await drawer.getByText('Versión: 26.4.7', { exact:true }).isVisible(), false);
+        await nativeControl.evaluate(node => node.remove());
+        await footer.waitFor({ state:'hidden' });
+        assert.equal(await drawer.locator('[data-hhr-drawer-tools]').evaluate(node => getComputedStyle(node).borderTopWidth), '0px');
+
         assert.ok(Math.abs(drawerBox.y + drawerBox.height - weatherBox.y - weatherBox.height - 10) <= 1);
         assert.ok(await drawer.locator('[data-hhr-drawer-brand]').evaluate(node => {
           const mascot = getComputedStyle(node, '::after');

@@ -33,15 +33,16 @@ const setup = async hosted => {
   const checkAccess = vi.fn().mockResolvedValue({ ok: true });
   const fetchImpl = vi.fn();
   const getInfo = vi.fn().mockResolvedValue({ info });
+  const getContext = vi.fn(async () => ({ info, patientId: '1', patient: { run: '11111111-1' } }));
   const runtime = globalThis.HhrNursingHandoffPilot.create({
     chrome, hosted, localPilot: { installationKey }, getSessionKey: () => 'rayen-session', getInfo, checkAccess, fetchImpl,
-    getContext: async () => ({ info, patientId: '1', patient: { run: '11111111-1' } }),
+    getContext,
   });
   const message = (index, action, overrides, fields) => runtime.operate({ id: ids[index], action, ...fields }, {
     frameId: 5, documentId: 'editor-' + index, url: extensionOrigin + 'nursing-handoff-editor.html#' + ids[index],
     tab: { id: index + 1, url: source }, ...overrides,
   });
-  return { checkAccess, chrome, fetchImpl, getInfo, message };
+  return { checkAccess, chrome, fetchImpl, getContext, getInfo, message, runtime };
 };
 
 it('retira el acceso a la nota si Eloísa revoca el permiso durante una lectura', async () => {
@@ -117,18 +118,26 @@ it('limita la nota al marco de la entrega y al documento que lo abrió', async (
   expect(fetchImpl).not.toHaveBeenCalled();
 });
 
-it('abre la conexión compartida desde el documento de origen y vuelve a verificar su sesión', async () => {
+it('comprueba y abre la conexión de la tabla sin leer pacientes y con la sesión de Eloísa autorizada', async () => {
   const open = vi.fn().mockResolvedValue({ ok:true });
-  const { message, getInfo, fetchImpl } = await setup({ create:() => ({ open }) });
-  const top = { frameId:0, documentId:'source-0', url:source };
-  await expect(message(0, 'connect-inline')).resolves.toHaveProperty('error');
-  await expect(message(0, 'connect-inline', { ...top, documentId:'otra-vista' })).resolves.toHaveProperty('error');
-  await expect(message(1, 'connect-inline', { ...top, documentId:'source-1' })).resolves.toHaveProperty('error');
+  const authorized = vi.fn().mockResolvedValue(null);
+  const { runtime, getInfo, getContext, checkAccess, fetchImpl } = await setup({ create:() => ({ authorized, open }) });
+  const sender = { frameId:0, documentId:'source-0', url:source, tab:{ id:1, url:source } };
+  await expect(runtime.table({ action:'connect' }, { ...sender, frameId:2 })).resolves.toHaveProperty('error');
+  await expect(runtime.table({ action:'connect' }, { ...sender, url:'https://hhr-hospitalizados.app' })).resolves.toHaveProperty('error');
+  await expect(runtime.table({ action:'status' }, sender)).resolves.toMatchObject({ code:'HHR_LINK_REQUIRED' });
+  await expect(runtime.start({ inline:true, encId:'901001' }, sender)).resolves.toMatchObject({ code:'HHR_LINK_REQUIRED' });
   expect(open).not.toHaveBeenCalled();
-  await expect(message(0, 'connect-inline', top)).resolves.toEqual({ ok:true });
+  await expect(runtime.table({ action:'connect' }, sender)).resolves.toEqual({ ok:true });
   expect(open).toHaveBeenCalledWith('1:2:3', 1);
+  authorized.mockResolvedValue({ proof:'synthetic', deviceId:'test-device' });
+  await expect(runtime.table({ action:'status' }, sender)).resolves.toEqual({ ok:true });
+  await expect(runtime.table({ action:'connect' }, sender)).resolves.toEqual({ ok:true });
+  checkAccess.mockResolvedValueOnce({ error:'Sin permiso de ficha.' });
+  await expect(runtime.table({ action:'connect' }, sender)).resolves.toEqual({ error:'Sin permiso de ficha.' });
   getInfo.mockResolvedValueOnce({ info:{ ...info, token:'' } });
-  await expect(message(0, 'connect-inline', top)).resolves.toMatchObject({ code:'SOURCE_SESSION_CHANGED' });
+  await expect(runtime.table({ action:'connect' }, sender)).resolves.toHaveProperty('error');
   expect(open).toHaveBeenCalledOnce();
+  expect(getContext).not.toHaveBeenCalled();
   expect(fetchImpl).not.toHaveBeenCalled();
 });

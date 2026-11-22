@@ -38,13 +38,13 @@
 .hhr-handoff-toolbar .hhr-handoff-connection button { background:#155e54; border-color:#155e54; color:white; }
 .hhr-handoff-toolbar button:focus-visible { outline:2px solid #147766; outline-offset:2px; }
 .hhr-handoff-toolbar button:disabled { opacity:.55; cursor:default; }
-[data-hhr-handoff-inline][hidden] { display:none !important; }
+[data-hhr-handoff-inline][hidden],
+.hhr-hospitalized-panel:not([data-hhr-handoff-state="ready"]) [data-hhr-handoff-inline] { display:none !important; }
 .hhr-worklist-handoff[hidden] { display:none !important; }
 [data-hhr-handoff-inline] {
   min-height:80px; min-width:220px; margin-block:3px; text-align:start;
   background:#f1f7f5; border-inline-start:3px solid #a6cbc1;
 }
 [data-hhr-handoff-inline] > iframe { display:block; width:100%; height:96px; border:0; }
-[data-hhr-handoff-inline][data-hhr-handoff-needs-link] { min-height:0; border-inline-start-color:transparent; }
 [data-hhr-handoff-inline]:focus-within { border-inline-start-color:#177867; }
 [data-hhr-handoff-inline] > p { margin:0; padding:12px; color:#31544d; }

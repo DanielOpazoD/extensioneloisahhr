@@ -132,7 +132,8 @@ En Gestión de cuidados, «Entrega de turno» habilita la edición de todas las 
 vigente en sus filas. Cada fila guarda por separado y muestra la confirmación de HHR. Al cerrar
 el modo vuelven las columnas operativas. Un borrador de la tabla se conserva durante la
 misma vista de Eloísa, incluso al filtrar, y se vincula al profesional, paciente, episodio y turno.
-Si hace falta conectar la cuenta de HHR, la tabla muestra un solo aviso sobre las filas.
+La tabla comprueba el acceso a HHR antes de abrir los editores. Si hace falta conectar la cuenta,
+la columna queda vacía y aparece un solo acceso a la conexión sobre las filas.
 
 El editor muestra la fecha censal y el turno que informó HHR. Si cambia el turno, «Ver turno vigente» abre la nueva entrega y conserva el borrador anterior como texto de consulta mientras el editor siga abierto. En caso de conflicto, puedes consultar la versión que dejaste de lado y recuperarla como borrador. La confirmación de HHR se muestra con un ✓.
 
