@@ -70,7 +70,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
           : column === 'patient' ? jsx('a', {href:path+'/'+id, children:[jsx('strong', {children:'Paciente '+id},'name'),
           jsx(Chip,{size:'small',label:id === 20 ? 'Nuevo' : 'Pendiente'},'status'), jsx(Chip,{size:'small',label:'Alta médica'},'discharge'),
           jsx('span', {children:id === 23 ? 'RUN Materno/progenitor(a): 12345678-9' : 'Número de Identificación: DEMO'+id}, 'id')]})
-          : column === 'link' ? jsx(NativeChart, { LinkComponent: 'a', href: path+'/'+id, children: '>' }) : column},column))},id)) });
+          : column === 'link' ? jsx(NativeChart, { LinkComponent: 'a', href: path+'/'+id, children: '>' }) : column},column))},1000 * (index + 1) + id)) });
     }
     function Chip({label, ...props}) {return jsx('span', {...props, children:label});}
     function Loader({index}) {
@@ -208,13 +208,35 @@ it('ordena las camas visibles y mantiene ambos episodios cuando comparten ubicac
   expect(ordered.children.map(row => row.props.children[2].props['data-hhr-worklist-episode'])).toEqual(expected);
 });
 
-it('muestra Entrega de turno para cada episodio del piloto', () => {
+it('usa el episodio del enlace nativo para imprimir y editar la entrega, incluso si cambia la clave de React', () => {
   Function(readFileSync('extension/hhr-worklist-print-column.js', 'utf8'))();
   Function(readFileSync('extension/hhr-nursing-worklist.js', 'utf8'))();
   const { jsx } = runtime;
-  const columns = [{ id: 'patient', label: 'Paciente' }];
-  const row = jsx('tr', { children: [jsx('td', { children: 'Paciente sintético' })] }, '123');
-  const result = globalThis.HhrNursingWorklist.joinTables(jsx, [{ columns, children: [row] }], true);
-  expect(result.columns.map(col => col.label)).toEqual(['Paciente', 'Entrega de turno']);
-  expect(result.children[0].props.children[1].props['data-hhr-handoff-episode']).toBe('123');
+  const columns = ['location', 'patient', 'ges', 'link'].map(id => ({ id, label:id }));
+  const row = (key, patient, chart = patient) => jsx('tr', { children: [
+    jsx('td', { children:['AMQI', jsx('br', {}), 'Sala', jsx('br', {}), 'R1'] }),
+    jsx('td', { children:jsx('a', { href:path + '/' + patient, children:'Paciente ' + patient }) }),
+    jsx('td', { children:'GES' }),
+    jsx('td', { children:jsx('a', { href:path + '/' + chart, children:'Ficha' }) }),
+  ] }, key);
+  const table = rows => globalThis.HhrWorklistPrintColumn.adapt(jsx, {
+    columns, listLenght:rows.length, children:rows,
+  }, path);
+  const { children } = globalThis.HhrNursingWorklist.joinTables(jsx, [
+    table([row('80', 200)]), table([row('123', 200), row('456', 300), row('789', 400, 500)]),
+  ], true);
+  expect(children).toHaveLength(3);
+  const projected = children.map(row => {
+    const cells = row.props.children.map(cell => cell.props);
+    return {
+      print:cells.find(cell => cell.className === 'hhr-worklist-documents')['data-hhr-worklist-episode'],
+      handoff:cells.find(cell => cell.className === 'hhr-worklist-handoff')?.['data-hhr-handoff-episode'],
+      href:cells.at(-1).children.props.href,
+    };
+  });
+  expect(projected).toEqual([
+    { print:'200', handoff:'200', href:path + '/200' },
+    { print:'300', handoff:'300', href:path + '/300' },
+    { print:undefined, handoff:undefined, href:path + '/500' },
+  ]);
 });

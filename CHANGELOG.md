@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.139
+
+- Gestión de cuidados combina filas y abre la entrega con el mismo episodio verificado en los enlaces nativos que usa la impresión. Ante enlaces ambiguos, conserva el acceso nativo y desactiva las acciones clínicas de la extensión.
+
 ## 0.48.138
 
 - «Un día como hoy» añade hechos históricos enlazados de Wikipedia en español y agrupa los nacimientos adicionales en una sección desplegable.
