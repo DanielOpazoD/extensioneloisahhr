@@ -41,7 +41,8 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   const NativeSkeleton = () => jsx('table', { 'data-native-skeleton': '' });
   const keys = ['incomeEncounterList','noveltyEncounterList','uneventfulEncounterList','recoveredEncounterList'];
   const beds = { 20: 'R1', 21: 'B1UEA', 22: 'H6C2', 23: 'NEO 1', 30: 'H1C1' };
-  const lists = [[20,21], [21,22], [22,23], [30]];
+  const discharges = Array.from({ length:12 }, (_, index) => 30 + index);
+  const lists = [[20,21], [21,22], [22,23], discharges];
   const publication = '2026-11-20T09:10:00-05:00';
   const historyRead = vi.fn(async path => ({ data: path.includes('/21/') ? [{
     publishDatetime: publication, evolutionResume: [{ HCPR_NAME: 'Médico', HCP_LEGAL: 'Profesional de prueba',
@@ -88,7 +89,7 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
         jsx('h1',{children:'Gestión de cuidados nativa'}), jsx(Loader,{session,index}),
       ] });
       return localJsx.jsxs('main',{children:[jsx('nav',{}),jsx('input',{'aria-label':'Buscar'}),
-        ...keys.map((_,i)=>jsx(Panel,{index:i,children:index === i && jsx(Loader,{session,index:i})},i))]});
+        ...keys.map((_,i)=>jsx(Panel,{index:i,children:index === i && jsx(Loader,{session:i === 3 ? undefined : session,index:i})},i))]});
     };
   };
   const exports = {};
@@ -113,11 +114,14 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   await act(() => setReady('error'));
   expect(document.querySelector('.hhr-care-loading')).toBeNull();
   expect(document.querySelectorAll('[role="alert"]')).toHaveLength(3);
+  expect([...document.querySelectorAll('nav button')].map(button => button.textContent))
+    .toEqual(['Pacientes hospitalizados', 'Egresos']);
   await act(() => setReady(true));
   const rows = () => [...document.querySelectorAll('tbody tr')].map(tr=>tr.querySelector('a').getAttribute('href').split('/').pop());
   const noveltyRows = () => [...document.querySelectorAll('[data-hhr-patient-novelty]')].map(marker =>
     marker.parentElement.querySelector('a').getAttribute('href').split('/').pop());
-  expect([...document.querySelectorAll('nav button')].map(b=>b.textContent)).toEqual(['Pacientes hospitalizados','Egresos']);
+  const tabLabels = () => [...document.querySelectorAll('nav button')].map(button => button.textContent);
+  expect(tabLabels()).toEqual(['Pacientes hospitalizados (4)', 'Egresos (12)']);
   expect(document.querySelectorAll('table')).toHaveLength(1);
   expect(document.querySelectorAll('.hhr-care-source[hidden]')).toHaveLength(3);
   expect(rows()).toEqual(['20','23','22','21']);
@@ -183,12 +187,14 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(action).toHaveBeenCalledWith(1,22);
   await act(()=>setFilter('23'));
   expect(rows()).toEqual(['23']);
+  expect(tabLabels()).toEqual(['Pacientes hospitalizados (1)', 'Egresos (0)']);
   expect(noveltyRows()).toEqual([]);
   await act(()=>setFilter(''));
-  await act(()=>click('Egresos'));
-  expect(rows()).toEqual(['30']);
+  await act(()=>click('Egresos (12)'));
+  expect(rows()).toEqual(discharges.map(String));
   expect(noveltyRows()).toEqual([]);
-  await act(()=>click('Pacientes hospitalizados'));
+  expect(tabLabels()).toEqual(['Pacientes hospitalizados (4)', 'Egresos (12)']);
+  await act(()=>click('Pacientes hospitalizados (4)'));
   expect(rows()).toEqual(['20','23','22','21']);
   await act(()=>setReady('unknown-table'));
   expect(document.querySelector('.hhr-hospitalized-panel')).toBeNull();

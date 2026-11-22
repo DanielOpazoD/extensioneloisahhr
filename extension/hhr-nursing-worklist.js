@@ -80,6 +80,7 @@
           request, adapt, orderRows, renderNovelty].every(value => typeof value === 'function')) return null;
     const Source = React.createContext(null);
     const Registry = React.createContext(null);
+    const DischargeCountOnly = React.createContext(false);
     const Novelty = React.createContext(null);
     const ReadNovelty = React.createContext(null);
     function NoveltyLink({ episode, publication, publisher, ...marker }) {
@@ -158,6 +159,7 @@
       const source = React.useContext(Source);
       const registry = React.useContext(Registry);
       const novelty = React.useContext(Novelty);
+      const countOnly = React.useContext(DischargeCountOnly);
       const adapted = React.useMemo(() => {
         const publications = novelty && new Map(novelty.flatMap(row => row?.lastPhysicianPublishDatetime
           ? [[String(row.id), { publication: row.lastPhysicianPublishDatetime, publisher: row.legalHcpName }]] : []));
@@ -165,15 +167,18 @@
       }, [props, novelty]);
       React.useLayoutEffect(() => {
         if (!registry || source == null) return;
-        registry.set(source, adapted === props ? unsupportedTable : adapted);
+        registry.set(source, source !== 3 && adapted === props ? unsupportedTable : adapted);
         return () => registry.set(source, null);
       }, [registry, source, adapted, props]);
-      return registry && source != null ? null : jsx(Table, adapted);
+      return registry && source != null && (source !== 3 || countOnly) ? null : jsx(Table, adapted);
     }
     function NativeLoading({ type, props }) {
-      return React.useContext(Source) == null ? jsx(type, props) : null;
+      const source = React.useContext(Source);
+      const countOnly = React.useContext(DischargeCountOnly);
+      return source == null || (source === 3 && !countOnly) ? jsx(type, props) : null;
     }
     function SourceFailure({ type, props } = {}) {
+      const countOnly = React.useContext(DischargeCountOnly);
       const index = React.useContext(Source);
       const registry = React.useContext(Registry);
       React.useLayoutEffect(() => {
@@ -181,13 +186,15 @@
         registry.set(index, emptySource);
         return () => registry.set(index, null);
       }, [index, registry]);
-      return index == null ? jsx(type, props) : jsx('p', {
+      if (index === 3 && countOnly) return null;
+      if (index == null || (index === 3 && type)) return jsx(type, props);
+      return jsx('p', {
         role: 'alert', className: 'hhr-care-error',
-        children: 'No se pudo cargar la lista de ' + sources[index].toLowerCase() + '.',
+        children: 'No se pudo cargar la lista de ' + (index === 3 ? 'egresos' : sources[index].toLowerCase()) + '.',
       });
     }
     function makeRegistry() {
-      let tables = [null, null, null];
+      let tables = [null, null, null, null];
       const listeners = new Set();
       return {
         get: () => tables,
@@ -196,11 +203,11 @@
       };
     }
     function Combined({ registry, onIncompatible }) {
-      const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get);
-      const [expanded, setExpanded] = React.useState(false);
-      const [visited, setVisited] = React.useState(false);
+      const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get).slice(0, 3);
       const loading = !tables.every(Boolean);
       const incompatible = tables.includes(unsupportedTable);
+      const [expanded, setExpanded] = React.useState(false);
+      const [visited, setVisited] = React.useState(false);
       const lastSettled = React.useRef(null);
       React.useLayoutEffect(() => {
         if (incompatible) onIncompatible(true);
@@ -270,8 +277,7 @@
       // Keep each native loader mounted for refreshes, but remove its empty layout from the table's flow.
       return jsx('div', { hidden: Boolean(tables[index] && tables[index] !== emptySource), className: 'hhr-care-source', children });
     }
-    function Hospitalized({ active, loaded, onIncompatible }) {
-      const [registry] = React.useState(makeRegistry);
+    function Hospitalized({ active, loaded, registry, onIncompatible }) {
       const [readNovelty] = React.useState(() => globalThis.HhrNursingNovelty?.createReader(async episode => {
         const response = await request('/encounter/' + episode +
           '/getPatientEncounterHistoryReportServer/false/0/0/-14', {
@@ -279,15 +285,50 @@
         });
         return response?.status === 'error' ? undefined : response?.data;
       }));
-      return jsx('section', { role: 'tabpanel', id: 'hhr-care-panel-0', 'aria-labelledby': 'hhr-care-tab-0',
-        className: 'hhr-hospitalized-panel', children: jsx(Registry.Provider, { value: registry, children: [
-          ...sources.map((_, index) => jsx(Source.Provider, { value: index,
-            children: jsx(SourcePanel, { registry, index, children: jsx(SourceError, { children: jsx(React.Suspense, {
-              fallback: null,
-              children: index === active ? loaded : jsx(getPage(), {}),
-            }) }) }) }, index)),
-          jsx(ReadNovelty.Provider, { value: readNovelty, children: jsx(Combined, { registry, onIncompatible }) }, 'table'),
-        ] }) });
+      const discharged = active === 3;
+      const loaders = sources.map((_, index) => jsx(Source.Provider, { value: index,
+        children: jsx(SourcePanel, { registry, index, children: jsx(SourceError, { children: jsx(React.Suspense, {
+          fallback: null,
+          children: index === active ? loaded : jsx(getPage(), {}),
+        }) }) }) }, index));
+      return discharged
+        ? jsx('div', { hidden: true, children: loaders })
+        : jsx('section', { role: 'tabpanel', id: 'hhr-care-panel-0', 'aria-labelledby': 'hhr-care-tab-0',
+          className: 'hhr-hospitalized-panel', children: [
+            ...loaders,
+            jsx(ReadNovelty.Provider, { value: readNovelty,
+              children: jsx(Combined, { registry, onIncompatible }) }, 'table'),
+          ] });
+    }
+    function WorklistTabs({ registry, discharged, onChange }) {
+      const tables = React.useSyncExternalStore(registry.subscribe, registry.get, registry.get);
+      const hospitalized = tables.slice(0, 3);
+      const hospitalizedCount = hospitalized.every(table => table && table !== emptySource && table !== unsupportedTable)
+        ? joinTables(jsx, hospitalized, true).listLenght : undefined;
+      const dischargeCount = tables[3]?.listLenght;
+      return jsx(Tabs, {
+        value: discharged ? 3 : 0, 'aria-label': 'Gestión de cuidados', onChange,
+        children: [[0, 'Pacientes hospitalizados', hospitalizedCount], [3, 'Egresos', dischargeCount]].map(([value, label, total]) =>
+          jsx(Tab, { value, label: Number.isSafeInteger(total) && total >= 0 ? label + ' (' + total + ')' : label,
+            id: 'hhr-care-tab-' + value, 'aria-controls': 'hhr-care-panel-' + value,
+            sx: { textTransform: 'none', paddingX: 0, mr: 2 } }, value)),
+      });
+    }
+    function Worklists({ type, props, dischargePanel, active, loaded, onChange, onIncompatible }) {
+      const [registry] = React.useState(makeRegistry);
+      const discharged = active === 3;
+      const discharge = jsx(Source.Provider, { value: 3,
+        children: jsx(DischargeCountOnly.Provider, { value: !discharged, children: jsx(SourceError, {
+          children: jsx(React.Suspense, { fallback: null, children: discharged ? loaded : jsx(getPage(), {}) }),
+        }) }) });
+      const hospital = jsx(Hospitalized, { active, loaded, registry, onIncompatible }, 'hospitalized');
+      const egresos = discharged
+        ? React.cloneElement(dischargePanel, { key:'egresos', id: 'hhr-care-panel-3', 'aria-labelledby': 'hhr-care-tab-3', children: discharge })
+        : jsx('div', { hidden: true, children: discharge }, 'egresos-count');
+      const items = props.children;
+      return jsx(Registry.Provider, { value: registry, children: jsx(type, { ...props,
+        children: [jsx(WorklistTabs, { registry, discharged, onChange }, 'tabs'), items[1], hospital, egresos, ...items.slice(6)],
+      }) });
     }
     function Layout({ type, props, panels }) {
       const source = React.useContext(Source);
@@ -295,7 +336,6 @@
       const router = navigation.useRouter();
       const resetPage = usePageStore(state => state.setCurrentPage);
       const [useNative, setUseNative] = React.useState(false);
-      const items = props.children;
       if (source != null) return panels[source].props.children;
       if (typeof params?.get !== 'function') return jsx(type, props);
       const active = Number(params.get('tab')) || 0;
@@ -305,8 +345,10 @@
       const session = loaded?.props?.session;
       if (typeof router?.replace !== 'function' || typeof resetPage !== 'function' ||
           (!discharged && !session?.facilityId)) return jsx(type, props);
-      const tabs = jsx(Tabs, {
-        value: discharged ? 3 : 0, 'aria-label': 'Gestión de cuidados',
+      const scope = session?.facilityId
+        ? [session.facilityId, session.healthCarePractitionerId, session.healthCarePractitionerRoleId].join('-')
+        : 'discharge';
+      return jsx(Worklists, { type, props, dischargePanel: panels[3], active, loaded, onIncompatible: setUseNative,
         onChange: (_, value) => {
           const query = new URLSearchParams(params);
           query.set('tab', String(value));
@@ -314,16 +356,7 @@
           resetPage(1);
           router.replace(location.pathname + '?' + query);
         },
-        children: [[0, 'Pacientes hospitalizados'], [3, 'Egresos']].map(([value, label]) =>
-          jsx(Tab, { value, label, id: 'hhr-care-tab-' + value, 'aria-controls': 'hhr-care-panel-' + value,
-            sx: { textTransform: 'none', paddingX: 0, mr: 2 } }, value)),
-      });
-      let panel = React.cloneElement(panels[3], { id: 'hhr-care-panel-3', 'aria-labelledby': 'hhr-care-tab-3' });
-      if (!discharged) {
-        const scope = [session.facilityId, session.healthCarePractitionerId, session.healthCarePractitionerRoleId].join('-');
-        panel = jsx(Hospitalized, { active, loaded, onIncompatible: setUseNative }, scope);
-      }
-      return jsx(type, { ...props, children: [tabs, items[1], panel, ...items.slice(6)] });
+      }, scope);
     }
     return {
       navigation: { ...navigation, useSearchParams },

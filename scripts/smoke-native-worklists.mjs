@@ -541,8 +541,8 @@ const verifyLists = async (context, origin, worker) => {
           drawer.tabIndex = -1;
           drawer.style.cssText = 'position:fixed; inset:0 auto 0 0; z-index:1300; width:216px; background:white;';
           const demoLogo = '<svg xmlns="http://www.w3.org/2000/svg" width="135" height="42"><text x="4" y="27" fill="#19695f" font-family="sans-serif" font-size="21">Eloísa demo</text></svg>';
-          drawer.innerHTML = '<header style="width:188px;max-width:188px;overflow:hidden"><a href="#home" style="width:165px">' +
-            '<img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></a><span hidden></span></header>' +
+          drawer.innerHTML = '<header style="width:188px;max-width:188px;overflow:hidden;border-bottom:2px solid #bbcfc8"><a href="#home" style="width:165px">' +
+            '<img alt="Rayen Eloísa" width="135" height="42" src="data:image/svg+xml,' + encodeURIComponent(demoLogo) + '"></a><span hidden></span></header><hr style="width:188px;margin:0;border:1px solid #bbcfc8">' +
             '<ul>' + ['Lista de trabajo médico', 'Gestión de cuidados', 'Ejecución plan de cuidados', 'Informes']
               .map(label => '<li style="padding-inline:15px"><button type="button" style="padding-inline:16px"><span>' +
                 label + '</span></button></li>').join('') + '</ul>' +
@@ -596,10 +596,10 @@ const verifyLists = async (context, origin, worker) => {
           const brand = node.querySelector('[data-hhr-drawer-brand]').getBoundingClientRect();
           const y = Math.round(brand.bottom - panel.top);
           const pixel = (x, row) => [...ctx.getImageData(x, row, 1, 1).data];
-          return [pixel(canvas.width - 4, y - 5), pixel(canvas.width - 4, y - 1)];
+          return [4, canvas.width - 4].map(x => [y - 3, y - 2, y - 1, y].map(row => pixel(x, row)));
         }, image.toString('base64'));
-        assert.deepEqual(colors, [[243, 248, 246, 255], [227, 238, 234, 255]],
-          'The painted background and rule must reach the right edge through clipped native wrappers');
+        const rule = [[243, 248, 246, 255], [227, 238, 234, 255], [227, 238, 234, 255], [252, 254, 253, 255]];
+        assert.deepEqual(colors, [rule, rule], 'The drawer paints one rule of equal thickness on both sides');
         const footer = drawer.locator('footer');
         assert.equal(await footer.isVisible(), false);
         await footer.evaluate(node => {

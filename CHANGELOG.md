@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.146
+
+- En Gestión de cuidados, los rótulos de Pacientes hospitalizados y Egresos muestran el total según los filtros vigentes.
+- Unifica el grosor de la línea bajo los logos en todo el ancho del panel.
+
 ## 0.48.145
 
 - Pinta el fondo y la línea de los logos directamente en el panel lateral, incluso cuando Eloísa recorta el contenedor interior.
