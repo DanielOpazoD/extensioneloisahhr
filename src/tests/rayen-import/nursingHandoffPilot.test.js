@@ -24,7 +24,8 @@ const setup = async hosted => {
     runtime: { getManifest: () => ({ name: hosted ? 'Puente Eloísa HHR' : 'Eloísa HHR · Entrega de turno (pruebas)' }),
       getURL: file => extensionOrigin + file },
     storage: { session: {
-      get: async key => ({ [key]: store[key] }),
+      get: async key => Array.isArray(key) ?
+        Object.fromEntries(key.map(item => [item, store[item]])) : { [key]: store[key] },
       set: async values => Object.assign(store, values),
       remove: async key => { for (const item of Array.isArray(key) ? key : [key]) delete store[item]; },
     } },
@@ -157,5 +158,44 @@ it('un equipo registrado guarda directamente con la llave y rechaza un cambio de
   expect(open).not.toHaveBeenCalled();
   getInfo.mockResolvedValue({ info: { ...info, professionalRun: '11111111-1' } });
   await expect(message(0, 'save')).resolves.toMatchObject({ code: 'SOURCE_SESSION_CHANGED' });
+  expect(fetchImpl).toHaveBeenCalledOnce();
+});
+
+it('carga varias notas juntas y solo entrega el texto al marco vinculado', async () => {
+  const { runtime, fetchImpl } = await setup();
+  const slot = { date:'2026-11-22', shift:'night' };
+  const notes = ['Primera entrega sintética', 'Segunda entrega sintética'];
+  fetchImpl.mockResolvedValueOnce(Response.json({ result: {
+    slot, results: notes.map(text => ({ ...slot, text, version:'a'.repeat(64) })),
+  } }));
+  const tab = { id:1, url:source };
+  const top = { tab, url:source, frameId:0, documentId:'source-0' };
+  const batch = await runtime.table({ action:'open-rows', episodes:['901001','901002'] }, top);
+  const { rows } = batch;
+  expect(batch).toMatchObject({ slot, rows:[{ episode:'901001', id:expect.any(String) }, { episode:'901002', id:expect.any(String) }] });
+  expect(JSON.stringify(batch)).not.toContain('entrega sintética');
+  for (const [index, { id }] of rows.entries()) {
+    const editor = { tab, url:extensionOrigin + 'nursing-handoff-editor.html#' + id, frameId:1, documentId:'row-' + index };
+    await expect(runtime.operate({ id, action:'context' }, editor)).resolves.toMatchObject({ inline:true });
+    await expect(runtime.operate({ id, action:'read' }, top)).resolves.toHaveProperty('error');
+    await expect(runtime.operate({ id, action:'read' }, editor)).resolves.toMatchObject({ text:notes[index] });
+  }
+  expect(fetchImpl).toHaveBeenCalledOnce();
+});
+
+it('admite el guardado global solo con el permiso de un solo uso de la tabla', async () => {
+  const { runtime, message, fetchImpl } = await setup();
+  const top = { tab:{ id:1, url:source }, url:source, frameId:0, documentId:'source-0' };
+  const request = { action:'prepare-save', ids:[ids[0]] };
+  await expect(runtime.table(request, { ...top, documentId:'otro-documento' })).resolves.toHaveProperty('error');
+  await expect(runtime.table(request, { ...top, frameId:1 })).resolves.toHaveProperty('error');
+  await expect(message(0, 'save', undefined, { ticket:crypto.randomUUID() })).resolves.toHaveProperty('error');
+  expect(fetchImpl).not.toHaveBeenCalled();
+
+  const { ticket } = await runtime.table(request, top);
+  expect(ticket).toHaveLength(36);
+  fetchImpl.mockResolvedValue(Response.json({ result:{ confirmed:true, date:'2026-11-22', shift:'night' } }));
+  await expect(message(0, 'save', undefined, { ticket })).resolves.toMatchObject({ confirmed:true });
+  await expect(message(0, 'save', undefined, { ticket })).resolves.toHaveProperty('error');
   expect(fetchImpl).toHaveBeenCalledOnce();
 });

@@ -136,7 +136,7 @@
       encIds: 'array',
       printFormat: 'string?', preview: 'boolean?',
     },
-    [types.NURSING_HANDOFF_TABLE]: { action: 'handoff-table-action' },
+    [types.NURSING_HANDOFF_TABLE]: { action: 'string' },
     [types.NURSING_HANDOFF_OPEN]: { encId: 'id', inline: 'boolean?' },
     [types.NURSING_HANDOFF_EDITOR]: { id: 'string', action: 'string', date: 'string?', shift: 'string?', since: 'string?', version: 'string?', text: 'string?', expiresAt: 'number?' },
     [types.WORKLIST_PATIENT_EDIT]: { encId: 'id' },
@@ -177,12 +177,17 @@
   });
   // Mirrors the extension-owned editor, the source list, and the HHR portal relay.
   // Sender, session and episode checks belong to the worker's handoff handler.
+  const handoffTableActions = Object.freeze({
+    status: {}, connect: {},
+    'open-rows': { episodes: 'array' },
+    'prepare-save': { ids: 'array' },
+  });
   const handoffEditorActions = Object.freeze({
     context: {}, close: {}, connect: {}, disconnect: {},
     'hosted-result': { expiresAt: 'number?' },
     read: { date: 'string?', shift: 'string?', since: 'string?' },
     draft: { date: 'string', shift: 'string', version: 'string', text: 'string?' },
-    save: { date: 'string', shift: 'string', version: 'string', text: 'string' },
+    save: { date: 'string', shift: 'string', version: 'string', text: 'string', ticket: 'string?' },
   });
   const knownTypes = new Set(Object.values(types));
   const cleanMessage = value => String(value || '').replace(/\s+/g, ' ').trim();
@@ -212,7 +217,6 @@
     const kind = optional ? descriptor.slice(0, -1) : descriptor;
     if (value == null) return optional;
     if (kind === 'array') return Array.isArray(value);
-    if (kind === 'handoff-table-action') return value === 'status' || value === 'connect';
     if (kind === 'object') return typeof value === 'object' && !Array.isArray(value);
     if (scalarRules[kind]) return scalarRules[kind](value);
     if (kind === 'rut-body') return typeof value === 'string' && /^\d{5,9}$/.test(value);
@@ -244,14 +248,16 @@
       };
     }
     let rules = fieldRules[type] || {};
-    if (type === types.NURSING_HANDOFF_EDITOR) {
-      if (typeof message.action !== 'string' || !Object.hasOwn(handoffEditorActions, message.action)) {
+    const handoffActions = type === types.NURSING_HANDOFF_TABLE ? handoffTableActions :
+      type === types.NURSING_HANDOFF_EDITOR ? handoffEditorActions : null;
+    if (handoffActions) {
+      if (typeof message.action !== 'string' || !Object.hasOwn(handoffActions, message.action)) {
         return {
           ok: false, known: true, type,
-          response: responses.error('La acción del editor de entregas no es válida.', 'INVALID_MESSAGE'),
+          response: responses.error('La acción de entrega de turno no es válida.', 'INVALID_MESSAGE'),
         };
       }
-      rules = { ...rules, ...handoffEditorActions[message.action] };
+      rules = { ...rules, ...handoffActions[message.action] };
     }
     for (const [field, descriptor] of Object.entries(rules)) {
       if (!fieldMatches(message[field], descriptor)) {

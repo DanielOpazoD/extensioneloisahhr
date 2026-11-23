@@ -17,7 +17,7 @@
 
   function watchTable(panel) {
     const entries = new Map();
-    let opening = 0;
+    let opening = false;
     let redraw;
     const connection = document.createElement('div');
     connection.className = 'hhr-handoff-connection';
@@ -28,6 +28,31 @@
     connect.type = 'button';
     connect.textContent = 'Conectar HHR';
     connection.append(connectionStatus, connect);
+    const controls = document.createElement('div');
+    controls.className = 'hhr-handoff-controls';
+    controls.hidden = true;
+    const dateLabel = document.createElement('span');
+    dateLabel.className = 'hhr-handoff-date';
+    const shifts = document.createElement('div');
+    shifts.className = 'hhr-handoff-shifts';
+    shifts.setAttribute('role', 'tablist');
+    shifts.setAttribute('aria-label', 'Turno de la entrega');
+    const shiftButtons = new Map();
+    const feedback = document.createElement('span');
+    feedback.setAttribute('role', 'status');
+    const saveAll = document.createElement('button');
+    saveAll.type = 'button';
+    saveAll.className = 'hhr-handoff-save-all';
+    saveAll.textContent = 'Guardar cambios';
+    const retryRows = document.createElement('button');
+    retryRows.type = 'button';
+    retryRows.textContent = 'Reintentar carga';
+    retryRows.hidden = true;
+    controls.append(dateLabel, shifts, feedback, retryRows, saveAll);
+    let slot;
+    let selected;
+    let batchSave;
+    let receipt = '';
     const toggle = () => panel.querySelector('[data-hhr-handoff-toggle]');
     const isExpanded = () => panel.isConnected && sourcePath.test(location.pathname) &&
       toggle()?.ariaExpanded === 'true';
@@ -35,20 +60,23 @@
     let checkId = 0;
     const placeConnection = () => {
       const button = toggle();
-      if (!connection.hidden && button && connection.nextElementSibling !== button) button.before(connection);
+      if (!button) return;
+      if (!connection.hidden && connection.nextElementSibling !== button) button.before(connection);
+      if (!controls.hidden && controls.nextElementSibling !== button) button.before(controls);
     };
     const setState = (next, message = '', registration = false) => {
       state = next;
       panel.dataset.hhrHandoffState = next;
       connection.hidden = next === 'closed' || next === 'ready';
+      controls.hidden = next !== 'ready';
       if (connectionStatus.textContent !== message) connectionStatus.textContent = message;
       connect.hidden = next === 'checking';
       if (next === 'link') connect.textContent = registration ? 'Registrar equipo' : 'Conectar HHR';
       else if (next === 'error') connect.textContent = 'Reintentar';
       placeConnection();
     };
-    const requestAccess = action => chrome.runtime.sendMessage({ type: types.NURSING_HANDOFF_TABLE, action })
-      .catch(() => ({ error: 'No se pudo comprobar la conexión a HHR. Intenta de nuevo.' }));
+    const requestAccess = (action, data = {}) => chrome.runtime.sendMessage({ type: types.NURSING_HANDOFF_TABLE, action, ...data })
+      .catch(() => ({ error: 'Se perdió la comunicación con la extensión. Intenta de nuevo.' }));
     const checkConnection = async (force = false) => {
       if (!isExpanded() || (!force && state === 'checking')) return;
       const current = ++checkId;
@@ -96,74 +124,154 @@
       }
     };
     const send = (entry, type, value) => entry.frame?.contentWindow?.postMessage({ type, value }, extensionOrigin);
+    const sameShift = (first, second) => first?.date === second?.date && first?.shift === second?.shift;
+    const eligibleRows = () => [...entries.values()].filter(entry =>
+      entry.id && entry.dirty && entry.canSave && sameShift(entry.slot, slot));
+    const broadcastShift = entry => { if (slot) send(entry, 'hhr-handoff-row-shift', { slot, selected }); };
     const updatePending = () => {
       const count = [...entries.values()].filter(entry => entry.dirty).length;
       const pending = panel.querySelector('[data-hhr-handoff-pending]');
       const label = count === 1 ? '1 borrador' : count ? count + ' borradores' : '';
       if (pending && pending.textContent !== label) pending.textContent = label;
+      shifts.hidden = !slot;
+      saveAll.hidden = !slot;
+      saveAll.disabled = Boolean(batchSave) || selected !== slot?.shift || !eligibleRows().length;
+      const message = batchSave ? 'Guardando ' + batchSave.total + ' entregas…' :
+        opening ? 'Cargando entregas…' : receipt ||
+          (slot && selected !== slot.shift ? 'Solo lectura' : '');
+      if (feedback.textContent !== message) feedback.textContent = message;
+      retryRows.hidden = opening || ![...entries.values()].some(entry => entry.failed);
+      for (const [shift, button] of shiftButtons) {
+        const active = shift === selected;
+        button.setAttribute('aria-selected', String(active));
+        button.tabIndex = active ? 0 : -1;
+        button.disabled = Boolean(batchSave);
+        button.toggleAttribute('data-vigente', shift === slot?.shift);
+        button.title = shift === slot?.shift ? 'Turno vigente' : 'Consultar turno';
+      }
     };
+    function chooseShift(shift) {
+      if (selected !== shift) receipt = '';
+      selected = shift;
+      for (const entry of entries.values()) broadcastShift(entry);
+      updatePending();
+    }
+    for (const [shift, label] of [['day', 'Día'], ['night', 'Noche']]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.setAttribute('role', 'tab');
+      button.addEventListener('click', event => {
+        if (event.isTrusted && !batchSave && slot) chooseShift(shift);
+      });
+      button.addEventListener('keydown', event => {
+        if (!event.isTrusted || batchSave ||
+            !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const next = event.key === 'Home' ? 'day' : event.key === 'End' ? 'night' :
+          shift === 'day' ? 'night' : 'day';
+        chooseShift(next);
+        shiftButtons.get(next).focus();
+      });
+      shiftButtons.set(shift, button);
+      shifts.append(button);
+    }
+    const formatter = new Intl.DateTimeFormat('es-CL', { timeZone: 'UTC', day: 'numeric', month: 'short' });
+    const acceptSlot = next => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(next?.date) || !['day', 'night'].includes(next.shift) ||
+          sameShift(slot, next) || (slot && (next.date < slot.date ||
+            (next.date === slot.date && slot.shift === 'night')))) return;
+      slot = next;
+      dateLabel.textContent = formatter.format(new Date(slot.date + 'T00:00:00Z'));
+      dateLabel.title = slot.date;
+      receipt = '';
+      chooseShift(slot.shift);
+    };
+    function finishSave(batch) {
+      if (batchSave !== batch || batch.pending.size) return;
+      clearTimeout(batch.timeout);
+      const pending = batch.total - batch.saved;
+      const saved = batch.saved === 1 ? '1 entrega guardada' : batch.saved + ' entregas guardadas';
+      receipt = pending ? saved + ' · ' + pending + ' por revisar' : saved;
+      batchSave = undefined;
+      updatePending();
+    }
+    saveAll.addEventListener('click', async event => {
+      if (!event.isTrusted || saveAll.disabled || batchSave || !isExpanded()) return;
+      const rows = eligibleRows();
+      if (!rows.length) return;
+      const batch = { pending: new Set(rows), total: rows.length, saved: 0 };
+      batchSave = batch;
+      updatePending();
+      const result = await requestAccess('prepare-save', { ids: rows.map(row => row.id) });
+      if (batchSave !== batch) return;
+      if (!result?.ticket) {
+        receipt = result?.error || 'No se pudieron preparar los guardados.';
+        batchSave = undefined;
+        updatePending();
+        if (result?.code === 'HHR_LINK_REQUIRED') void checkConnection();
+        return;
+      }
+      batch.ticket = result.ticket;
+      batch.timeout = setTimeout(() => {
+        batch.pending.clear();
+        finishSave(batch);
+      }, 300000);
+      for (const row of batch.pending) send(row, 'hhr-handoff-row-save', batch.ticket);
+      finishSave(batch);
+    });
+    retryRows.addEventListener('click', event => {
+      if (!event.isTrusted) return;
+      for (const row of entries.values()) if (row.failed) {
+        row.failed = false;
+        row.started = false;
+        delete row.host.dataset.hhrHandoffLoadFailed;
+        row.host.replaceChildren();
+      }
+      receipt = '';
+      drain();
+      updatePending();
+    });
     const receiveRow = message => {
       if (message.origin !== extensionOrigin ||
-          !['hhr-handoff-row-height', 'hhr-handoff-row-dirty', 'hhr-handoff-row-link'].includes(message.data?.type)) return;
+          !['hhr-handoff-row-height', 'hhr-handoff-row-state', 'hhr-handoff-row-link',
+            'hhr-handoff-row-saved'].includes(message.data?.type)) return;
       const row = [...entries.values()].find(entry => entry.frame?.contentWindow === message.source);
       if (!row || !panel.contains(row.host)) return;
       const { type, value } = message.data;
       if (type === 'hhr-handoff-row-height' && Number.isFinite(value)) {
         row.frame.style.height = String(Math.max(24, Math.min(880, Math.ceil(value)))) + 'px';
-      } else if (type === 'hhr-handoff-row-dirty' && typeof value === 'boolean') {
-        row.dirty = value;
+      } else if (type === 'hhr-handoff-row-state' && typeof value?.dirty === 'boolean') {
+        row.dirty = value.dirty;
+        row.canSave = value.canSave === true;
+        row.slot = value.slot;
+        acceptSlot(value.slot);
+        broadcastShift(row);
         updatePending();
+      } else if (type === 'hhr-handoff-row-saved' && batchSave?.ticket &&
+          value?.ticket === batchSave.ticket && batchSave.pending.delete(row)) {
+        if (value.confirmed === true) batchSave.saved += 1;
+        finishSave(batchSave);
       } else if (type === 'hhr-handoff-row-link' && value === true && state === 'ready') {
         void checkConnection();
       }
     };
-    const drain = () => {
-      if (state !== 'ready' || !isExpanded()) return;
-      for (const entry of entries.values()) {
-        if (opening >= 3) return;
-        if (entry.visible && !entry.started) {
-          entry.started = true;
-          opening += 1;
-          void mount(entry).finally(() => {
-            opening -= 1;
-            drain();
-          });
-        }
-      }
-    };
-    async function mount(entry) {
-      const { host } = entry;
-      const episode = host.dataset.hhrHandoffInline;
-      const rowEpisode = () => host.closest('tr')?.querySelector('[data-hhr-handoff-episode]')?.dataset.hhrHandoffEpisode;
-      if (rowEpisode() !== episode) return;
-      const status = document.createElement('p');
-      status.setAttribute('role', 'status');
-      status.textContent = 'Cargando entrega…';
-      host.replaceChildren(status);
-      const opened = await openEditor(episode, true);
-      if (!host.isConnected || entries.get(host) !== entry || rowEpisode() !== episode ||
-          host.dataset.hhrHandoffInline !== episode) {
-        if (opened?.id) void revoke(opened.id);
-        return;
-      }
-      if (state !== 'ready' || opened?.code === 'HHR_LINK_REQUIRED') {
-        if (opened?.id) void revoke(opened.id);
-        host.replaceChildren();
+
+    const episodeOf = host => host.dataset.hhrHandoffInline;
+    const rowEpisode = host => host.closest('tr')?.querySelector('[data-hhr-handoff-episode]')?.dataset.hhrHandoffEpisode;
+    const usable = (entry, episode) => entries.get(entry.host) === entry && panel.contains(entry.host) &&
+      episodeOf(entry.host) === episode && rowEpisode(entry.host) === episode;
+    const mount = (entry, opened) => {
+      if (!usable(entry, opened.episode) || state !== 'ready' || !isExpanded()) {
+        if (opened.id) void revoke(opened.id);
         entry.started = false;
-        if (state === 'ready') void checkConnection();
         return;
       }
-      if (!opened?.id) {
-        status.textContent = opened?.error || 'No se pudo abrir la entrega.';
-        const retry = document.createElement('button');
-        retry.type = 'button';
-        retry.textContent = 'Reintentar';
-        retry.addEventListener('click', event => {
-          if (!event.isTrusted) return;
-          entry.started = false;
-          drain();
-        });
-        host.append(retry);
+      if (!opened.id) {
+        entry.failed = true;
+        const status = document.createElement('p');
+        status.textContent = opened.error || 'Entrega pendiente de carga';
+        entry.host.replaceChildren(status);
         return;
       }
       entry.id = opened.id;
@@ -171,8 +279,49 @@
       entry.frame = frame;
       frame.title = 'Entrega de turno de esta fila';
       frame.src = editorUrl + '#' + opened.id;
-      frame.addEventListener('load', () => send(entry, 'hhr-handoff-row-visible', entry.visible));
-      host.replaceChildren(frame);
+      frame.addEventListener('load', () => {
+        send(entry, 'hhr-handoff-row-visible', entry.visible);
+        broadcastShift(entry);
+      });
+      entry.host.replaceChildren(frame);
+    };
+    async function drain() {
+      if (state !== 'ready' || !isExpanded() || opening) return;
+      const visible = new Map();
+      for (const entry of entries.values()) {
+        const episode = episodeOf(entry.host);
+        if (entry.visible && !entry.started && usable(entry, episode)) visible.set(episode, entry);
+        if (visible.size >= 50) break;
+      }
+      if (!visible.size) return;
+      for (const entry of visible.values()) entry.started = true;
+      opening = true;
+      updatePending();
+      try {
+        const result = await requestAccess('open-rows', { episodes: [...visible.keys()] });
+        if (result?.code === 'HHR_LINK_REQUIRED') {
+          for (const entry of visible.values()) entry.started = false;
+          if (state === 'ready') void checkConnection(true);
+          return;
+        }
+        if (result.error) {
+          receipt = result.error;
+          for (const entry of visible.values()) {
+            entry.failed = true;
+            entry.host.dataset.hhrHandoffLoadFailed = '';
+          }
+          return;
+        }
+        const rows = new Map(result.rows?.map(row => [row.episode, row]));
+        if (isExpanded() && state === 'ready') acceptSlot(result.slot);
+        for (const [episode, entry] of visible) {
+          mount(entry, rows.get(episode) || { episode });
+        }
+      } finally {
+        opening = false;
+        updatePending();
+        void drain();
+      }
     }
     const observer = new IntersectionObserver(changes => {
       for (const { target, isIntersecting } of changes) {
@@ -187,6 +336,7 @@
       observer.unobserve(host);
       entries.delete(host);
       if (entry.id) void revoke(entry.id);
+      if (batchSave?.pending.delete(entry)) finishSave(batchSave);
     };
     const reconcile = () => {
       redraw = undefined;
@@ -194,6 +344,8 @@
         observer.disconnect();
         changes.disconnect();
         connection.remove();
+        controls.remove();
+        if (batchSave) clearTimeout(batchSave.timeout);
         delete panel.dataset.hhrHandoffState;
         window.removeEventListener('message', receiveRow);
         window.removeEventListener('focus', reconnect);

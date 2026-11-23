@@ -146,14 +146,16 @@ en `extension/vendor-lock.json` y en sus archivos originales.
 
 ## Entrega de turno
 
-En Gestión de cuidados, «Entrega de turno» habilita la edición de todas las notas del turno
-vigente en sus filas. Cada fila guarda por separado y muestra la confirmación de HHR. Al cerrar
-el modo vuelven las columnas operativas. Un borrador de la tabla se conserva durante la
-misma vista de Eloísa, incluso al filtrar, y se vincula al profesional, paciente, episodio y turno.
-La tabla comprueba el acceso a HHR antes de abrir los editores. Si hace falta conectar la cuenta,
-la columna queda vacía y aparece un solo acceso a la conexión sobre las filas.
+En Gestión de cuidados, «Entrega de turno» abre los editores en la tabla. La fecha censal y
+las pestañas Día y Noche aparecen una vez arriba. Se puede editar el turno vigente y consultar
+el otro turno de la misma fecha. HHR proporciona las notas visibles en una lectura agrupada.
+La extensión comprueba el acceso antes de cargar las filas y muestra un solo aviso de conexión.
 
-El editor muestra la fecha censal y el turno que informó HHR. Si cambia el turno, «Ver turno vigente» abre la nueva entrega y conserva el borrador anterior como texto de consulta mientras el editor siga abierto. En caso de conflicto, puedes consultar la versión que dejaste de lado y recuperarla como borrador. La confirmación de HHR se muestra con un ✓.
+«Guardar cambios» envía las entregas modificadas y muestra un ✓ por cada paciente que HHR
+confirme. Los borradores que requieren revisión se conservan durante la misma vista de Eloísa,
+incluso al filtrar. Si cambia el turno, se puede abrir el vigente y consultar el borrador anterior
+mientras su editor siga abierto. En caso de conflicto, el editor permite comparar y recuperar
+el texto conservado.
 
 ## Piloto local de entrega de turno
 

@@ -391,7 +391,9 @@ async function verifyTableConnection(context, origin, worker) {
   const url = origin + '/dashboard/encounter-list-nurse?handoffConnectionFixture=1';
   await context.route(portalUrl, mockPortal);
   try {
-    await worker.evaluate(() => { self.__worklistHandoffFixture = true; });
+    await worker.evaluate(() => {
+      self.__worklistHandoffFixture = { batches:[], singles:0, rejectSecond:true, writes:[], saved:{} };
+    });
     await page.route(url, route => route.fulfill({ contentType:'text/html', body:`<!doctype html>
       <meta charset="utf-8"><style>body{font:14px system-ui,sans-serif} th,td{padding:4px 8px;text-align:left}</style>
       <header class="MuiAppBar-root">Gestión de cuidados</header><main>
@@ -477,6 +479,43 @@ async function verifyTableConnection(context, origin, worker) {
       await note.waitFor();
       assert.equal(await note.inputValue(), 'Nota sintética en HHR');
     }
+    const heights = await page.locator('tbody tr').evaluateAll(rows =>
+      rows.map(row => row.getBoundingClientRect().height));
+    assert.ok(heights.every(height => height <= 56), `Clean editor rows should fit within 56 px: ${heights}`);
+    if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+      await page.locator('main').screenshot({ path:path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'Entrega de turno.png') });
+    }
+    const firstLoad = await worker.evaluate(() => self.__worklistHandoffFixture);
+    assert.deepEqual(firstLoad.batches, [2], 'Both visible patients use one HHR lookup');
+    assert.equal(firstLoad.singles, 0, 'No follow-up request is needed for initial notes');
+    const editors = ['901001','901002'].map(id =>
+      page.frameLocator(`[data-hhr-handoff-inline="${id}"] iframe`));
+    assert.equal(await page.locator('.hhr-handoff-date').count(), 1);
+    assert.equal(await editors[0].locator('#slot').isVisible(), false);
+    assert.equal(await editors[0].locator('#save').isVisible(), false);
+    const save = page.getByRole('button', { name:'Guardar cambios', exact:true });
+    const first = editors[0].getByLabel('Nota del turno');
+    const second = editors[1].getByLabel('Nota del turno');
+    await first.fill('Primera entrega sintética');
+    await second.fill('Segunda entrega sintética');
+    await page.getByRole('tab', { name:'Día', exact:true }).click();
+    assert.equal(await editors[0].getByLabel('Nota del otro turno').inputValue(), 'Nota sintética diurna');
+    assert.equal(await save.isDisabled(), true);
+    await page.getByRole('tab', { name:'Noche', exact:true }).click();
+    assert.equal(await first.inputValue(), 'Primera entrega sintética');
+    assert.equal(await second.inputValue(), 'Segunda entrega sintética');
+    await save.click();
+    await page.getByText('1 entrega guardada · 1 por revisar', { exact:true }).waitFor();
+    assert.equal(await second.inputValue(), 'Segunda entrega sintética');
+    await save.click();
+    await page.getByText('1 entrega guardada', { exact:true }).waitFor();
+    const persisted = await worker.evaluate(() => self.__worklistHandoffFixture);
+    assert.deepEqual(persisted.saved, {
+      '901001':'Primera entrega sintética', '901002':'Segunda entrega sintética',
+    });
+    assert.deepEqual(persisted.writes.slice().sort(), ['901001','901002','901002']);
+    assert.equal((await page.locator('table').innerText()).includes('entrega sintética'), false,
+      'Clinical notes stay inside extension-owned frames');
   } finally {
     await context.unroute(portalUrl, mockPortal);
     await page.close();
@@ -485,7 +524,7 @@ async function verifyTableConnection(context, origin, worker) {
       return chrome.storage.session.remove('hhr-nursing-handoff-connecting');
     });
   }
-  console.log('[entrega] 0 editores antes de validar el acceso, 1 aviso tras reinyección y 2 editores después de registrar y cerrar HHR');
+  console.log('[entrega] 0 editores antes de validar el acceso, 1 aviso tras reinyección y 2 pacientes en una lectura inicial, guardado parcial y reintento del pendiente');
 }
 
 async function verifyToolbarReload(page, url) {

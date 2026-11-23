@@ -32,13 +32,40 @@ const mockHandoff = () => {
     if (!self.__worklistHandoffFixture || data.professionalRun !== '22222222-2' || !data.deviceId || !data.proof) {
       throw new Error('Unexpected request to the handoff fixture');
     }
+    const fixture = self.__worklistHandoffFixture;
+    const slot = { date:'2026-11-21', shift:'night' };
+    const episodes = ['901001','901002'];
+    const byEpisode = episode => ({
+      ...slot, version: (fixture.saved[episode] ? '1' : '0').repeat(64),
+      text: fixture.saved[episode] ?? 'Nota sintética en HHR',
+      comparison: { shift:'day', text:'Nota sintética diurna' },
+    });
     if (data.action === 'status') return Promise.resolve(Response.json({ result:{ authorized:true } }));
-    if (data.action !== 'read' || !['901001','901002'].includes(data.episode)) {
-      throw new Error('Unexpected operation in the handoff fixture');
+    if (data.action === 'read-batch') {
+      if (!data.patients.every(visit => episodes.includes(visit.episode) && visit.patientRun)) {
+        throw new Error('Unexpected patients in the handoff fixture');
+      }
+      fixture.batches.push(data.patients.length);
+      return Promise.resolve(Response.json({ result:{
+        slot, results:data.patients.map(visit => byEpisode(visit.episode)),
+      } }));
     }
-    return Promise.resolve(Response.json({
-      result:{ date:'2026-11-21', shift:'night', version:'0'.repeat(64), text:'Nota sintética en HHR' },
-    }));
+    if (!episodes.includes(data.episode)) throw new Error('Unexpected episode in the handoff fixture');
+    if (data.action === 'read') {
+      fixture.singles++;
+      if (data.since) return new Promise(resolve => setTimeout(() => resolve(Response.json({ result: byEpisode(data.episode) })), 120));
+      return Promise.resolve(Response.json({ result: byEpisode(data.episode) }));
+    }
+    if (data.action !== 'save') throw new Error('Unexpected operation in the handoff fixture');
+    fixture.writes.push(data.episode);
+    if (data.episode === '901002' && fixture.rejectSecond) {
+      fixture.rejectSecond = false;
+      return Promise.resolve(Response.json({
+        error: { status:'ABORTED', message:'HHR rechazó la segunda entrega. Reintenta.' },
+      }, { status:409 }));
+    }
+    fixture.saved[data.episode] = data.text;
+    return Promise.resolve(Response.json({ result:{ ...byEpisode(data.episode), confirmed:true } }));
   };
 };
 files[workerFile] = Buffer.concat([Buffer.from("'use strict';\n(" + mockHandoff.toString() + ')();\n'), files[workerFile]]);
