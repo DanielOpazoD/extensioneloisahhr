@@ -13,12 +13,29 @@
     type: types.NURSING_HANDOFF_EDITOR, id, action: 'close',
   }).catch(() => {});
   let active;
-  const tables = new WeakSet();
+  const tables = new WeakMap();
 
-  function watchTable(panel) {
+  function watchTable(panel, firstClick) {
     const entries = new Map();
     let opening = false;
     let redraw;
+    let openedAt = firstClick;
+    const timings = document.createElement('details');
+    const timingLabel = document.createElement('summary');
+    timingLabel.textContent = 'Tiempos';
+    const firstTiming = document.createElement('span');
+    const saveTiming = document.createElement('span');
+    timings.className = 'hhr-handoff-timings';
+    timings.hidden = true;
+    timings.append(timingLabel, firstTiming, saveTiming);
+    const seconds = ms => (ms / 1000).toLocaleString('es-CL', { maximumFractionDigits: 1 }) + ' s';
+    const measureOpening = () => {
+      if (openedAt === undefined || state !== 'ready' || !isExpanded() ||
+          ![...entries.values()].some(row => row.visible && row.editable && !row.host.closest('[hidden]'))) return;
+      firstTiming.textContent = 'Primera nota editable: ' + seconds(performance.now() - openedAt);
+      timings.hidden = false;
+      openedAt = undefined;
+    };
     const connection = document.createElement('div');
     connection.className = 'hhr-handoff-connection';
     connection.hidden = true;
@@ -48,7 +65,11 @@
     retryRows.type = 'button';
     retryRows.textContent = 'Reintentar carga';
     retryRows.hidden = true;
-    controls.append(dateLabel, shifts, feedback, retryRows, saveAll);
+    const retrySave = document.createElement('button');
+    const review = document.createElement('button');
+    retrySave.type = review.type = 'button';
+    let lastReviewed;
+    controls.append(dateLabel, shifts, feedback, retryRows, retrySave, review, timings, saveAll);
     let slot;
     let selected;
     let batchSave;
@@ -76,7 +97,7 @@
       placeConnection();
     };
     const requestAccess = (action, data = {}) => chrome.runtime.sendMessage({ type: types.NURSING_HANDOFF_TABLE, action, ...data })
-      .catch(() => ({ error: 'Se perdió la comunicación con la extensión. Intenta de nuevo.' }));
+      .catch(() => ({ code: 'UNAVAILABLE', error: 'Se perdió la comunicación con la extensión. Intenta de nuevo.' }));
     const checkConnection = async (force = false) => {
       if (!isExpanded() || (!force && state === 'checking')) return;
       const current = ++checkId;
@@ -85,6 +106,7 @@
       if (current !== checkId || !isExpanded()) return;
       if (result?.ok) {
         setState('ready');
+        measureOpening();
         drain();
       } else if (result?.code === 'HHR_LINK_REQUIRED') {
         setState('link', result.registration ? result.error : 'Conecta tu cuenta de HHR para editar las entregas.', result.registration);
@@ -136,7 +158,13 @@
       shifts.hidden = !slot;
       saveAll.hidden = !slot;
       saveAll.disabled = Boolean(batchSave) || selected !== slot?.shift || !eligibleRows().length;
-      const message = batchSave ? 'Guardando ' + batchSave.total + ' entregas…' :
+      const issues = recoveryRows();
+      for (const [button, rows, verb] of [[retrySave, issues.retry, 'Reintentar'], [review, issues.review, 'Revisar']]) {
+        button.hidden = Boolean(batchSave) || !rows.length || selected !== slot?.shift;
+        const label = verb + ' (' + rows.length + ')';
+        if (button.textContent !== label) button.textContent = label;
+      }
+      const message = batchSave ? batchSave.saved + ' de ' + batchSave.total + (batchSave.total === 1 ? ' confirmada' : ' confirmadas') :
         opening ? 'Cargando entregas…' : receipt ||
           (slot && selected !== slot.shift ? 'Solo lectura' : '');
       if (feedback.textContent !== message) feedback.textContent = message;
@@ -150,6 +178,15 @@
         button.title = shift === slot?.shift ? 'Turno vigente' : 'Consultar turno';
       }
     };
+    function recoveryRows() {
+      const retry = [], review = [];
+      for (const entry of entries.values()) {
+        if (!entry.dirty || !sameShift(entry.slot, slot)) continue;
+        if (entry.conflict || entry.issue === 'review') review.push(entry);
+        else if (entry.issue === 'retry') (entry.canSave ? retry : review).push(entry);
+      }
+      return { retry, review };
+    }
     function chooseShift(shift) {
       if (selected !== shift) receipt = '';
       selected = shift;
@@ -181,6 +218,7 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(next?.date) || !['day', 'night'].includes(next.shift) ||
           sameShift(slot, next) || (slot && (next.date < slot.date ||
             (next.date === slot.date && slot.shift === 'night')))) return;
+      for (const entry of entries.values()) entry.issue = undefined;
       slot = next;
       dateLabel.textContent = formatter.format(new Date(slot.date + 'T00:00:00Z'));
       dateLabel.title = slot.date;
@@ -190,35 +228,59 @@
     function finishSave(batch) {
       if (batchSave !== batch || batch.pending.size) return;
       clearTimeout(batch.timeout);
-      const pending = batch.total - batch.saved;
+      const remaining = batch.total - batch.saved;
+      const retry = batch.retries;
+      const reviewCount = remaining - retry;
       const saved = batch.saved === 1 ? '1 entrega guardada' : batch.saved + ' entregas guardadas';
-      receipt = pending ? saved + ' · ' + pending + ' por revisar' : saved;
+      receipt = [saved, retry && retry + ' por reintentar', reviewCount && reviewCount + ' por revisar']
+        .filter(Boolean).join(' · ');
+      const duration = seconds(performance.now() - batch.start);
+      saveTiming.textContent = 'Último guardado: ' + duration + ' · ' + batch.saved + '/' + batch.total +
+        (batch.total === 1 ? ' confirmada' : ' confirmadas') + (remaining && batch.saved ? ' · Última confirmación: ' + seconds(batch.lastAck - batch.start) : '');
+      timings.hidden = false;
       batchSave = undefined;
       updatePending();
     }
-    saveAll.addEventListener('click', async event => {
-      if (!event.isTrusted || saveAll.disabled || batchSave || !isExpanded()) return;
-      const rows = eligibleRows();
-      if (!rows.length) return;
-      const batch = { pending: new Set(rows), total: rows.length, saved: 0 };
+    async function saveRows(rows) {
+      if (!rows.length || batchSave || !isExpanded() || state !== 'ready' || selected !== slot?.shift) return;
+      const batch = { pending: new Set(rows), total: rows.length, saved: 0, retries: 0, start: performance.now() };
       batchSave = batch;
       updatePending();
+      const settlePending = outcome => {
+        for (const row of batch.pending) row.issue = outcome;
+        if (outcome === 'retry') batch.retries += batch.pending.size;
+        batch.pending.clear();
+        finishSave(batch);
+      };
+      batch.timeout = setTimeout(() => settlePending('review'), 300000);
       const result = await requestAccess('prepare-save', { ids: rows.map(row => row.id) });
       if (batchSave !== batch) return;
       if (!result?.ticket) {
+        settlePending(result?.code === 'UNAVAILABLE' ? 'retry' : 'review');
         receipt = result?.error || 'No se pudieron preparar los guardados.';
-        batchSave = undefined;
         updatePending();
         if (result?.code === 'HHR_LINK_REQUIRED') void checkConnection();
         return;
       }
       batch.ticket = result.ticket;
-      batch.timeout = setTimeout(() => {
-        batch.pending.clear();
-        finishSave(batch);
-      }, 300000);
       for (const row of batch.pending) send(row, 'hhr-handoff-row-save', batch.ticket);
       finishSave(batch);
+    }
+    saveAll.addEventListener('click', event => {
+      if (event.isTrusted && !saveAll.disabled) void saveRows(eligibleRows());
+    });
+    retrySave.addEventListener('click', event => {
+      if (event.isTrusted) void saveRows(recoveryRows().retry);
+    });
+    review.addEventListener('click', event => {
+      if (!event.isTrusted || batchSave) return;
+      const rows = recoveryRows().review;
+      if (!rows.length) return;
+      const row = rows[(rows.indexOf(lastReviewed) + 1) % rows.length];
+      lastReviewed = row;
+      row.host.scrollIntoView({ block: 'center' });
+      row.frame.focus();
+      send(row, 'hhr-handoff-row-review');
     });
     retryRows.addEventListener('click', event => {
       if (!event.isTrusted) return;
@@ -244,13 +306,25 @@
       } else if (type === 'hhr-handoff-row-state' && typeof value?.dirty === 'boolean') {
         row.dirty = value.dirty;
         row.canSave = value.canSave === true;
+        row.editable = value.editable === true;
+        if (!value.dirty || (row.conflict && !value.conflict)) row.issue = undefined;
+        row.conflict = value.conflict === true;
         row.slot = value.slot;
         acceptSlot(value.slot);
         broadcastShift(row);
+        measureOpening();
         updatePending();
       } else if (type === 'hhr-handoff-row-saved' && batchSave?.ticket &&
           value?.ticket === batchSave.ticket && batchSave.pending.delete(row)) {
-        if (value.confirmed === true) batchSave.saved += 1;
+        if (value.outcome === 'saved') {
+          batchSave.saved += 1;
+          batchSave.lastAck = performance.now();
+          row.issue = undefined;
+        } else {
+          row.issue = value.outcome === 'retry' ? 'retry' : 'review';
+          if (row.issue === 'retry') batchSave.retries += 1;
+        }
+        updatePending();
         finishSave(batchSave);
       } else if (type === 'hhr-handoff-row-link' && value === true && state === 'ready') {
         void checkConnection();
@@ -330,6 +404,7 @@
         entry.visible = isIntersecting;
         send(entry, 'hhr-handoff-row-visible', isIntersecting);
       }
+      measureOpening();
       drain();
     });
     const cleanup = (host, entry) => {
@@ -346,6 +421,7 @@
         connection.remove();
         controls.remove();
         if (batchSave) clearTimeout(batchSave.timeout);
+        batchSave = undefined;
         delete panel.dataset.hhrHandoffState;
         window.removeEventListener('message', receiveRow);
         window.removeEventListener('focus', reconnect);
@@ -382,15 +458,16 @@
     window.addEventListener('focus', reconnect);
     chrome.runtime.onMessage.addListener(receiveAccess);
     reconcile();
+    return start => { openedAt = start; };
   }
 
   document.addEventListener('click', async event => {
     if (!event.isTrusted || !sourcePath.test(location.pathname)) return;
     const toggle = event.target.closest?.('[data-hhr-handoff-toggle]');
     const panel = toggle?.closest('.hhr-hospitalized-panel');
-    if (panel && 'IntersectionObserver' in window && !tables.has(panel)) {
-      tables.add(panel);
-      watchTable(panel);
+    if (panel && 'IntersectionObserver' in window && toggle.ariaExpanded !== 'true') {
+      if (tables.has(panel)) tables.get(panel)(event.timeStamp);
+      else tables.set(panel, watchTable(panel, event.timeStamp));
     }
     const button = event.target.closest?.('button[data-hhr-handoff-episode]');
     if (!button || !button.closest('.hhr-hospitalized-panel')) return;
