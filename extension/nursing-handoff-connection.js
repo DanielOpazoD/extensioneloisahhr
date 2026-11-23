@@ -1,12 +1,17 @@
 (() => {
   'use strict';
-  const pilot = globalThis.HhrNursingHandoffDevicePilot;
-  const origin = pilot?.origin ?? 'https://hhr-hospitalizados.app';
+  const productionOrigin = 'https://hhr-hospitalizados.app';
+  // The public package uses a fixed Chrome ID accepted by the HHR gateway.
+  const registration = globalThis.HhrNursingHandoffDevice ??
+    (globalThis.chrome?.runtime?.getManifest?.()?.key
+      ? { origin: productionOrigin, endpoint: productionOrigin + '/api/entrega-turno-equipo' }
+      : null);
+  const origin = registration?.origin ?? productionOrigin;
   const portal = origin + '/conectar-entrega-turno';
   const deviceKey = 'hhr-nursing-handoff-device';
   const accessKey = 'hhr-nursing-handoff-access';
   const pendingKey = 'hhr-nursing-handoff-connecting';
-  const project = pilot?.endpoint ?? (origin + '/api/entrega-turno');
+  const project = registration?.endpoint ?? (origin + '/api/entrega-turno');
   const hex = bytes => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
   const isHhr = value => {
     try { return new URL(value).origin === origin; } catch { return false; }
@@ -35,7 +40,7 @@
   }
 
   function create(chrome, onAuthorized, { checkRegistered, persistent } = {}) {
-    const registered = pilot && (persistent ?? registeredStore());
+    const registered = registration && (persistent ?? registeredStore());
     const store = chrome.storage.session;
     const get = async key => (await store.get(key))[key];
     let opening;
@@ -132,5 +137,5 @@
     return { authorized, forget, open, receive };
   }
 
-  globalThis.HhrNursingHandoffConnection = { create, endpoint: project, registeredMode: Boolean(pilot) };
+  globalThis.HhrNursingHandoffConnection = { create, endpoint: project, registeredMode: Boolean(registration) };
 })();

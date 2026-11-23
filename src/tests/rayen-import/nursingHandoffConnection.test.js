@@ -78,7 +78,7 @@ it('keeps the existing HHR tab untouched when a connection is cancelled', async 
 });
 
 it('conserva la llave individual al iniciar de nuevo y solo la usa con el RUN confirmado', async () => {
-  const namespace = { HhrNursingHandoffDevicePilot: { origin: host, endpoint: host + '/pruebas' } };
+  const namespace = { HhrNursingHandoffDevice: { origin: host, endpoint: host + '/pruebas' } };
   Function('globalThis', readFileSync('extension/nursing-handoff-connection.js', 'utf8'))(namespace);
   const api = namespace.HhrNursingHandoffConnection;
   const keys = new Map();

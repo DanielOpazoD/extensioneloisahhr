@@ -23,10 +23,18 @@ const workerFile = JSON.parse(Buffer.from(files['manifest.json']).toString('utf8
 const mockHandoff = () => {
   const network = self.fetch;
   self.fetch = (input, init) => {
-    if (new URL(input).href !== 'https://hhr-hospitalizados.app/api/entrega-turno') return network(input, init);
+    const url = new URL(input);
+    if (url.origin !== 'https://hhr-hospitalizados.app' || !url.pathname.startsWith('/api/entrega-turno')) {
+      return network(input, init);
+    }
+    if (url.pathname !== '/api/entrega-turno-equipo') throw new Error('Unexpected handoff route');
     const { data } = JSON.parse(init.body);
-    if (!self.__worklistHandoffFixture || data.action !== 'read' || !['901001','901002'].includes(data.episode)) {
+    if (!self.__worklistHandoffFixture || data.professionalRun !== '22222222-2' || !data.deviceId || !data.proof) {
       throw new Error('Unexpected request to the handoff fixture');
+    }
+    if (data.action === 'status') return Promise.resolve(Response.json({ result:{ authorized:true } }));
+    if (data.action !== 'read' || !['901001','901002'].includes(data.episode)) {
+      throw new Error('Unexpected operation in the handoff fixture');
     }
     return Promise.resolve(Response.json({
       result:{ date:'2026-11-21', shift:'night', version:'0'.repeat(64), text:'Nota sintética en HHR' },
@@ -56,6 +64,7 @@ const syntheticSession = {
     healthCarePractitionerRoleId: "3",
     role: "Enfermera",
     fullName: "Profesional de prueba",
+    user: "22222222-2",
   },
 };
 const fixtureHtml = `<!doctype html>

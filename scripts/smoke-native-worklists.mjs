@@ -444,7 +444,7 @@ async function verifyTableConnection(context, origin, worker) {
     assert.deepEqual(before, [0, 1, true], 'Check access once, without opening an editor');
     assert.equal(await page.locator('[data-hhr-handoff-inline] > *').count(), 0);
     await release();
-    const connect = page.getByRole('button', { name:'Conectar HHR', exact:true });
+    const connect = page.getByRole('button', { name:'Registrar equipo', exact:true });
     await connect.waitFor();
     assert.equal(await connect.count(), 1);
     assert.equal(await page.locator('[data-hhr-handoff-inline] > *').count(), 0);
@@ -463,9 +463,11 @@ async function verifyTableConnection(context, origin, worker) {
     const portal = await opened;
     await portal.waitForURL(portalUrl + '#*');
     const closed = portal.waitForEvent('close');
+    const registration = new URLSearchParams(new URL(portal.url()).hash.slice(1));
+    assert.equal(registration.get('registerDevice'), '1', 'The public build uses durable registration');
     await portal.evaluate(() => {
       const requestId = new URLSearchParams(location.hash.slice(1)).get('requestId');
-      window.postMessage({ type:'HHR_NURSING_HANDOFF_LINK_RESULT', requestId, expiresAt:Date.now() + 60_000 }, location.origin);
+      window.postMessage({ type:'HHR_NURSING_HANDOFF_LINK_RESULT', requestId, registered:true }, location.origin);
     });
     await closed;
     await connect.waitFor({ state:'hidden' });
@@ -480,10 +482,10 @@ async function verifyTableConnection(context, origin, worker) {
     await page.close();
     await worker.evaluate(() => {
       delete self.__worklistHandoffFixture;
-      return chrome.storage.session.remove(['hhr-nursing-handoff-access', 'hhr-nursing-handoff-connecting']);
+      return chrome.storage.session.remove('hhr-nursing-handoff-connecting');
     });
   }
-  console.log('[entrega] 0 editores antes de validar el acceso, 1 aviso tras reinyección y 2 editores después de conectar');
+  console.log('[entrega] 0 editores antes de validar el acceso, 1 aviso tras reinyección y 2 editores después de registrar y cerrar HHR');
 }
 
 async function verifyToolbarReload(page, url) {

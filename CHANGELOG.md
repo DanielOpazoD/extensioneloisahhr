@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.148
+
+- Entrega de turno en producción registra el equipo una vez en HHR Hospitalizados y después reutiliza ese acceso con el mismo profesional en Eloísa.
+- La extensión conserva una identidad fija de Chrome para reutilizar el registro al actualizar.
+
 ## 0.48.147
 
 - Añade un paquete de pruebas para editar entregas desde Eloísa después de registrar el equipo una sola vez en HHR.
