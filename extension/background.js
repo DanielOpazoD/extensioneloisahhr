@@ -339,12 +339,10 @@ const bufferToBase64 = buffer => {
 };
 const patientFlowRuntime = self.HhrFichaMedicoPatientFlowRuntime.create({ clinicalClient: fichaMedicoClinicalClient, bufferToBase64 });
 
+const waitMs = delay => new Promise(resolve => setTimeout(resolve, delay));
+const recentBedsSlot = self.HhrGestionCamasActiveBeds.createRecentBedsSlot({ ttlMs: 10_000, now: () => Date.now() });
 const readSnapshotWithClinicalCribs = () =>
-  self.HhrGestionCamasClinicalCribs.enrichSnapshotRequest(
-    handleSnapshotRequest(),
-    gestionCamasRuntime,
-    fetchWithTimeout
-  );
+  self.HhrGestionCamasClinicalCribs.enrichSnapshotRequest(handleSnapshotRequest(), gestionCamasRuntime, fetchWithTimeout, recentBedsSlot.store);
 
 const readAuthorizedSnapshot = sender =>
   patientFlowRuntime.authorizeSnapshotResponse(
@@ -376,7 +374,7 @@ const egresoReportRuntime = self.HhrGestionCamasEgresoReportRuntime.create({
 const { request: handleReportRequest, save: handleReportSave } = egresoReportRuntime;
 
 const monthlyCudyrReports = self.HhrGestionCamasMonthlyCudyrRuntime.create({
-  resolveSession: resolveGestionCamasSession, fetchWithTimeout, markSessionVerified: markGestionCamasSessionVerified, bufferToBase64,
+  resolveSession: resolveGestionCamasSession, fetchWithTimeout, markSessionVerified: markGestionCamasSessionVerified, bufferToBase64, wait: waitMs,
 });
 
 const syncBundleCancellation = self.HhrSyncBundleCancellationRuntime.create();
@@ -978,8 +976,7 @@ const clinicalScoreRuntime = self.HhrClinicalScoreRuntime.create({
   crypto,
   fetchWithTimeout,
   getFichaFetchInfo,
-  resolveGestionCamasSession,
-  classifyGestionCamasRejection,
+  resolveGestionCamasSession, classifyGestionCamasRejection, markGestionCamasSessionVerified, wait: waitMs, consumeRecentBeds: recentBedsSlot.consume,
   nursingWorklists: fichaMedicoNursingWorklists,
   resolveSessionHandoffKind,
   fetchFichaClaims,
@@ -1022,8 +1019,7 @@ const clinicalScoreWriteRuntime = self.HhrClinicalScoreWriteRuntime.create({
   clinicalRecordKey,
   collectClinicalTimestampBaseline,
   hasNewClinicalTimestamp,
-  prescriptionPrint: self.HhrPrescriptionPrint,
-  wait: delay => new Promise(resolve => setTimeout(resolve, delay)),
+  prescriptionPrint: self.HhrPrescriptionPrint, wait: waitMs, onCudyrWriteAttempt: recentBedsSlot.clear,
 });
 const handleScoreSaveRequest = clinicalScoreWriteRuntime.handleSaveRequest;
 
@@ -1230,7 +1226,7 @@ const runtimeMessageRoutes = Object.freeze({
     'No se pudo abrir Gestión de Camas.'
   ),
   [RUNTIME_MESSAGES.GC_DISCONNECT_REQUEST]: runtimeRoute(
-    healthHeartbeat.pushAfter(() => handleDisconnectGestionCamas(), 'gc-disconnected'),
+    healthHeartbeat.pushAfter(() => { recentBedsSlot.clear(); return handleDisconnectGestionCamas(); }, 'gc-disconnected'),
     'No se pudo olvidar la conexión de Gestión de Camas.'
   ),
     // instead of leaving HHR's button enabled until the next heartbeat.
@@ -1523,7 +1519,7 @@ const runtimeMessageRoutes = Object.freeze({
     'No se pudo revisar el estado del guardado clínico.'
   ),
   [RUNTIME_MESSAGES.CUDYR_CATEGORIES_REQUEST]: runtimeRoute(
-    () => handleCudyrCategoriesRequest(),
+    message => handleCudyrCategoriesRequest({ expectedEncounterIds: message?.expectedEncounterIds }),
     'No se pudo consultar CUDYR.'
   ),
 });

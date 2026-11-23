@@ -79,4 +79,80 @@ describe('monthly report read-only transport', () => {
     deps.markSessionVerified.mockResolvedValue(false);
     expect(await api.request({ month: '2026-08' })).toHaveProperty('error');
   });
+
+  it.each(['http-503', 'http-429', 'network'])(
+    'retries a single transient %s failure after backoff and succeeds on recovery',
+    async failureMode => {
+      const waits: number[] = [];
+      let attempt = 0;
+      const deps = {
+        resolveSession: vi.fn().mockResolvedValue({
+          record: { facId: 1342, apiBase: 'https://example.test/api', token: 'fixture' },
+        }),
+        fetchWithTimeout: vi.fn(async () => {
+          attempt += 1;
+          if (attempt === 1) {
+            if (failureMode === 'network') throw new TypeError('Failed to fetch');
+            return { ok: false, status: failureMode === 'http-429' ? 429 : 503 };
+          }
+          return {
+            ok: true,
+            status: 200,
+            arrayBuffer: async () =>
+              Uint8Array.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]).buffer,
+          };
+        }),
+        markSessionVerified: vi.fn().mockResolvedValue(true),
+        bufferToBase64: (buffer: ArrayBuffer) => Buffer.from(buffer).toString('base64'),
+        wait: async (ms: number) => {
+          waits.push(ms);
+        },
+        retryDelayMs: () => 550,
+      };
+      const api = context.HhrGestionCamasMonthlyCudyrRuntime.create(deps);
+
+      const result = await api.request({ month: '2026-08' });
+      expect(result).toMatchObject({ ok: true, month: '2026-08' });
+      expect(deps.fetchWithTimeout).toHaveBeenCalledTimes(2);
+      expect(waits).toEqual([550]);
+    }
+  );
+
+  it('does not retry HTTP 401/403 and limits persistent HTTP 503 to two attempts', async () => {
+    for (const status of [401, 403]) {
+      const waits: number[] = [];
+      const deps = {
+        resolveSession: vi.fn().mockResolvedValue({
+          record: { facId: 1342, apiBase: 'https://example.test/api', token: 'fixture' },
+        }),
+        fetchWithTimeout: vi.fn().mockResolvedValue({ ok: false, status }),
+        markSessionVerified: vi.fn().mockResolvedValue(true),
+        bufferToBase64: (buffer: ArrayBuffer) => Buffer.from(buffer).toString('base64'),
+        wait: async (ms: number) => {
+          waits.push(ms);
+        },
+        retryDelayMs: () => 550,
+      };
+      const api = context.HhrGestionCamasMonthlyCudyrRuntime.create(deps);
+      expect(await api.request({ month: '2026-08' })).toHaveProperty('error');
+      expect(deps.fetchWithTimeout).toHaveBeenCalledTimes(1);
+      expect(waits).toEqual([]);
+    }
+
+    const persistentDeps = {
+      resolveSession: vi.fn().mockResolvedValue({
+        record: { facId: 1342, apiBase: 'https://example.test/api', token: 'fixture' },
+      }),
+      fetchWithTimeout: vi.fn().mockResolvedValue({ ok: false, status: 503 }),
+      markSessionVerified: vi.fn().mockResolvedValue(true),
+      bufferToBase64: (buffer: ArrayBuffer) => Buffer.from(buffer).toString('base64'),
+      wait: vi.fn().mockResolvedValue(undefined),
+      retryDelayMs: () => 550,
+    };
+    const persistentApi = context.HhrGestionCamasMonthlyCudyrRuntime.create(persistentDeps);
+    expect(await persistentApi.request({ month: '2026-08' })).toEqual({
+      error: 'No se pudo consultar el informe (HTTP 503).',
+    });
+    expect(persistentDeps.fetchWithTimeout).toHaveBeenCalledTimes(2);
+  });
 });
