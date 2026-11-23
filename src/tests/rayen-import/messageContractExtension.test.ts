@@ -289,12 +289,14 @@ describe('shared Rayen runtime-message contract', () => {
     errorSpy.mockRestore();
   });
 
-  it('limits table connection requests to status and connect, without a patient or editor', () => {
+  it('validates table connection, batch loading and batch save preparation', () => {
     const type = contract.types.NURSING_HANDOFF_TABLE;
     for (const action of ['status', 'connect']) {
       expect(contract.validateRuntimeMessage({ type, action }).ok).toBe(true);
     }
-    for (const action of [undefined, 'read', 'save']) {
+    expect(contract.validateRuntimeMessage({ type, action:'open-rows', episodes:['123'] }).ok).toBe(true);
+    expect(contract.validateRuntimeMessage({ type, action:'prepare-save', ids:['editor-sintético'] }).ok).toBe(true);
+    for (const action of [undefined, 'read', 'save', 'open-rows', 'prepare-save']) {
       expect(contract.validateRuntimeMessage({ type, action }).ok).toBe(false);
     }
   });

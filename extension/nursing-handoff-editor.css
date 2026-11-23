@@ -45,7 +45,6 @@ footer { margin-block-start: .75rem; }
   padding:3px 6px; background:#fff; color:#33574e; font:inherit;
 }
 #recovery-text { min-height:60px; background:#f5f8f6; }
-.hhr-handoff-row .notes:has(#conflict:not([hidden])) textarea { height:90px; }
 #status[data-tone="error"] { color: #9b2929; }
 #save { margin-inline-start: auto; }
 
@@ -53,17 +52,28 @@ footer { margin-block-start: .75rem; }
   .notes:has(#conflict:not([hidden])) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-.hhr-handoff-row { background:#f1f7f5; }
-.hhr-handoff-row main { padding:8px 10px; }
-.hhr-handoff-row header, .hhr-handoff-row .patient { display:none; }
+.hhr-handoff-row { background:transparent; font-size:13px; line-height:1.25; }
+.hhr-handoff-row main { padding:3px 5px; }
+.hhr-handoff-row header, .hhr-handoff-row .patient, .hhr-handoff-row #save { display:none; }
+.hhr-handoff-row label[for="comparison-note"],
 .hhr-handoff-row main:not(:has(#conflict:not([hidden]))) label[for="note"] {
   position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
 }
-.hhr-handoff-row .notes textarea { min-height:48px; height:48px; }
-.hhr-handoff-row .handoff-receipt { display:flex; flex-wrap:wrap; align-items:center; gap:2px 9px; min-width:0; }
-.hhr-handoff-row #slot { font-variant-numeric:tabular-nums; }
-.hhr-handoff-row #status:empty { display:none; }
+.hhr-handoff-row .notes { gap:4px; }
+.hhr-handoff-row .notes textarea { min-height:37px; height:37px; padding:4px 7px; border-radius:5px; }
+.hhr-handoff-row .notes #comparison-note { background:#f4f7f6; border-color:#d1ded9; }
+.hhr-handoff-row .notes:has(#conflict:not([hidden])) textarea { height:86px; }
+.hhr-handoff-row #status { font-size:.75rem; }
 .hhr-handoff-row #status[data-tone="ok"] { font-weight:600; }
-.hhr-handoff-row footer { min-height:28px; margin-block-start:5px; }
-.hhr-handoff-row main:has(#edit[hidden]):has(#status:empty) footer { display:none; }
-.hhr-handoff-row footer button { font-size:.85rem; padding:4px 10px; }
+.hhr-handoff-row footer { min-height:0; margin-block-start:2px; gap:4px; }
+.hhr-handoff-row footer:has(#status:empty):not(:has(#current-shift:not([hidden]))) { display:none; }
+.hhr-handoff-row footer button { font-size:.75rem; padding:2px 7px; }
+.hhr-handoff-row[data-comparing] :is(#edit, #conflict, #recovery) { display:none; }
+.hhr-handoff-row[data-comparing] .notes { display:block; }
+.hhr-handoff-row[data-comparing] #status:is([data-tone="draft"], [data-tone="ok"]) { display:none; }
+.hhr-handoff-row[data-comparing] footer:not(:has(#current-shift:not([hidden]))):not(:has([data-tone="error"])) { display:none; }
+
+.hhr-handoff-row main:has(#edit[hidden]):has(#status[data-tone="pending"])::before {
+  content:''; display:block; height:36px; border-radius:5px;
+  background:linear-gradient(90deg,#edf4f1 60%,#f5f9f7 60%);
+}

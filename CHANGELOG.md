@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.149
+
+- Entrega de turno muestra una sola fecha censal, pestañas Día y Noche y filas más compactas.
+- Agrupa la carga de las notas visibles y permite guardar los cambios desde la barra superior, con confirmación por paciente y borradores recuperables.
+
 ## 0.48.148
 
 - Entrega de turno en producción registra el equipo una vez en HHR Hospitalizados y después reutiliza ese acceso con el mismo profesional en Eloísa.

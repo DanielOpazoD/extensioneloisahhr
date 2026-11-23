@@ -9,6 +9,7 @@
   const draftKey = (context, date, shift) => prefix(context.tabId) +
     ['draft', context.sourceDocument, context.episode, date, shift].join(':');
   const number = value => /^[1-9]\d{0,15}$/.test(value ?? '');
+  const uuid = value => typeof value === 'string' && /^[a-f0-9-]{36}$/.test(value);
   const error = (message, code) => ({ error: message, code });
   const identity = info => {
     const ids = [info?.facId, info?.practitionerId, info?.practitionerRoleId];
@@ -41,6 +42,12 @@
       : error('Conecta tu cuenta de HHR para continuar.', 'HHR_LINK_REQUIRED');
     const load = async key => (await store.get(key))[key];
     const draftWrites = new Map();
+    const initialNotes = new Map();
+    const saveTickets = new Map();
+    const reap = entries => {
+      const now = Date.now();
+      for (const [id, entry] of entries) if (entry.expires <= now) entries.delete(id);
+    };
     async function writeDraft(context, { date, shift, version, text }) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !['day', 'night'].includes(shift) ||
           !/^[a-f0-9]{64}$/.test(version) || (text !== undefined && (typeof text !== 'string' || text.length > 16000))) {
@@ -75,15 +82,100 @@
       return session;
     }
 
-    async function table({ action }, sender) {
-      if (action !== 'status' && action !== 'connect') return error('Operación no autorizada.');
+    const remoteAccess = (connectionAccess, info) => connection ? connectionAccess : {
+      source: { installationKey: localPilot.installationKey, facilityId: String(info.facId),
+        practitionerId: String(info.practitionerId), roleId: String(info.practitionerRoleId) },
+    };
+
+    function editorContext({ episode, patient, patientId, info, sessionKey, sender, inline }) {
+      return {
+        id: crypto.randomUUID(), tabId: sender.tab.id, sourceDocument: sender.documentId, episode,
+        owner: identity(info), sessionKey, accountOwner: connectionOwner(info),
+        patientId, run: patient.run, name: patient.name, inline,
+      };
+    }
+
+    async function openRows(episodes, sender, info, access) {
+      if (!sender.documentId || !Array.isArray(episodes) || !episodes.length || episodes.length > 50 ||
+          episodes.some(episode => !number(episode)) || new Set(episodes).size !== episodes.length) {
+        return error('La lista de episodios no es válida.');
+      }
+      const sessionKey = await getSessionKey(info, sender);
+      const rows = Array(episodes.length);
+      let next = 0;
+      await Promise.all(Array.from({ length: Math.min(6, episodes.length) }, async () => {
+        while (next < episodes.length) {
+          const index = next++;
+          const episode = String(episodes[index]);
+          let patient;
+          try {
+            patient = await getPatient(episode, info, sender);
+          } catch {
+            patient = error('No se pudo identificar al paciente en Eloísa.');
+          }
+          rows[index] = patient.error ? { episode, error: patient.error } :
+            editorContext({ ...patient, episode, info, sessionKey, sender, inline: true });
+        }
+      }));
+      const contexts = rows.filter(row => row.id);
+      const patients = contexts.map(row => ({ episode: row.episode, patientRun: row.run }));
+      if (!patients.length) return { rows };
+      const batch = await call({ action: 'read-batch', ...remoteAccess(access, info), patients });
+      if (connection && batch.code === 'UNAUTHENTICATED') {
+        await connection.forget(connectionOwner(info), access.proof);
+        return needsHhr();
+      }
+      if (batch.error) return batch;
+      if (!Array.isArray(batch.results) || batch.results.length !== contexts.length) {
+        return error('HHR devolvió una lista incompleta de entregas.');
+      }
+      const verified = await verifySource(contexts[0]);
+      if (verified.error) return verified;
+      const stored = {};
+      const expires = Date.now() + 15_000;
+      reap(initialNotes);
+      contexts.forEach((context, index) => {
+        stored[editorKey(context.tabId, context.id)] = context;
+        initialNotes.set(context.id, { tabId: context.tabId, expires, result: batch.results[index] });
+      });
+      await store.set(stored);
+      return { slot: batch.slot, rows: rows.map(({ episode, id, error }) => id ? { episode, id } : { episode, error }) };
+    }
+
+    async function authorizeBatchSave(ids, sender, info) {
+      if (!sender.documentId || !Array.isArray(ids) || !ids.length || ids.length > 100 || !ids.every(uuid)) {
+        return error('No se pudieron comprobar los borradores.');
+      }
+      const keys = ids.map(id => editorKey(sender.tab.id, id));
+      const contexts = await store.get(keys);
+      const sessionKey = await getSessionKey(info, sender);
+      if (!keys.every(key => {
+        const row = contexts[key];
+        return row?.inline && row.editorDocument && row.sourceDocument === sender.documentId &&
+          row.sessionKey === sessionKey && row.owner === identity(info);
+      })) {
+        return error('Cambió la lista o la sesión en Eloísa. Revisa los borradores.');
+      }
+      reap(saveTickets);
+      const ticket = crypto.randomUUID();
+      for (const id of ids) saveTickets.set(id, { ticket, tabId: sender.tab.id, expires: Date.now() + 300_000 });
+      return { ticket };
+    }
+
+    async function table({ action, episodes, ids }, sender) {
+      if (!['status', 'connect', 'open-rows', 'prepare-save'].includes(action)) return error('Operación no autorizada.');
       const session = await sourceSession(sender);
       if (session.error) return session;
       const access = await checkAccess(session.info);
       if (access.error) return error(access.error);
       const owner = connectionOwner(session.info);
+      const key = connection && await connection.authorized(owner);
+      if (action === 'open-rows' || action === 'prepare-save') {
+        if (connection && !key) return needsHhr();
+        return action === 'open-rows' ? openRows(episodes, sender, session.info, key) :
+          authorizeBatchSave(ids, sender, session.info);
+      }
       if (!connection) return { ok: true };
-      const key = await connection.authorized(owner);
       if (key && !registration) return { ok: true };
       if (key) {
         const result = await call({ action: 'status', ...key });
@@ -105,13 +197,10 @@
       if (access.error) return error(access.error);
       const owner = identity(result.info);
       if (!owner) return error('No se pudo verificar la sesión de Eloísa.');
-      const id = crypto.randomUUID();
       const sessionKey = await getSessionKey(result.info, sender);
-      await store.set({ [editorKey(sender.tab.id, id)]: {
-        id, tabId: sender.tab.id, sourceDocument: sender.documentId, episode: String(encId), owner, sessionKey,
-        accountOwner: connectionOwner(result.info), patientId: result.patientId, run: result.patient.run, name: result.patient.name, inline: inline === true,
-      } });
-      return { ok: true, id };
+      const context = editorContext({ ...result, episode: String(encId), sender, sessionKey, inline: inline === true });
+      await store.set({ [editorKey(sender.tab.id, context.id)]: context });
+      return { ok: true, id: context.id };
     }
 
     async function call(data) {
@@ -154,12 +243,14 @@
     async function operate(message, sender) {
       const { id, action } = message;
       if (connection && action === 'hosted-result') return connection.receive(message, sender);
-      if (!enabled || !/^[a-f0-9-]{36}$/.test(id) || !source.test(sender.tab?.url) ||
+      if (!enabled || !uuid(id) || !source.test(sender.tab?.url) ||
           !sender.documentId) return error('Editor no autorizado.');
       const key = editorKey(sender.tab.id, id);
       const context = await load(key);
       if (context?.id !== id) return error('Vuelve a abrir la entrega desde la lista.');
       if (action === 'close' && sender.frameId === 0 && sender.documentId === context.sourceDocument) {
+        initialNotes.delete(id);
+        saveTickets.delete(id);
         await store.remove(key);
         return { ok: true };
       }
@@ -171,7 +262,17 @@
         return writeDraft(context, message);
       }
       if (!['context', 'read', 'save', 'connect', 'disconnect'].includes(action)) return error('Operación no autorizada.');
-      const verified = await verifySource(context, ['read', 'save'].includes(action));
+      if (action === 'save' && message.ticket !== undefined) {
+        const grant = saveTickets.get(id);
+        if (!grant || grant.expires <= Date.now() || grant.ticket !== message.ticket) {
+          return error('Vuelve a pulsar Guardar cambios desde la tabla.');
+        }
+        saveTickets.delete(id);
+      }
+      const prepared = action === 'read' && !message.since && initialNotes.get(id);
+      if (prepared) initialNotes.delete(id);
+      const initial = prepared?.expires > Date.now() ? prepared.result : null;
+      const verified = await verifySource(context, action === 'save' || (action === 'read' && !initial));
       if (verified.error) return verified;
       if (action === 'context') {
         await store.set({ [key]: { ...context, editorDocument: sender.documentId } });
@@ -193,12 +294,9 @@
         return { disconnected: true, remoteConfirmed: result.disconnected === true };
       }
       if (connection && !access) return needsHhr();
-      const { facId, practitionerId, practitionerRoleId } = verified.info;
-      const result = await call({
+      const result = initial || await call({
         action, episode: context.episode, patientRun: context.run,
-        ...(connection ? access : {
-          source: { installationKey: localPilot.installationKey, facilityId: String(facId), practitionerId: String(practitionerId), roleId: String(practitionerRoleId) },
-        }),
+        ...remoteAccess(access, verified.info), comparison: context.inline && action === 'read',
         date: message.date, shift: message.shift, since: message.since,
         version: message.version, text: message.text,
       });
@@ -207,8 +305,10 @@
         return needsHhr();
       }
       if (!result.error && action === 'read') {
-        const updated = await verifySource(context, true);
-        if (updated.error) return updated;
+        if (!initial) {
+          const updated = await verifySource(context, true);
+          if (updated.error) return updated;
+        }
         if (context.inline && !message.since) {
           const key = draftKey(context, result.date, result.shift);
           await draftWrites.get(key)?.catch(() => {});
@@ -231,6 +331,8 @@
     }
 
     if (enabled) chrome.tabs.onRemoved.addListener(async tabId => {
+      for (const [id, entry] of initialNotes) if (entry.tabId === tabId) initialNotes.delete(id);
+      for (const [id, entry] of saveTickets) if (entry.tabId === tabId) saveTickets.delete(id);
       const keys = Object.keys(await store.get(null)).filter(key => key.startsWith(prefix(tabId)));
       if (keys.length) await store.remove(keys);
     });

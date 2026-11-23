@@ -28,16 +28,24 @@ function installSyntheticHandoff() {
     if (data.date && (data.date !== slot.date || data.shift !== slot.shift)) {
       return fail('FAILED_PRECONDITION', 'Cambió el turno o la fecha censal. Abre otra entrega.');
     }
-    const key = slot.date + '/' + slot.shift + '/' + data.episode;
-    const previous = () => notes.get(key) ?? { text:'', version:'0'.repeat(64) };
+    const byVisit = (episode, shift = slot.shift) => slot.date + '/' + shift + '/' + episode;
+    const comparison = episode => {
+      const shift = slot.shift === 'day' ? 'night' : 'day';
+      return { shift, text:notes.get(byVisit(episode, shift))?.text ?? '' };
+    };
+    const previous = episode => notes.get(byVisit(episode)) ?? { text:'', version:'0'.repeat(64) };
+    if (data.action === 'read-batch') return Response.json({ result:{
+      slot, results:data.patients.map(({episode}) => ({ ...slot, ...previous(episode), comparison:comparison(episode) })),
+    } });
+    const key = byVisit(data.episode);
     if (data.action === 'save') {
-      if (data.version !== previous().version) return fail('ABORTED', 'La entrega cambió en HHR.');
+      if (data.version !== previous(data.episode).version) return fail('ABORTED', 'La entrega cambió en HHR.');
       const value = { text:data.text, version:(++revision).toString(16).padStart(64,'0') };
       notes.set(key, value);
       return Response.json({ result:{ ...slot, ...value, confirmed:true } });
     }
     if (data.since) await new Promise(resolve => setTimeout(resolve, 150));
-    return Response.json({ result:{ ...slot, ...previous() } });
+    return Response.json({ result:{ ...slot, ...previous(data.episode), comparison:comparison(data.episode) } });
   };
 }
 
@@ -203,11 +211,11 @@ try {
   await a.fill('Solo borrador del primer episodio');
   await b.fill('Nota guardada del segundo episodio');
   await grid.getByText('2 borradores', { exact: true }).waitFor();
-  await second.getByRole('button', { name: 'Guardar', exact: true }).click();
+  await b.press('Control+Enter');
   await second.getByText('✓ Guardado en HHR', { exact: true }).waitFor();
   await first.getByText('Borrador sin guardar', { exact: true }).waitFor();
   await grid.getByText('1 borrador', { exact: true }).waitFor();
-  assert.match(await second.locator('footer #slot').innerText(), /^.+ · (Día|Noche)$/);
+  assert.equal(await second.locator('#slot').isVisible(), false);
   await toggle.click();
   assert.equal(await grid.locator(host('901001')).isVisible(), false);
   await toggle.click();
@@ -232,8 +240,8 @@ try {
   await b.waitFor();
   assert.equal(await a.inputValue(), 'Solo borrador del primer episodio');
   assert.equal(await b.inputValue(), 'Nota guardada del segundo episodio');
-  assert.equal(await first.getByRole('button', { name: 'Guardar', exact: true }).isEnabled(), true);
-  assert.equal(await second.getByRole('button', { name: 'Guardar', exact: true }).isDisabled(), true);
+  const saveChanges = grid.getByRole('button', { name:'Guardar cambios', exact:true });
+  assert.equal(await saveChanges.isEnabled(), true);
   assert.equal(context.pages().length, tabCount);
   if (synthetic) {
     assert.match(await first.locator('#slot').innerText(), /19.* · Noche$/);
@@ -245,12 +253,12 @@ try {
     assert.equal(await a.getAttribute('readonly'), '');
     assert.equal(await a.inputValue(), 'Solo borrador del primer episodio');
     await next.click();
-    await first.getByText(/20.* · Día$/).waitFor();
+    await grid.getByRole('tab', { name:'Día', exact:true, selected:true }).waitFor();
     assert.match(await first.locator('#recovery-label').textContent(), /Borrador · .*19.* · Noche/);
     await first.locator('#recovery-label').click();
     assert.equal(await first.getByLabel('Texto conservado').inputValue(), 'Solo borrador del primer episodio');
     assert.equal(await a.inputValue(), '');
-    assert.equal(await first.getByRole('button', { name:'Guardar', exact:true }).isDisabled(), true);
+    assert.equal(await saveChanges.isDisabled(), true);
     console.log('OK: turno nocturno fechado, cambio a turno diurno y recuperación del texto sin transferirlo.');
   }
   console.log('OK: dos entregas en una tabla, guardado por episodio y borrador recuperado tras ocultar o filtrar.');
