@@ -9,6 +9,7 @@
 
   function publicationKey(value) {
     if (typeof value !== 'string') return '';
+    // clinical-clock-allow raw-offset-clock: Offset-bearing values convert through Date.parse and Intl (Pacific/Easter) below; unzoned values keep local wall time.
     const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,7}))?(Z|[+-]\d{2}:\d{2})?$/i.exec(value);
     if (!match) return '';
     const fraction = (match[2] || '').padEnd(7, '0');

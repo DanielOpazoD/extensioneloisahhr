@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import '../../../extension/cudyr-capture-support.js';
@@ -18,8 +18,27 @@ const cudyr = (
         fallback: Array<Record<string, unknown>>
       ) => Array<Record<string, unknown>>;
     };
+    HhrGestionCamasActiveBeds: {
+      createRecentBedsSlot: (options?: { ttlMs?: number; now?: () => number }) => {
+        store: (record: Record<string, unknown>, payload: unknown[]) => void;
+        consume: (record: Record<string, unknown>) => unknown[] | null;
+        clear: () => void;
+      };
+    };
   }
 ).HhrGestionCamasCudyr;
+
+const activeBeds = (
+  globalThis as typeof globalThis & {
+    HhrGestionCamasActiveBeds: {
+      createRecentBedsSlot: (options?: { ttlMs?: number; now?: () => number }) => {
+        store: (record: Record<string, unknown>, payload: unknown[]) => void;
+        consume: (record: Record<string, unknown>) => unknown[] | null;
+        clear: () => void;
+      };
+    };
+  }
+).HhrGestionCamasActiveBeds;
 
 const clinicalScoreRuntimeSource = readFileSync(
   new URL('../../../extension/clinical-score-runtime.js', import.meta.url),
@@ -37,7 +56,9 @@ const loadClinicalScoreRuntime = () => {
     context as unknown as {
       HhrClinicalScoreRuntime: {
         create: (dependencies: Record<string, unknown>) => {
-          handleCudyrCategoriesRequest: () => Promise<Record<string, unknown>>;
+          handleCudyrCategoriesRequest: (
+            request?: Record<string, unknown>
+          ) => Promise<Record<string, unknown>>;
         };
       };
     }
@@ -451,5 +472,300 @@ describe('Gestión de Camas CUDYR normalizer', () => {
         definitions: [],
       })
     ).toEqual([]);
+  });
+
+  it('orders same-second CUDYR records deterministically by descending numeric id and warns on unknown formId', () => {
+    const warnings: string[] = [];
+    const build = (entries: unknown[]) =>
+      cudyr.buildSnapshot({
+        includeObservations: true,
+        practitioners: [{ id: 7, fullName: 'Enfermería sintética' }],
+        definitions: [],
+        warnings,
+        beds: [bedWith(entries)],
+      })[0];
+
+    const first = {
+      ...sourceVersion,
+      id: 1002,
+      value: 'C1',
+      creationDate: '2026-10-06T03:00:00-05:00',
+    };
+    const second = {
+      ...sourceVersion,
+      id: 1010,
+      value: 'B2',
+      creationDate: '2026-10-06T03:00:00-05:00',
+    };
+    const unknownForm = {
+      ...sourceVersion,
+      id: 1011,
+      formId: 3,
+      value: 'A1',
+      creationDate: '2026-10-06T03:05:00-05:00',
+    };
+
+    const forward = build([first, second, unknownForm]);
+    const reversed = build([second, first]);
+
+    expect(forward.crdValue).toBe('B2');
+    expect(reversed.crdValue).toBe('B2');
+    expect((forward.history as Array<{ id: string }>).map(entry => entry.id)).toEqual([
+      '1010',
+      '1002',
+    ]);
+    expect((reversed.history as Array<{ id: string }>).map(entry => entry.id)).toEqual([
+      '1010',
+      '1002',
+    ]);
+    expect(warnings).toEqual([
+      'Gestión de Camas informó registros CUDYR con formId no reconocido (3).',
+    ]);
+  });
+
+  it('caches definitions and practitioners per facility, falls back on transient failure, and refreshes for an unseen practitioner', async () => {
+    let clock = 10_000;
+    let practitionersStatus = 200;
+    let practitionersPayload = [{ id: 7, fullName: 'Autor inicial' }];
+    let currentBeds = [bedWith([sourceVersion])];
+    const requestedUrls: string[] = [];
+
+    const runtime = loadClinicalScoreRuntime().create(
+      createRuntimeDependencies({
+        now: () => clock,
+        resolveGestionCamasSession: async () => ({
+          record: {
+            apiBase: 'https://hospbackend.rayensalud.cl/api',
+            facId: '1342',
+            token: 'token-1',
+          },
+        }),
+        fetchWithTimeout: async (url: string) => {
+          requestedUrls.push(url);
+          if (url.endsWith('/beds')) {
+            return { ok: true, status: 200, json: async () => currentBeds };
+          }
+          if (url.includes('/healthCarePractitioners')) {
+            return {
+              ok: practitionersStatus === 200,
+              status: practitionersStatus,
+              json: async () => practitionersPayload,
+            };
+          }
+          if (url.includes('/formCategorizationOfRisk')) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => [
+                { formId: 1, formFieldId: 1, formFieldLabel: 'Cambio de ropa', typeId: 1 },
+              ],
+            };
+          }
+          return { ok: true, status: 200, json: async () => [] };
+        },
+      })
+    );
+
+    const first = await runtime.handleCudyrCategoriesRequest();
+    expect(first).toMatchObject({ ok: true, metadataStatus: 'complete' });
+    expect((first.items as Array<Record<string, unknown>>)[0].author).toBe('Autor inicial');
+    expect(requestedUrls.filter(url => url.includes('/healthCarePractitioners'))).toHaveLength(1);
+    expect(requestedUrls.filter(url => url.includes('/formCategorizationOfRisk'))).toHaveLength(1);
+
+    // Within TTL (2 min): metadata comes from cache without extra HTTP calls.
+    clock += 2 * 60 * 1000;
+    const second = await runtime.handleCudyrCategoriesRequest();
+    expect(second).toMatchObject({ ok: true, metadataStatus: 'complete' });
+    expect(requestedUrls.filter(url => url.includes('/healthCarePractitioners'))).toHaveLength(1);
+    expect(requestedUrls.filter(url => url.includes('/formCategorizationOfRisk'))).toHaveLength(1);
+
+    // New practitioner ID appears within practitioners TTL: triggers one fresh catalog refresh.
+    currentBeds = [bedWith([{ ...sourceVersion, id: 92, healthCarePractitionerId: 88 }])];
+    practitionersPayload = [
+      { id: 7, fullName: 'Autor inicial' },
+      { id: 88, fullName: 'Enfermería nueva' },
+    ];
+    const third = await runtime.handleCudyrCategoriesRequest();
+    expect((third.items as Array<Record<string, unknown>>)[0].author).toBe('Enfermería nueva');
+    expect(requestedUrls.filter(url => url.includes('/healthCarePractitioners'))).toHaveLength(2);
+
+    // After practitioners TTL expires (6 min), transient 503 falls back silently to cached catalog.
+    clock += 6 * 60 * 1000;
+    practitionersStatus = 503;
+    const fourth = await runtime.handleCudyrCategoriesRequest();
+    expect(fourth).toMatchObject({ ok: true, metadataStatus: 'complete' });
+    expect((fourth.items as Array<Record<string, unknown>>)[0].author).toBe('Enfermería nueva');
+    expect(String(fourth.warning || '')).not.toContain('autores CUDYR');
+  });
+
+  it('waits before retrying a transient official error, renews an expired 401 session once, and verifies session on success', async () => {
+    const waits: number[] = [];
+    let sessionCall = 0;
+    let bedsCall = 0;
+    const markGestionCamasSessionVerified = vi.fn(async () => true);
+
+    const runtime = loadClinicalScoreRuntime().create(
+      createRuntimeDependencies({
+        wait: async (ms: number) => {
+          waits.push(ms);
+        },
+        retryDelayMs: () => 650,
+        markGestionCamasSessionVerified,
+        resolveGestionCamasSession: async () => {
+          sessionCall += 1;
+          return {
+            record: {
+              apiBase: 'https://hospbackend.rayensalud.cl/api',
+              facId: '1342',
+              token: sessionCall === 1 ? 'expired-token' : 'fresh-token',
+            },
+          };
+        },
+        classifyGestionCamasRejection: async (response: { status: number }) =>
+          response.status === 401 ? 'expired' : '',
+        fetchWithTimeout: async (url: string, options: { headers?: { Authorization?: string } }) => {
+          if (url.endsWith('/beds')) {
+            bedsCall += 1;
+            if (options?.headers?.Authorization === 'expired-token') {
+              return { ok: false, status: 401, json: async () => [] };
+            }
+            if (bedsCall === 2) {
+              return { ok: false, status: 503, json: async () => [] };
+            }
+            return { ok: true, status: 200, json: async () => [bedWith([sourceVersion])] };
+          }
+          return { ok: true, status: 200, json: async () => [] };
+        },
+      })
+    );
+
+    const result = await runtime.handleCudyrCategoriesRequest();
+    expect(result).toMatchObject({ ok: true, source: 'gestion_camas', historyAvailable: true });
+    expect(waits).toEqual([650]);
+    expect(markGestionCamasSessionVerified).toHaveBeenCalledWith(
+      expect.objectContaining({ token: 'fresh-token' })
+    );
+
+    // Rejects payload if session verification fails mid-flight.
+    const changedRuntime = loadClinicalScoreRuntime().create(
+      createRuntimeDependencies({
+        markGestionCamasSessionVerified: vi.fn(async () => false),
+        resolveGestionCamasSession: async () => ({
+          record: {
+            apiBase: 'https://hospbackend.rayensalud.cl/api',
+            facId: '1342',
+            token: 'token-ok',
+          },
+        }),
+        fetchWithTimeout: async () => ({ ok: true, status: 200, json: async () => [] }),
+      })
+    );
+    const changed = await changedRuntime.handleCudyrCategoriesRequest();
+    expect(String(changed.error)).toContain('cambió durante la consulta');
+  });
+
+  it('skips Ficha Médico fallback when Gestión de Camas covers all expected encounters and falls back only when one is missing', async () => {
+    const fichaUrls: string[] = [];
+    const fichaInfo = {
+      apiOrigin: 'https://fichamedicoback.rayensalud.cl',
+      facId: '1342',
+      token: 'ficha-token',
+    };
+    const runtime = loadClinicalScoreRuntime().create(
+      createRuntimeDependencies({
+        getFichaFetchInfo: async () => ({ info: fichaInfo }),
+        resolveGestionCamasSession: async () => ({
+          record: {
+            apiBase: 'https://hospbackend.rayensalud.cl/api',
+            facId: '1342',
+            token: 'gc-token',
+          },
+        }),
+        fetchWithTimeout: async (url: string) => {
+          if (url.startsWith(fichaInfo.apiOrigin)) {
+            fichaUrls.push(url);
+            return {
+              ok: true,
+              status: 200,
+              json: async () => [{ id: 999, crdValue: 'A1', crdDateTime: '2026-10-06T04:00:00Z' }],
+            };
+          }
+          if (url.endsWith('/beds')) {
+            return { ok: true, status: 200, json: async () => [bedWith([sourceVersion])] };
+          }
+          return { ok: true, status: 200, json: async () => [] };
+        },
+      })
+    );
+
+    const complete = await runtime.handleCudyrCategoriesRequest({ expectedEncounterIds: ['901'] });
+    expect(complete).toMatchObject({ ok: true, source: 'gestion_camas' });
+    expect(fichaUrls).toHaveLength(0);
+
+    const missing = await runtime.handleCudyrCategoriesRequest({
+      expectedEncounterIds: ['901', '999'],
+    });
+    expect(missing).toMatchObject({ ok: true, source: 'gestion_camas+ficha_medico' });
+    expect(fichaUrls).toHaveLength(3);
+    expect((missing.items as Array<{ encId: string }>).map(item => item.encId)).toEqual([
+      '901',
+      '999',
+    ]);
+  });
+
+  it('shares a single-use recent /beds handoff slot strictly for the same verified session within TTL', async () => {
+    let clock = 50_000;
+    const slot = activeBeds.createRecentBedsSlot({ ttlMs: 10_000, now: () => clock });
+    const sessionRecord = {
+      apiBase: 'https://hospbackend.rayensalud.cl/api',
+      facId: '1342',
+      token: 'token-1',
+      sourceTabId: 4,
+      connectionAttemptId: 'attempt-1',
+      verificationEpoch: 2,
+    };
+
+    slot.store(sessionRecord, [bedWith([sourceVersion])]);
+    expect(slot.consume({ ...sessionRecord, token: 'other-token' })).toBeNull();
+    expect(slot.consume({ ...sessionRecord, verificationEpoch: 3 })).toBeNull();
+
+    const bedsFetches: string[] = [];
+    const markGestionCamasSessionVerified = vi.fn(async () => true);
+    const runtime = loadClinicalScoreRuntime().create(
+      createRuntimeDependencies({
+        now: () => clock,
+        markGestionCamasSessionVerified,
+        consumeRecentBeds: (record: Record<string, unknown>) => slot.consume(record),
+        resolveGestionCamasSession: async () => ({ record: sessionRecord }),
+        fetchWithTimeout: async (url: string) => {
+          if (url.endsWith('/beds')) bedsFetches.push(url);
+          return {
+            ok: true,
+            status: 200,
+            json: async () => (url.endsWith('/beds') ? [bedWith([sourceVersion])] : []),
+          };
+        },
+      })
+    );
+
+    // First call consumes the handoff slot (0 HTTP /beds reads) and still verifies the session.
+    const first = await runtime.handleCudyrCategoriesRequest();
+    expect(first).toMatchObject({ ok: true, source: 'gestion_camas' });
+    expect(bedsFetches).toHaveLength(0);
+    expect(markGestionCamasSessionVerified).toHaveBeenCalledTimes(1);
+
+    // Second call must read /beds fresh because the handoff slot is single-use.
+    const second = await runtime.handleCudyrCategoriesRequest();
+    expect(second).toMatchObject({ ok: true, source: 'gestion_camas' });
+    expect(bedsFetches).toHaveLength(1);
+
+    // Expired or cleared slot is never reused.
+    slot.store(sessionRecord, [bedWith([sourceVersion])]);
+    clock += 10_001;
+    expect(slot.consume(sessionRecord)).toBeNull();
+
+    slot.store(sessionRecord, [bedWith([sourceVersion])]);
+    slot.clear();
+    expect(slot.consume(sessionRecord)).toBeNull();
   });
 });

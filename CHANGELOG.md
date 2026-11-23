@@ -1,8 +1,19 @@
 # Cambios
 
-## 0.48.152
+## 0.48.154
 
 - Inicio vuelve a abrir Recetas, Laboratorio e Imágenes. La cabecera omite el número de episodio y las solicitudes aprovechan mejor la altura del panel.
+- Las órdenes de Laboratorio e Imágenes pueden imprimirse con datos de Eloísa, sin identificación o con datos personalizados.
+
+## 0.48.153
+
+- Documenta con anotaciones `clinical-clock-allow` las tres lecturas de hora ya convertidas a `Pacific/Easter` en novedades e historial (`hhr-nursing-novelty.js`, `hhr-nursing-worklist.js` y `hhr-history-date-navigation.js`) para alinearlas con el control `check:clinical-clock` de HHR sin cambios funcionales.
+
+## 0.48.152
+
+- Sincronización CUDYR conserva en sesión las definiciones y el catálogo de profesionales de Gestión de Camas (con refresco ante un profesional nuevo y respaldo si falla una recarga) para evitar degradaciones falsas por microcortes.
+- Agrega espera con jitter antes de reintentar lecturas transitorias de CUDYR diario y extiende ese reintento único al informe XLS mensual, renueva silenciosamente la sesión ante HTTP 401 si hay pestaña activa y verifica la sesión antes de aceptar el resultado.
+- Unifica el desempate determinístico por ID en categorizaciones del mismo segundo, avisa si Eloísa informa un `formId` CUDYR no reconocido y reduce peticiones redundantes (reutilización única y breve de `/beds` dentro de la misma sincronización y respaldo en Ficha Médico sólo cuando falta algún episodio).
 
 ## 0.48.151
 

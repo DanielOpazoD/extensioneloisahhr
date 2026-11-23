@@ -2,6 +2,7 @@
 
 - Esta es la fuente del código de la extensión. HHR es un consumidor; no desarrollar dos copias en paralelo.
 - Leer README.md y CHANGELOG.md antes de cambiar el código. Usar una rama desde main y PR.
+- Mergear directo y sin preguntar las PRs propias en cuanto CI esté en verde y la rama esté lista para mergear con `main`, de a una.
 - Incorporar la última base antes de publicar. No omitir CI ni debilitar la validación de versiones.
 - Conservar las funciones existentes. Una eliminación funcional requiere indicación expresa del responsable, contrato actualizado y pruebas equivalentes.
 - Cada versión debe tener notas. La identidad de un paquete incluye su huella, no solo su número.
