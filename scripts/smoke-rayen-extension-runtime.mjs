@@ -63,13 +63,6 @@ const mockHandoff = () => {
         fixture.saved[episode] = text;
         return {episode, ...byEpisode(episode), confirmed:true};
       });
-      if (fixture.pauseSave) return new Promise(resolve => {
-        self.__finishHandoffSave = () => {
-          delete self.__finishHandoffSave;
-          fixture.pauseSave = false;
-          resolve(Response.json({result:{results}}));
-        };
-      });
       return Promise.resolve(Response.json({result:{results}}));
     }
     if (!episodes.includes(data.episode)) throw new Error('Unexpected episode in the handoff fixture');

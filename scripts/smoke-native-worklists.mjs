@@ -392,7 +392,7 @@ async function verifyTableConnection(context, origin, worker) {
   await context.route(portalUrl, mockPortal);
   try {
     await worker.evaluate(() => {
-      self.__worklistHandoffFixture = { batches:[], singles:0, rejectSecond:'UNAVAILABLE', pauseSave:true, writes:[], saved:{} };
+      self.__worklistHandoffFixture = { batches:[], singles:0, rejectSecond:'UNAVAILABLE', writes:[], saved:{} };
     });
     await page.route(url, route => route.fulfill({ contentType:'text/html', body:`<!doctype html>
       <meta charset="utf-8"><style>body{font:14px system-ui,sans-serif} th,td{padding:4px 8px;text-align:left}</style>
@@ -507,11 +507,22 @@ async function verifyTableConnection(context, origin, worker) {
     const times = page.locator('.hhr-handoff-timings');
     await times.locator('summary').click();
     assert.match(await times.innerText(), /Primera nota editable: [\d,]+ s/);
+    // Release each real editor response separately to exercise intermediate progress.
+    for (const editor of editors) await editor.locator('body').evaluate(() => {
+      const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+      const gate = Promise.withResolvers();
+      window.releaseSaveReceipt = gate.resolve;
+      chrome.runtime.sendMessage = async (...args) => {
+        const result = await send(...args);
+        if (args[0]?.action === 'save') await gate.promise;
+        return result;
+      };
+    });
     await save.click();
     await page.getByText('0 de 2 confirmadas', { exact:true }).waitFor();
-    await page.waitForFunction(() => !document.querySelector('.hhr-handoff-save-all:not(:disabled)'));
-    for (let n = 0; n < 100 && !await worker.evaluate(() => !!self.__finishHandoffSave); n++) await page.waitForTimeout(50);
-    await worker.evaluate(() => self.__finishHandoffSave());
+    await editors[0].locator('body').evaluate(() => window.releaseSaveReceipt());
+    await page.getByText('1 de 2 confirmadas', { exact:true }).waitFor();
+    await editors[1].locator('body').evaluate(() => window.releaseSaveReceipt());
     await page.getByText('1 entrega guardada · 1 por reintentar', { exact:true }).waitFor();
     assert.match(await times.innerText(), /1\/2 confirmadas.*Última confirmación:/);
     assert.equal(await second.inputValue(), 'Segunda entrega sintética');
