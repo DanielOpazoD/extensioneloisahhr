@@ -50,22 +50,26 @@ const mockHandoff = () => {
         slot, results:data.patients.map(visit => byEpisode(visit.episode)),
       } }));
     }
+    if (data.action === 'save-batch') {
+      const results = data.patients.map(({episode,text}) => {
+        if (!episodes.includes(episode)) throw new Error('Unexpected episode in the handoff fixture');
+        fixture.writes.push(episode);
+        if (episode === '901002' && fixture.rejectSecond) {
+          fixture.rejectSecond = false;
+          return {episode, code:'ABORTED', error:'HHR rechazó la segunda entrega. Reintenta.'};
+        }
+        fixture.saved[episode] = text;
+        return {episode, ...byEpisode(episode), confirmed:true};
+      });
+      return Promise.resolve(Response.json({result:{results}}));
+    }
     if (!episodes.includes(data.episode)) throw new Error('Unexpected episode in the handoff fixture');
     if (data.action === 'read') {
       fixture.singles++;
       if (data.since) return new Promise(resolve => setTimeout(() => resolve(Response.json({ result: byEpisode(data.episode) })), 120));
       return Promise.resolve(Response.json({ result: byEpisode(data.episode) }));
     }
-    if (data.action !== 'save') throw new Error('Unexpected operation in the handoff fixture');
-    fixture.writes.push(data.episode);
-    if (data.episode === '901002' && fixture.rejectSecond) {
-      fixture.rejectSecond = false;
-      return Promise.resolve(Response.json({
-        error: { status:'ABORTED', message:'HHR rechazó la segunda entrega. Reintenta.' },
-      }, { status:409 }));
-    }
-    fixture.saved[data.episode] = data.text;
-    return Promise.resolve(Response.json({ result:{ ...byEpisode(data.episode), confirmed:true } }));
+    throw new Error('Unexpected operation in the handoff fixture');
   };
 };
 files[workerFile] = Buffer.concat([Buffer.from("'use strict';\n(" + mockHandoff.toString() + ')();\n'), files[workerFile]]);

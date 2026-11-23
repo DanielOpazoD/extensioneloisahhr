@@ -194,8 +194,35 @@ it('admite el guardado global solo con el permiso de un solo uso de la tabla', a
 
   const { ticket } = await runtime.table(request, top);
   expect(ticket).toHaveLength(36);
-  fetchImpl.mockResolvedValue(Response.json({ result:{ confirmed:true, date:'2026-11-22', shift:'night' } }));
-  await expect(message(0, 'save', undefined, { ticket })).resolves.toMatchObject({ confirmed:true });
-  await expect(message(0, 'save', undefined, { ticket })).resolves.toHaveProperty('error');
+  const fields = { ticket, date:'2026-11-22', shift:'night', text:'Nota' };
+  fetchImpl.mockResolvedValue(Response.json({ result:{ results:[{
+    ...fields, version:'b'.repeat(64), confirmed:true, episode:'901001',
+  }] } }));
+  await expect(message(0, 'save', undefined, fields)).resolves.toMatchObject({ confirmed:true });
+  await expect(message(0, 'save', undefined, fields)).resolves.toHaveProperty('error');
   expect(fetchImpl).toHaveBeenCalledOnce();
+});
+
+it('envía diez borradores en una solicitud y verifica cada comprobante', async () => {
+  const { runtime, chrome, fetchImpl } = await setup();
+  const tab = { id:1, url:source };
+  const top = { tab, url:source, frameId:0, documentId:'source-0' };
+  const template = (await chrome.storage.session.get('hhr-nursing-handoff-1:editor:'+ids[0]))['hhr-nursing-handoff-1:editor:'+ids[0]];
+  const rows = Array.from({length:10}, (_,index) => ({ ...template,
+    episode:String(901010+index), id:crypto.randomUUID(), editorDocument:'frame-'+index }));
+  await chrome.storage.session.set(Object.fromEntries(rows.map(row => ['hhr-nursing-handoff-1:editor:'+row.id, row])));
+  const {ticket} = await runtime.table({action:'prepare-save',ids:rows.map(row=>row.id)},top);
+  const slot = {date:'2026-11-22',shift:'night'};
+  fetchImpl.mockImplementation(async (_url, options) => {
+    const {data} = JSON.parse(options.body);
+    expect(data.action).toBe('save-batch');
+    expect(data.patients).toHaveLength(10);
+    return Response.json({result:{results:data.patients.map(visit => ({...visit, ...slot, confirmed:true}))}});
+  });
+  const results = await Promise.all(rows.map((row,index) => runtime.operate({
+    id:row.id, action:'save', ticket, ...slot, text:'Nota '+index, version:'f'.repeat(64)
+  }, {tab, frameId:index+1, documentId:row.editorDocument, url:extensionOrigin+'nursing-handoff-editor.html#'+row.id})));
+  expect(fetchImpl).toHaveBeenCalledOnce();
+  expect(results.map(result=>result.text)).toEqual(rows.map((_row,index)=>'Nota '+index));
+  expect(results.every(result=>result.confirmed)).toBe(true);
 });

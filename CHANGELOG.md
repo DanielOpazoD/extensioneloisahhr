@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.150
+
+- Guardar cambios envía hasta diez entregas por bloque y conserva el comprobante individual de cada paciente.
+
 ## 0.48.149
 
 - Entrega de turno muestra una sola fecha censal, pestañas Día y Noche y filas más compactas.

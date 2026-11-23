@@ -143,7 +143,7 @@
     }
 
     async function authorizeBatchSave(ids, sender, info) {
-      if (!sender.documentId || !Array.isArray(ids) || !ids.length || ids.length > 100 || !ids.every(uuid)) {
+      if (!sender.documentId || !Array.isArray(ids) || !ids.length || ids.length > 100 || new Set(ids).size !== ids.length || !ids.every(uuid)) {
         return error('No se pudieron comprobar los borradores.');
       }
       const keys = ids.map(id => editorKey(sender.tab.id, id));
@@ -158,7 +158,11 @@
       }
       reap(saveTickets);
       const ticket = crypto.randomUUID();
-      for (const id of ids) saveTickets.set(id, { ticket, tabId: sender.tab.id, expires: Date.now() + 300_000 });
+      for (let offset = 0; offset < ids.length; offset += 10) {
+        const group = ids.slice(offset, offset + 10);
+        const block = { size: group.length, rows: [] };
+        for (const id of group) saveTickets.set(id, { ticket, block, tabId: sender.tab.id, expires: Date.now() + 300_000 });
+      }
       return { ticket };
     }
 
@@ -240,6 +244,74 @@
       return { info: session.info };
     }
 
+    // Editors deliver note text directly to the worker. Only the ticket crosses the host page.
+    function collectSave(block, context, message) {
+      return new Promise(resolve => {
+        block.rows.push({ context, message, resolve });
+        clearTimeout(block.timer);
+        const flush = () => {
+          const rows = block.rows.splice(0);
+          const task = saving.then(() => writeBlock(rows));
+          saving = task.catch(() => {});
+          task.catch(() => {
+            for (const row of rows) row.resolve(error('No se pudo confirmar el bloque. Conserva tus borradores.'));
+          });
+        };
+        // A closed or filtered editor must not keep the other patients waiting.
+        if (block.rows.length === block.size) flush();
+        else block.timer = setTimeout(flush, 200);
+      });
+    }
+
+    async function writeBlock(rows) {
+      const first = rows[0].context;
+      const { date, shift } = rows[0].message;
+      const failAll = result => rows.forEach(row => row.resolve(result));
+      const source = await verifySource(first);
+      if (source.error) return failAll(source);
+      const tab = await chrome.tabs.get(first.tabId);
+      const sender = { tab, frameId: 0, url: tab.url, id: chrome.runtime.id };
+      const verified = await Promise.all(rows.map(async row => {
+        const { context, message } = row;
+        const fresh = await Promise.resolve().then(() => getPatient(context.episode, source.info, sender)).catch(() => null);
+        if (message.date !== date || message.shift !== shift ||
+            fresh?.patientId !== context.patientId || !fresh?.patient?.run || fresh.patient.run !== context.run) {
+          row.resolve(error('Revisa el paciente y el turno antes de guardar.', 'SOURCE_SESSION_CHANGED'));
+          return null;
+        }
+        return row;
+      }));
+      const active = verified.filter(Boolean);
+      if (!active.length) return;
+      const access = connection && await connection.authorized(first.accountOwner ?? first.owner);
+      if (connection && !access) return failAll(needsHhr());
+      const current = await verifySource(first);
+      if (current.error) return failAll(current);
+      const patients = active.map(({ context, message }) => ({
+        episode: context.episode, patientRun: context.run, text: message.text, version: message.version,
+      }));
+      const result = await call({ action: 'save-batch', date, shift, patients, ...remoteAccess(access, current.info) });
+      if (connection && result.code === 'UNAUTHENTICATED') {
+        await connection.forget(first.accountOwner ?? first.owner, access.proof);
+        return failAll(needsHhr());
+      }
+      if (result.error) return failAll(result);
+      const after = await verifySource(first).catch(() => error('Cambió la sesión de Eloísa.', 'SOURCE_SESSION_CHANGED'));
+      for (const [index, row] of active.entries()) {
+        const receipt = result.results?.[index];
+        if (receipt?.episode !== row.context.episode || !receipt.confirmed || receipt.date !== date ||
+            receipt.shift !== shift || receipt.text !== row.message.text || !/^[a-f0-9]{64}$/.test(receipt.version)) {
+          row.resolve(receipt?.episode === row.context.episode && receipt.error ?
+            error(receipt.error, receipt.code) : error('HHR aún no confirmó esta entrega.'));
+          continue;
+        }
+        if (!after.error) void chrome.tabs.sendMessage(first.tabId, {
+          type: 'RAYEN_NURSING_HANDOFF_CONFIRMED', episode: row.context.episode, date, shift,
+        }, { documentId: first.sourceDocument }).catch(() => {});
+        row.resolve(after.error ? { ...after, confirmed: true } : receipt);
+      }
+    }
+
     async function operate(message, sender) {
       const { id, action } = message;
       if (connection && action === 'hosted-result') return connection.receive(message, sender);
@@ -268,6 +340,7 @@
           return error('Vuelve a pulsar Guardar cambios desde la tabla.');
         }
         saveTickets.delete(id);
+        return collectSave(grant.block, context, message);
       }
       const prepared = action === 'read' && !message.since && initialNotes.get(id);
       if (prepared) initialNotes.delete(id);
@@ -342,7 +415,7 @@
       table,
       start,
       operate(message, sender) {
-        if (message.action !== 'save' || !(sender.frameId > 0) ||
+        if (message.action !== 'save' || message.ticket !== undefined || !(sender.frameId > 0) ||
             sender.url !== chrome.runtime.getURL(editor) + '#' + message.id) {
           return operate(message, sender);
         }
