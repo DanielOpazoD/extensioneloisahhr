@@ -109,14 +109,15 @@
 
     const summaryText = () => {
       if (usesManualPatient()) return MANUAL_HINT;
-      const patient = episodePatient();
-      if (!patient) return LOADING_HINT;
-      return `${patient.name || 'Paciente'} · ${patient.run || 'RUT no informado'}`;
+      return episodePatient() ? '' : LOADING_HINT;
     };
 
     const refresh = () => {
       if (manualFields) manualFields.hidden = !usesManualPatient();
-      if (summary) summary.textContent = summaryText();
+      if (summary) {
+        summary.textContent = summaryText();
+        summary.hidden = !summary.textContent;
+      }
     };
 
     main.querySelectorAll(`input[name="${SOURCE_FIELD}"]`).forEach(input => {

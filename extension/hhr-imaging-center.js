@@ -61,7 +61,7 @@
             </div>
             <button class="hhr-center-action hhr-center-action-primary hhr-imaging-print" type="button" disabled>Imprimir</button>
           </div>
-          <p class="hhr-imaging-hint" id="hhr-imaging-keyboard-hint">Los datos del paciente se completan solos. Haz clic sobre el formulario o usa las flechas para mover el cursor y Enter para marcar; lo que agregues se imprime en el PDF oficial.</p>
+          <p class="hhr-imaging-hint" id="hhr-imaging-keyboard-hint">Haz clic para marcar, o mueve el cursor con las flechas y pulsa Enter.</p>
           <div class="hhr-imaging-stage">
             <div class="hhr-imaging-canvas" role="group" tabindex="0"
               aria-describedby="hhr-imaging-keyboard-hint"

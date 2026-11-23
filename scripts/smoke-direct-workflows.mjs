@@ -46,9 +46,18 @@ export const verifyDirectWorkflows = async (page, worker) => {
   };
   try {
     await nav('settings'); await nav('lab'); await labReady();
+    assert.equal(await root.locator('.hhr-labreq-patient-summary').isVisible(), false);
+    assert.match(await root.locator('.hhr-patientbar-name').innerText(), /Paciente sintético/);
     await root.getByRole('checkbox', { name: 'CREATININA', exact: true }).check();
     await root.getByRole('textbox', { name: 'Otros exámenes', exact: true }).fill('Borrador de prueba');
     await nav('imaging'); await imageReady();
+    const imagingLayout = await root.evaluate(node => {
+      const bounds = selector => node.querySelector(selector).getBoundingClientRect();
+      return { beforeForm: Math.round(bounds('.hhr-imaging-canvas').top - bounds('.hhr-center-toolbar').top),
+        width: Math.round(bounds('.hhr-center-dialog').width) };
+    });
+    if (imagingLayout.width >= 590) assert.ok(imagingLayout.beforeForm < 220, 'Los controles de imágenes deben dejar visible el formulario');
+    console.info('[imágenes] Diálogo de ' + imagingLayout.width + ' px: ' + imagingLayout.beforeForm + ' px antes del formulario');
     await root.getByRole('textbox', { name: 'Médico solicitante' }).fill('Profesional de prueba');
     await root.locator('[data-doc="encuesta"]').click();
     await root.locator('.hhr-imaging-canvas').focus(); await page.keyboard.press('Enter');

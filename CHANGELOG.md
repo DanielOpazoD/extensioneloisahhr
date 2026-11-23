@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.152
+
+- Inicio vuelve a abrir Recetas, Laboratorio e Imágenes. La cabecera omite el número de episodio y las solicitudes aprovechan mejor la altura del panel.
+
 ## 0.48.151
 
 - Entrega de turno muestra cuántas notas confirmó HHR, permite reintentar los fallos de conexión o ir a una fila por revisar y muestra en «Tiempos» la espera de apertura y guardado.

@@ -79,7 +79,7 @@ export const verifyLabWorkspace = async (page, worker) => {
   const name = root.locator('[data-manual="name"]');
   await name.fill('Paciente de prueba');
   assert.equal(await root.locator('.hhr-patientbar-name').textContent(), 'Paciente de prueba');
-  assert.equal(await root.locator('.hhr-patientbar-episode').textContent(), '');
+  assert.equal(await root.locator('.hhr-patientbar-episode').count(), 0);
   await root.locator('[data-panel="minimize"]').click();
   assert.equal(await root.getByRole('dialog').isVisible(), false);
   assert.equal(await page.evaluate(() => Boolean(document.documentElement.dataset.hhrCenterDocked)), false);
