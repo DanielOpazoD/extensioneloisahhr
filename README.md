@@ -151,7 +151,7 @@ las pestañas Día y Noche aparecen una vez arriba. Se puede editar el turno vig
 el otro turno de la misma fecha. HHR proporciona las notas visibles en una lectura agrupada.
 La extensión comprueba el acceso antes de cargar las filas y muestra un solo aviso de conexión.
 
-«Guardar cambios» envía las entregas modificadas y muestra un ✓ por cada paciente que HHR
+«Guardar cambios» envía las entregas modificadas en bloques de hasta diez y muestra un ✓ por cada paciente que HHR
 confirme. Los borradores que requieren revisión se conservan durante la misma vista de Eloísa,
 incluso al filtrar. Si cambia el turno, se puede abrir el vigente y consultar el borrador anterior
 mientras su editor siga abierto. En caso de conflicto, el editor permite comparar y recuperar
