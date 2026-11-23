@@ -116,6 +116,8 @@ export const verifyLabActionLayout = async page => {
     });
     assert.equal(geometry.overflowing, false, `Toolbar overflow at ${width}px`);
     if (width === 1280) assert.ok(geometry.searchAndGroupsAligned, 'Search and exam groups share the desktop row: ' + JSON.stringify(geometry));
+    const heightBudget = { 1280: 105, 840: 130, 390: 275 };
+    assert.ok(geometry.headerHeight <= heightBudget[width], 'Controles de laboratorio demasiado altos: ' + JSON.stringify(geometry));
     console.info('[laboratorio] ' + width + ' px: ' + geometry.headerHeight + ' px antes del catálogo');
     for (const control of geometry.controls) {
       assert.ok(control.width > 0 && control.left >= geometry.left && control.right <= geometry.right, `${control.selector} outside dialog at ${width}px`);

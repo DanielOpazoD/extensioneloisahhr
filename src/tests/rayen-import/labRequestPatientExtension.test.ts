@@ -79,14 +79,14 @@ describe('origen del paciente en la solicitud de exámenes', () => {
     expect(main.querySelector<HTMLElement>('.hhr-labreq-manual-fields')?.hidden).toBe(false);
   });
 
-  it('no entrega un paciente manual mientras falte el nombre', () => {
+  it('acepta una identificación parcial sin inventar el nombre', () => {
     const main = mount('');
     const controller = owner().createController({ main });
 
     expect(controller.printablePatient()).toBeNull();
 
     setManual(main, 'run', '12.345.678-5');
-    expect(controller.printablePatient()).toBeNull();
+    expect(controller.printablePatient()).toMatchObject({ name: '', run: '12.345.678-5' });
 
     setManual(main, 'name', 'Paciente De Prueba');
     expect(controller.printablePatient()).toMatchObject({

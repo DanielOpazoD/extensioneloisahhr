@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.154
+
+- Inicio vuelve a abrir Recetas, Laboratorio e Imágenes. La cabecera omite el número de episodio y las solicitudes aprovechan mejor la altura del panel.
+- Las órdenes de Laboratorio e Imágenes pueden imprimirse con datos de Eloísa, sin identificación o con datos personalizados.
+
 ## 0.48.153
 
 - Documenta con anotaciones `clinical-clock-allow` las tres lecturas de hora ya convertidas a `Pacific/Easter` en novedades e historial (`hhr-nursing-novelty.js`, `hhr-nursing-worklist.js` y `hhr-history-date-navigation.js`) para alinearlas con el control `check:clinical-clock` de HHR sin cambios funcionales.

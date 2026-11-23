@@ -26,7 +26,7 @@ const rootWithShell = () => {
   root.dataset.encounterId = '1';
   root.innerHTML = `<section class="hhr-center-dialog">
     <button class="hhr-rx-close">Cerrar</button><header class="hhr-center-header"><strong>Centro HHR</strong></header>
-    <div class="hhr-center-patientbar"><span class="hhr-patientbar-tag">Paciente</span><strong class="hhr-patientbar-name">Paciente de prueba</strong><span class="hhr-patientbar-episode"></span><span class="hhr-patientbar-meta"></span><span class="hhr-patientbar-route" hidden></span></div>
+    <div class="hhr-center-patientbar"><span class="hhr-patientbar-tag">Paciente</span><strong class="hhr-patientbar-name">Paciente de prueba</strong><span class="hhr-patientbar-meta"></span><span class="hhr-patientbar-route" hidden></span></div>
     <main class="hhr-center-main"><input aria-label="Solicitud" value="Trabajo en curso"></main></section>`;
   document.body.append(root);
   return root;
@@ -243,7 +243,8 @@ describe('Centro HHR workspace', () => {
     resolveFirst({ patient: { name: 'Paciente A' }, view: {} });
     await first; await Promise.resolve();
     expect(root.querySelector('.hhr-patientbar-name').textContent).toBe('Paciente B');
-    expect(root.querySelector('.hhr-patientbar-episode').textContent).toBe('Episodio 2');
+    expect(root.dataset.hhrContextEncounter).toBe('2');
+    expect(root.querySelector('.hhr-center-patientbar').textContent).not.toContain('Episodio 2');
   });
 
   it('keeps a current route mismatch visible after laboratory form edits', () => {

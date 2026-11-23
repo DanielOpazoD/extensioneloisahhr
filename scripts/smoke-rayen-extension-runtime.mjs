@@ -637,6 +637,14 @@ try {
       .evaluate((element) => element.scrollHeight <= element.clientHeight),
     true,
   );
+  for (const module of ['recipes', 'lab', 'imaging']) {
+    const shortcut = home.locator('.hhr-home-card[data-module="' + module + '"]');
+    if (module === 'lab') await shortcut.press('Enter');
+    else await shortcut.click();
+    await home.locator('.hhr-center-nav-button[data-module="' + module + '"][aria-current="page"]').waitFor();
+    assert.equal(await home.getAttribute('data-active-module'), module);
+    await home.locator('.hhr-center-nav-button[data-module="home"]').click();
+  }
   await verifyDockedPanel(page);
   await home.locator(".hhr-rx-close").click();
   await verifyPrescriptionFormats(page, extensionPath);

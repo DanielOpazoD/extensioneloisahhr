@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import '../../../extension/hhr-lab-request-patient.js';
+import '../../../extension/hhr-imaging-request-view.js';
 import '../../../extension/hhr-imaging-center.js';
 
 type Runtime = {
@@ -18,9 +20,11 @@ const runtimeOwner = () =>
 
 const runtimeMessages = {
   IMAGING_FORM_PRINT_REQUEST: 'RAYEN_IMAGING_FORM_PRINT_REQUEST',
+  LOCAL_IMAGING_FORM_PRINT_REQUEST: 'RAYEN_LOCAL_IMAGING_FORM_PRINT_REQUEST',
 };
 
 const requestForms = {
+  buildPatientView: (patient: {name?: string}) => ({ name: patient.name || '' }),
   IMAGING_DOCUMENTS: {
     solicitud: {
       id: 'solicitud',
@@ -198,6 +202,24 @@ describe('Centro HHR imaging runtime', () => {
     ]);
     expect(print.textContent).toBe('Imprimir');
     expect(root.querySelector('.hhr-imaging-feedback')?.textContent).toContain('Se abrió el PDF');
+  });
+
+  it.each(['', '141121'])('keeps a blank order independent of the clinical header (episode %s)', async encId => {
+    let resolveHeader: ((value: unknown) => void) | undefined;
+    const header = vi.fn(() => new Promise(resolve => { resolveHeader = resolve; }));
+    const send = vi.fn(async () => ({ok:true}));
+    const root = makeRoot();
+    runtimeOwner().create(makeDependencies(send, header)).renderImagingCenter(root, encId);
+    root.querySelector<HTMLInputElement>('input[value="blank"]')!.click();
+    resolveHeader?.({ patient: { name: 'Nombre de la ficha' }, view: { name: 'Nombre de la ficha' } });
+    await Promise.resolve();
+    expect(header).toHaveBeenCalledTimes(encId ? 1 : 0);
+    expect(root.querySelector('.hhr-imaging-overlays')?.textContent).not.toContain('Nombre de la ficha');
+    root.querySelector<HTMLButtonElement>('.hhr-imaging-print')!.click();
+    expect(send).toHaveBeenCalledWith({
+      type: runtimeMessages.LOCAL_IMAGING_FORM_PRINT_REQUEST, source:'blank', patient:{},
+      doc:'solicitud', marks:[], physician:'',
+    });
   });
 
   it('ignores a late patient response after the imaging root is replaced', async () => {
