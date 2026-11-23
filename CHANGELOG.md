@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.153
+
+- Documenta con anotaciones `clinical-clock-allow` las tres lecturas de hora ya convertidas a `Pacific/Easter` en novedades e historial (`hhr-nursing-novelty.js`, `hhr-nursing-worklist.js` y `hhr-history-date-navigation.js`) para alinearlas con el control `check:clinical-clock` de HHR sin cambios funcionales.
+
 ## 0.48.152
 
 - Sincronización CUDYR conserva en sesión las definiciones y el catálogo de profesionales de Gestión de Camas (con refresco ante un profesional nuevo y respaldo si falla una recarga) para evitar degradaciones falsas por microcortes.
