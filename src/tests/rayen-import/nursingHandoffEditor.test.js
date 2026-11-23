@@ -53,9 +53,14 @@ it('conserva el turno nocturno, espera la confirmación y mantiene ambos textos 
   expect(sendMessage.mock.calls.some(([msg]) =>
     msg.action === 'save' && msg.date === night.date && msg.shift === 'night' && msg.version === night.version)).toBe(true);
   server = { ...night, version:'b'.repeat(64), text:id('note').value };
+  const readsBeforeReceipt = sendMessage.mock.calls.filter(([msg]) => msg.action === 'read').length;
   writing.resolve({ ...server, confirmed:true });
   await flush();
   expect(id('status').textContent).toBe('✓ Guardado en HHR');
+
+  expect(sendMessage.mock.calls.filter(([msg]) => msg.action === 'read')).toHaveLength(readsBeforeReceipt);
+  await vi.advanceTimersByTimeAsync(40000);
+  expect(sendMessage.mock.calls.filter(([msg]) => msg.action === 'read')).toHaveLength(readsBeforeReceipt + 1);
 
   type('Borrador local concurrente');
   server = { ...server, version:'c'.repeat(64), text:'Otra edición en HHR' };
