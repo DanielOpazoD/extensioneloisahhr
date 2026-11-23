@@ -36,7 +36,7 @@ const mockHandoff = () => {
     const slot = { date:'2026-11-21', shift:'night' };
     const episodes = ['901001','901002'];
     const byEpisode = episode => ({
-      ...slot, version: (fixture.saved[episode] ? '1' : '0').repeat(64),
+      ...slot, version: (fixture.saved[episode] === 'Actualización remota sintética' ? '2' : fixture.saved[episode] ? '1' : '0').repeat(64),
       text: fixture.saved[episode] ?? 'Nota sintética en HHR',
       comparison: { shift:'day', text:'Nota sintética diurna' },
     });
@@ -55,11 +55,20 @@ const mockHandoff = () => {
         if (!episodes.includes(episode)) throw new Error('Unexpected episode in the handoff fixture');
         fixture.writes.push(episode);
         if (episode === '901002' && fixture.rejectSecond) {
+          const code = fixture.rejectSecond;
           fixture.rejectSecond = false;
-          return {episode, code:'ABORTED', error:'HHR rechazó la segunda entrega. Reintenta.'};
+          if (code === 'ABORTED') fixture.saved[episode] = 'Actualización remota sintética';
+          return {episode, code, error:'Entrega sin confirmar'};
         }
         fixture.saved[episode] = text;
         return {episode, ...byEpisode(episode), confirmed:true};
+      });
+      if (fixture.pauseSave) return new Promise(resolve => {
+        self.__finishHandoffSave = () => {
+          delete self.__finishHandoffSave;
+          fixture.pauseSave = false;
+          resolve(Response.json({result:{results}}));
+        };
       });
       return Promise.resolve(Response.json({result:{results}}));
     }

@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.151
+
+- Entrega de turno muestra cuántas notas confirmó HHR, permite reintentar los fallos de conexión o ir a una fila por revisar y muestra en «Tiempos» la espera de apertura y guardado.
+
 ## 0.48.150
 
 - Guardar cambios envía hasta diez entregas por bloque y conserva el comprobante individual de cada paciente.

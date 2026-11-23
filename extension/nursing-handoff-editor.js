@@ -81,7 +81,7 @@
     disconnect.disabled = saving;
     note.readOnly = saving || ended;
     if (inline) {
-      const state = { dirty: changed, canSave: !save.disabled, slot };
+      const state = { dirty: changed, canSave: !save.disabled, editable: ready && available && !edit.hidden && !note.readOnly && !comparing(), conflict: Boolean(remote), slot };
       const signature = JSON.stringify(state);
       if (reportedState !== signature) {
         reportedState = signature;
@@ -264,8 +264,13 @@
       updateButtons();
     }
     if (type === 'hhr-handoff-row-save' && typeof value === 'string' && /^[a-f0-9-]{36}$/.test(value)) {
-      const confirmed = await submitNote(value);
-      rowMessage('hhr-handoff-row-saved', { ticket: value, confirmed });
+      const outcome = await submitNote(value);
+      rowMessage('hhr-handoff-row-saved', { ticket: value, outcome });
+    }
+    if (type === 'hhr-handoff-row-review') {
+      const target = !conflict.hidden ? byId('remote') : !edit.hidden ? note : status;
+      if (target === status) status.tabIndex = -1;
+      target.focus();
     }
     if (type === 'hhr-handoff-row-visible') {
       const visible = event.data.value === true;
@@ -359,7 +364,7 @@
   currentShift.addEventListener('click', () => { if (ended) loadCurrentShift(); });
 
   async function submitNote(ticket) {
-    if (save.disabled) return false;
+    if (save.disabled) return 'review';
     clearTimeout(refresh);
     ++polling;
     saving = true;
@@ -382,7 +387,9 @@
           (tableView.slot.date !== slot.date || tableView.slot.shift !== slot.shift)) loadCurrentShift();
       else void follow(++polling, Boolean(result.confirmed));
     }
-    return result.confirmed === true;
+    if (result.confirmed === true) return 'saved';
+    return ['UNAVAILABLE', 'DEADLINE_EXCEEDED', 'RESOURCE_EXHAUSTED'].includes(result.code)
+      ? 'retry' : 'review';
   }
   edit.addEventListener('submit', event => {
     event.preventDefault();

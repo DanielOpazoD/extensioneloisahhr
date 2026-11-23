@@ -73,3 +73,6 @@
   content:''; display:block; height:36px; border:1px solid #e3ede9; border-radius:5px;
   background:linear-gradient(90deg,#edf4f1 62%, #f6f9f7 62%);
 }
+.hhr-handoff-timings { color:#45625a; font-variant-numeric:tabular-nums; }
+.hhr-handoff-timings summary { cursor:pointer; }
+.hhr-handoff-timings span:not(:empty) { display:block; margin-top:2px; }

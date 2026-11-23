@@ -392,7 +392,7 @@ async function verifyTableConnection(context, origin, worker) {
   await context.route(portalUrl, mockPortal);
   try {
     await worker.evaluate(() => {
-      self.__worklistHandoffFixture = { batches:[], singles:0, rejectSecond:true, writes:[], saved:{} };
+      self.__worklistHandoffFixture = { batches:[], singles:0, rejectSecond:'UNAVAILABLE', pauseSave:true, writes:[], saved:{} };
     });
     await page.route(url, route => route.fulfill({ contentType:'text/html', body:`<!doctype html>
       <meta charset="utf-8"><style>body{font:14px system-ui,sans-serif} th,td{padding:4px 8px;text-align:left}</style>
@@ -504,16 +504,36 @@ async function verifyTableConnection(context, origin, worker) {
     await page.getByRole('tab', { name:'Noche', exact:true }).click();
     assert.equal(await first.inputValue(), 'Primera entrega sintética');
     assert.equal(await second.inputValue(), 'Segunda entrega sintética');
+    const times = page.locator('.hhr-handoff-timings');
+    await times.locator('summary').click();
+    assert.match(await times.innerText(), /Primera nota editable: [\d,]+ s/);
     await save.click();
-    await page.getByText('1 entrega guardada · 1 por revisar', { exact:true }).waitFor();
+    await page.getByText('0 de 2 confirmadas', { exact:true }).waitFor();
+    await page.waitForFunction(() => !document.querySelector('.hhr-handoff-save-all:not(:disabled)'));
+    for (let n = 0; n < 100 && !await worker.evaluate(() => !!self.__finishHandoffSave); n++) await page.waitForTimeout(50);
+    await worker.evaluate(() => self.__finishHandoffSave());
+    await page.getByText('1 entrega guardada · 1 por reintentar', { exact:true }).waitFor();
+    assert.match(await times.innerText(), /1\/2 confirmadas.*Última confirmación:/);
     assert.equal(await second.inputValue(), 'Segunda entrega sintética');
-    await save.click();
+    await first.fill('Borrador ajeno al reintento');
+    await page.getByRole('button', {name:'Reintentar (1)', exact:true}).click();
     await page.getByText('1 entrega guardada', { exact:true }).waitFor();
     const persisted = await worker.evaluate(() => self.__worklistHandoffFixture);
     assert.deepEqual(persisted.saved, {
       '901001':'Primera entrega sintética', '901002':'Segunda entrega sintética',
     });
     assert.deepEqual(persisted.writes.slice().sort(), ['901001','901002','901002']);
+    assert.equal(await first.inputValue(), 'Borrador ajeno al reintento');
+    await first.fill('Primera entrega sintética');
+    await worker.evaluate(() => { self.__worklistHandoffFixture.rejectSecond = 'ABORTED'; });
+    await second.fill('Borrador en conflicto');
+    await save.click();
+    await page.getByText('0 entregas guardadas · 1 por revisar', { exact:true }).waitFor();
+    await editors[1].locator('#remote').waitFor();
+    await page.getByRole('button', {name:'Revisar (1)', exact:true}).click();
+    await editors[1].locator('#remote:focus').waitFor();
+    assert.equal(await second.inputValue(), 'Borrador en conflicto');
+    assert.equal(await editors[1].locator('#remote').inputValue(), 'Actualización remota sintética');
     assert.equal((await page.locator('table').innerText()).includes('entrega sintética'), false,
       'Clinical notes stay inside extension-owned frames');
   } finally {
