@@ -6,6 +6,7 @@ import '../../../extension/hhr-request-forms.js';
 import '../../../extension/hhr-lab-request-patient.js';
 import '../../../extension/hhr-lab-center.js';
 import '../../../extension/hhr-lab-selection-runtime.js';
+import '../../../extension/hhr-imaging-request-view.js';
 import '../../../extension/hhr-imaging-center.js';
 import '../../../extension/hhr-document-preview-runtime.js';
 

@@ -40,7 +40,7 @@ describe('shared Rayen runtime-message contract', () => {
   it('registers every service-worker request type once', () => {
     const values = Object.values(contract.types);
 
-    expect(values).toHaveLength(75);
+    expect(values).toHaveLength(76);
     expect(contract.types.RAPA_NUI_WEATHER).toBe('RAYEN_RAPA_NUI_WEATHER');
     expect(contract.types.DAILY_BIRTHS).toBe('RAYEN_DAILY_BIRTHS');
     expect(contract.validateRuntimeMessage({ type: contract.types.DAILY_BIRTHS }).ok).toBe(true);

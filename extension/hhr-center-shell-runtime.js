@@ -242,7 +242,7 @@
           encId: requestedEncId,
         });
         if (!root.isConnected || root.dataset.selectedEncounterId !== requestedEncId) return;
-        if (module === 'lab' && root.querySelector('[name="hhr-labreq-patient-source"]:checked')?.value === 'manual') return;
+        if (['manual', 'blank'].includes(root.querySelector('[name="hhr-labreq-patient-source"]:checked')?.value)) return;
         if (!response || response.error) {
           nameEl.textContent = 'Paciente no identificado';
           metaEl.textContent = String((response && response.error) || '');

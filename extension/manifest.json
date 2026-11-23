@@ -248,6 +248,7 @@
         "hhr-lab-selection-runtime.js",
         "hhr-lab-center.js",
         "hhr-request-forms.js",
+        "hhr-imaging-request-view.js",
         "hhr-imaging-center.js",
         "hhr-discharge-actions-runtime.js",
         "hhr-medication-actions-runtime.js",

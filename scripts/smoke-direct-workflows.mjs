@@ -2,6 +2,58 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
+async function verifyLocalOrders(page, worker, root, nav) {
+  const choose = source => root.locator('[name="hhr-labreq-patient-source"][value="' + source + '"]').check();
+  const name = 'Nora Ejemplo Prueba';
+  const run = 'PAS-TEST123';
+  for (const module of ['lab', 'imaging']) {
+    await nav(module);
+    await choose('manual');
+    await root.locator('[data-manual="name"]').fill(name);
+    await root.locator('[data-manual="run"]').fill(run);
+    for (const blank of [false, true]) {
+      if (blank) await choose('blank');
+      let printed;
+      if (module === 'lab') {
+        const popup = page.waitForEvent('popup');
+        await root.locator('.hhr-labreq-print').click();
+        const order = await popup;
+        printed = await order.locator('body').innerText();
+        await order.close();
+      } else {
+        // Capture exactly the bytes passed to Chrome's print tab, before the job is consumed.
+        await worker.evaluate(() => {
+          self.__localOrder = new Promise(resolve => {
+            const listener = (changes, area) => {
+              if (area !== 'session') return;
+              const job = Object.entries(changes).find(([key, change]) => key.startsWith('hhr-pdf-print-') && change.newValue?.base64);
+              if (!job) return;
+              chrome.storage.onChanged.removeListener(listener);
+              resolve(job[1].newValue.base64);
+            };
+            chrome.storage.onChanged.addListener(listener);
+          });
+        });
+        const popup = page.context().waitForEvent('page', {timeout:15000});
+        await root.locator('.hhr-imaging-print').click();
+        const order = await popup;
+        const b64 = await worker.evaluate(() => self.__localOrder);
+        const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+        const pdf = await getDocument({ data: new Uint8Array(Buffer.from(b64, 'base64')), useSystemFonts:true }).promise;
+        const content = await (await pdf.getPage(1)).getTextContent();
+        printed = content.items.map(item => item.str || '').join(' ');
+        await pdf.destroy();
+        await order.close();
+      }
+      assert.doesNotMatch(printed, /Paciente sintético|SINTETICO/i);
+      assert.equal(printed.toUpperCase().includes(run), !blank);
+      for (const part of name.toUpperCase().split(' ')) assert.equal(printed.toUpperCase().includes(part), !blank);
+    }
+    await choose('current');
+  }
+  console.info('[órdenes] Cuatro impresiones verificadas: identidad personalizada y en blanco en HTML de laboratorio y PDF de imágenes.');
+}
+
 export const verifyDirectWorkflows = async (page, worker) => {
   const url = page.url();
   const tabId = await worker.evaluate(async url => {
@@ -45,7 +97,7 @@ export const verifyDirectWorkflows = async (page, worker) => {
     await root.getByRole('option').filter({ hasText: 'Paciente sintético ' + id }).click();
   };
   try {
-    await nav('settings'); await nav('lab'); await labReady();
+    await nav('settings'); await verifyLocalOrders(page, worker, root, nav); await nav('lab'); await labReady();
     assert.equal(await root.locator('.hhr-labreq-patient-summary').isVisible(), false);
     assert.match(await root.locator('.hhr-patientbar-name').innerText(), /Paciente sintético/);
     await root.getByRole('checkbox', { name: 'CREATININA', exact: true }).check();
