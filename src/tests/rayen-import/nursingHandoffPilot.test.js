@@ -226,3 +226,22 @@ it('envía diez borradores en una solicitud y verifica cada comprobante', async 
   expect(results.map(result=>result.text)).toEqual(rows.map((_row,index)=>'Nota '+index));
   expect(results.every(result=>result.confirmed)).toBe(true);
 });
+
+it('comparte solo la comprobación simultánea de apertura del mismo documento y sesión', async () => {
+  const { runtime, chrome, getInfo } = await setup();
+  const prefix = 'hhr-nursing-handoff-1:editor:';
+  const template = (await chrome.storage.session.get(prefix + ids[0]))[prefix + ids[0]];
+  const contexts = Array.from({length:10}, (_, i) => ({ ...template, id:crypto.randomUUID(),
+    episode:String(902000 + i), editorDocument:'editor-' + i }));
+  await chrome.storage.session.set(Object.fromEntries(contexts.map(row => [prefix + row.id, row])));
+  const open = row => runtime.operate({ id:row.id, action:'context' }, {
+    frameId:1, documentId:row.editorDocument, url:extensionOrigin + 'nursing-handoff-editor.html#' + row.id,
+    tab:{ id:1, url:source },
+  });
+  const results = await Promise.all(contexts.map(open));
+  expect(results.every(row => row.inline)).toBe(true);
+  expect(getInfo).toHaveBeenCalledTimes(1);
+  getInfo.mockResolvedValue({ error:'Sesión finalizada' });
+  await expect(open(contexts[0])).resolves.toMatchObject({ code:'SOURCE_SESSION_CHANGED' });
+  expect(getInfo).toHaveBeenCalledTimes(2);
+});

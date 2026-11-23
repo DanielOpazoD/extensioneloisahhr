@@ -11,6 +11,7 @@ let root;
 afterEach(async () => {
   if (root) await act(() => root.unmount());
   document.body.replaceChildren();
+  document.documentElement.removeAttribute('data-hhr-handoff-enabled');
   delete self.webpackChunk_N_E;
   delete globalThis.IS_REACT_ACT_ENVIRONMENT;
   vi.unstubAllGlobals();
@@ -18,6 +19,7 @@ afterEach(async () => {
 
 it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egresos desde enlaces anteriores', async () => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  document.documentElement.setAttribute('data-hhr-handoff-enabled', '');
   history.replaceState(null, '', path + '?tab=2');
   for (const file of ['hhr-worklist-print-column','hhr-nursing-novelty','hhr-nursing-worklist','hhr-continuous-worklist-main']) {
     Function(readFileSync('extension/' + file + '.js', 'utf8'))();
@@ -182,6 +184,13 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   expect(headings()).toEqual(expect.arrayContaining(operationalColumns));
   expect(document.querySelector('[data-hhr-handoff-inline]')).toBe(editor);
   expect(editor.hidden).toBe(true);
+  await act(() => onToggle({ isTrusted: true }));
+  await act(() => document.documentElement.removeAttribute('data-hhr-handoff-enabled'));
+  expect(document.querySelector('[data-hhr-handoff-toggle]')).toBeNull();
+  expect(document.querySelector('[data-hhr-handoff-inline]')).toBeNull();
+  expect(headings()).toContain('Actividad');
+  await act(() => document.documentElement.setAttribute('data-hhr-handoff-enabled', ''));
+  expect(document.querySelector('[data-hhr-handoff-toggle]').getAttribute('aria-expanded')).toBe('false');
   const click = text => [...document.querySelectorAll('button')].find(b=>b.textContent===text).click();
   await act(()=>click('Acción 22'));
   expect(action).toHaveBeenCalledWith(1,22);

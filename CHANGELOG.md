@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.155
+
+- Ajustes permite activar o desactivar la entrega de turno en Gestión de cuidados para este perfil de Chrome. El cambio se aplica también a las pestañas abiertas.
+- Al abrir varias entregas se comparte la verificación de sesión simultánea. Tras guardar en bloque, las filas confirmadas sin foco retoman su actualización periódica sin abrir una consulta inmediata por paciente.
+
 ## 0.48.154
 
 - Inicio vuelve a abrir Recetas, Laboratorio e Imágenes. La cabecera omite el número de episodio y las solicitudes aprovechan mejor la altura del panel.
