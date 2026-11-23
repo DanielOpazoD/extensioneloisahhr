@@ -148,6 +148,7 @@
           children: [
             jsx('strong', { children: detail?.kind === 'evolution' ? 'Evolución' : detail?.kind === 'indication' ? 'Indicación' : 'Novedad médica' }, 'type'),
             jsx('span', { className: 'hhr-novelty-meta',
+              // clinical-clock-allow raw-offset-clock: detail.minute is already converted to Pacific/Easter wall time (YYYY-MM-DDTHH:MM) by hhr-nursing-novelty.js.
               children: [detail?.minute.slice(11), detail?.author].filter(Boolean).join(' · ') || marker.title }, 'meta'),
             jsx('p', { children: detail?.excerpt || 'Abre el Historial para leer la publicación.' }, 'excerpt'),
             jsx('a', { href: detail ? marker.href + '=' + detail.minute : marker.href, children: 'Abrir en Historial ↗' }, 'history'),

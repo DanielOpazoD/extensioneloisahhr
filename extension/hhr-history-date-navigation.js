@@ -265,6 +265,7 @@
               header?.querySelector('.MuiCardHeader-subheader')?.textContent.trim() || '')) return false;
             if (!minute) return true;
             const action = header.querySelector('.MuiCardHeader-action');
+            // clinical-clock-allow raw-offset-clock: novelty.minute is already converted to Pacific/Easter wall time (YYYY-MM-DDTHH:MM) by hhr-nursing-novelty.js.
             return /^\s*(\d{2}:\d{2})(?:\s*(?:hrs?|h))?\.?\s*$/i.exec(action?.textContent || '')?.[1] === minute.slice(11);
           });
         const card = minute && matches.length !== 1 ? undefined : matches[0];
