@@ -38,5 +38,16 @@
           <div class="hhr-connection-feedback hhr-imaging-feedback" role="status" aria-live="polite"></div>
         </div>
       `;
-  globalThis.HhrImagingRequestView = Object.freeze({ markup });
+  const reports = () => `
+    <div class="hhr-labreq-patient-source hhr-census-anchor">
+      <strong>Paciente</strong>
+      ${globalThis.HhrLabRequestPatient.pickerButtonHtml()}
+      ${globalThis.HhrLabRequestPatient.routeNoticeHtml}
+    </div>
+    <div class="hhr-imaging-reports">
+      <a class="hhr-center-action hhr-center-action-primary" href="${globalThis.HhrFavoriteLinks.mmradUrl}"
+        target="_blank" rel="noopener noreferrer">Abrir MMRAD <span aria-hidden="true">↗</span></a>
+      <span class="hhr-rx-meta">Selecciona al paciente en el portal de radiología.</span>
+    </div>`;
+  globalThis.HhrImagingRequestView = Object.freeze({ markup, reports });
 })();

@@ -87,9 +87,14 @@ describe('Session-local request drafts', () => {
   it('isolates episodes and discards a draft when verified patient or author changes', async () => {
     const app = setup(), root = rootFor('1'); app.labView(root, '1'); await readyLab(root);
     input(root, '.hhr-labreq-otros', 'Borrador del primer episodio');
+    const copiesSelector = '.hhr-labreq-copies input';
+    input(root, copiesSelector, '4');
     app.labView(root, '2'); await readyLab(root); expect(root.querySelector('.hhr-labreq-otros').value).toBe('');
+    expect(root.querySelector(copiesSelector).value).toBe('1');
     app.labView(root, '1'); await readyLab(root); expect(root.querySelector('.hhr-labreq-otros').value).toBe('Borrador del primer episodio');
+    expect(root.querySelector(copiesSelector).value).toBe('4');
     globalThis.HhrRequestDrafts.checkpoint(root); app.changeActor('author-2'); app.labView(root, '1'); await readyLab(root);
+    expect(root.querySelector(copiesSelector).value).toBe('1');
     expect(root.querySelector('.hhr-labreq-otros').value).toBe('');
     input(root, '.hhr-labreq-otros', 'Borrador de otro autor'); globalThis.HhrRequestDrafts.checkpoint(root);
     app.changeIdentity('different-patient'); app.labView(root, '1'); await readyLab(root);

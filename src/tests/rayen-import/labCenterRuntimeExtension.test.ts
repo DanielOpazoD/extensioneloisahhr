@@ -25,6 +25,7 @@ const runtimeMessages = {
 };
 
 const requestForms = {
+  LAB_MAX_COPIES: 99,
   EXAM_CATEGORIES: [{ id: 'hematologia', name: 'Hematología', tube: 'Lila', exams: ['Hemograma'] }],
   PROCEDENCIA_OPTIONS: ['Hospitalización', 'Urgencia'],
   FONASA_LEVELS: ['A', 'B'],
@@ -209,11 +210,20 @@ describe('Centro HHR Laboratorio runtime', () => {
     expect(medico.getAttribute('autocomplete')).toBe('off');
     otros.value = 'Ferritina ';
     medico.value = 'Dra. Sintética';
+    const copies = root.querySelector<HTMLInputElement>('.hhr-labreq-copies input')!;
+    expect(copies.value).toBe('1');
+    for (const invalid of ['', '0', '100', '1.5']) {
+      copies.value = invalid;
+      print.click();
+      expect(window.open).not.toHaveBeenCalled();
+    }
+    copies.value = '3';
     print.click();
 
     expect(requestForms.buildLabRequestPrintHtml).toHaveBeenCalledWith(
       expect.objectContaining({
         otros: 'Ferritina',
+        copies: 3,
         medico: 'Dra. Sintética',
         patient: {
           name: 'Ana Riroroko',
@@ -295,6 +305,7 @@ describe('Centro HHR Laboratorio runtime', () => {
           birthDate: '01-02-1980',
         },
         ficha: 'FC-204',
+        copies: 1,
         diagnosis: 'Diagnóstico registrado manualmente',
         selected: [],
       })

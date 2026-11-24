@@ -175,9 +175,24 @@ describe('extension request forms · laboratory print HTML', () => {
     expect(html).toContain('TUBO VERDE');
     expect(html).toContain('ORINA / PARÁSITOS');
     expect(html).toContain('VIROLOGÍA / OTROS');
-    expect(html).toContain('body { margin: 0; padding: 3mm 4mm;');
+    expect(html.match(/<section class="lab-order-copy">/g)).toHaveLength(1);
+    expect(html).toContain('.lab-order-copy { padding: 3mm 4mm; }');
     expect(html).toContain('@page { size: letter portrait; margin: 4mm; }');
     expect(html).not.toContain('window.print()');
+  });
+
+  it('repeats the complete order identically for every requested copy in one document', () => {
+    const html = forms.buildLabRequestPrintHtml({ ...baseState, copies: 3 });
+    const pages = html.match(/<section class="lab-order-copy">[\s\S]*?<\/section>/g) || [];
+    expect(pages).toHaveLength(3);
+    expect(new Set(pages).size).toBe(1);
+    expect(pages[0]).toContain(baseState.patient.name);
+    expect(pages[0]).toContain('MEDICO TRATANTE:');
+    expect(html.match(/<!doctype html>/gi)).toHaveLength(1);
+  });
+
+  it.each([0, 100, 1.5, Infinity, NaN])('rejects invalid copy counts (%s)', copies => {
+    expect(() => forms.buildLabRequestPrintHtml({ ...baseState, copies })).toThrow(RangeError);
   });
 
   it('prints the typed OTROS on two ruled lines and MEDICO TRATANTE on its line, FIRMA blank', () => {

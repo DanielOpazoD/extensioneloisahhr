@@ -52,6 +52,40 @@ async function chooseCensusPatient(root, id, query = '') {
   } else await option.click();
 }
 
+async function readPdfPages(bytes) {
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const pdf = await getDocument({ data: new Uint8Array(bytes), useSystemFonts: true }).promise;
+  try {
+    const pages = [];
+    for (let number = 1; number <= pdf.numPages; number++) {
+      const page = await pdf.getPage(number);
+      const content = await page.getTextContent();
+      pages.push(content.items.map(item => item.str || '').join(' '));
+    }
+    return pages;
+  } finally {
+    await pdf.destroy();
+  }
+}
+
+async function verifyMmradLink(page, root) {
+  const url = 'https://ris.mmrad.cl/web/guest';
+  const link = root.getByRole('link', { name: 'Abrir MMRAD', exact: true });
+  assert.equal(await link.getAttribute('href'), url);
+  await page.context().route(url, route => route.fulfill({ contentType:'text/html', body:'<title>RIS de prueba</title>' }));
+  try {
+    const opened = page.waitForEvent('popup');
+    await link.press('Enter');
+    const portal = await opened;
+    await portal.waitForURL(url);
+    assert.equal(await portal.title(), 'RIS de prueba');
+    assert.ok(await portal.evaluate(() => !window.opener && !document.referrer));
+    await portal.close();
+  } finally {
+    await page.context().unroute(url);
+  }
+}
+
 async function verifyLocalOrders(page, worker, root, nav) {
   const choose = source => root.locator('[name="hhr-labreq-patient-source"][value="' + source + '"]').check();
   const name = 'Nora Ejemplo Prueba';
@@ -92,10 +126,23 @@ async function verifyLocalOrders(page, worker, root, nav) {
       assert.ok(Math.abs(scrolled.y - before.y) < 1 && Math.abs(scrolled.x - before.x) < 1);
       let printed;
       if (module === 'lab') {
+        const copies = root.getByRole('spinbutton', { name: 'Copias', exact: true });
+        if (!blank) {
+          assert.equal(await copies.inputValue(), '1');
+          await root.getByRole('checkbox', {name:'HEMOGRAMA', exact:true}).check();
+        }
+        const expected = blank ? 1 : 3;
+        await copies.fill(String(expected));
         const popup = page.waitForEvent('popup');
         await root.locator('.hhr-labreq-print').click();
         const order = await popup;
-        printed = await order.locator('body').innerText();
+        await order.locator('h1').first().waitFor();
+        const pages = await readPdfPages(await order.pdf({ preferCSSPageSize: true }));
+        assert.equal(pages.length, expected);
+        assert.ok(pages.every(text => text === pages[0]));
+        assert.match(pages[0], /FIRMA/);
+        if (!blank) assert.equal(await order.locator('.exam').filter({ hasText: 'HEMOGRAMA' }).locator('.box.on').count(), expected);
+        printed = pages[0];
         await order.close();
       } else {
         // Capture exactly the bytes passed to Chrome's print tab, before the job is consumed.
@@ -115,11 +162,7 @@ async function verifyLocalOrders(page, worker, root, nav) {
         await root.locator('.hhr-imaging-print').click();
         const order = await popup;
         const b64 = await worker.evaluate(() => self.__localOrder);
-        const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
-        const pdf = await getDocument({ data: new Uint8Array(Buffer.from(b64, 'base64')), useSystemFonts:true }).promise;
-        const content = await (await pdf.getPage(1)).getTextContent();
-        printed = content.items.map(item => item.str || '').join(' ');
-        await pdf.destroy();
+        [printed] = await readPdfPages(Buffer.from(b64, 'base64'));
         await order.close();
       }
       assert.doesNotMatch(printed, /Paciente sintético|DOC-FICHA|PAS-PRUEBA/i);
@@ -135,7 +178,7 @@ async function verifyLocalOrders(page, worker, root, nav) {
       }
     }
   }
-  console.info('[órdenes] Cuatro impresiones verificadas: identidad personalizada y en blanco en HTML de laboratorio y PDF de imágenes.');
+  console.info('[órdenes] PDF de laboratorio con tres copias idénticas o una hoja en blanco y dos PDF de imágenes verificados.');
 }
 
 export const verifyDirectWorkflows = async (page, worker) => {
@@ -197,6 +240,7 @@ export const verifyDirectWorkflows = async (page, worker) => {
     assert.equal(await root.locator('.hhr-imaging-mark').count(), 1);
     await root.locator('.hhr-flow-tabs [data-flow="reports"]').click();
     assert.equal(await root.getByRole('button', { name: 'Imprimir', exact: true }).count(), 0);
+    await verifyMmradLink(page, root);
     await root.locator('.hhr-flow-tabs [data-flow="request"]').click();
     await imageReady();
     assert.equal(await root.locator('.hhr-imaging-mark').count(), 1);

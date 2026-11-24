@@ -609,7 +609,7 @@
             <button class="hhr-rx-tab" type="button" role="tab" data-flow="results" aria-selected="false">Resultados</button>
             <button class="hhr-rx-tab" type="button" role="tab" data-flow="request" aria-selected="true">Solicitar</button>
           </div>
-          ${labRequestPatient.printActionsHtml('lab')}
+          ${labRequestPatient.printActionsHtml('lab', requestForms.LAB_MAX_COPIES)}
         </div>
         <div class="hhr-center-content hhr-labreq-content">
           ${labRequestPatient.sectionHtml(encId)}
@@ -652,6 +652,7 @@
         </div>
       `;
       const counter = main.querySelector('.hhr-labreq-count');
+      const copiesInput = main.querySelector('.hhr-labreq-copies input');
       const printButton = main.querySelector('.hhr-labreq-print');
       const feedback = main.querySelector('.hhr-labreq-feedback');
       const othersInput = main.querySelector('.hhr-labreq-otros');
@@ -683,12 +684,13 @@
           if (input.matches('.hhr-labreq-exam input')) return ['selected', input.dataset.key];
           if (input.dataset.manual) return ['manual', input.dataset.manual];
           if (input === othersInput) return 'others';
+          if (input === copiesInput) return 'copies';
           if (input.matches('.hhr-labreq-medico')) return 'physician';
           if (input.matches('.hhr-labreq-prais')) return 'prais';
           return { 'hhr-labreq-patient-source': 'source', 'hhr-labreq-procedencia': 'procedencia', 'hhr-labreq-fonasa': 'fonasa' }[input.name] || null;
         },
         capture: () => ({ selected: Object.fromEntries(Array.from(main.querySelectorAll('.hhr-labreq-exam input')).map(input => [input.dataset.key, input.checked])), others: othersInput.value,
-          physician: main.querySelector('.hhr-labreq-medico').value,
+          copies: copiesInput.value, physician: main.querySelector('.hhr-labreq-medico').value,
           source: main.querySelector('[name="hhr-labreq-patient-source"]:checked')?.value,
           manual: Object.fromEntries(manualKeys.map(key => [key, main.querySelector('[data-manual="' + key + '"]').value])),
           procedencia: main.querySelector('[name="hhr-labreq-procedencia"]:checked')?.value,
@@ -697,6 +699,7 @@
         restore: state => {
           main.querySelectorAll('.hhr-labreq-exam input').forEach(input => { input.checked = Boolean(state.selected[input.dataset.key]); });
           othersInput.value = state.others; main.querySelector('.hhr-labreq-medico').value = state.physician;
+          copiesInput.value = state.copies ?? '1';
           manualKeys.forEach(key => { main.querySelector('[data-manual="' + key + '"]').value = state.manual[key] || ''; });
           [['hhr-labreq-patient-source', state.source], ['hhr-labreq-procedencia', state.procedencia], ['hhr-labreq-fonasa', state.fonasa]].forEach(([name, value]) => {
             main.querySelectorAll('[name="' + name + '"]').forEach(input => { input.checked = input.value === value; });
@@ -716,12 +719,13 @@
       main.querySelector('.hhr-center-content').addEventListener('input', updateCount);
       printButton.addEventListener('click', () => {
         const patient = printablePatient();
-        if (!patient) return;
+        if (!patient || !copiesInput.reportValidity()) return;
         const fonasa = main.querySelector('input[name="hhr-labreq-fonasa"]:checked');
         const procedencia = main.querySelector('input[name="hhr-labreq-procedencia"]:checked');
         let logoUrl = '';
         try { logoUrl = chrome.runtime.getURL('hhr-logo.svg'); } catch (_error) {}
         const html = requestForms.buildLabRequestPrintHtml({
+          copies: copiesInput.valueAsNumber,
           patient: { name: patient.name, run: patient.run, birthDate: patient.birthDate && requestForms.formatDateCL ? requestForms.formatDateCL(patient.birthDate) : patient.birthDate },
           diagnosis: patient.diagnosis,
           ficha: patient.ficha,

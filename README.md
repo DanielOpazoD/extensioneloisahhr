@@ -94,6 +94,10 @@ La orden conserva su origen hasta que se elige un paciente. Junto a «Imprimir»
 y el documento si se eligió alguien del censo, o «Sin identificación» si la orden está en blanco.
 Para una orden personalizada, los datos se ven en el propio formulario. En Laboratorio, el contador
 y la opción de guardar un grupo aparecen al seleccionar exámenes.
+En Laboratorio, «Copias» junto a «Imprimir» permite elegir de 1 a 99 ejemplares de la misma
+orden. «Guardar como PDF» los reúne en un archivo, con una copia por página.
+En Imágenes, la pestaña «Informes» ofrece «Abrir MMRAD». El portal se abre en otra pestaña
+para consultar los estudios con la sesión del profesional.
 En Recetas se elige Estándar o Compacta antes de imprimir. En el diálogo de Chrome se puede
 seleccionar una impresora o guardar el documento como PDF.
 
