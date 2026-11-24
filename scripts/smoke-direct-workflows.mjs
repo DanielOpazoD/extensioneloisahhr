@@ -2,6 +2,41 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
+async function verifyImagingToolbar(page, root) {
+  const viewport = page.viewportSize();
+  const dock = root.locator('[data-panel="dock"]');
+  const wasDocked = await dock.getAttribute('aria-pressed') === 'true';
+  if (wasDocked) await dock.click();
+  try {
+    const tabs = root.getByRole('tablist', { name: 'Documento' });
+    const consent = tabs.getByRole('tab', { name: 'Consentimiento Informado' });
+    await consent.click();
+    assert.equal(await consent.getAttribute('aria-selected'), 'true');
+    for (const width of [1036, 620, 390, 320]) {
+      await page.setViewportSize({ width, height: 740 });
+      const layout = await root.evaluate(node => {
+        const pane = node.querySelector('.hhr-center-content');
+        pane.scrollTop = 0;
+        const box = selector => node.querySelector(selector).getBoundingClientRect();
+        const docs = box('.hhr-imaging-tabs'), doctor = box('.hhr-imaging-physician'), tools = box('.hhr-imaging-tools');
+        return {
+          abovePaper: Math.round(box('.hhr-imaging-canvas').top - box('.hhr-center-toolbar').top),
+          overflow: pane.scrollWidth - pane.clientWidth, inputWidth: doctor.width,
+          docsInline: Math.abs(docs.y + docs.height / 2 - doctor.y - doctor.height / 2) < 2,
+          toolsInline: Math.abs(tools.y + tools.height / 2 - doctor.y - doctor.height / 2) < 2,
+        };
+      });
+      assert.ok(layout.overflow <= 1 && layout.inputWidth >= 100 && layout.toolsInline, JSON.stringify({width, layout}));
+      assert.equal(layout.docsInline, width >= 620);
+      if (width === 1036) assert.ok(layout.abovePaper <= 180, 'Demasiado espacio por encima de la orden personalizada');
+    }
+    await tabs.getByRole('tab', { name: 'Formulario Solicitud' }).click();
+  } finally {
+    await page.setViewportSize(viewport);
+    if (wasDocked) await dock.click();
+  }
+}
+
 async function verifyLocalOrders(page, worker, root, nav) {
   const choose = source => root.locator('[name="hhr-labreq-patient-source"][value="' + source + '"]').check();
   const name = 'Nora Ejemplo Prueba';
@@ -11,6 +46,7 @@ async function verifyLocalOrders(page, worker, root, nav) {
     await choose('manual');
     await root.locator('[data-manual="name"]').fill(name);
     await root.locator('[data-manual="run"]').fill(run);
+    if (module === 'imaging') await verifyImagingToolbar(page, root);
     for (const blank of [false, true]) {
       if (blank) await choose('blank');
       const actions = root.locator('.hhr-request-actions');

@@ -396,23 +396,42 @@
       }
       #hhr-prescription-print-modal .hhr-connection-feedback { min-height: 18px; margin-top: 10px; color: #64716f; font-size: 11.5px; }
       #hhr-prescription-print-modal .hhr-connection-feedback.is-error { color: var(--hhr-red-ink); }
-      #hhr-prescription-print-modal .hhr-imaging-tabs { width: fit-content; max-width: 100%; flex-wrap: wrap; margin: 0; }
       #hhr-prescription-print-modal .hhr-imaging-controls {
-        position: sticky; top: 0; z-index: 4; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;
-        margin: 4px 0; padding: 3px 0; border-bottom: 1px solid #e8eeec; background: rgba(255,255,255,.97);
-        box-shadow: 0 5px 10px rgba(255,255,255,.92);
+        position: sticky; top: 0; z-index: 4; display: grid; align-items: center; gap: 4px 8px;
+        grid-template-columns: auto minmax(0,1fr) auto; padding: 3px 0 4px;
+        border-bottom: 1px solid #e1e9e6; background: #fff;
       }
-      #hhr-prescription-print-modal .hhr-imaging-physician { flex: 1 1 180px; min-width: min(160px, 100%); }
-      #hhr-prescription-print-modal .hhr-imaging-tools { display: flex; align-items: center; gap: 5px; }
+      #hhr-prescription-print-modal .hhr-imaging-tabs { justify-self: start; max-width: 100%; margin: 0; padding: 2px; gap: 2px; }
+      #hhr-prescription-print-modal[data-active-module="imaging"] :is(.hhr-flow-tabs,.hhr-imaging-tabs) .hhr-rx-tab {
+        flex: 0 0 auto; min-height: 26px; padding: 1px 8px; font-size: 12px; white-space: nowrap;
+      }
+      #hhr-prescription-print-modal .hhr-imaging-controls .hhr-imaging-physician { width: 100%; min-width: 0; box-sizing: border-box; }
+      #hhr-prescription-print-modal .hhr-imaging-tools { display: flex; align-items: center; gap: 3px; }
+      #hhr-prescription-print-modal .hhr-imaging-tools button { padding-inline: 7px; }
+      #hhr-prescription-print-modal[data-active-module="imaging"] .hhr-labreq-manual-fields label { gap: 2px; }
+      #hhr-prescription-print-modal[data-active-module="imaging"] .hhr-labreq-manual-fields input { height: 28px; box-sizing: border-box; }
       #hhr-prescription-print-modal .hhr-imaging-tool.is-active { border-color: var(--hhr-teal-500); background: #e8f4f1; color: var(--hhr-teal-ink); }
-      #hhr-prescription-print-modal .hhr-imaging-hint { margin: 3px 0; color: #526762; font-size: 11px; line-height: 1.4; }
       #hhr-prescription-print-modal .hhr-imaging-stage { display: flex; justify-content: center; padding: 4px 0 10px; }
+      @container hhr-center (max-width: 600px) {
+        #hhr-prescription-print-modal .hhr-imaging-controls { grid-template-columns: minmax(0,1fr) auto; }
+        #hhr-prescription-print-modal .hhr-imaging-tabs { grid-column: 1 / -1; }
+      }
+      @container hhr-center (max-width: 410px) {
+        #hhr-prescription-print-modal .hhr-imaging-undo { width: 28px; padding-inline: 0; }
+        #hhr-prescription-print-modal .hhr-imaging-undo span { display: none; }
+        #hhr-prescription-print-modal .hhr-imaging-undo::after { content: '↶'; font-size: 16px; line-height: 1; }
+      }
       #hhr-prescription-print-modal .hhr-imaging-canvas {
         position: relative; width: min(720px, 100%); border: 1px solid #dde5e3; border-radius: 8px;
         background: #fff; box-shadow: 0 4px 18px rgba(16,42,67,.10); overflow: hidden;
         cursor: crosshair; user-select: none;
       }
       #hhr-prescription-print-modal .hhr-imaging-canvas:focus-visible { outline: 3px solid rgba(15,147,140,.38); outline-offset: 3px; }
+      #hhr-prescription-print-modal #hhr-imaging-keyboard-hint { display: none; }
+      #hhr-prescription-print-modal .hhr-imaging-canvas:focus-visible #hhr-imaging-keyboard-hint {
+        display: block; position: absolute; top: 4px; left: 6px; pointer-events: none;
+        color: var(--hhr-teal-ink); font-size: 11px;
+      }
       #hhr-prescription-print-modal .hhr-imaging-image { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
       #hhr-prescription-print-modal .hhr-imaging-overlays { position: absolute; inset: 0; }
       #hhr-prescription-print-modal .hhr-imaging-overlay { position: absolute; color: #000; font-size: 12px; line-height: 1; white-space: nowrap; pointer-events: none; }

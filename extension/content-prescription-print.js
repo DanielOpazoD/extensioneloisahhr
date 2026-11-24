@@ -693,9 +693,7 @@
           </div>
         </div>
         <span class="divider" aria-hidden="true"></span>
-        <button class="session hhr-ops-session is-degraded" type="button"
-          aria-label="Comprobar conexiones" data-tip="Conexiones"
-          data-tip-note="Estado de Ficha Médico y Gestión de Camas. Clic para administrar.">
+        <button class="session hhr-ops-session is-degraded" type="button" aria-label="Abrir conexiones">
           <span class="avatar-wrap" aria-hidden="true">
             <span class="avatar hhr-ops-avatar">HHR</span>
             <span class="dot hhr-ops-connection-dot"></span>

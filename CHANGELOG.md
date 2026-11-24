@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.157
+
+- En Imágenes, los formularios Solicitud, Contraste y Consentimiento comparten una barra con el médico solicitante y las herramientas de anotación. En pantallas estrechas los controles se distribuyen en dos filas para dejar espacio al documento.
+- El botón de sesión abre los detalles de conexión con un clic. Se eliminó el mensaje largo que aparecía al pasar el cursor.
+
 ## 0.48.156
 
 - Inicio abre Recetas, resultados, solicitudes de laboratorio y solicitudes de imágenes con un clic.
