@@ -267,6 +267,7 @@
         "hhr-history-date-navigation.js",
         "hhr-native-ficha-presentation.js",
         "hhr-worklist-drawer.js",
+        "worklist-return-navigation.js",
         "hhr-native-worklist-presentation.js",
         "content-prescription-print.js",
         "nursing-handoff-dialog.js"

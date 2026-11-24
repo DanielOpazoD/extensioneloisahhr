@@ -125,7 +125,7 @@ export const verifyLabWorkspace = async (page, worker) => {
   await search.fill('');
   await capture(page, 'workspace-laboratorio');
   const printedPage = page.waitForEvent('popup');
-  await root.getByRole('button', { name: 'Imprimir solicitud' }).click();
+  await root.getByRole('button', { name: 'Imprimir', exact: true }).click();
   const popup = await printedPage;
   await popup.getByText('Paciente de prueba', { exact: false }).first().waitFor();
   for (const exam of ['CREATININA', 'PROTEINA C REACTIVA']) {

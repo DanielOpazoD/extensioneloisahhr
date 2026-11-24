@@ -4,7 +4,7 @@
 // MV3 requires initial imports. Excel/PDF stay here until their separate offscreen migrations.
 importScripts(
   'message-contract.js', 'build-identity.js', 'hhr-origin-policy.js', 'exalab-background.js', 'exalab-session-transport.js', 'exalab-auto-runtime.js', 'eloisa-patient-code-contract.js', 'fichamedico-manual-patient-code-runtime.js',
-  'encounter-navigation.js', 'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js', 'rapa-nui-weather.js', 'hhr-daily-births.js',
+  'encounter-navigation.js', 'worklist-return-state.js', 'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js', 'rapa-nui-weather.js', 'hhr-daily-births.js',
   'hhr-request-forms.js', 'hhr-imaging-print.js',
   'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
   'connection-relay-recovery.js', 'fichamedico-transport-runtime.js', 'fichamedico-history-read-model.js', 'fichamedico-device-evidence-runtime.js', 'clinical-read-error-contract.js', 'fichamedico-clinical-client.js', 'tab-encounter-authorization.js', 'fichamedico-patient-flow-runtime.js',
@@ -1413,6 +1413,7 @@ const runtimeMessageRoutes = Object.freeze({
       }),
     'No se pudo generar la impresión de pacientes hospitalizados.'
   ),
+  [RUNTIME_MESSAGES.WORKLIST_RETURN_CONTEXT]: runtimeRoute(self.HhrWorklistReturnState.handle, 'No se pudo recuperar la posición de la lista.'),
   [RUNTIME_MESSAGES.WORKLIST_PATIENT_EDIT]: runtimeRoute(worklistPatientEditor.start, 'No se pudo abrir Gestión de Camas.'),
   [RUNTIME_MESSAGES.WORKLIST_EDITOR_READY]: runtimeRoute(worklistPatientEditor.resume, 'No se pudo abrir el editor de Gestión de Camas.'),
   [RUNTIME_MESSAGES.WORKLIST_DOCUMENT_PRINT_REQUEST]: runtimeRoute(

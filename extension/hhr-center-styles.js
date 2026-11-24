@@ -197,7 +197,6 @@
       #hhr-prescription-print-modal .hhr-center-app-link { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; min-height: 34px; padding: 0 12px; border: 1px solid #d7e1df; border-radius: 8px; background: #fff; color: var(--hhr-teal-ink); font-size: 12px; font-weight: 650; text-decoration: none; }
       #hhr-prescription-print-modal .hhr-center-app-link:hover { background: #edf7f4; border-color: #9ccac1; }
       #hhr-prescription-print-modal .hhr-center-app-link:focus-visible { outline: 2px solid var(--hhr-teal-ink); outline-offset: 3px; }
-      #hhr-prescription-print-modal .hhr-home-intro { margin: 0 0 16px; color: var(--hhr-ink-500); font-size: 12px; line-height: 1.5; }
       #hhr-prescription-print-modal .hhr-center-header {
         min-height: 52px; height: 52px; box-sizing: border-box; flex-shrink: 0; margin: 0; display: flex; align-items: center; gap: 10px; padding: 0 56px 0 16px;
         border-bottom: 1px solid #e2e8e6; background: #fff;
@@ -239,22 +238,19 @@
       #hhr-prescription-print-modal .hhr-patientbar-option-meta { grid-column: 2; color: #74807e; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       #hhr-prescription-print-modal .hhr-patientbar-empty { padding: 18px 10px; color: #697674; text-align: center; font-size: 12px; }
       #hhr-prescription-print-modal .hhr-flow-tabs { flex: 0 0 auto; min-width: 230px; margin: 0; }
-      #hhr-prescription-print-modal .hhr-home-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+      #hhr-prescription-print-modal .hhr-home-grid {
+        display:grid; grid-template-columns:repeat(auto-fit,minmax(min(165px,100%),1fr)); gap:6px;
+      }
       #hhr-prescription-print-modal .hhr-home-card {
-        display: grid; gap: 5px; justify-items: start; padding: 13px 14px; border: 1px solid #e0e8e6;
-        border-radius: 12px; background: #fff; color: var(--hhr-ink-900); cursor: pointer; text-align: left;
-        font: inherit; box-shadow: 0 1px 2px rgba(16,42,67,.04);
-        transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+        display:flex; align-items:center; gap:9px; min-height:40px; padding:6px 10px;
+        border:1px solid var(--hhr-line-200); border-radius:7px; background:white;
+        color:var(--hhr-ink-900); font:inherit; text-align:left; cursor:pointer;
       }
-      #hhr-prescription-print-modal .hhr-home-card:hover { border-color: #9fd0ca; box-shadow: 0 6px 18px rgba(16,42,67,.10); transform: translateY(-1px); }
-      #hhr-prescription-print-modal .hhr-home-card:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(15,147,140,.28); }
-      #hhr-prescription-print-modal .hhr-home-card strong { font-size: 13px; font-weight: 650; }
-      #hhr-prescription-print-modal .hhr-home-card-icon {
-        display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px;
-        background: #e8f4f1; color: var(--hhr-teal-ink);
-      }
-      #hhr-prescription-print-modal .hhr-home-card-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-      #hhr-prescription-print-modal .hhr-home-card-desc { color: #6b7876; font-size: 11px; line-height: 1.4; }
+      #hhr-prescription-print-modal .hhr-home-card:hover { background:var(--hhr-teal-050); border-color:#a7c9c1; }
+      #hhr-prescription-print-modal .hhr-home-card:focus-visible { outline:2px solid var(--hhr-teal-ink); outline-offset:1px; }
+      #hhr-prescription-print-modal .hhr-home-card strong { font-size:13px; font-weight:600; }
+      #hhr-prescription-print-modal .hhr-home-card-icon { display:grid; place-items:center; color:var(--hhr-teal-ink); }
+      #hhr-prescription-print-modal .hhr-home-card-icon svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
       #hhr-prescription-print-modal .hhr-route-change-state { margin-left: 12px; padding-right: 26px; color: #8a6714; font-size: 11px; font-weight: 600; }
       #hhr-prescription-print-modal .hhr-route-change-state.is-synced { color: #11766d; }
       #hhr-prescription-print-modal .hhr-route-change-state.is-error,
@@ -439,12 +435,8 @@
         font: 600 11px/1.3 var(--hhr-font); text-transform: uppercase; outline: none;
         box-shadow: 0 3px 10px rgba(16,42,67,.18);
       }
-      @media (prefers-reduced-motion: reduce) { #hhr-prescription-print-modal .hhr-home-card { transition: none; transform: none; } }
       @media (max-width: 760px) {
         #hhr-prescription-print-modal[data-active-module="home"] .hhr-center-dialog { width: calc(100vw - 16px); height: min(620px, calc(100vh - 16px)); }
-        #hhr-prescription-print-modal .hhr-home-grid { grid-template-columns: 1fr; }
-        #hhr-prescription-print-modal .hhr-home-card { grid-template-columns: auto minmax(0,1fr); column-gap: 12px; padding: 12px; }
-        #hhr-prescription-print-modal .hhr-home-card-icon { grid-row: span 2; }
         #hhr-prescription-print-modal .hhr-center-app-link { min-height: 38px; }
 
         #hhr-prescription-print-modal .hhr-center-dialog { width: calc(100vw - 16px); height: calc(100vh - 16px); max-height: calc(100vh - 16px); margin: 8px auto; }

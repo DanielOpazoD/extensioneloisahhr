@@ -48,6 +48,10 @@
       const docTabs = Array.from(main.querySelectorAll('.hhr-imaging-tabs .hhr-rx-tab'));
       const contentHost = main.querySelector('.hhr-center-content');
       main.querySelector('.hhr-flow-tabs [data-flow="reports"]').addEventListener('click', event => {
+        if (!printButton.isConnected) return;
+        globalThis.HhrRequestDrafts?.checkpoint(root);
+        printButton.closest('.hhr-request-actions').remove();
+        main.querySelector('.hhr-request-toolbar').classList.remove('hhr-request-toolbar');
         main.querySelectorAll('.hhr-flow-tabs .hhr-rx-tab').forEach(tab =>
           tab.setAttribute('aria-selected', String(tab === event.currentTarget)));
         contentHost.innerHTML = `

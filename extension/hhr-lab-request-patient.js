@@ -17,6 +17,16 @@
 
   const hasEpisode = encId => /^\d+$/.test(String(encId || ''));
 
+  // Both order types keep the printable identity beside the primary action.
+  const printActionsHtml = kind => `
+    <div class="hhr-center-toolbar-actions hhr-request-actions">
+      <div class="hhr-request-details" aria-live="polite" aria-atomic="true">
+        <span class="hhr-request-source" hidden></span>
+        ${kind === 'lab' ? '<span class="hhr-labreq-count">0 exámenes</span>' : ''}
+      </div>
+      <button class="hhr-center-action hhr-center-action-primary ${kind === 'lab' ? 'hhr-labreq-print' : 'hhr-imaging-print'}" type="button" disabled>Imprimir</button>
+    </div>`;
+
   const manualFieldHtml = field => {
     const attributes = [
       `data-manual="${field.key}"`,
@@ -56,6 +66,7 @@
    * Eloísa (o null mientras no existan), de modo que este módulo no consulta la red.
    */
   const createController = ({ main, readEpisodePatient, onChange }) => {
+    const printSource = main.querySelector('.hhr-request-source');
     const summary = main.querySelector('.hhr-labreq-patient-summary');
     const manualFields = main.querySelector('.hhr-labreq-manual-fields');
 
@@ -109,6 +120,11 @@
     };
 
     const refresh = () => {
+      if (printSource) {
+        const label = usesLocalPatient() ? localLabel() : '';
+        if (printSource.textContent !== label) printSource.textContent = label;
+        printSource.hidden = !label;
+      }
       if (manualFields) manualFields.hidden = !usesManualPatient();
       if (summary) {
         summary.textContent = summaryText();
@@ -126,5 +142,5 @@
     return { source, printablePatient, usesManualPatient, usesLocalPatient, localLabel, refresh, summaryText };
   };
 
-  root.HhrLabRequestPatient = Object.freeze({ sectionHtml, createController, hasEpisode });
+  root.HhrLabRequestPatient = Object.freeze({ sectionHtml, printActionsHtml, createController, hasEpisode });
 })(typeof globalThis !== 'undefined' ? globalThis : self);

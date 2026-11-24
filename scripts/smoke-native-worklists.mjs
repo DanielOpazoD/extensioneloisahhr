@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { verifyRoundReturn } from './smoke-worklist-return.mjs';
 import { verifyEditShortcut } from './smoke-worklist-editor.mjs';
 import { verifyWorklistOverlays } from './smoke-worklist-overlays.mjs';
 import { nativeFichaFixture } from './smoke-native-ficha.mjs';
@@ -62,7 +63,8 @@ function startFixture(route) {
       const hasMedicalLink = !route.pathname.endsWith('-nurse') && !discharge;
       jsx(props => {
         const list = referral ? props[key][0].patientList : props[key];
-        const matches = list.filter(row => !filter || row.id % 2 === 1);
+        const query = document.getElementById('search-encounter-list').value.toLowerCase();
+        const matches = list.filter(row => (!filter || row.id % 2 === 1) && ('paciente sintético ' + row.id).includes(query));
         const visible = matches.slice((page - 1) * 10, page * 10);
         document.querySelector('.heading').textContent = (referral ? 'Mis pacientes de interconsulta en Medicina' : 'Resultados de búsqueda ' + label) + ' (' + matches.length + ')';
         const body = document.querySelector('#worklist tbody');
@@ -75,7 +77,7 @@ function startFixture(route) {
           ['assignment', 'Médico tratante'], ['actions', 'Acciones'],
         ].map(([id, label]) => ({ id, label }));
         const tr = (id) => {
-          const encId = 2000 + id;
+          const encId = Number(sessionStorage.getItem('fixture-encounter-' + id)) || 2000 + id;
           const href = route.pathname + '/' + encId + (referral ? '/?referralGuid=demo' : '');
           const nursing = route.pathname.endsWith('-nurse');
           const nameParts = [
@@ -101,7 +103,7 @@ function startFixture(route) {
           const patient = nativeJsx('div', {className:'MuiStack-root', children:[link, ...details]});
           const nativeAction = hasMedicalLink ? nativeJsx('a', { LinkComponent: 'a', href, children: '>' })
             : nativeJsx('button', { ...(discharge ? {encId,patId:3000+id} : {}), children: 'Abrir ficha' });
-          const location = ['AMQI', nativeJsx('br', {}), 'H1', nativeJsx('br', {}), id > 8 ? 'H2C1' : 'H1C2'];
+          const location = ['AMQI', nativeJsx('br', {}), 'H1', nativeJsx('br', {}), sessionStorage.getItem('fixture-bed-' + encId) || (id > 8 ? 'H2C1' : 'H1C2')];
           const cells = [location, patient, ...(referral ? [] : ['No GES']), 'Diagnóstico (lateral) (Ingreso) (principal) (solicitud hospitalización)',
             ...(label === 'con novedad' ? ['Hace 1 hora por Profesional de prueba'] : []),
             ...(discharge || referral ? ['Detalle'] : []),
@@ -165,6 +167,8 @@ function startFixture(route) {
     };
   });
   filter.onchange = render;
+  document.getElementById('search-encounter-list').addEventListener('input', render);
+  window.addEventListener('pageshow', event => { if (event.persisted) render(); });
   document.querySelector('[data-next]').onclick = () => { page = 2; render(); };
   render();
 }
@@ -276,6 +280,7 @@ export const verifyNativeWorklists = async (context, origin, worker) => {
   });
   try {
     await verifyLists(context, origin, worker);
+    await verifyRoundReturn(context, origin);
     await verifyTableConnection(context, origin, worker);
   } finally {
     await worker.evaluate(() => { self.fetch = self.__worklistOriginalFetch; delete self.__worklistOriginalFetch; });

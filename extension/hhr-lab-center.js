@@ -597,16 +597,13 @@
       if (!requestForms) return;
       const categories = requestForms.EXAM_CATEGORIES;
       main.innerHTML = `
-        <div class="hhr-center-toolbar">
+        <div class="hhr-center-toolbar hhr-request-toolbar">
           <h2 class="hhr-center-heading">Laboratorio</h2>
           <div class="hhr-rx-tabs hhr-flow-tabs" role="tablist" aria-label="Flujo de laboratorio">
             <button class="hhr-rx-tab" type="button" role="tab" data-flow="results" aria-selected="false">Ver resultados</button>
             <button class="hhr-rx-tab" type="button" role="tab" data-flow="request" aria-selected="true">Solicitar exámenes</button>
           </div>
-          <div class="hhr-center-toolbar-actions">
-            <span class="hhr-labreq-count">0 exámenes seleccionados</span>
-            <button class="hhr-center-action hhr-center-action-primary hhr-labreq-print" type="button" disabled>Imprimir solicitud</button>
-          </div>
+          ${labRequestPatient.printActionsHtml('lab')}
         </div>
         <div class="hhr-center-content hhr-labreq-content">
           ${labRequestPatient.sectionHtml(encId)}
@@ -673,7 +670,8 @@
         globalThis.HhrCenterPatientContext?.refreshRoute(root,
           globalThis.HhrPrescriptionPrint?.resolveEncounterId(window.location.href) || '');
         const count = selectedKeys().length + (othersInput.value.trim() ? 1 : 0);
-        counter.textContent = count === 1 ? '1 examen seleccionado' : count + ' exámenes seleccionados';
+        const label = count === 1 ? '1 examen' : count + ' exámenes';
+        if (counter.textContent !== label) counter.textContent = label;
         printButton.disabled = !printablePatient();
       };
       const manualKeys = ['name', 'run', 'birthDate', 'ficha', 'diagnosis'];
@@ -756,6 +754,7 @@
         window.setTimeout(openPrintDialog, 300);
         setLiveRegion(feedback, 'Se abrió la solicitud con el diálogo de impresión.');
       });
+      patientSection.refresh();
       if (!/^\d+$/.test(String(encId || ''))) {
         draft?.confirmManual(); updateCount();
         return;

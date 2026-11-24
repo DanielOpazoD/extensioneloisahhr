@@ -59,6 +59,10 @@ Gestión de cuidados reúne ingresos, pacientes con novedad y pacientes sin nove
 
 El encabezado de la tabla queda visible durante el desplazamiento. En Gestión de cuidados, el icono de novedad abre una vista breve cuando la publicación se puede identificar en Eloísa. El enlace abre el Historial y resalta la tarjeta cuando coincide una sola publicación médica de esa fecha y hora.
 
+Al volver de una ficha a su lista, se recuperan la subsección y la búsqueda de esa pestaña.
+Si el episodio sigue en los resultados, su fila recupera el foco y queda marcada unos segundos,
+incluso después de un traslado de cama.
+
 En el menú lateral y en Ajustes de Centro HHR, «Favoritos» reúne los accesos fijos a SysLab, MMRAD y Gmail. Los iconos se incluyen en el paquete a partir de los favicons de los tres sitios y los enlaces se abren en otra pestaña.
 
 En el menú lateral, «Un día como hoy» reúne las conmemoraciones de Efemerides.cl, hasta tres hechos históricos destacados por Wikipedia en español y hasta ocho nacimientos ordenados por visitas recientes. Cada hecho y nacimiento enlaza a su artículo. La lista de nacimientos muestra tres al abrirse y permite desplegar el resto.
@@ -76,8 +80,8 @@ versión se restablece esa apertura; después puedes elegir y guardar el panel l
 En pantallas amplias, el botón de acoplar deja espacio para la ficha al lado derecho.
 El borde permite ajustar su ancho con el mouse o las flechas del teclado. El encabezado
 incluye desacoplar, ampliar, minimizar y densidad compacta. Minimizar conserva el formulario;
-cerrar libera el espacio de la página. Paciente y episodio permanecen visibles, y las
-solicitudes manuales identifican al paciente nuevo en la misma franja.
+cerrar libera el espacio de la página. La franja superior identifica al paciente seleccionado. En Inicio, «Abrir recetas»,
+«Ver resultados», «Solicitar laboratorio» y «Solicitar imágenes» llevan a su pantalla con un clic.
 
 La solicitud de laboratorio permite buscar nombres y abreviaturas, quitar seleccionados
 desde sus etiquetas y guardar hasta 20 grupos propios. Añadir un grupo conserva los exámenes
@@ -85,6 +89,9 @@ ya seleccionados. Chrome guarda sólo preferencias de presentación y nombres/cl
 grupos; los campos del paciente y la solicitud no forman parte de esas preferencias.
 
 Recetas, laboratorio e imágenes abren directamente el diálogo de impresión de Chrome.
+En las solicitudes de laboratorio e imágenes, «Imprimir» permanece arriba a la derecha.
+La cabecera indica si la orden usa datos personalizados o sale sin identificación. Laboratorio
+también muestra la cantidad de exámenes seleccionados.
 En Recetas se elige Estándar o Compacta antes de imprimir. En el diálogo de Chrome se puede
 seleccionar una impresora o guardar el documento como PDF.
 
