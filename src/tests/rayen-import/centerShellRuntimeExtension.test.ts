@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import '../../../extension/hhr-center-shell-runtime.js';
+import '../../../extension/hhr-lab-request-patient.js';
 
 type Runtime = {
   openCenterModule: (module: string | undefined, encId: string, trigger?: HTMLElement) => void;
@@ -125,43 +126,80 @@ describe('Centro HHR shared shell runtime', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  it('rejects a stale patient header after the selected encounter changes', async () => {
-    const firstHeader = deferred<Record<string, unknown>>();
-    const secondHeader = deferred<Record<string, unknown>>();
-    const sendMessage = vi.fn((message: { type: string; encId?: string }) => {
-      if (message.type === 'CENSUS_LIST_REQUEST') {
-        return Promise.resolve({
-          patients: [{ encounterId: '141122', name: 'Paciente B', run: '2-7', bed: 'H2' }],
-        });
-      }
-      return message.encId === '141122' ? secondHeader.promise : firstHeader.promise;
-    });
+  const renderOrders = (root: HTMLElement, encId: string) => {
+    const patient = (globalThis as unknown as {
+      HhrLabRequestPatient: { sectionHtml: (id: string) => string };
+    }).HhrLabRequestPatient;
+    root.querySelector('main')!.innerHTML = patient.sectionHtml(encId);
+  };
+
+  it.each(['lab', 'imaging'])('opens the census from %s without a chart and commits only an explicit choice', async module => {
+    const census = deferred<Record<string, unknown>>();
+    const sendMessage = vi.fn(() => census.promise);
+    const { runtime } = createRuntime({ sendMessage, currentRouteEncounterId: () => '' });
+    const root = runtime.prepareCenterModalRoot({ activeModule: module, encId: '' })!;
+    const renderModule = vi.fn((id: string) => renderOrders(root, id));
+    renderOrders(root, '');
+    runtime.setupCenterPatientContext(root, module, '', renderModule);
+    const button = root.querySelector<HTMLButtonElement>('.hhr-census-trigger')!;
+    const source = () => root.querySelector<HTMLInputElement>('input[type=radio]:checked')!.value;
+    expect(root.querySelector('.hhr-center-patientbar')).toBeNull();
+    expect(sendMessage).not.toHaveBeenCalled();
+    button.click();
+    expect(source()).toBe('manual');
+    expect(document.activeElement).toBe(root.querySelector('input[type=search]'));
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(root.isConnected).toBe(true);
+    expect(document.activeElement).toBe(button);
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    census.resolve({ patients: [
+      { encounterId: '101', name: 'Paciente Prueba', run: 'DOC-A', bed: 'C1' },
+      { encounterId: '102', name: 'Paciente Prueba', run: 'PAS-B', bed: 'C2' },
+      { encounterId: '', name: 'Sin episodio', run: 'PAS-B', bed: 'C3' },
+    ] });
+    await Promise.resolve();
+    expect(root.querySelector('[role=listbox]')).toBeNull();
+    button.click();
+    const search = root.querySelector<HTMLInputElement>('input[type=search]')!;
+    await vi.waitFor(() => expect(root.querySelectorAll('[role=option]')).toHaveLength(2));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(document.activeElement).toBe(root.querySelector('[role=option]'));
+    expect(renderModule).not.toHaveBeenCalled();
+    search.focus();
+    search.value = 'pasb';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(root.querySelectorAll('[role=option]')).toHaveLength(1);
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(renderModule).toHaveBeenCalledWith('102', undefined);
+    expect(root.dataset.selectedEncounterId).toBe('102');
+    expect(source()).toBe('current');
+    expect(document.activeElement).toBe(root.querySelector('.hhr-census-trigger'));
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(sendMessage).toHaveBeenCalledWith({ type: 'CENSUS_LIST_REQUEST', currentEncId: '' });
+  });
+
+  it('can reselect the open chart after a census error and retries on the next open', async () => {
+    const sendMessage = vi.fn()
+      .mockResolvedValueOnce({ error: 'Censo no disponible' })
+      .mockResolvedValueOnce({ patients: [{ encounterId: '141121', name: 'Paciente de prueba' }] });
     const { runtime } = createRuntime({ sendMessage });
-    const root = runtime.prepareCenterModalRoot({
-      activeModule: 'lab',
-      encId: '141121',
-      focusReturnTarget: null,
-    })!;
+    const root = runtime.prepareCenterModalRoot({ activeModule: 'lab', encId: '141121' })!;
+    renderOrders(root, '141121');
     const renderModule = vi.fn();
     runtime.setupCenterPatientContext(root, 'lab', '141121', renderModule);
-
-    root.querySelector<HTMLButtonElement>('.hhr-patientbar-change')!.click();
-    const option = await vi.waitFor(() => {
-      const element = root.querySelector<HTMLButtonElement>('.hhr-patientbar-option');
-      expect(element).not.toBeNull();
-      return element!;
-    });
-    option.click();
-    secondHeader.resolve({ patient: { name: 'Paciente B', run: '2-7', bed: 'H2' } });
-    await vi.waitFor(() => {
-      expect(root.querySelector('.hhr-patientbar-name')?.textContent).toBe('Paciente B');
-    });
-    firstHeader.resolve({ patient: { name: 'Paciente A obsoleto' } });
-    await Promise.resolve();
-
-    expect(root.dataset.selectedEncounterId).toBe('141122');
-    expect(root.querySelector('.hhr-patientbar-name')?.textContent).toBe('Paciente B');
-    expect(renderModule).toHaveBeenCalledWith('141122');
+    const button = root.querySelector<HTMLButtonElement>('.hhr-census-trigger')!;
+    const blank = root.querySelector<HTMLInputElement>('input[value=blank]')!;
+    blank.click();
+    button.click();
+    await vi.waitFor(() => expect(root.querySelector('[role=status]')?.textContent).toBe('Censo no disponible'));
+    expect(blank.checked).toBe(true);
+    root.querySelector<HTMLButtonElement>('.hhr-census-current')!.click();
+    expect(root.querySelector<HTMLInputElement>('input[value=current]')!.checked).toBe(true);
+    expect(renderModule).not.toHaveBeenCalled();
+    button.click();
+    await vi.waitFor(() => expect(root.querySelector('[role=option]')?.textContent).toContain('Paciente de prueba'));
+    expect(root.querySelector<HTMLElement>('.hhr-census-current')!.hidden).toBe(true);
+    expect(sendMessage).toHaveBeenCalledTimes(2);
   });
 
   it('loads before the orchestrator and stays within its explicit line budget', () => {

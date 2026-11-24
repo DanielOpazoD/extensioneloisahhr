@@ -16,13 +16,18 @@
   const NEW_PATIENT_HINT = 'Completa solo los datos que quieras imprimir.';
 
   const hasEpisode = encId => /^\d+$/.test(String(encId || ''));
+  const routeNoticeHtml = '<span class="hhr-patientbar-route" hidden>Distinto al episodio abierto en Eloísa</span>';
+  const pickerButtonHtml = (pressed = null) => `<button type="button" class="hhr-labreq-chip hhr-census-trigger"
+    aria-haspopup="dialog" aria-expanded="false"${pressed === null ? '' : ' aria-pressed="' + pressed + '"'}>De Eloísa <span aria-hidden="true">▾</span></button>`;
 
   // Both order types keep the printable identity beside the primary action.
   const printActionsHtml = kind => `
     <div class="hhr-center-toolbar-actions hhr-request-actions">
       <div class="hhr-request-details" aria-live="polite" aria-atomic="true">
         <span class="hhr-request-source" hidden></span>
+        <span class="hhr-request-id" hidden></span>
         ${kind === 'lab' ? '<span class="hhr-labreq-count">0 exámenes</span>' : ''}
+        ${routeNoticeHtml}
       </div>
       <button class="hhr-center-action hhr-center-action-primary ${kind === 'lab' ? 'hhr-labreq-print' : 'hhr-imaging-print'}" type="button" disabled>Imprimir</button>
     </div>`;
@@ -42,11 +47,10 @@
     const episode = hasEpisode(encId);
     return `
           <section class="hhr-labreq-patient" aria-labelledby="hhr-labreq-patient-title">
-            <div class="hhr-labreq-patient-source">
+            <div class="hhr-labreq-patient-source hhr-census-anchor">
               <strong id="hhr-labreq-patient-title">Paciente</strong>
-              <label class="hhr-labreq-chip">
-                <input type="radio" name="${SOURCE_FIELD}" value="current" ${episode ? 'checked' : 'disabled'}>De Eloísa
-              </label>
+              <input type="radio" name="${SOURCE_FIELD}" value="current" hidden ${episode ? 'checked' : 'disabled'}>
+              ${pickerButtonHtml(episode)}
               <label class="hhr-labreq-chip">
                 <input type="radio" name="${SOURCE_FIELD}" value="manual" ${episode ? '' : 'checked'}>Personalizados
               </label>
@@ -67,6 +71,8 @@
    */
   const createController = ({ main, readEpisodePatient, onChange }) => {
     const printSource = main.querySelector('.hhr-request-source');
+    const identifier = main.querySelector('.hhr-request-id');
+    const pickerButton = main.querySelector('.hhr-census-trigger');
     const summary = main.querySelector('.hhr-labreq-patient-summary');
     const manualFields = main.querySelector('.hhr-labreq-manual-fields');
 
@@ -120,10 +126,18 @@
     };
 
     const refresh = () => {
+      const current = source() === 'current';
+      const patient = current ? episodePatient() : null;
+      pickerButton?.setAttribute('aria-pressed', String(current));
       if (printSource) {
-        const label = usesLocalPatient() ? localLabel() : '';
+        const label = current ? patient?.name || '' : localLabel();
         if (printSource.textContent !== label) printSource.textContent = label;
         printSource.hidden = !label;
+      }
+      if (identifier) {
+        const id = patient?.run || '';
+        if (identifier.textContent !== id) identifier.textContent = id;
+        identifier.hidden = !id;
       }
       if (manualFields) manualFields.hidden = !usesManualPatient();
       if (summary) {
@@ -142,5 +156,5 @@
     return { source, printablePatient, usesManualPatient, usesLocalPatient, localLabel, refresh, summaryText };
   };
 
-  root.HhrLabRequestPatient = Object.freeze({ sectionHtml, printActionsHtml, createController, hasEpisode });
+  root.HhrLabRequestPatient = Object.freeze({ sectionHtml, printActionsHtml, pickerButtonHtml, routeNoticeHtml, createController, hasEpisode });
 })(typeof globalThis !== 'undefined' ? globalThis : self);

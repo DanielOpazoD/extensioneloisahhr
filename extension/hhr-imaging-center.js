@@ -27,7 +27,7 @@
       throw new Error('No se pudo inicializar el Centro de Imágenes HHR.');
     }
 
-    const renderImagingCenter = (root, encId) => {
+    const renderImagingCenter = (root, encId, flow = 'request') => {
       globalThis.HhrRequestDrafts?.checkpoint(root);
       root.dataset.selectedEncounterId = String(encId || '');
       const main = root.querySelector('.hhr-center-main');
@@ -47,42 +47,42 @@
       const feedback = main.querySelector('.hhr-imaging-feedback');
       const docTabs = Array.from(main.querySelectorAll('.hhr-imaging-tabs .hhr-rx-tab'));
       const contentHost = main.querySelector('.hhr-center-content');
-      main.querySelector('.hhr-flow-tabs [data-flow="reports"]').addEventListener('click', event => {
+      const showReports = () => {
         if (!printButton.isConnected) return;
         globalThis.HhrRequestDrafts?.checkpoint(root);
         printButton.closest('.hhr-request-actions').remove();
         main.querySelector('.hhr-request-toolbar').classList.remove('hhr-request-toolbar');
         main.querySelectorAll('.hhr-flow-tabs .hhr-rx-tab').forEach(tab =>
-          tab.setAttribute('aria-selected', String(tab === event.currentTarget)));
+          tab.setAttribute('aria-selected', String(tab.dataset.flow === 'reports')));
         contentHost.innerHTML = `
           <div class="hhr-connection-grid" style="padding-top:12px">
             <section class="hhr-connection-card">
-              <div class="hhr-connection-card-header">
+              <div class="hhr-connection-card-header hhr-census-anchor">
+                ${globalThis.HhrLabRequestPatient.pickerButtonHtml()}
                 <span class="hhr-connection-icon">IMG</span>
                 <div><h3>Visualizar informes</h3><span class="hhr-connection-status">En preparación</span></div>
+                ${globalThis.HhrLabRequestPatient.routeNoticeHtml}
               </div>
               <div class="hhr-connection-user">Resultados de imagenología
                 <span class="hhr-connection-detail">La visualización de informes radiológicos dentro de este panel está en preparación. Por ahora revísalos en el visor habitual del servicio; la solicitud sigue disponible en la pestaña «Solicitar».</span>
               </div>
             </section>
           </div>`;
-      });
+        globalThis.HhrCenterPatientContext?.setOrderEpisode(root, encId);
+      };
+      main.querySelector('.hhr-flow-tabs [data-flow="reports"]').addEventListener('click', showReports);
       main.querySelector('.hhr-flow-tabs [data-flow="request"]').addEventListener('click', () =>
         renderImagingCenter(root, encId)
       );
+      if (flow === 'reports') { showReports(); return; }
       let selectedDoc = 'solicitud';
       let toolMode = 'cross';
       let episodePatient;
       let printing = false;
       const patient = globalThis.HhrLabRequestPatient.createController({ main, readEpisodePatient: () => episodePatient });
       const refreshPatient = () => {
-        const local = patient.usesLocalPatient();
         const chosen = patient.printablePatient();
-        globalThis.HhrCenterPatientContext?.set(root, {
-          encId: local ? '' : encId,
-          patient: local ? { ...chosen, name: chosen?.name || patient.localLabel() } : episodePatient?.patient,
-        });
-        globalThis.HhrCenterPatientContext?.refreshRoute(root, globalThis.HhrPrescriptionPrint?.resolveEncounterId(location.href) || '');
+        globalThis.HhrCenterPatientContext?.setOrderEpisode(root, patient.usesLocalPatient() ? '' : encId);
         patient.refresh();
         printButton.disabled = printing || !chosen;
         renderOverlays();
@@ -322,7 +322,8 @@
       main.querySelector('.hhr-labreq-patient').addEventListener('input', event => {
         if (event.target.dataset.manual) refreshPatient();
       });
-      main.querySelector('.hhr-labreq-patient-source').addEventListener('change', () => {
+      main.querySelector('.hhr-labreq-patient-source').addEventListener('change', event => {
+        if (event.target.name !== 'hhr-labreq-patient-source') return;
         setFeedback('');
         if (patient.usesLocalPatient()) draft?.confirmManual();
         else if (episodePatient) draft?.confirm(episodePatient.patient.patientId, episodePatient.actorId);

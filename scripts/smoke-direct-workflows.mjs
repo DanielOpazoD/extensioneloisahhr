@@ -37,18 +37,46 @@ async function verifyImagingToolbar(page, root) {
   }
 }
 
+async function chooseCensusPatient(root, id, query = '') {
+  const button = root.getByRole('button', { name: 'De Eloísa', exact: true });
+  await button.click();
+  const search = root.getByRole('searchbox', { name: 'Buscar paciente en el censo' });
+  if (query) await search.fill(query);
+  const option = root.getByRole('option').filter({ hasText: 'Paciente sintético ' + id });
+  await option.waitFor();
+  if (query) {
+    assert.equal(await root.getByRole('option').count(), 1);
+    await search.press('ArrowDown');
+    assert.equal(await option.evaluate(node => document.activeElement === node), true);
+    await option.press('Enter');
+  } else await option.click();
+}
+
 async function verifyLocalOrders(page, worker, root, nav) {
   const choose = source => root.locator('[name="hhr-labreq-patient-source"][value="' + source + '"]').check();
   const name = 'Nora Ejemplo Prueba';
   const run = 'PAS-TEST123';
   for (const module of ['lab', 'imaging']) {
     await nav(module);
+    assert.equal(await root.locator('.hhr-center-patientbar').count(), 0);
+    const picker = root.getByRole('button', { name: 'De Eloísa', exact: true });
     await choose('manual');
     await root.locator('[data-manual="name"]').fill(name);
     await root.locator('[data-manual="run"]').fill(run);
+    await picker.click();
+    const search = root.getByRole('searchbox', { name: 'Buscar paciente en el censo' });
+    await search.fill('consulta sin coincidencias');
+    await search.press('Escape');
+    assert.equal(await picker.evaluate(node => document.activeElement === node), true);
+    assert.equal(await root.locator('[data-manual="name"]').inputValue(), name);
     if (module === 'imaging') await verifyImagingToolbar(page, root);
     for (const blank of [false, true]) {
-      if (blank) await choose('blank');
+      if (blank) {
+        await choose('blank');
+        await picker.click();
+        await root.locator('.hhr-center-toolbar h3, .hhr-center-toolbar h2, .hhr-center-toolbar strong').first().click();
+        assert.equal(await picker.getAttribute('aria-expanded'), 'false');
+      }
       const actions = root.locator('.hhr-request-actions');
       assert.equal(await actions.locator('.hhr-request-source').innerText(),
         blank ? 'Sin identificación' : 'Datos personalizados');
@@ -89,11 +117,18 @@ async function verifyLocalOrders(page, worker, root, nav) {
         await pdf.destroy();
         await order.close();
       }
-      assert.doesNotMatch(printed, /Paciente sintético|SINTETICO/i);
+      assert.doesNotMatch(printed, /Paciente sintético|DOC-FICHA|PAS-PRUEBA/i);
       assert.equal(printed.toUpperCase().includes(run), !blank);
       for (const part of name.toUpperCase().split(' ')) assert.equal(printed.toUpperCase().includes(part), !blank);
     }
-    await choose('current');
+    await chooseCensusPatient(root, '141121');
+    if (module === 'lab') {
+      for (let i = 0; i < 6; i++) {
+        await choose('manual');
+        await chooseCensusPatient(root, '141121');
+        assert.equal(await picker.getAttribute('aria-pressed'), 'true');
+      }
+    }
   }
   console.info('[órdenes] Cuatro impresiones verificadas: identidad personalizada y en blanco en HTML de laboratorio y PDF de imágenes.');
 }
@@ -108,7 +143,7 @@ export const verifyDirectWorkflows = async (page, worker) => {
       const state = globalThis.__hhrDirectWorkflowFixture = { calls: [], actor: 'synthetic-author', failHeader: false, failPrint: false, original };
       chrome.runtime.sendMessage = (message, callback) => {
         let response;
-        const patient = id => ({ patientId: 'synthetic-' + id, name: 'Paciente sintético ' + id, run: 'SINTETICO', service: 'Servicio de prueba' });
+        const patient = id => ({ patientId: 'synthetic-' + id, name: 'Paciente sintético ' + id, run: id === '141121' ? 'DOC-FICHA-A' : 'PAS-PRUEBA-B', bed: id === '141121' ? 'C1' : 'C2', service: 'Servicio de prueba' });
         if (message.type === types.PATIENT_HEADER_REQUEST) response = state.failHeader
           ? { error: 'Sin sesión de Ficha Médico.', requiresLogin: true }
           : { patient: patient(message.encId), actorId: state.actor };
@@ -123,7 +158,7 @@ export const verifyDirectWorkflows = async (page, worker) => {
           : { ok: true };
         else if (message.type === types.DOCUMENT_PREVIEW_REQUEST) response = { ok: true };
         else return original.call(chrome.runtime, message, callback);
-        state.calls.push({ type: message.type, preview: message.preview, operation: message.operation });
+        state.calls.push({ type: message.type, preview: message.preview, operation: message.operation, encId: message.encId });
         callback?.(response); return Promise.resolve(response);
       };
     } });
@@ -136,14 +171,10 @@ export const verifyDirectWorkflows = async (page, worker) => {
   const nav = module => root.locator('.hhr-center-nav-button[data-module="' + module + '"]').click();
   const labReady = () => page.waitForFunction(() => !document.querySelector('.hhr-labreq-print')?.disabled);
   const imageReady = () => page.waitForFunction(() => !document.querySelector('.hhr-imaging-print')?.disabled);
-  const choose = async id => {
-    await root.getByRole('button', { name: /Cambiar paciente/ }).click();
-    await root.getByRole('option').filter({ hasText: 'Paciente sintético ' + id }).click();
-  };
   try {
     await nav('settings'); await verifyLocalOrders(page, worker, root, nav); await nav('lab'); await labReady();
     assert.equal(await root.locator('.hhr-labreq-patient-summary').isVisible(), false);
-    assert.match(await root.locator('.hhr-patientbar-name').innerText(), /Paciente sintético/);
+    assert.match(await root.locator('.hhr-request-source').innerText(), /Paciente sintético/);
     await root.getByRole('checkbox', { name: 'CREATININA', exact: true }).check();
     await root.getByRole('textbox', { name: 'Otros exámenes', exact: true }).fill('Borrador de prueba');
     await nav('imaging'); await imageReady();
@@ -178,11 +209,33 @@ export const verifyDirectWorkflows = async (page, worker) => {
     assert.equal(await root.locator('.hhr-imaging-mark').count(), 1);
     assert.equal(await root.locator('[data-doc="encuesta"]').getAttribute('aria-selected'), 'true');
     assert.equal(await root.getByRole('textbox', { name: 'Médico solicitante' }).inputValue(), 'Profesional de prueba');
-    await choose('141122'); await imageReady();
+    await root.locator('.hhr-flow-tabs [data-flow="reports"]').click();
+    await chooseCensusPatient(root, '141122', 'paspruebab');
+    assert.equal(await root.locator('.hhr-flow-tabs [data-flow="reports"]').getAttribute('aria-selected'), 'true');
+    await root.locator('.hhr-flow-tabs [data-flow="request"]').click();
+    await imageReady();
+    assert.match(await root.locator('.hhr-request-source').innerText(), /141122/);
+    assert.equal(await root.locator('.hhr-request-id').innerText(), 'PAS-PRUEBA-B');
+    assert.equal(await root.locator('.hhr-patientbar-route').isVisible(), true);
+    await root.locator('.hhr-imaging-print').click();
+    await root.getByText('Se abrió el PDF', { exact: false }).waitFor();
     assert.equal(await root.locator('.hhr-imaging-mark').count(), 0);
     await nav('lab'); await labReady();
     assert.equal(await root.getByRole('textbox', { name: 'Otros exámenes' }).inputValue(), '');
-    await choose('141121'); await labReady();
+    const openedOrder = page.waitForEvent('popup');
+    await root.locator('.hhr-labreq-print').click();
+    const order = await openedOrder;
+    const printed = await order.locator('body').innerText();
+    assert.match(printed, /Paciente sintético 141122/i);
+    assert.match(printed, /PAS-PRUEBA-B/i);
+    assert.doesNotMatch(printed, /141121|DOC-FICHA-A|Nora Ejemplo/i);
+    await order.close();
+    await root.locator('.hhr-flow-tabs [data-flow="results"]').click();
+    await chooseCensusPatient(root, '141121', 'C1');
+    assert.equal(await root.locator('.hhr-flow-tabs [data-flow="results"]').getAttribute('aria-selected'), 'true');
+    await root.locator('.hhr-flow-tabs [data-flow="request"]').click();
+    await labReady();
+    assert.equal(await root.locator('.hhr-patientbar-route').isVisible(), false);
     assert.equal(await root.getByRole('textbox', { name: 'Otros exámenes' }).inputValue(), 'Borrador de prueba');
     await setState({ actor: 'another-author' }); await nav('imaging'); await imageReady(); await nav('lab'); await labReady();
     assert.equal(await root.getByRole('textbox', { name: 'Otros exámenes' }).inputValue(), '');
@@ -211,7 +264,7 @@ export const verifyDirectWorkflows = async (page, worker) => {
     }, tabId);
     assert.equal(calls.filter(call => call.operation === 'print').length, 0);
     const printRequests = calls.filter(call => call.type === 'RAYEN_IMAGING_FORM_PRINT_REQUEST');
-    assert.equal(printRequests.length, 2);
+    assert.deepEqual(printRequests.map(call => call.encId), ['141122', '141121', '141121']);
     assert.ok(printRequests.every(call => !call.preview));
     assert.equal(await bar.locator('.hhr-ops-favorites,.collapse').count(), 0);
     await bar.getByRole('button', { name: 'Abrir Centro HHR', exact: true }).click(); await nav('settings');

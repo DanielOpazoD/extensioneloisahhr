@@ -43,6 +43,12 @@
       delete documentRoot.dataset.hhrCenterDocked;
       documentRoot.style.removeProperty('--hhr-center-reserved');
     };
+    const syncRestoreLabel = () => {
+      const name = root.querySelector('.hhr-labreq-manual-fields:not([hidden]) [data-manual="name"]')?.value.trim()
+        || root.querySelector('.hhr-patientbar-name,.hhr-request-source,.hhr-lab-result-name')?.textContent.trim();
+      restore.textContent = 'Centro HHR' + (name && name !== '—' ? ' · ' + name : '');
+    };
+    const identityObserver = new MutationObserver(syncRestoreLabel);
     const apply = () => {
       if (disposed) return;
       const current = preferences.get();
@@ -65,8 +71,12 @@
         documentRoot.dataset.hhrCenterDocked = instance;
         documentRoot.style.setProperty('--hhr-center-reserved', appliedWidth + 'px');
       } else releaseSpace();
-      const name = root.querySelector('.hhr-patientbar-name')?.textContent.trim();
-      restore.textContent = 'Centro HHR' + (name && name !== '—' ? ' · ' + name : '');
+      if (minimized) {
+        syncRestoreLabel();
+        identityObserver.observe(root.querySelector('.hhr-center-patientbar,.hhr-center-main'), {
+          childList: true, subtree: true, characterData: true,
+        });
+      } else identityObserver.disconnect();
     };
     actions.addEventListener('click', event => {
       const action = event.target.closest('[data-panel]')?.dataset.panel;
@@ -109,8 +119,6 @@
       preferences.save({ width });
     });
     const unsubscribe = preferences.subscribe(current => { width = current.width; apply(); });
-    const identityObserver = new MutationObserver(apply);
-    identityObserver.observe(root.querySelector('.hhr-center-patientbar'), { childList: true, subtree: true, characterData: true });
     const removalObserver = new MutationObserver(() => { if (!root.isConnected) dispose(); });
     removalObserver.observe(document.body, { childList: true });
     const dispose = () => {

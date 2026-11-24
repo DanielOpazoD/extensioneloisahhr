@@ -70,11 +70,12 @@ describe('origen del paciente en la solicitud de exámenes', () => {
     expect(main.querySelector<HTMLElement>('.hhr-labreq-manual-fields')?.hidden).toBe(true);
   });
 
-  it('sin episodio obliga al paciente escrito a mano y no ofrece el de Eloísa', () => {
+  it('sin episodio parte en personalizados y permite abrir el censo de Eloísa', () => {
     const main = mount('');
     const current = main.querySelector<HTMLInputElement>('input[value="current"]');
 
     expect(current?.disabled).toBe(true);
+    expect(main.querySelector<HTMLButtonElement>('.hhr-census-trigger')?.disabled).toBe(false);
     expect(main.querySelector<HTMLInputElement>('input[value="manual"]')?.checked).toBe(true);
     expect(main.querySelector<HTMLElement>('.hhr-labreq-manual-fields')?.hidden).toBe(false);
   });

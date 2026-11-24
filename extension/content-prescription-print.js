@@ -571,7 +571,7 @@
     });
     if (!root) return;
     if (flow === 'results' || flow === 'request') root.dataset.labFlow = flow;
-    const renderModule = targetEncId => {
+    const renderModule = (targetEncId, selectedFlow) => {
       if (activeModule === 'lab') {
         if (root.dataset.labFlow === 'results') labCenterRuntime.renderLabCenter(root, targetEncId);
         else labCenterRuntime.renderLabRequestView(root, targetEncId);
@@ -583,7 +583,7 @@
             '<div class="hhr-center-content"><div class="hhr-rx-error">El Centro de Imágenes no quedó cargado. Recarga la extensión y la pestaña.</div></div>';
           return;
         }
-        imagingCenterRuntime.renderImagingCenter(root, targetEncId);
+        imagingCenterRuntime.renderImagingCenter(root, targetEncId, selectedFlow);
       }
       else if (activeModule === 'settings') globalThis.HhrCenterSettings.render({ root,
         operationsBar: document.getElementById(OPERATIONS_BAR_ID) });
