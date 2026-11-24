@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.165
+
+- Pauta Braden adulto / Braden Q pediátrico (NT 234) en Evolución: agrega acceso directo «Pauta Braden» junto a «Aplicar pauta», matriz rápida 1–4 fiel a la planilla oficial del Hospital Hanga Roa (con sugerencia automática Adulto vs. Pediátrico según edad del paciente y fecha/hora de Rapa Nui prellenadas).
+- Calcula en vivo puntaje total, subpuntajes (`PS · H · A · M · N · F [· PO]`), nivel de riesgo (Bajo / Moderado / Alto), intervalo de reevaluación y cuidados planeados según NT 234.
+- Permite elegir entre «Guardar e insertar» (guarda automáticamente en HHR e inserta en Evolución), «Guardar en HHR y copiar texto» (respalda en HHR y copia el texto verificado para pegar en Evolución) o «Copiar texto» directo desde la vista previa.
+
 ## 0.48.164
 
 - Pautas clínicas en Evolución: monta el botón «Aplicar pauta» dentro de la tarjeta nativa de Evolución (evitando que quede recortado bajo «Instrumentos de evaluación»).
