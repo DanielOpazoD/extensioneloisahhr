@@ -131,7 +131,7 @@
     });
     editor.addEventListener('keydown', event => {
       if (event.key === 'Escape') { event.stopPropagation(); closeEditor(); }
-      if (event.key === 'Enter') { event.preventDefault(); host.querySelector('[data-group="confirm"]').click(); }
+      if (event.key === 'Enter' && event.target === name) { event.preventDefault(); host.querySelector('[data-group="confirm"]').click(); }
     });
     render(); renderGroups();
     preferences.load().then(renderGroups);

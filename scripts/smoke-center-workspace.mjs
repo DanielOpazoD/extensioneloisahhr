@@ -120,12 +120,13 @@ export const verifyLabWorkspace = async (page, worker) => {
   assert.equal(await root.locator('.hhr-labreq-selected button').count(), 2);
   await root.getByRole('button', { name: 'Guardar selección', exact: true }).click();
   assert.equal(await root.locator('.hhr-labreq-group-editor').isVisible(), true);
-  await root.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await root.getByRole('button', { name: 'Cancelar', exact: true }).press('Enter');
   assert.equal(await root.locator('.hhr-labreq-group-editor').isVisible(), false);
   assert.equal(await root.getByRole('button', { name: 'Guardar selección' }).evaluate(button => button === document.activeElement), true);
   await root.getByRole('button', { name: 'Guardar selección', exact: true }).click();
-  await root.getByRole('textbox', { name: 'Nombre del grupo', exact: true }).fill('Grupo de prueba');
-  await root.getByRole('button', { name: 'Guardar', exact: true }).click();
+  const groupName = root.getByRole('textbox', { name: 'Nombre del grupo', exact: true });
+  await groupName.fill('Grupo de prueba');
+  await groupName.press('Enter');
   await page.waitForFunction(() => document.querySelector('.hhr-labreq-search-summary')?.textContent === 'Grupo guardado en este navegador.');
   const stored = await worker.evaluate(() => chrome.storage.local.get(null));
   assert.equal(JSON.stringify(stored).includes('Paciente de prueba'), false);
