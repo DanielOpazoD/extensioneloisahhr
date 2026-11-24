@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import '../../../extension/hhr-origin-policy.js';
 import '../../../extension/clinical-checklist-evolution.js';
+import '../../../extension/clinical-checklist-braden.js';
 import '../../../extension/clinical-checklist-broker.js';
 
 const code = 'PT-00000000-0000-4000-8000-000000000001';
@@ -175,4 +176,74 @@ it('pide abrir HHR con sesión iniciada cuando no hay ninguna pestaña de HHR ab
   const result = await broker.handle({ encId: '91', request: { action: 'templates' } }, sender);
   expect(result.error).toMatch(/Abre HHR Hospitalizados/);
   expect(tabs.create).not.toHaveBeenCalled();
+});
+
+it('completa rápido la matriz Braden NT 234, sugiere adulto vs pediátrico por edad y permite copiar texto para evolución', () => {
+  const adultTemplate = {
+    id: 'hhr-lpp-braden-adulto',
+    version: 2,
+    scaleGroup: 'braden',
+    title: 'LPP · Braden adulto (≥15 años)',
+    riskBands: { highMax: 12, moderateMax: 15 },
+    fields: [
+      { id: 'percepcion', shortCode: 'PS', label: 'PS · Percepción sensorial', type: 'choice', required: true, options: [{ label: '1 · Completamente limitada', points: 1 }, { label: '2 · Muy limitada', points: 2 }, { label: '3 · Ligeramente limitada', points: 3 }, { label: '4 · No limitada', points: 4 }] },
+      { id: 'humedad', shortCode: 'H', label: 'H · Humedad', type: 'choice', required: true, options: [{ label: '1 · Constantemente húmeda', points: 1 }, { label: '2 · Muy húmeda', points: 2 }, { label: '3 · Ocasionalmente húmeda', points: 3 }, { label: '4 · Raramente húmeda', points: 4 }] },
+      { id: 'actividad', shortCode: 'A', label: 'A · Actividad', type: 'choice', required: true, options: [{ label: '1 · Postrado en cama', points: 1 }, { label: '2 · En silla de ruedas', points: 2 }, { label: '3 · Anda ocasionalmente', points: 3 }, { label: '4 · Anda con frecuencia', points: 4 }] },
+      { id: 'movilidad', shortCode: 'M', label: 'M · Movilidad', type: 'choice', required: true, options: [{ label: '1 · Completamente inmóvil', points: 1 }, { label: '2 · Muy limitada', points: 2 }, { label: '3 · Ligeramente limitada', points: 3 }, { label: '4 · Sin limitación', points: 4 }] },
+      { id: 'nutricion', shortCode: 'N', label: 'N · Nutrición', type: 'choice', required: true, options: [{ label: '1 · Muy deficiente', points: 1 }, { label: '2 · Probablemente inadecuada', points: 2 }, { label: '3 · Adecuada', points: 3 }, { label: '4 · Excelente', points: 4 }] },
+      { id: 'friccion', shortCode: 'F', label: 'F · Fricción y cizalla', type: 'choice', required: true, options: [{ label: '1 · Problema', points: 1 }, { label: '2 · Posibles problemas', points: 2 }, { label: '3 · Sin problemas aparentes', points: 3 }] },
+      { id: 'fecha', label: 'Fecha de valoración', type: 'date', required: true },
+      { id: 'hora', label: 'Hora de valoración (Rapa Nui)', type: 'time', required: true },
+      { id: 'piel', label: 'Observaciones de piel e intervenciones', type: 'text', required: false },
+    ],
+  };
+  const pediatricTemplate = {
+    id: 'hhr-lpp-braden-q',
+    version: 2,
+    scaleGroup: 'braden',
+    title: 'LPP · Braden Q pediátrico (30 días a <15 años)',
+    riskBands: { highMax: 16, moderateMax: 21 },
+    fields: [...adultTemplate.fields],
+  };
+
+  const braden = globalThis.HhrChecklistBraden;
+  expect(braden.suggestBradenTemplate([adultTemplate, pediatricTemplate], { patientAge: '6 años' }).templateId).toBe('hhr-lpp-braden-q');
+  expect(braden.suggestBradenTemplate([adultTemplate, pediatricTemplate], { patientAge: '68 años' }).templateId).toBe('hhr-lpp-braden-adulto');
+
+  const container = document.createElement('div');
+  document.body.append(container);
+  const answers = {};
+  const copied = vi.fn();
+  const switched = vi.fn();
+  braden.renderMatrix({
+    container,
+    template: adultTemplate,
+    bradenTemplates: [adultTemplate, pediatricTemplate],
+    suggestedId: adultTemplate.id,
+    suggestedReason: 'Sugerida por edad (68 años)',
+    answers,
+    authorName: 'EU Prueba',
+    onSwitchTemplate: switched,
+    onAnswerChange: () => {},
+    onCopyText: copied,
+  });
+
+  expect(answers.fecha).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  expect(answers.hora).toMatch(/^\d{2}:\d{2}$/);
+  expect(container.querySelector('.hhr-braden-na')?.textContent).toBe('No aplica');
+
+  // 6 clicks: 3, 2, 3, 2, 3, 2 -> total 15 (Moderado, Cada 72 h)
+  const picks = [['percepcion', '3'], ['humedad', '2'], ['actividad', '3'], ['movilidad', '2'], ['nutricion', '3'], ['friccion', '2']];
+  for (const [field, pts] of picks) {
+    container.querySelector(`button[data-field="${field}"][data-points="${pts}"]`).click();
+  }
+
+  expect(container.textContent).toContain('Total: 15 / 23');
+  expect(container.textContent).toContain('Riesgo Moderado');
+  expect(container.textContent).toContain('Reevaluar: Cada 72 h');
+  expect(container.textContent).toContain('Posición: cada 4 h con SEMP adecuada');
+
+  container.querySelector('.hhr-braden-copy-inline').click();
+  expect(copied).toHaveBeenCalledWith(expect.stringContaining('Subpuntajes: PS 3 · H 2 · A 3 · M 2 · N 3 · F 2'));
+  expect(copied).toHaveBeenCalledWith(expect.stringContaining('Puntaje: 15 / 23'));
 });
