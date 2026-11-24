@@ -122,8 +122,9 @@ export const verifyLabActionLayout = async (page, worker) => {
   for (const width of [1280, 840, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const geometry = await root.evaluate(root => {
-      const selectors = ['.hhr-center-app-link', '.hhr-census-trigger', '.hhr-labreq-print', '.hhr-rx-close'];
+      const selectors = ['.hhr-center-header strong', '[data-panel="density"]', '.hhr-census-trigger', '.hhr-labreq-print', '.hhr-rx-close'];
       const dialog = root.querySelector('.hhr-center-dialog').getBoundingClientRect();
+      const header = root.querySelector('.hhr-center-header');
       const controls = selectors.map(selector => {
         const node = root.querySelector(selector);
         const rect = node.getBoundingClientRect();
@@ -131,12 +132,15 @@ export const verifyLabActionLayout = async (page, worker) => {
       });
       const rect = selector => root.querySelector(selector).getBoundingClientRect();
       const search = rect('.hhr-labreq-search'), groups = rect('.hhr-labreq-selection-tools');
+      const rightInset = header.getBoundingClientRect().right - rect('.hhr-rx-close').right;
       return { controls, left: dialog.left, right: dialog.right,
+        headerControlsAligned: Math.abs(rightInset - parseFloat(getComputedStyle(header).paddingRight)) <= 1,
         searchAndGroupsAligned: Math.abs(search.y + search.height / 2 - groups.y - groups.height / 2) <= 2,
         headerHeight: Math.round(rect('.hhr-labreq-grid').top - rect('.hhr-labreq-patient').top),
         overflowing: [...root.querySelectorAll('.hhr-center-header,.hhr-center-patientbar,.hhr-center-toolbar,.hhr-labreq-patient,.hhr-labreq-meta,.hhr-labreq-selection')].some(node => node.scrollWidth > node.clientWidth + 1) };
     });
     assert.equal(geometry.overflowing, false, `Toolbar overflow at ${width}px`);
+    assert.ok(geometry.headerControlsAligned, `Los controles deben quedar en el borde derecho de la cabecera a ${width}px`);
     if (width === 1280) assert.ok(geometry.searchAndGroupsAligned, 'Search and exam groups share the desktop row: ' + JSON.stringify(geometry));
     const heightBudget = { 1280: 105, 840: 130, 390: 275 };
     assert.ok(geometry.headerHeight <= heightBudget[width], 'Controles de laboratorio demasiado altos: ' + JSON.stringify(geometry));
