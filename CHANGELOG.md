@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.161
+
+- En Laboratorio puedes elegir de 1 a 99 copias junto a «Imprimir». Al guardar como PDF, todas las copias de la orden quedan en un solo archivo. El borrador recuerda la cantidad del episodio.
+- En Imágenes → Informes, «Abrir MMRAD» abre el portal de radiología en otra pestaña. Puedes volver a la solicitud y seguir donde la dejaste.
+
 ## 0.48.160
 
 - Se retiró «Abrir HHR» de la cabecera de Centro HHR en todos los módulos. Los controles de la ventana quedan alineados a la derecha.
