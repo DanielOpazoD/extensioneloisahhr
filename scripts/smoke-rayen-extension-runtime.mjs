@@ -9,6 +9,7 @@ import { packageRayenExtension } from "./package-extension.mjs";
 import { verifyCompactOperationsBar, verifyDockedPanel, verifyLabWorkspace } from "./smoke-center-workspace.mjs";
 import { verifyHistoryNavigation, verifyLabActionLayout, verifyPrescriptionFormats } from "./smoke-extension-visual.mjs";
 import { verifyNativeFicha } from "./smoke-native-ficha.mjs";
+import { verifyClinicalChecklists } from "./smoke-clinical-checklists.mjs";
 import { nativeWorklistFixture, verifyNativeWorklists } from "./smoke-native-worklists.mjs";
 import { verifyDirectWorkflows } from "./smoke-direct-workflows.mjs";
 
@@ -680,6 +681,7 @@ try {
   await verifyLabActionLayout(page, serviceWorker);
   await verifyLabWorkspace(page, serviceWorker);
   await verifyDirectWorkflows(page, serviceWorker);
+  await verifyClinicalChecklists(context, page, serviceWorker);
 
   const manualPatient = page.locator(
     '#hhr-prescription-print-modal input[name="hhr-labreq-patient-source"][value="manual"]',

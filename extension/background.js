@@ -25,7 +25,7 @@ importScripts(
   'clinical-antecedents-attachment.js', 'clinical-antecedents-fields.js', 'clinical-antecedents-cache.js', 'clinical-antecedents-detail.js', 'clinical-antecedents-window.js',
   'clinical-antecedents-transport.js', 'clinical-antecedents-sources.js', 'clinical-antecedents-runtime.js', 'urgency-dau-page.js', 'urgency-dau-source.js', 'urgency-session-page.js', 'urgency-dau-runtime.js', 'urgency-api.js', 'urgency-auth-model.js', 'urgency-auth-state.js', 'urgency-dau-api.js', 'urgency-auth-runtime.js',
   'clinical-write-recovery-policy.js', 'clinical-write-runtime.js',
-  'clinical-handoff-runtime.js',
+  'clinical-handoff-runtime.js', 'clinical-checklist-broker.js',
   'clinical-score-runtime.js',
   'clinical-score-write-model.js',
   'clinical-score-write-runtime.js',
@@ -1170,7 +1170,10 @@ const nursingHandoffPilot = self.HhrNursingHandoffPilot.create({
   chrome, getContext: getClinicalReportContext, getInfo: getFichaFetchInfo, checkAccess: checkWorklistChartAccess,
   getSessionKey: fichaSessionCacheKey,
 });
+const clinicalChecklists = self.HhrClinicalChecklistBroker.create({ chrome, resolveSession: resolveFichaClinicalSession,
+  getContext: getClinicalReportContext, encounterFromUrl: self.HhrPrescriptionPrint.resolveEncounterId });
 const runtimeMessageRoutes = Object.freeze({
+  [RUNTIME_MESSAGES.CLINICAL_CHECKLIST]: runtimeRoute(clinicalChecklists.handle, 'No se pudo conectar la pauta con HHR.'),
   [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),
   [RUNTIME_MESSAGES.DAILY_BIRTHS]: runtimeRoute(() => self.HhrDailyBirths.read(), 'Nacimientos no disponibles.'),
   [RUNTIME_MESSAGES.NURSING_HANDOFF_TABLE]: runtimeRoute(nursingHandoffPilot.table, 'No se pudo comprobar la conexión a HHR.'),

@@ -1,6 +1,7 @@
 (function (root) {
   'use strict';
   const types = Object.freeze({
+    CLINICAL_CHECKLIST: 'RAYEN_CLINICAL_CHECKLIST',
     HHR_SESSION_CHANGED: 'RAYEN_HHR_SESSION_CHANGED', EXTENSION_HEALTH_REQUEST: 'RAYEN_EXTENSION_HEALTH_REQUEST',
     EXTENSION_RUNTIME_CONTEXT_REQUEST: 'RAYEN_EXTENSION_RUNTIME_CONTEXT_REQUEST',
     CONNECTION_REPAIR_REQUEST: 'RAYEN_CONNECTION_REPAIR_REQUEST',
@@ -74,6 +75,7 @@
     CUDYR_CATEGORIES_REQUEST: 'RAYEN_CUDYR_CATEGORIES_REQUEST',
   });
   const fieldRules = Object.freeze({
+    [types.CLINICAL_CHECKLIST]: { encId: 'id', request: 'object', actor: 'string?', document: 'string?', hhrTabId: 'number?' },
     [types.GC_SESSION_CAPTURED]: { info: 'object' },
     [types.GC_CONNECT_REQUEST]: { renew: 'boolean?' },
     [types.SYNC_BUNDLE_REQUEST]: { requestId: 'string', dateStart: 'string', dateEnd: 'string' },

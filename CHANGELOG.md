@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.163
+
+- Ajustes permite habilitar Pautas clínicas en Evolución. La pauta se guarda en HHR, genera un código verificable y se inserta como borrador en la evolución del mismo episodio.
+
 ## 0.48.162
 
 - Centro HHR reúne el módulo, las pestañas y sus acciones en una cabecera común. «Vista» agrupa las opciones de presentación. Minimizar y cerrar quedan a un clic.
