@@ -62,19 +62,23 @@
         const intent = departure = { link, query: snapshot.query, rowTop: snapshot.rowTop, entryKey: snapshot.entryKey };
         intent.done = send({ action: 'remember', snapshot }).catch(() => {}).then(() => { intent.ready = true; });
       }
-      if (event.type !== 'click' || departure.ready) return;
-      // A hard navigation can discard a message from the closing document.
-      // Follow immediately on receipt, with a fallback for a suspended worker.
+      if (event.type === 'click') {
+        departure.activation = event;
+        departure.href = link.href;
+      }
+    };
+
+    const followHardNavigation = event => {
       const intent = departure;
-      const href = link.href;
+      // Let the native router handle same-document visits immediately. Only a
+      // full page load can discard the outgoing document's pending message.
+      if (intent?.activation !== event || event.defaultPrevented || !event.cancelable ||
+          intent.ready || nav.currentEntry?.key !== intent.entryKey) return;
       event.preventDefault();
-      event.stopImmediatePropagation();
       let timeout;
-      Promise.race([intent.done, new Promise(resolve => { timeout = setTimeout(resolve, 1500); })]).then(() => {
+      Promise.race([intent.done, new Promise(resolve => { timeout = setTimeout(resolve, 8000); })]).then(() => {
         clearTimeout(timeout);
-        if (departure !== intent || nav.currentEntry?.key !== snapshot.entryKey) return;
-        if (link.isConnected && link.href === href) link.click();
-        else location.assign(href); // React replaced the activated link while the worker was replying.
+        if (departure === intent && nav.currentEntry?.key === intent.entryKey) location.assign(intent.href);
       });
     };
 
@@ -173,6 +177,7 @@
     for (const type of inputs) document.addEventListener(type, userAction, true);
     const activations = ['pointerdown', 'keydown', 'click'];
     for (const type of activations) document.addEventListener(type, remember, true);
+    window.addEventListener('click', followHardNavigation);
     nav.addEventListener('currententrychange', onEntry);
     window.addEventListener('pageshow', onPageShow);
     enter(nav.activation?.from, nav.activation?.navigationType === 'traverse');
@@ -182,6 +187,7 @@
         cancel();
         for (const type of inputs) document.removeEventListener(type, userAction, true);
         for (const type of activations) document.removeEventListener(type, remember, true);
+        window.removeEventListener('click', followHardNavigation);
         nav.removeEventListener('currententrychange', onEntry);
         window.removeEventListener('pageshow', onPageShow);
       },
