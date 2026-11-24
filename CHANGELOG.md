@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.160
+
+- Se retiró «Abrir HHR» de la cabecera de Centro HHR en todos los módulos. Los controles de la ventana quedan alineados a la derecha.
+
 ## 0.48.159
 
 - En Laboratorio e Imágenes, «Personalizados» se indica una sola vez en el selector de paciente. Al ingresar el primer dato, se despeja la ayuda del formulario. Las órdenes en blanco conservan el aviso «Sin identificación» junto a «Imprimir».

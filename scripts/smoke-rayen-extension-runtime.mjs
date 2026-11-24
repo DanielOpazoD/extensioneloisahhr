@@ -629,8 +629,8 @@ try {
     /Entrega de turno|Signos vitales|Scores|BRADEN/i,
   );
   assert.equal(
-    await home.locator(".hhr-center-app-link").getAttribute("href"),
-    "https://hhr-hospitalizados.app/",
+    await home.locator(".hhr-center-header").getByRole("link", { name: /Abrir HHR/ }).count(),
+    0,
   );
   assert.equal(
     await home

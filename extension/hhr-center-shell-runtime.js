@@ -83,7 +83,6 @@
         <button class="hhr-rx-close" type="button" aria-label="Cerrar">&times;</button>
         <header class="hhr-center-header">
           <img alt="" aria-hidden="true"><strong>Centro HHR</strong>
-          <a class="hhr-center-app-link" href="https://hhr-hospitalizados.app/" target="_blank" rel="noopener noreferrer">Abrir HHR <span aria-hidden="true">↗</span></a>
         </header>
         ${PATIENT_BOUND_MODULES.has(activeModule) || activeModule === 'settings' ? '' : `<div class="hhr-center-patientbar" hidden>
           <span class="hhr-patientbar-tag">Paciente</span>
