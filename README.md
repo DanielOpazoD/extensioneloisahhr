@@ -99,9 +99,8 @@ La barra principal usa iconos para recetas y exámenes, sin subtítulo de conexi
 Exámenes abre directamente «Ver resultados», «Solicitar laboratorio» o «Solicitar imágenes».
 La barra conserva HHR, Receta, Exámenes y sesión. Las preferencias de presentación
 están dentro de Ajustes de Centro HHR.
-El estado sigue disponible en el indicador de color, el texto accesible y la ayuda al pasar
-el cursor; el panel de conexiones
-muestra las dependencias de cada herramienta y sus acciones de reconexión. Syslab se
+El botón de sesión muestra el estado y abre el panel de conexiones con un clic.
+Allí se detallan las dependencias de cada herramienta y sus acciones de reconexión. Syslab se
 comprueba al abrir resultados de laboratorio; no se deduce su estado de las otras sesiones.
 
 Al cambiar entre módulos, las solicitudes de laboratorio e imágenes conservan su selección,

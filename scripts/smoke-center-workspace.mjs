@@ -30,6 +30,19 @@ export const verifyCompactOperationsBar = async page => {
     assert.equal(await bar.getByRole('menu', { name: 'Tipos de exámenes' }).isVisible(), false);
   }
   await page.setViewportSize(viewport);
+  await bar.locator('.brand').hover();
+  const tip = bar.locator('.tip.is-visible');
+  await tip.waitFor();
+  const session = bar.getByRole('button', { name: /^Abrir conexiones/ });
+  await session.hover();
+  await tip.waitFor({ state: 'hidden' });
+  await session.focus();
+  assert.equal(await session.evaluate(button => Boolean(button.closest('[data-tip],[data-tip-note],[title]'))), false);
+  await session.press('Enter');
+  const panel = page.locator('#hhr-prescription-print-modal[data-active-module="connection"]');
+  await panel.locator('.hhr-connection-capabilities').waitFor();
+  await panel.locator('[data-module="home"]').click();
+  await page.locator('#hhr-prescription-print-modal .hhr-rx-close').click();
 };
 
 export const verifyDockedPanel = async page => {

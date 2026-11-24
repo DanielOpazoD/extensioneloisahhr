@@ -118,6 +118,7 @@
     solicitud: {
       id: 'solicitud',
       title: 'Formulario Solicitud',
+      tabLabel: 'Solicitud',
       image: 'forms/solicitud_imagenologia.png',
       pdf: 'forms/solicitud-imagen.pdf',
       aspectRatio: '612 / 936',
@@ -148,6 +149,7 @@
     encuesta: {
       id: 'encuesta',
       title: 'Encuesta Medio Contraste',
+      tabLabel: 'Contraste',
       image: 'forms/encuesta_imagenologia.png',
       pdf: 'forms/encuesta-contraste.pdf',
       aspectRatio: '612 / 792',
@@ -176,6 +178,7 @@
     consentimiento: {
       id: 'consentimiento',
       title: 'Consentimiento Informado',
+      tabLabel: 'Consentimiento',
       image: 'forms/consentimiento.png',
       pdf: 'forms/consentimiento.pdf',
       aspectRatio: '612 / 842',
