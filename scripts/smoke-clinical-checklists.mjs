@@ -60,7 +60,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     assert.equal(await save.isEnabled(), true);
     await save.focus();
     await save.press('Enter');
-    await modal.waitFor({ state: 'detached' });
+    await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
     assert.match(await ficha.locator('#observationEntrySection textarea').inputValue(),
       /^Texto previo\n\nAplicación pauta IAAS\nControl sintético\nCódigo de verificación: PT-[0-9A-F-]{36}$/);
     await ficha.getByRole('button', { name: 'Pauta insertada · guardar en Eloísa' }).waitFor();
@@ -92,7 +92,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
       document.getElementById('observationEntrySection').append(create);
     });
     await ficha.getByRole('button', { name: 'Insertar pauta guardada' }).click();
-    await modal.waitFor({ state: 'detached' });
+    await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
     assert.match(await native.locator('textarea').inputValue(), /Seguimiento diferido de prueba\nCódigo de verificación: PT-/);
     assert.equal(await native.evaluate(dialog => dialog.open), true);
   } finally {
