@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.158
+
+- En Laboratorio e Imágenes, **De Eloísa** abre el selector junto a **Personalizados**. Busca por nombre, documento o cama, incluso desde la lista de hospitalizados.
+- La fila **Cambiar paciente** desaparece de ambos módulos. El nombre y el documento de la orden quedan junto a **Imprimir**. Cerrar el selector conserva la orden que estabas preparando.
+
 ## 0.48.157
 
 - En Imágenes, los formularios Solicitud, Contraste y Consentimiento comparten una barra con el médico solicitante y las herramientas de anotación. En pantallas estrechas los controles se distribuyen en dos filas para dejar espacio al documento.
