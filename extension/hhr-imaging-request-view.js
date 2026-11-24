@@ -2,12 +2,13 @@
 (() => {
   'use strict';
   const markup = (documents, encId) => `
-        <div class="hhr-center-toolbar">
+        <div class="hhr-center-toolbar hhr-request-toolbar">
           <h2 class="hhr-center-heading">Imágenes</h2>
           <div class="hhr-rx-tabs hhr-flow-tabs" role="tablist" aria-label="Flujo de imágenes">
             <button class="hhr-rx-tab" type="button" role="tab" data-flow="request" aria-selected="true">Solicitar</button>
             <button class="hhr-rx-tab" type="button" role="tab" data-flow="reports" aria-selected="false">Ver informes</button>
           </div>
+          ${globalThis.HhrLabRequestPatient.printActionsHtml('imaging')}
         </div>
         <div class="hhr-center-content">
           ${globalThis.HhrLabRequestPatient.sectionHtml(encId, true)}
@@ -24,7 +25,6 @@
               <button class="hhr-center-action hhr-imaging-tool" type="button" data-tool="text" aria-pressed="false">T Texto</button>
               <button class="hhr-center-action hhr-imaging-undo" type="button">Deshacer</button>
             </div>
-            <button class="hhr-center-action hhr-center-action-primary hhr-imaging-print" type="button" disabled>Imprimir</button>
           </div>
           <p class="hhr-imaging-hint" id="hhr-imaging-keyboard-hint">Haz clic para marcar, o mueve el cursor con las flechas y pulsa Enter.</p>
           <div class="hhr-imaging-stage">

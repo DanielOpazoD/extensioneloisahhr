@@ -63,7 +63,6 @@
     #hhr-prescription-print-modal .hhr-labreq-group-editor input { flex: 1; min-width: 100px; }
     #hhr-prescription-print-modal .hhr-labreq-card { border-color: #e4ebe8; border-radius: 8px; }
     #hhr-prescription-print-modal .hhr-labreq-card-title { background: #f7faf9; }
-    #hhr-prescription-print-modal .hhr-labreq-exam { padding: 3px 8px; font-size: 12px; }
     #hhr-prescription-print-modal .hhr-document-preview {
       position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column;
       background: #f3f6f5; color: var(--hhr-ink-900);
@@ -94,6 +93,25 @@
     }
     #hhr-prescription-print-modal:is([data-active-module="lab"],[data-active-module="imaging"]) :is(.hhr-center-action,.hhr-center-select,.hhr-center-search) {
       min-height: 28px; height: auto; padding-block: 3px;
+    }
+    #hhr-prescription-print-modal .hhr-center-toolbar.hhr-request-toolbar {
+      display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center;
+    }
+    #hhr-prescription-print-modal .hhr-request-toolbar .hhr-flow-tabs {
+      min-width:0; width:fit-content; max-width:100%; margin:0;
+    }
+    #hhr-prescription-print-modal .hhr-request-toolbar .hhr-request-actions {
+      justify-self:end; width:auto; justify-content:flex-end; flex-wrap:nowrap; gap:8px;
+    }
+    #hhr-prescription-print-modal .hhr-request-details {
+      display:grid; justify-items:end; color:#4c605b; font-size:11.5px; line-height:1.25;
+    }
+    #hhr-prescription-print-modal .hhr-request-source { color:var(--hhr-teal-ink); font-weight:600; }
+    #hhr-prescription-print-modal .hhr-request-actions button { white-space:nowrap; }
+    @container hhr-center (max-width: 550px) {
+      #hhr-prescription-print-modal .hhr-center-toolbar.hhr-request-toolbar { grid-template-columns:minmax(0,1fr) auto; }
+      #hhr-prescription-print-modal .hhr-request-toolbar .hhr-flow-tabs { grid-row:2; grid-column:1 / -1; }
+      #hhr-prescription-print-modal .hhr-request-toolbar .hhr-request-actions { grid-row:1; grid-column:2; }
     }
     @container hhr-center (max-width: 760px) {
       #hhr-prescription-print-modal .hhr-center-shell { grid-template-columns: 1fr; grid-template-rows: auto minmax(0,1fr); }

@@ -622,7 +622,8 @@ try {
       .evaluateAll((buttons) => buttons.map((button) => button.dataset.module)),
     ["home", "recipes", "lab", "imaging", "settings", "connection"],
   );
-  assert.equal(await home.locator(".hhr-home-card").count(), 3);
+  assert.deepEqual(await home.locator('.hhr-home-card strong').allTextContents(),
+    ['Abrir recetas', 'Ver resultados', 'Solicitar laboratorio', 'Solicitar imágenes']);
   assert.doesNotMatch(
     await home.innerText(),
     /Entrega de turno|Signos vitales|Scores|BRADEN/i,
@@ -637,11 +638,15 @@ try {
       .evaluate((element) => element.scrollHeight <= element.clientHeight),
     true,
   );
-  for (const module of ['recipes', 'lab', 'imaging']) {
-    const shortcut = home.locator('.hhr-home-card[data-module="' + module + '"]');
-    if (module === 'lab') await shortcut.press('Enter');
-    else await shortcut.click();
-    await home.locator('.hhr-center-nav-button[data-module="' + module + '"][aria-current="page"]').waitFor();
+  for (const [label, module, selector] of [
+    ['Abrir recetas', 'recipes', '.hhr-recipes-toolbar'],
+    ['Ver resultados', 'lab', '.hhr-lab-filter'],
+    ['Solicitar laboratorio', 'lab', '.hhr-request-toolbar .hhr-labreq-print'],
+    ['Solicitar imágenes', 'imaging', '.hhr-request-toolbar .hhr-imaging-print'],
+  ]) {
+    const shortcut = home.getByRole('button', { name: label, exact: true });
+    await shortcut.press('Enter');
+    await home.locator(selector).waitFor();
     assert.equal(await home.getAttribute('data-active-module'), module);
     await home.locator('.hhr-center-nav-button[data-module="home"]').click();
   }
@@ -672,7 +677,7 @@ try {
     .locator("#hhr-prescription-print-modal .hhr-labreq-print")
     .waitFor();
 
-  await verifyLabActionLayout(page);
+  await verifyLabActionLayout(page, serviceWorker);
   await verifyLabWorkspace(page, serviceWorker);
   await verifyDirectWorkflows(page, serviceWorker);
 
@@ -702,7 +707,7 @@ try {
     await page
       .locator("#hhr-prescription-print-modal .hhr-labreq-count")
       .textContent(),
-    "0 exámenes seleccionados",
+    "0 exámenes",
   );
   assert.equal(
     await page

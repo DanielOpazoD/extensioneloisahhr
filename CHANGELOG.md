@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.156
+
+- Inicio abre Recetas, resultados, solicitudes de laboratorio y solicitudes de imágenes con un clic.
+- En Laboratorio e Imágenes, «Imprimir» queda visible al desplazarse. Junto al botón se indica cuándo la orden sale sin identificación o con datos personalizados. Laboratorio también muestra la cantidad de exámenes.
+- El catálogo dedica más espacio al nombre del examen y al tubo. Los controles de copiar el RUN y abrir la ficha tienen una zona de clic más amplia.
+- Al regresar a Gestión de cuidados o Lista de trabajo médico, se recuperan la subsección, la búsqueda y la posición del episodio. Una marca breve señala la fila, incluso si el paciente cambió de cama.
+
 ## 0.48.155
 
 - Ajustes permite activar o desactivar la entrega de turno en Gestión de cuidados para este perfil de Chrome. El cambio se aplica también a las pestañas abiertas.

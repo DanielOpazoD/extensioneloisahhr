@@ -13,6 +13,14 @@ async function verifyLocalOrders(page, worker, root, nav) {
     await root.locator('[data-manual="run"]').fill(run);
     for (const blank of [false, true]) {
       if (blank) await choose('blank');
+      const actions = root.locator('.hhr-request-actions');
+      assert.equal(await actions.locator('.hhr-request-source').innerText(),
+        blank ? 'Sin identificación' : 'Datos personalizados');
+      const button = actions.getByRole('button', { name: 'Imprimir', exact: true });
+      const before = await button.boundingBox();
+      await root.locator('.hhr-center-content').evaluate(node => { node.scrollTop = node.scrollHeight; });
+      const scrolled = await button.boundingBox();
+      assert.ok(Math.abs(scrolled.y - before.y) < 1 && Math.abs(scrolled.x - before.x) < 1);
       let printed;
       if (module === 'lab') {
         const popup = page.waitForEvent('popup');
@@ -108,11 +116,16 @@ export const verifyDirectWorkflows = async (page, worker) => {
       return { beforeForm: Math.round(bounds('.hhr-imaging-canvas').top - bounds('.hhr-center-toolbar').top),
         width: Math.round(bounds('.hhr-center-dialog').width) };
     });
-    if (imagingLayout.width >= 590) assert.ok(imagingLayout.beforeForm < 220, 'Los controles de imágenes deben dejar visible el formulario');
     console.info('[imágenes] Diálogo de ' + imagingLayout.width + ' px: ' + imagingLayout.beforeForm + ' px antes del formulario');
+    if (imagingLayout.width >= 590) assert.ok(imagingLayout.beforeForm < 220, 'Los controles de imágenes deben dejar visible el formulario');
     await root.getByRole('textbox', { name: 'Médico solicitante' }).fill('Profesional de prueba');
     await root.locator('[data-doc="encuesta"]').click();
     await root.locator('.hhr-imaging-canvas').focus(); await page.keyboard.press('Enter');
+    assert.equal(await root.locator('.hhr-imaging-mark').count(), 1);
+    await root.locator('.hhr-flow-tabs [data-flow="reports"]').click();
+    assert.equal(await root.getByRole('button', { name: 'Imprimir', exact: true }).count(), 0);
+    await root.locator('.hhr-flow-tabs [data-flow="request"]').click();
+    await imageReady();
     assert.equal(await root.locator('.hhr-imaging-mark').count(), 1);
     await nav('settings');
     const favorites = root.getByRole('navigation', { name: 'Favoritos' });

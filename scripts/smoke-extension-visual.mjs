@@ -91,12 +91,34 @@ export const verifyHistoryNavigation = async page => {
   }
 };
 
-export const verifyLabActionLayout = async page => {
+export const verifyLabActionLayout = async (page, worker) => {
   const originalViewport = page.viewportSize();
   const root = page.locator('#hhr-prescription-print-modal');
   const docking = root.locator('[data-panel="dock"]');
   const initiallyDocked = await root.getAttribute('data-panel-mode') === 'docked';
   if (initiallyDocked) await docking.click();
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const tabId = await worker.evaluate(async url => (await chrome.tabs.query({})).find(tab => tab.url === url).id, page.url());
+  const setZoom = zoom => worker.evaluate(({ tabId, zoom }) => chrome.tabs.setZoom(tabId, zoom), { tabId, zoom });
+  try {
+    for (const zoom of [1, 1.25]) {
+      await setZoom(zoom);
+      await page.waitForFunction(width => Math.abs(innerWidth - width) <= 1, 1280 / zoom);
+      const visible = await root.evaluate(root => {
+        const content = root.querySelector('.hhr-center-content');
+        content.scrollTop = 0;
+        const area = content.getBoundingClientRect();
+        return [...content.querySelectorAll('.hhr-labreq-exam')].filter(label => {
+          const box = label.getBoundingClientRect();
+          return box.height > 0 && box.top >= area.top && box.bottom <= area.bottom;
+        }).length;
+      });
+      assert.ok(visible >= (zoom === 1 ? 50 : 28), 'Se perdieron exámenes visibles respecto a la 0.48.155: ' + visible);
+      console.info('[laboratorio] 1280 × 720 al ' + (zoom * 100) + '%: ' + visible + ' exámenes completos');
+    }
+  } finally {
+    await setZoom(1);
+  }
   for (const width of [1280, 840, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const geometry = await root.evaluate(root => {
