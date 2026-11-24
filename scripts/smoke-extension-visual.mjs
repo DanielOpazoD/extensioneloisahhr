@@ -122,7 +122,7 @@ export const verifyLabActionLayout = async (page, worker) => {
   for (const width of [1280, 840, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const geometry = await root.evaluate(root => {
-      const selectors = ['.hhr-center-header strong', '[data-panel="density"]', '.hhr-census-trigger', '.hhr-labreq-print', '.hhr-rx-close'];
+      const selectors = ['.hhr-center-header strong', '[data-panel="density"]', '.hhr-census-trigger', '.hhr-flow-tabs', '.hhr-labreq-copies', '.hhr-labreq-print', '.hhr-rx-close'];
       const dialog = root.querySelector('.hhr-center-dialog').getBoundingClientRect();
       const header = root.querySelector('.hhr-center-header');
       const controls = selectors.map(selector => {

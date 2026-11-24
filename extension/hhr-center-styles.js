@@ -401,6 +401,8 @@
       }
       #hhr-prescription-print-modal .hhr-connection-feedback { min-height: 18px; margin-top: 10px; color: #64716f; font-size: 11.5px; }
       #hhr-prescription-print-modal .hhr-connection-feedback.is-error { color: var(--hhr-red-ink); }
+      #hhr-prescription-print-modal .hhr-imaging-reports { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 12px; }
+      #hhr-prescription-print-modal .hhr-imaging-reports a { display: inline-flex; align-items: center; gap: 5px; box-sizing: border-box; text-decoration: none; }
       #hhr-prescription-print-modal .hhr-imaging-controls {
         position: sticky; top: 0; z-index: 4; display: grid; align-items: center; gap: 4px 8px;
         grid-template-columns: auto minmax(0,1fr) auto; padding: 3px 0 4px;

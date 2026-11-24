@@ -4,11 +4,12 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import '../../../extension/hhr-lab-request-patient.js';
+import '../../../extension/hhr-favorite-links.js';
 import '../../../extension/hhr-imaging-request-view.js';
 import '../../../extension/hhr-imaging-center.js';
 
 type Runtime = {
-  renderImagingCenter: (root: HTMLElement, encId: string) => void;
+  renderImagingCenter: (root: HTMLElement, encId: string, flow?: 'request' | 'reports') => void;
 };
 
 type RuntimeOwner = {
@@ -112,6 +113,22 @@ describe('Centro HHR imaging runtime', () => {
     expect(contentSource).not.toContain('const renderImagingCenter =');
     expect(contentSource.split('\n').length).toBeLessThanOrEqual(2_250);
     expect(ownerSource.split('\n').length).toBeLessThanOrEqual(350);
+  });
+
+  it.each(['', '141121'])('opens only the official radiology portal from reports (episode %s)', encId => {
+    const send = vi.fn(async () => ({}));
+    const header = vi.fn(async () => ({}));
+    const root = makeRoot();
+    runtimeOwner().create(makeDependencies(send, header)).renderImagingCenter(root, encId, 'reports');
+    const link = root.querySelector<HTMLAnchorElement>('.hhr-imaging-reports a')!;
+    expect(link.textContent).toContain('Abrir MMRAD');
+    expect(link.href).toBe('https://ris.mmrad.cl/web/guest');
+    expect(link.target).toBe('_blank');
+    expect(link.relList.contains('noreferrer')).toBe(true);
+    expect(link.relList.contains('noopener')).toBe(true);
+    expect(header).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(root.querySelector('.hhr-imaging-print')).toBeNull();
   });
 
   it('preserves patient overlays, pointer and keyboard marks, text focus and print payloads', async () => {

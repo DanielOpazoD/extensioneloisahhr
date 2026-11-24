@@ -20,7 +20,7 @@
     aria-haspopup="dialog" aria-expanded="false"${pressed === null ? '' : ' aria-pressed="' + pressed + '"'}>De Eloísa <span aria-hidden="true">▾</span></button>`;
 
   // Both order types keep the printable identity beside the primary action.
-  const printActionsHtml = kind => `
+  const printActionsHtml = (kind, copiesLimit) => `
     <div class="hhr-center-toolbar-actions hhr-request-actions">
       <div class="hhr-request-details" aria-live="polite" aria-atomic="true">
         <span class="hhr-request-source" hidden></span>
@@ -28,6 +28,7 @@
         ${kind === 'lab' ? '<span class="hhr-labreq-count" hidden>0 exámenes</span>' : ''}
         ${routeNoticeHtml}
       </div>
+      ${kind === 'lab' ? `<label class="hhr-labreq-copies">Copias<input type="number" value="1" min="1" max="${copiesLimit}" step="1" required title="De 1 a ${copiesLimit} copias"></label>` : ''}
       <button class="hhr-center-action hhr-center-action-primary ${kind === 'lab' ? 'hhr-labreq-print' : 'hhr-imaging-print'}" type="button" disabled>Imprimir</button>
     </div>`;
 

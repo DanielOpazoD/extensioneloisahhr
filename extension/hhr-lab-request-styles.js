@@ -25,6 +25,9 @@
       #hhr-prescription-print-modal .hhr-syslab-access-form input { width: min(180px,30%); min-width: 110px; padding: 0 9px; border: 1px solid #d7c58f; border-radius: 7px; background: #fff; color: var(--hhr-ink-900); font: inherit; }
       #hhr-prescription-print-modal .hhr-labreq-content { padding: 10px clamp(12px,2vw,26px) 22px; }
       #hhr-prescription-print-modal .hhr-labreq-count { color: #64716f; font-size: 11.5px; white-space: nowrap; }
+      #hhr-prescription-print-modal .hhr-labreq-copies { display: inline-flex; align-items: center; gap: 4px; margin-inline-end: 6px; color: var(--hhr-ink-700); font-size: 12px; }
+      #hhr-prescription-print-modal .hhr-labreq-copies input { box-sizing: border-box; width: 5ch; min-width: 42px; height: 28px; padding-inline-start: 4px; border: 1px solid #cfd9d7; border-radius: 6px; background: white; color: var(--hhr-ink-900); font: inherit; }
+      #hhr-prescription-print-modal .hhr-labreq-copies input:invalid { border-color: #a6382e; }
       #hhr-prescription-print-modal .hhr-labreq-patient { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px; margin-bottom: 4px; }
       #hhr-prescription-print-modal .hhr-labreq-patient-source { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
       #hhr-prescription-print-modal .hhr-labreq-patient-summary { color: #46534f; font-size: 11.5px; line-height: 1.4; }

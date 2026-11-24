@@ -128,9 +128,10 @@
     #hhr-prescription-print-modal .hhr-request-actions button { white-space:nowrap; }
     @container hhr-center (max-width: 550px) {
       #hhr-prescription-print-modal .hhr-request-toolbar { --hhr-request-layout:"heading print" auto "tabs tabs" auto / minmax(0,1fr) auto; }
+      #hhr-prescription-print-modal[data-active-module="lab"] .hhr-request-toolbar { --hhr-request-layout:"heading tabs" auto "print print" auto / auto minmax(0,1fr); }
     }
     @container hhr-center (min-width: 350px) and (max-width: 550px) {
-      #hhr-prescription-print-modal .hhr-request-toolbar:not(:has(.hhr-request-details > :not([hidden]))) { --hhr-request-layout:initial; }
+      #hhr-prescription-print-modal[data-active-module="imaging"] .hhr-request-toolbar:not(:has(.hhr-request-details > :not([hidden]))) { --hhr-request-layout:initial; }
     }
     @container hhr-center (max-width: 760px) {
       #hhr-prescription-print-modal .hhr-center-shell { grid-template-columns: 1fr; grid-template-rows: auto minmax(0,1fr); }
