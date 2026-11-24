@@ -85,7 +85,7 @@
           <img alt="" aria-hidden="true"><strong>Centro HHR</strong>
           <a class="hhr-center-app-link" href="https://hhr-hospitalizados.app/" target="_blank" rel="noopener noreferrer">Abrir HHR <span aria-hidden="true">↗</span></a>
         </header>
-        ${PATIENT_BOUND_MODULES.has(activeModule) ? '' : `<div class="hhr-center-patientbar" hidden>
+        ${PATIENT_BOUND_MODULES.has(activeModule) || activeModule === 'settings' ? '' : `<div class="hhr-center-patientbar" hidden>
           <span class="hhr-patientbar-tag">Paciente</span>
           <strong class="hhr-patientbar-name">—</strong>
           <span class="hhr-patientbar-meta"></span>

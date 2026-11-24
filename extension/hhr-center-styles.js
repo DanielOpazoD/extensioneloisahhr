@@ -410,6 +410,7 @@
         border-bottom: 1px solid #e1e9e6; background: #fff;
       }
       #hhr-prescription-print-modal .hhr-imaging-tabs { justify-self: start; max-width: 100%; margin: 0; padding: 2px; gap: 2px; }
+      #hhr-prescription-print-modal[data-active-module="lab"] .hhr-flow-tabs .hhr-rx-tab,
       #hhr-prescription-print-modal[data-active-module="imaging"] :is(.hhr-flow-tabs,.hhr-imaging-tabs) .hhr-rx-tab {
         flex: 0 0 auto; min-height: 26px; padding: 1px 8px; font-size: 12px; white-space: nowrap;
       }

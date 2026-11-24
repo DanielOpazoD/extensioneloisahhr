@@ -61,6 +61,11 @@ async function verifyLocalOrders(page, worker, root, nav) {
     assert.equal(await root.locator('.hhr-center-patientbar').count(), 0);
     const picker = root.getByRole('button', { name: 'De Eloísa', exact: true });
     await choose('manual');
+    const hint = root.locator('.hhr-labreq-patient-summary');
+    await root.locator('[data-manual="name"]').fill(name);
+    assert.equal(await hint.isVisible(), false);
+    await root.locator('[data-manual="name"]').fill('');
+    assert.equal(await hint.isVisible(), true);
     await root.locator('[data-manual="name"]').fill(name);
     await root.locator('[data-manual="run"]').fill(run);
     await picker.click();
@@ -78,8 +83,8 @@ async function verifyLocalOrders(page, worker, root, nav) {
         assert.equal(await picker.getAttribute('aria-expanded'), 'false');
       }
       const actions = root.locator('.hhr-request-actions');
-      assert.equal(await actions.locator('.hhr-request-source').innerText(),
-        blank ? 'Sin identificación' : 'Datos personalizados');
+      assert.equal(await actions.locator('.hhr-request-source').isVisible(), blank);
+      if (blank) assert.equal(await actions.locator('.hhr-request-source').innerText(), 'Sin identificación');
       const button = actions.getByRole('button', { name: 'Imprimir', exact: true });
       const before = await button.boundingBox();
       await root.locator('.hhr-center-content').evaluate(node => { node.scrollTop = node.scrollHeight; });
@@ -158,7 +163,8 @@ export const verifyDirectWorkflows = async (page, worker) => {
           : { ok: true };
         else if (message.type === types.DOCUMENT_PREVIEW_REQUEST) response = { ok: true };
         else return original.call(chrome.runtime, message, callback);
-        state.calls.push({ type: message.type, preview: message.preview, operation: message.operation, encId: message.encId });
+        const module = document.querySelector('#hhr-prescription-print-modal')?.dataset.activeModule;
+        state.calls.push({ type: message.type, preview: message.preview, operation: message.operation, encId: message.encId, module });
         callback?.(response); return Promise.resolve(response);
       };
     } });
@@ -195,6 +201,8 @@ export const verifyDirectWorkflows = async (page, worker) => {
     await imageReady();
     assert.equal(await root.locator('.hhr-imaging-mark').count(), 1);
     await nav('settings');
+    assert.equal(await root.locator('.hhr-center-patientbar').count(), 0);
+    assert.match(await root.getByRole('link', { name: 'Descargar ZIP' }).getAttribute('href'), /releases\/latest\/download\/eloisa-hhr\.zip$/);
     const favorites = root.getByRole('navigation', { name: 'Favoritos' });
     assert.deepEqual(await favorites.getByRole('link').allTextContents(), ['SysLab', 'MMRAD', 'Gmail']);
     assert.equal(await favorites.getByRole('textbox').count(), 0);
@@ -263,6 +271,7 @@ export const verifyDirectWorkflows = async (page, worker) => {
       const [result] = await chrome.scripting.executeScript({ target: { tabId }, world: 'ISOLATED', func: () => globalThis.__hhrDirectWorkflowFixture.calls }); return result.result;
     }, tabId);
     assert.equal(calls.filter(call => call.operation === 'print').length, 0);
+    assert.ok(!calls.some(call => call.module === 'settings' && call.type === 'RAYEN_PATIENT_HEADER_REQUEST'));
     const printRequests = calls.filter(call => call.type === 'RAYEN_IMAGING_FORM_PRINT_REQUEST');
     assert.deepEqual(printRequests.map(call => call.encId), ['141122', '141121', '141121']);
     assert.ok(printRequests.every(call => !call.preview));

@@ -90,9 +90,10 @@ grupos; los campos del paciente y la solicitud no forman parte de esas preferenc
 
 Recetas, laboratorio e imágenes abren directamente el diálogo de impresión de Chrome.
 En Laboratorio e Imágenes, «De Eloísa» abre el censo para buscar por nombre, documento o cama.
-La orden conserva su origen hasta que se elige un paciente. Junto a «Imprimir» aparecen el
-nombre y el documento elegidos, «Datos personalizados» o «Sin identificación». Laboratorio
-también muestra la cantidad de exámenes seleccionados.
+La orden conserva su origen hasta que se elige un paciente. Junto a «Imprimir» se ve el nombre
+y el documento si se eligió alguien del censo, o «Sin identificación» si la orden está en blanco.
+Para una orden personalizada, los datos se ven en el propio formulario. En Laboratorio, el contador
+y la opción de guardar un grupo aparecen al seleccionar exámenes.
 En Recetas se elige Estándar o Compacta antes de imprimir. En el diálogo de Chrome se puede
 seleccionar una impresora o guardar el documento como PDF.
 

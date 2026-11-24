@@ -91,7 +91,7 @@ export const verifyLabWorkspace = async (page, worker) => {
   await root.locator('[name="hhr-labreq-patient-source"][value="manual"]').check();
   const name = root.locator('[data-manual="name"]');
   await name.fill('Paciente de prueba');
-  assert.equal(await root.locator('.hhr-request-source').innerText(), 'Datos personalizados');
+  assert.equal(await root.locator('.hhr-request-source').isVisible(), false);
   assert.equal(await root.locator('.hhr-center-patientbar').count(), 0);
   await root.locator('[data-panel="minimize"]').click();
   assert.equal(await root.getByRole('dialog').isVisible(), false);
@@ -108,9 +108,13 @@ export const verifyLabWorkspace = async (page, worker) => {
   assert.ok(Number(await resize.getAttribute('aria-valuenow')) > beforeWidth + 30);
   const search = root.getByRole('searchbox', { name: 'Buscar exámenes para solicitar' });
   assert.equal(await root.locator('.hhr-labreq-group-editor').isVisible(), false);
+  assert.equal(await root.locator('.hhr-labreq-selection-tools').getByRole('button').count(), 0);
+  assert.equal(await root.locator('.hhr-labreq-count').isVisible(), false);
   await search.fill('pcr');
+  assert.equal(await root.locator('.hhr-labreq-section:visible').count(), 1);
   assert.equal(await root.getByRole('checkbox', { name: 'CREATININA', exact: true }).isVisible(), false);
   await root.getByRole('checkbox', { name: 'PROTEINA C REACTIVA', exact: true }).check();
+  assert.equal(await root.locator('.hhr-labreq-count:visible').innerText(), '1 examen');
   await search.fill('creat');
   await root.getByRole('checkbox', { name: 'CREATININA', exact: true }).check();
   assert.equal(await root.locator('.hhr-labreq-selected button').count(), 2);
@@ -118,6 +122,7 @@ export const verifyLabWorkspace = async (page, worker) => {
   assert.equal(await root.locator('.hhr-labreq-group-editor').isVisible(), true);
   await root.getByRole('button', { name: 'Cancelar', exact: true }).click();
   assert.equal(await root.locator('.hhr-labreq-group-editor').isVisible(), false);
+  assert.equal(await root.getByRole('button', { name: 'Guardar selección' }).evaluate(button => button === document.activeElement), true);
   await root.getByRole('button', { name: 'Guardar selección', exact: true }).click();
   await root.getByRole('textbox', { name: 'Nombre del grupo', exact: true }).fill('Grupo de prueba');
   await root.getByRole('button', { name: 'Guardar', exact: true }).click();
@@ -128,6 +133,7 @@ export const verifyLabWorkspace = async (page, worker) => {
     'bioquimica|CREATININA', 'inmunologia|PROTEINA C REACTIVA',
   ]);
   await search.fill('no-existe-ningun-examen');
+  assert.equal(await root.locator('.hhr-labreq-section:visible').count(), 0);
   assert.match(await root.locator('.hhr-labreq-search-summary').textContent(), /No hay coincidencias/);
   await root.getByRole('button', { name: 'Quitar PROTEINA C REACTIVA', exact: true }).click();
   assert.equal(await root.locator('.hhr-labreq-selected button').count(), 1);
