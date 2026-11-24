@@ -78,8 +78,9 @@ En Ajustes de Centro HHR, «Descargar extensión desde GitHub (.zip)» descarga 
 Centro HHR se abre por defecto como un cuadro de diálogo centrado. Al actualizar esta
 versión se restablece esa apertura; después puedes elegir y guardar el panel lateral.
 En pantallas amplias, el botón de acoplar deja espacio para la ficha al lado derecho.
-El borde permite ajustar su ancho con el mouse o las flechas del teclado. El encabezado
-incluye desacoplar, ampliar, minimizar y densidad compacta. Minimizar conserva el formulario;
+El borde permite ajustar su ancho con el mouse o las flechas del teclado. La cabecera
+reúne el módulo activo, sus pestañas y sus acciones. «Vista» permite ajustar la densidad,
+acoplar o desacoplar el panel y ampliar el cuadro. Minimizar conserva el formulario;
 cerrar libera el espacio de la página. En Inicio, «Abrir recetas»,
 «Ver resultados», «Solicitar laboratorio» y «Solicitar imágenes» llevan a su pantalla con un clic.
 
@@ -96,6 +97,9 @@ Para una orden personalizada, los datos se ven en el propio formulario. En Labor
 y la opción de guardar un grupo aparecen al seleccionar exámenes.
 En Laboratorio, «Copias» junto a «Imprimir» permite elegir de 1 a 99 ejemplares de la misma
 orden. «Guardar como PDF» los reúne en un archivo, con una copia por página.
+En Imágenes, al marcar la primera cruz o confirmar un texto, los datos del paciente
+se recogen en una línea. «Editar» vuelve a abrirlos. «Ajustar al ancho» y «Hoja completa»
+cambian la escala en pantalla y conservan la posición de las marcas en el documento.
 En Imágenes, la pestaña «Informes» ofrece «Abrir MMRAD». El portal se abre en otra pestaña
 para consultar los estudios con la sesión del profesional.
 En Recetas se elige Estándar o Compacta antes de imprimir. En el diálogo de Chrome se puede

@@ -4,6 +4,7 @@
  * and the printable laboratory request HTML (selection marks + escaping).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 import '../../../extension/hhr-request-forms.js';
 
@@ -117,6 +118,9 @@ describe('extension request forms · imaging documents', () => {
       expect(doc.image).toMatch(/^forms\/.+\.png$/);
       expect(doc.pdf).toMatch(/^forms\/.+\.pdf$/);
       expect(doc.aspectRatio).toMatch(/^\d+ \/ \d+$/);
+      const [width, height] = doc.aspectRatio.split('/').map(Number);
+      const png = readFileSync('extension/' + doc.image);
+      expect(width / height).toBeCloseTo(png.readUInt32BE(16) / png.readUInt32BE(20), 5);
     }
   });
 

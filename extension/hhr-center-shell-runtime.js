@@ -81,18 +81,18 @@
       <div class="hhr-rx-backdrop" aria-hidden="true"></div>
       <section class="hhr-rx-dialog hhr-center-dialog" role="dialog" aria-modal="true" aria-label="Centro HHR">
         <button class="hhr-rx-close" type="button" aria-label="Cerrar">&times;</button>
-        <header class="hhr-center-header">
-          <img alt="" aria-hidden="true"><strong>Centro HHR</strong>
-        </header>
-        ${PATIENT_BOUND_MODULES.has(activeModule) || activeModule === 'settings' ? '' : `<div class="hhr-center-patientbar" hidden>
-          <span class="hhr-patientbar-tag">Paciente</span>
-          <strong class="hhr-patientbar-name">—</strong>
-          <span class="hhr-patientbar-meta"></span>
-          <span class="hhr-patientbar-route" hidden>Distinto al episodio abierto en Eloísa</span>
-        </div>`}
-        <div class="hhr-center-shell">
-          <nav class="hhr-center-nav" aria-label="Herramientas de Eloísa">${centerNavMarkup(activeModule)}</nav>
-          <main class="hhr-center-main"></main>
+        <div class="hhr-center-layout">
+          <header class="hhr-center-header"><img alt="" aria-hidden="true"></header>
+          ${PATIENT_BOUND_MODULES.has(activeModule) || activeModule === 'settings' ? '' : `<div class="hhr-center-patientbar" hidden>
+            <span class="hhr-patientbar-tag">Paciente</span>
+            <strong class="hhr-patientbar-name">—</strong>
+            <span class="hhr-patientbar-meta"></span>
+            <span class="hhr-patientbar-route" hidden>Distinto al episodio abierto en Eloísa</span>
+          </div>`}
+          <div class="hhr-center-shell">
+            <nav class="hhr-center-nav" aria-label="Herramientas de Eloísa">${centerNavMarkup(activeModule)}</nav>
+            <main class="hhr-center-main"></main>
+          </div>
         </div>
       </section>
     `;

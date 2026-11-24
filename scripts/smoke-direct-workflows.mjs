@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { selectPanelView } from './smoke-center-workspace.mjs';
+
+const imageAnnotation = { text: 'MARCA DE PRUEBA', x: 0.27, y: 0.33 };
 
 async function verifyImagingToolbar(page, root) {
   const viewport = page.viewportSize();
-  const dock = root.locator('[data-panel="dock"]');
-  const wasDocked = await dock.getAttribute('aria-pressed') === 'true';
-  if (wasDocked) await dock.click();
+  const wasDocked = await root.getAttribute('data-panel-mode') === 'docked';
+  if (wasDocked) await selectPanelView(root, 'dock');
   try {
     const tabs = root.getByRole('tablist', { name: 'Documento' });
     const consent = tabs.getByRole('tab', { name: 'Consentimiento Informado' });
@@ -21,6 +23,8 @@ async function verifyImagingToolbar(page, root) {
         const docs = box('.hhr-imaging-tabs'), doctor = box('.hhr-imaging-physician'), tools = box('.hhr-imaging-tools');
         return {
           abovePaper: Math.round(box('.hhr-imaging-canvas').top - box('.hhr-center-toolbar').top),
+          headerCenters: ['.hhr-center-header img', '.hhr-center-heading', '.hhr-flow-tabs', '.hhr-imaging-print', '[data-panel="view"]']
+            .map(selector => { const item = box(selector); return item.top + item.height / 2; }),
           overflow: pane.scrollWidth - pane.clientWidth, inputWidth: doctor.width,
           docsInline: Math.abs(docs.y + docs.height / 2 - doctor.y - doctor.height / 2) < 2,
           toolsInline: Math.abs(tools.y + tools.height / 2 - doctor.y - doctor.height / 2) < 2,
@@ -28,13 +32,67 @@ async function verifyImagingToolbar(page, root) {
       });
       assert.ok(layout.overflow <= 1 && layout.inputWidth >= 100 && layout.toolsInline, JSON.stringify({width, layout}));
       assert.equal(layout.docsInline, width >= 620);
-      if (width === 1036) assert.ok(layout.abovePaper <= 180, 'Demasiado espacio por encima de la orden personalizada');
+      if (width === 1036) {
+        assert.ok(layout.abovePaper <= 180, 'Demasiado espacio por encima de la orden personalizada');
+        assert.ok(Math.max(...layout.headerCenters) - Math.min(...layout.headerCenters) <= 4, 'La cabecera de Imágenes debe caber en una fila');
+      }
     }
     await tabs.getByRole('tab', { name: 'Formulario Solicitud' }).click();
+    await page.setViewportSize({ width: 1036, height: 740 });
+    await verifyImagingSheet(root);
   } finally {
     await page.setViewportSize(viewport);
-    if (wasDocked) await dock.click();
+    if (wasDocked) await selectPanelView(root, 'dock');
   }
+}
+
+async function verifyImagingSheet(root) {
+  const canvas = root.locator('.hhr-imaging-canvas');
+  const stage = root.locator('.hhr-imaging-stage');
+  const name = root.locator('[data-manual="name"]');
+  const expectedName = await name.inputValue();
+  const expectedId = await root.locator('[data-manual="run"]').inputValue();
+  const edit = root.getByRole('button', { name: 'Editar', exact: true });
+  const pageSize = root.getByRole('button', { name: 'Hoja completa', exact: true });
+  const widthSize = root.getByRole('button', { name: 'Ajustar al ancho', exact: true });
+  await canvas.press('Enter');
+  await edit.waitFor();
+  assert.equal(await name.isVisible(), false);
+  const summary = await root.locator('.hhr-imaging-patient-summary').innerText();
+  assert.ok(summary.includes(expectedName) && summary.includes(expectedId));
+  await edit.press('Enter');
+  assert.equal(await name.inputValue(), expectedName);
+  assert.equal(await name.isVisible(), true);
+
+  await pageSize.click();
+  await root.getByRole('button', { name: 'Texto', exact: true }).click();
+  const page = await canvas.boundingBox();
+  await canvas.click({ position: { x: Math.round(page.width * imageAnnotation.x), y: Math.round(page.height * imageAnnotation.y) } });
+  const editor = root.getByRole('textbox', { name: 'Texto libre sobre el formulario' });
+  await editor.fill(imageAnnotation.text);
+  await editor.press('Enter');
+  await edit.waitFor();
+
+  const dimensions = async () => {
+    const sheet = await canvas.boundingBox();
+    const area = await stage.boundingBox();
+    const mark = await canvas.getByText(imageAnnotation.text, { exact: true }).boundingBox();
+    assert.ok(Math.abs((mark.x - sheet.x) / sheet.width - imageAnnotation.x) < 0.012);
+    assert.ok(Math.abs((mark.y + mark.height / 2 - sheet.y) / sheet.height - imageAnnotation.y) < 0.012);
+    return { sheet, area };
+  };
+  const full = await dimensions();
+  assert.ok(full.sheet.height <= full.area.height + 2 && full.sheet.width <= full.area.width + 2);
+  if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+    await mkdir(process.env.HHR_VISUAL_ARTIFACT_DIR, { recursive: true });
+    await root.getByRole('dialog').screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'imagenes-hoja-completa.png') });
+  }
+  await widthSize.click();
+  const wide = await dimensions();
+  assert.ok(wide.sheet.width > full.sheet.width + 20 && wide.sheet.width >= wide.area.width * 0.9);
+  assert.equal(await canvas.locator('.hhr-imaging-mark').count(), 2);
+  await edit.click();
+  console.info('[imágenes] Hoja completa de ' + Math.round(full.sheet.width) + ' px y ajuste al ancho de ' + Math.round(wide.sheet.width) + ' px con la misma marca.');
 }
 
 async function chooseCensusPatient(root, id, query = '') {
@@ -52,7 +110,7 @@ async function chooseCensusPatient(root, id, query = '') {
   } else await option.click();
 }
 
-async function readPdfPages(bytes) {
+async function readPdfPages(bytes, annotation) {
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const pdf = await getDocument({ data: new Uint8Array(bytes), useSystemFonts: true }).promise;
   try {
@@ -60,6 +118,14 @@ async function readPdfPages(bytes) {
     for (let number = 1; number <= pdf.numPages; number++) {
       const page = await pdf.getPage(number);
       const content = await page.getTextContent();
+      if (annotation && number === 1) {
+        const mark = content.items.find(item => item.str === annotation.text);
+        assert.ok(mark, 'La marca debe estar en el PDF impreso');
+        const viewport = page.getViewport({ scale: 1 });
+        const [x, y] = viewport.convertToViewportPoint(mark.transform[4], mark.transform[5]);
+        assert.ok(Math.abs(x / viewport.width - annotation.x) < 0.012 && Math.abs(y / viewport.height - annotation.y) < 0.012,
+          'La marca impresa debe coincidir con la posición elegida en la hoja');
+      }
       pages.push(content.items.map(item => item.str || '').join(' '));
     }
     return pages;
@@ -162,8 +228,12 @@ async function verifyLocalOrders(page, worker, root, nav) {
         await root.locator('.hhr-imaging-print').click();
         const order = await popup;
         const b64 = await worker.evaluate(() => self.__localOrder);
-        [printed] = await readPdfPages(Buffer.from(b64, 'base64'));
+        [printed] = await readPdfPages(Buffer.from(b64, 'base64'), blank ? null : imageAnnotation);
         await order.close();
+        if (!blank) {
+          const undo = root.getByRole('button', { name: 'Deshacer', exact: true });
+          await undo.click(); await undo.click();
+        }
       }
       assert.doesNotMatch(printed, /Paciente sintético|DOC-FICHA|PAS-PRUEBA/i);
       assert.equal(printed.toUpperCase().includes(run), !blank);
@@ -229,15 +299,19 @@ export const verifyDirectWorkflows = async (page, worker) => {
     await nav('imaging'); await imageReady();
     const imagingLayout = await root.evaluate(node => {
       const bounds = selector => node.querySelector(selector).getBoundingClientRect();
-      return { beforeForm: Math.round(bounds('.hhr-imaging-canvas').top - bounds('.hhr-center-toolbar').top),
+      return { beforeForm: Math.round(bounds('.hhr-imaging-canvas').top - bounds('.hhr-center-dialog').top),
         width: Math.round(bounds('.hhr-center-dialog').width) };
     });
     console.info('[imágenes] Diálogo de ' + imagingLayout.width + ' px: ' + imagingLayout.beforeForm + ' px antes del formulario');
-    if (imagingLayout.width >= 590) assert.ok(imagingLayout.beforeForm < 220, 'Los controles de imágenes deben dejar visible el formulario');
+    if (imagingLayout.width >= 590) assert.ok(imagingLayout.beforeForm < 220, 'La hoja debe empezar en los primeros 220 px del diálogo');
     await root.getByRole('textbox', { name: 'Médico solicitante' }).fill('Profesional de prueba');
     await root.locator('[data-doc="encuesta"]').click();
+    await root.getByRole('button', { name: 'Cruz', exact: true }).click();
     await root.locator('.hhr-imaging-canvas').focus(); await page.keyboard.press('Enter');
     assert.equal(await root.locator('.hhr-imaging-mark').count(), 1);
+    assert.match(await root.locator('.hhr-imaging-patient-summary').innerText(), /DOC-FICHA-A/);
+    assert.equal(await root.locator('.hhr-request-id').isVisible(), false);
+    assert.equal(await root.locator('.hhr-request-source').isVisible(), false);
     await root.locator('.hhr-flow-tabs [data-flow="reports"]').click();
     assert.equal(await root.getByRole('button', { name: 'Imprimir', exact: true }).count(), 0);
     await verifyMmradLink(page, root);

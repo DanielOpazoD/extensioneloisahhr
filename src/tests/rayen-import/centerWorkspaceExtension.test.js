@@ -41,6 +41,37 @@ afterEach(() => {
 });
 
 describe('Centro HHR workspace', () => {
+  it('opens display preferences from Vista and returns focus when it closes with Escape', async () => {
+    setupPreferences();
+    const root = rootWithShell();
+    globalThis.HhrCenterPanelRuntime.attach(root);
+    const view = root.querySelector('[data-panel="view"]');
+    const options = document.getElementById(view.getAttribute('aria-controls'));
+    const density = options.querySelector('[data-panel="density"]');
+    expect(options.hidden).toBe(true);
+    view.click();
+    expect(view.getAttribute('aria-expanded')).toBe('true');
+    density.focus();
+    density.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(options.hidden).toBe(true);
+    expect(document.activeElement).toBe(view);
+    view.click(); density.click();
+    await vi.waitFor(() => expect(root.dataset.density).toBe('compact'));
+    expect(document.activeElement).toBe(view);
+    view.click();
+    root.querySelector('input').dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(view.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('keeps a folded imaging identity on the minimized button', () => {
+    setupPreferences();
+    const root = rootWithShell();
+    root.querySelector('main').innerHTML = '<div class="hhr-imaging-patient-summary"><span class="hhr-imaging-patient-name">Nombre de prueba</span></div>';
+    globalThis.HhrCenterPanelRuntime.attach(root);
+    root.querySelector('[data-panel="minimize"]').click();
+    expect(root.querySelector('.hhr-center-restore').textContent).toContain('Nombre de prueba');
+  });
+
   it('preserves the form while minimizing, resizing and restoring, then releases page space', async () => {
     const { preferences } = setupPreferences();
     await preferences.save({ mode: 'docked' });

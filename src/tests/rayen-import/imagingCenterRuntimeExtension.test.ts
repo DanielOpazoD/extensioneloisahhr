@@ -239,6 +239,54 @@ describe('Centro HHR imaging runtime', () => {
     });
   });
 
+  it.each([
+    ['current', 'Ana Riroroko'], ['manual', 'Nombre de prueba'], ['blank', 'Sin identificación'],
+  ])('folds %s data only after an annotation and reopens the same fields', async (source, label) => {
+    const root = makeRoot();
+    runtimeOwner().create(makeDependencies(vi.fn())).renderImagingCenter(root, '141121');
+    await Promise.resolve();
+    const canvas = root.querySelector<HTMLElement>('.hhr-imaging-canvas')!;
+    const fields = root.querySelector<HTMLElement>('.hhr-labreq-patient')!;
+    const name = root.querySelector<HTMLInputElement>('[data-manual="name"]')!;
+    if (source !== 'current') root.querySelector<HTMLInputElement>(`input[value="${source}"]`)!.click();
+    if (source === 'manual') {
+      name.value = label;
+      root.querySelector<HTMLInputElement>('[data-manual="run"]')!.value = 'PAS-TEST-2';
+      name.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    root.querySelector<HTMLButtonElement>('[data-sheet-fit="page"]')!.click();
+    expect(root.querySelector('.hhr-imaging-stage')?.getAttribute('data-fit')).toBe('page');
+    canvas.focus();
+    root.querySelector<HTMLButtonElement>('[data-tool="text"]')!.click();
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    root.querySelector('.hhr-imaging-text-editor')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(fields.hidden).toBe(false);
+    expect(root.querySelector('.hhr-imaging-mark')).toBeNull();
+    root.querySelector<HTMLButtonElement>('[data-tool="cross"]')!.click();
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(fields.hidden).toBe(true);
+    expect(root.querySelector('.hhr-imaging-patient-name')?.textContent).toBe(label);
+    expect(root.querySelector('.hhr-imaging-patient-id')?.textContent).toBe(source === 'manual' ? 'PAS-TEST-2' : '');
+    root.querySelector<HTMLButtonElement>('[data-sheet-fit="width"]')!.click();
+    expect(root.querySelectorAll('.hhr-imaging-mark')).toHaveLength(1);
+    root.querySelector<HTMLButtonElement>('.hhr-imaging-edit')!.click();
+    expect(fields.hidden).toBe(false);
+    expect(fields.contains(document.activeElement)).toBe(true);
+    if (source === 'manual') expect(name.value).toBe(label);
+    expect(root.querySelector<HTMLInputElement>('input[name="hhr-labreq-patient-source"]:checked')?.value).toBe(source);
+  });
+
+  it('shows a custom passport only once when the name is empty', () => {
+    const root = makeRoot();
+    runtimeOwner().create(makeDependencies(vi.fn())).renderImagingCenter(root, '');
+    const id = root.querySelector<HTMLInputElement>('[data-manual="run"]')!;
+    id.value = 'PAS-TEST-2';
+    id.dispatchEvent(new Event('input', { bubbles: true }));
+    root.querySelector('.hhr-imaging-canvas')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(root.querySelector('.hhr-imaging-patient-name')?.textContent).toBe(id.value);
+    expect(root.querySelector<HTMLElement>('.hhr-imaging-patient-id')?.hidden).toBe(true);
+  });
+
   it('ignores a late patient response after the imaging root is replaced', async () => {
     let resolvePatient: ((value: unknown) => void) | undefined;
     const fetchPatientHeaderView = vi.fn(
@@ -264,5 +312,21 @@ describe('Centro HHR imaging runtime', () => {
 
     expect(root.querySelector<HTMLButtonElement>('.hhr-imaging-print')?.disabled).toBe(true);
     expect(root.querySelector('.hhr-imaging-overlay')).toBeNull();
+  });
+
+  it('scrolls only the sheet to keep keyboard annotations in view', async () => {
+    const root = makeRoot();
+    runtimeOwner().create(makeDependencies(vi.fn())).renderImagingCenter(root, '141121');
+    await Promise.resolve();
+    const canvas = root.querySelector<HTMLElement>('.hhr-imaging-canvas')!;
+    const stage = root.querySelector<HTMLElement>('.hhr-imaging-stage')!;
+    const pane = root.querySelector<HTMLElement>('.hhr-center-content')!;
+    const rect = (top: number, height: number) => ({ left: 0, right: 300, width: 300, top, bottom: top + height, height, x: 0, y: top, toJSON: () => ({}) });
+    vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue(rect(100, 300));
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(rect(450, 18));
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(stage.scrollTop).toBe(68);
+    expect(pane.scrollTop).toBe(0);
+    expect(root.scrollTop).toBe(0);
   });
 });

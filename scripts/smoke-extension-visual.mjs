@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { selectPanelView } from './smoke-center-workspace.mjs';
 
 const screenshot = async (page, name) => {
   if (!process.env.HHR_VISUAL_ARTIFACT_DIR) return;
@@ -94,9 +95,8 @@ export const verifyHistoryNavigation = async page => {
 export const verifyLabActionLayout = async (page, worker) => {
   const originalViewport = page.viewportSize();
   const root = page.locator('#hhr-prescription-print-modal');
-  const docking = root.locator('[data-panel="dock"]');
   const initiallyDocked = await root.getAttribute('data-panel-mode') === 'docked';
-  if (initiallyDocked) await docking.click();
+  if (initiallyDocked) await selectPanelView(root, 'dock');
   await page.setViewportSize({ width: 1280, height: 720 });
   const tabId = await worker.evaluate(async url => (await chrome.tabs.query({})).find(tab => tab.url === url).id, page.url());
   const setZoom = zoom => worker.evaluate(({ tabId, zoom }) => chrome.tabs.setZoom(tabId, zoom), { tabId, zoom });
@@ -122,7 +122,7 @@ export const verifyLabActionLayout = async (page, worker) => {
   for (const width of [1280, 840, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const geometry = await root.evaluate(root => {
-      const selectors = ['.hhr-center-header strong', '[data-panel="density"]', '.hhr-census-trigger', '.hhr-flow-tabs', '.hhr-labreq-copies', '.hhr-labreq-print', '.hhr-rx-close'];
+      const selectors = ['.hhr-center-header img', '.hhr-center-heading', '[data-panel="view"]', '.hhr-census-trigger', '.hhr-flow-tabs', '.hhr-labreq-copies', '.hhr-labreq-print', '.hhr-rx-close'];
       const dialog = root.querySelector('.hhr-center-dialog').getBoundingClientRect();
       const header = root.querySelector('.hhr-center-header');
       const controls = selectors.map(selector => {
@@ -134,14 +134,19 @@ export const verifyLabActionLayout = async (page, worker) => {
       const search = rect('.hhr-labreq-search'), groups = rect('.hhr-labreq-selection-tools');
       const rightInset = header.getBoundingClientRect().right - rect('.hhr-rx-close').right;
       return { controls, left: dialog.left, right: dialog.right,
-        headerControlsAligned: Math.abs(rightInset - parseFloat(getComputedStyle(header).paddingRight)) <= 1,
+        headerControlsAligned: Math.abs(rightInset - parseFloat(getComputedStyle(root.querySelector('.hhr-center-window-actions')).paddingRight)) <= 1,
         searchAndGroupsAligned: Math.abs(search.y + search.height / 2 - groups.y - groups.height / 2) <= 2,
         headerHeight: Math.round(rect('.hhr-labreq-grid').top - rect('.hhr-labreq-patient').top),
         overflowing: [...root.querySelectorAll('.hhr-center-header,.hhr-center-patientbar,.hhr-center-toolbar,.hhr-labreq-patient,.hhr-labreq-meta,.hhr-labreq-selection')].some(node => node.scrollWidth > node.clientWidth + 1) };
     });
     assert.equal(geometry.overflowing, false, `Toolbar overflow at ${width}px`);
     assert.ok(geometry.headerControlsAligned, `Los controles deben quedar en el borde derecho de la cabecera a ${width}px`);
-    if (width === 1280) assert.ok(geometry.searchAndGroupsAligned, 'Search and exam groups share the desktop row: ' + JSON.stringify(geometry));
+    if (width === 1280) {
+      assert.ok(geometry.searchAndGroupsAligned, 'Search and exam groups share the desktop row: ' + JSON.stringify(geometry));
+      const header = geometry.controls.filter(control => control.selector !== '.hhr-census-trigger');
+      const centers = header.map(control => (control.top + control.bottom) / 2);
+      assert.ok(Math.max(...centers) - Math.min(...centers) <= 4, 'La cabecera de laboratorio ocupa más de una fila: ' + JSON.stringify(header));
+    }
     const heightBudget = { 1280: 105, 840: 130, 390: 275 };
     assert.ok(geometry.headerHeight <= heightBudget[width], 'Controles de laboratorio demasiado altos: ' + JSON.stringify(geometry));
     console.info('[laboratorio] ' + width + ' px: ' + geometry.headerHeight + ' px antes del catálogo');
@@ -155,7 +160,7 @@ export const verifyLabActionLayout = async (page, worker) => {
     await screenshot(page, 'laboratorio-' + width);
   }
   await page.setViewportSize(originalViewport);
-  if (initiallyDocked) await docking.click();
+  if (initiallyDocked) await selectPanelView(root, 'dock');
 };
 
 export const verifyPrescriptionFormats = async (page, extensionPath) => {
