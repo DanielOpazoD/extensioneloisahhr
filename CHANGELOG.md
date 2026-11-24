@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.164
+
+- Pautas clínicas en Evolución: monta el botón «Aplicar pauta» dentro de la tarjeta nativa de Evolución (evitando que quede recortado bajo «Instrumentos de evaluación»).
+- Mejora la apertura e inserción en el editor real de Eloísa (botones de ícono, cajones/modales MUI, editores `contenteditable`, eventos `input`/`change` e ignorando Centro HHR) y agrega vista previa con botón «Copiar texto» como respaldo.
+- Mejora la sincronización de plantillas con HHR: reinyecta automáticamente el relé en pestañas de HHR ya abiertas, prueba todas las pestañas abiertas de HHR, permite sincronizar plantillas desde el diálogo y entrega mensajes claros cuando no hay sesión iniciada en HHR.
+
 ## 0.48.163
 
 - Ajustes permite habilitar Pautas clínicas en Evolución. La pauta se guarda en HHR, genera un código verificable y se inserta como borrador en la evolución del mismo episodio.
