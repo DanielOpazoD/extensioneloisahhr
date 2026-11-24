@@ -284,8 +284,8 @@
         <div class="hhr-center-toolbar">
           <h2 class="hhr-center-heading">Laboratorio</h2>
           <div class="hhr-rx-tabs hhr-flow-tabs" role="tablist" aria-label="Flujo de laboratorio">
-            <button class="hhr-rx-tab" type="button" role="tab" data-flow="results" aria-selected="true">Ver resultados</button>
-            <button class="hhr-rx-tab" type="button" role="tab" data-flow="request" aria-selected="false">Solicitar exámenes</button>
+            <button class="hhr-rx-tab" type="button" role="tab" data-flow="results" aria-selected="true">Resultados</button>
+            <button class="hhr-rx-tab" type="button" role="tab" data-flow="request" aria-selected="false">Solicitar</button>
           </div>
           <input class="hhr-center-search hhr-lab-filter" type="search" placeholder="Filtrar por fecha o examen" aria-label="Filtrar informes">
           <button class="hhr-center-action hhr-lab-select-all" type="button" disabled>Seleccionar todos</button>
@@ -606,8 +606,8 @@
         <div class="hhr-center-toolbar hhr-request-toolbar">
           <h2 class="hhr-center-heading">Laboratorio</h2>
           <div class="hhr-rx-tabs hhr-flow-tabs" role="tablist" aria-label="Flujo de laboratorio">
-            <button class="hhr-rx-tab" type="button" role="tab" data-flow="results" aria-selected="false">Ver resultados</button>
-            <button class="hhr-rx-tab" type="button" role="tab" data-flow="request" aria-selected="true">Solicitar exámenes</button>
+            <button class="hhr-rx-tab" type="button" role="tab" data-flow="results" aria-selected="false">Resultados</button>
+            <button class="hhr-rx-tab" type="button" role="tab" data-flow="request" aria-selected="true">Solicitar</button>
           </div>
           ${labRequestPatient.printActionsHtml('lab')}
         </div>
@@ -672,6 +672,7 @@
         const count = selectedKeys().length + (othersInput.value.trim() ? 1 : 0);
         const label = count === 1 ? '1 examen' : count + ' exámenes';
         if (counter.textContent !== label) counter.textContent = label;
+        counter.hidden = count === 0;
         printButton.disabled = !printablePatient();
       };
       const manualKeys = ['name', 'run', 'birthDate', 'ficha', 'diagnosis'];

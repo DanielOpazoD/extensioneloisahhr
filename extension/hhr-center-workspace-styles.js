@@ -48,9 +48,11 @@
     #hhr-prescription-print-modal .hhr-rx-meta { color: #526762; }
     #hhr-prescription-print-modal .hhr-center-action { font-size: 12px; min-height: 34px; }
     #hhr-prescription-print-modal .hhr-labreq-selection { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; margin-bottom: 4px; }
-    #hhr-prescription-print-modal .hhr-labreq-search { flex: 1 1 180px; min-width: 0; box-sizing: border-box; min-height: 32px; }
-    #hhr-prescription-print-modal .hhr-labreq-selection-tools { display: flex; flex: 1 1 340px; align-items: center; flex-wrap: wrap; gap: 4px; }
-    #hhr-prescription-print-modal .hhr-labreq-selection-tools select { flex: 1; min-width: 130px; max-width: 100%; }
+    #hhr-prescription-print-modal .hhr-labreq-search { flex: 1 1 155px; min-width: 0; box-sizing: border-box; min-height: 32px; }
+    #hhr-prescription-print-modal .hhr-labreq-selection-tools { display: flex; min-width: 0; max-width: 100%; align-items: center; flex-wrap: wrap; gap: 4px; }
+    #hhr-prescription-print-modal .hhr-labreq-selection-tools select { width: auto; min-width: min(105px, 100%); max-width: min(24ch, 100%); }
+    #hhr-prescription-print-modal .hhr-labreq-selection-tools button:disabled,
+    #hhr-prescription-print-modal .hhr-labreq-selection:has(.hhr-labreq-group-editor:not([hidden])) [data-group="save"] { display: none; }
     #hhr-prescription-print-modal .hhr-labreq-selected { display: flex; flex-wrap: wrap; gap: 6px; max-height: 120px; overflow-y: auto; }
     #hhr-prescription-print-modal .hhr-labreq-selection > :is(.hhr-labreq-selected,.hhr-labreq-search-summary,.hhr-labreq-group-editor) { flex-basis: 100%; }
     #hhr-prescription-print-modal .hhr-labreq-selection > div:empty { display: none; }
@@ -85,6 +87,18 @@
     #hhr-prescription-print-modal .hhr-connection-capabilities strong { font-size: 14px; color: var(--hhr-ink-900); }
     #hhr-prescription-print-modal .hhr-connection-capabilities p { margin: 7px 0 0; font-size: 12px; line-height: 1.6; color: #526762; }
     #hhr-prescription-print-modal .hhr-connection-card { box-shadow: none; border-color: #e4ebe8; }
+    #hhr-prescription-print-modal .hhr-center-toolbar.hhr-settings-toolbar { min-height: 44px; gap: 8px; padding-block: 6px; }
+    #hhr-prescription-print-modal .hhr-settings-toolbar .hhr-center-heading { flex: 1 1 auto; }
+    #hhr-prescription-print-modal .hhr-settings-toolbar a { display: inline-flex; align-items: center; min-height: 28px; text-decoration: none; }
+    #hhr-prescription-print-modal .hhr-settings-list { max-width: 34rem; font-size: 13px; color: var(--hhr-ink-900); }
+    #hhr-prescription-print-modal .hhr-setting-row {
+      display: grid; grid-template-columns: minmax(0,1fr) auto; column-gap: 12px; align-items: center;
+      min-height: 40px; padding-block: 4px; box-sizing: border-box; border-bottom: 1px solid var(--hhr-line-200); line-height: 1.35;
+    }
+    #hhr-prescription-print-modal .hhr-setting-row select { width: min(10rem,42cqw); }
+    #hhr-prescription-print-modal .hhr-setting-row input { width: 16px; height: 16px; margin: 0; accent-color: var(--hhr-teal-500); }
+    #hhr-prescription-print-modal .hhr-settings-list [data-handoff-status]:not(:empty) { display: block; padding-block: 4px; }
+    #hhr-prescription-print-modal .hhr-settings-list .hhr-favorite-links { margin-top: 12px; }
     #hhr-prescription-print-modal:is([data-active-module="lab"],[data-active-module="imaging"]) .hhr-center-toolbar {
       min-height: 40px; padding: 5px 14px; gap: 4px 10px;
     }
@@ -95,13 +109,15 @@
       min-height: 28px; height: auto; padding-block: 3px;
     }
     #hhr-prescription-print-modal .hhr-center-toolbar.hhr-request-toolbar {
-      display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center;
+      display:grid; align-items:center;
+      grid-template:var(--hhr-request-layout, "heading tabs print" auto / auto minmax(0,1fr) auto);
     }
+    #hhr-prescription-print-modal .hhr-request-toolbar .hhr-center-heading { grid-area:heading; }
     #hhr-prescription-print-modal .hhr-request-toolbar .hhr-flow-tabs {
-      min-width:0; width:fit-content; max-width:100%; margin:0;
+      grid-area:tabs; min-width:0; width:fit-content; max-width:100%; margin:0;
     }
     #hhr-prescription-print-modal .hhr-request-toolbar .hhr-request-actions {
-      justify-self:end; width:auto; justify-content:flex-end; flex-wrap:nowrap; gap:8px;
+      grid-area:print; justify-self:end; width:auto; justify-content:flex-end; flex-wrap:nowrap; gap:0;
     }
     #hhr-prescription-print-modal .hhr-request-details {
       display:grid; justify-items:end; text-align:end; max-width:min(26cqw,280px); color:#4c605b; font-size:11.5px; line-height:1.25;
@@ -109,11 +125,13 @@
     #hhr-prescription-print-modal .hhr-request-source {
       color:var(--hhr-teal-ink); font-weight:600; overflow-wrap:anywhere;
     }
+    #hhr-prescription-print-modal .hhr-request-details:has(> :not([hidden])) { margin-inline-end:8px; }
     #hhr-prescription-print-modal .hhr-request-actions button { white-space:nowrap; }
     @container hhr-center (max-width: 550px) {
-      #hhr-prescription-print-modal .hhr-center-toolbar.hhr-request-toolbar { grid-template-columns:minmax(0,1fr) auto; }
-      #hhr-prescription-print-modal .hhr-request-toolbar .hhr-flow-tabs { grid-row:2; grid-column:1 / -1; }
-      #hhr-prescription-print-modal .hhr-request-toolbar .hhr-request-actions { grid-row:1; grid-column:2; }
+      #hhr-prescription-print-modal .hhr-request-toolbar { --hhr-request-layout:"heading print" auto "tabs tabs" auto / minmax(0,1fr) auto; }
+    }
+    @container hhr-center (min-width: 350px) and (max-width: 550px) {
+      #hhr-prescription-print-modal .hhr-request-toolbar:not(:has(.hhr-request-details > :not([hidden]))) { --hhr-request-layout:initial; }
     }
     @container hhr-center (max-width: 760px) {
       #hhr-prescription-print-modal .hhr-center-shell { grid-template-columns: 1fr; grid-template-rows: auto minmax(0,1fr); }

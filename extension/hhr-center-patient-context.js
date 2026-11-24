@@ -27,7 +27,7 @@
     root.dataset.selectedEncounterId = encId || '';
     set(root, { encId });
     refreshRoute(root, currentRouteEncounterId());
-    if (['lab', 'imaging', 'recipes', 'indications'].includes(activeModule) || !encId) return;
+    if (!['home', 'connection'].includes(activeModule) || !encId) return;
     const main = root.querySelector('.hhr-center-main');
     void sendMessage({ type: runtimeMessages.PATIENT_HEADER_REQUEST, encId }).then(response => {
       if (!main.isConnected || root.dataset.selectedEncounterId !== encId || root.dataset.activeModule !== activeModule) return;

@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.159
+
+- En Laboratorio e Imágenes, «Personalizados» se indica una sola vez en el selector de paciente. Al ingresar el primer dato, se despeja la ayuda del formulario. Las órdenes en blanco conservan el aviso «Sin identificación» junto a «Imprimir».
+- Laboratorio reúne el buscador y «Mis grupos» en una fila cuando hay espacio. Al buscar, solo aparecen las categorías con coincidencias. El contador de exámenes y las acciones de grupo aparecen cuando se pueden usar.
+- Ajustes reúne las preferencias en filas alineadas y deja «Descargar ZIP» en la cabecera. Abrir Ajustes ya no requiere cargar los datos del paciente.
+
 ## 0.48.158
 
 - En Laboratorio e Imágenes, **De Eloísa** abre el selector junto a **Personalizados**. Busca por nombre, documento o cama, incluso desde la lista de hospitalizados.

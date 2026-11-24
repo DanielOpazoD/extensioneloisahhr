@@ -11,9 +11,8 @@
     { key: 'diagnosis', label: 'Diagnóstico', type: 'text', maxLength: 180, wide: true },
   ];
 
-  const MANUAL_HINT = 'Completa solo los datos que quieras imprimir.';
+  const MANUAL_HINT = 'Completa un campo para imprimir.';
   const LOADING_HINT = 'Cargando datos desde el episodio…';
-  const NEW_PATIENT_HINT = 'Completa solo los datos que quieras imprimir.';
 
   const hasEpisode = encId => /^\d+$/.test(String(encId || ''));
   const routeNoticeHtml = '<span class="hhr-patientbar-route" hidden>Distinto al episodio abierto en Eloísa</span>';
@@ -26,7 +25,7 @@
       <div class="hhr-request-details" aria-live="polite" aria-atomic="true">
         <span class="hhr-request-source" hidden></span>
         <span class="hhr-request-id" hidden></span>
-        ${kind === 'lab' ? '<span class="hhr-labreq-count">0 exámenes</span>' : ''}
+        ${kind === 'lab' ? '<span class="hhr-labreq-count" hidden>0 exámenes</span>' : ''}
         ${routeNoticeHtml}
       </div>
       <button class="hhr-center-action hhr-center-action-primary ${kind === 'lab' ? 'hhr-labreq-print' : 'hhr-imaging-print'}" type="button" disabled>Imprimir</button>
@@ -58,7 +57,7 @@
                 <input type="radio" name="${SOURCE_FIELD}" value="blank">Sin identificación
               </label>
             </div>
-            <div class="hhr-labreq-patient-summary">${episode ? LOADING_HINT : NEW_PATIENT_HINT}</div>
+            <div class="hhr-labreq-patient-summary">${episode ? LOADING_HINT : MANUAL_HINT}</div>
             <div class="hhr-labreq-manual-fields" ${episode ? 'hidden' : ''}>
               ${MANUAL_FIELDS.filter(field => !imaging || field.key !== 'ficha').map(manualFieldHtml).join('\n              ')}
             </div>
@@ -86,7 +85,6 @@
     const source = () => main.querySelector(`input[name="${SOURCE_FIELD}"]:checked`)?.value;
     const usesManualPatient = () => source() === 'manual';
     const usesLocalPatient = () => usesManualPatient() || source() === 'blank';
-    const localLabel = () => usesManualPatient() ? 'Datos personalizados' : 'Sin identificación';
 
     const manualPatient = () => {
       const patient = {
@@ -121,8 +119,15 @@
 
     const summaryText = () => {
       if (source() === 'blank') return '';
-      if (usesManualPatient()) return MANUAL_HINT;
+      if (usesManualPatient()) return manualPatient() ? '' : MANUAL_HINT;
       return episodePatient() ? '' : LOADING_HINT;
+    };
+
+    const refreshSummary = () => {
+      if (!summary) return;
+      const hint = summaryText();
+      if (summary.textContent !== hint) summary.textContent = hint;
+      summary.hidden = !hint;
     };
 
     const refresh = () => {
@@ -130,7 +135,7 @@
       const patient = current ? episodePatient() : null;
       pickerButton?.setAttribute('aria-pressed', String(current));
       if (printSource) {
-        const label = current ? patient?.name || '' : localLabel();
+        const label = source() === 'blank' ? 'Sin identificación' : patient?.name || '';
         if (printSource.textContent !== label) printSource.textContent = label;
         printSource.hidden = !label;
       }
@@ -140,12 +145,10 @@
         identifier.hidden = !id;
       }
       if (manualFields) manualFields.hidden = !usesManualPatient();
-      if (summary) {
-        summary.textContent = summaryText();
-        summary.hidden = !summary.textContent;
-      }
+      refreshSummary();
     };
 
+    manualFields?.addEventListener('input', refreshSummary);
     main.querySelectorAll(`input[name="${SOURCE_FIELD}"]`).forEach(input => {
       input.addEventListener('change', () => {
         refresh();
@@ -153,7 +156,7 @@
       });
     });
 
-    return { source, printablePatient, usesManualPatient, usesLocalPatient, localLabel, refresh, summaryText };
+    return { source, printablePatient, usesManualPatient, usesLocalPatient, refresh, summaryText };
   };
 
   root.HhrLabRequestPatient = Object.freeze({ sectionHtml, printActionsHtml, pickerButtonHtml, routeNoticeHtml, createController, hasEpisode });
