@@ -119,7 +119,7 @@ describe('CodeRabbit clinical integration hardening', () => {
     expect(contentSource).toContain(
       'switchCenterModule(root, target, root.dataset.selectedEncounterId || encId'
     );
-    expect(contentSource).toContain('const requestedEncId = selected');
+    expect(contentSource).toContain('if (!printButton.isConnected || root.dataset.selectedEncounterId !== String(encId)) return;');
   });
 
   it('keeps transient request selections out of the clinical-write guard', () => {

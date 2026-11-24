@@ -293,7 +293,11 @@
           <button class="hhr-center-action hhr-center-refresh" type="button">Actualizar</button>
         </div>
         <div class="hhr-center-content">
-          <div class="hhr-lab-patient"><strong>Verificación Syslab</strong><span>Cruzando identidad Eloísa ↔ Syslab…</span><span class="hhr-lab-status">Conectando a Syslab local</span></div>
+          <div class="hhr-lab-patient hhr-census-anchor">
+            ${labRequestPatient.pickerButtonHtml()}
+            <div class="hhr-lab-patient-identity"><strong>Verificación Syslab</strong><span>Cruzando identidad Eloísa ↔ Syslab…</span><span class="hhr-lab-status">Conectando a Syslab local</span></div>
+            ${labRequestPatient.routeNoticeHtml}
+          </div>
           <div class="hhr-syslab-access" role="region" aria-label="Acceso seguro a Syslab" hidden>
             <div>
               <strong>Inicio de sesión requerido</strong>
@@ -306,7 +310,8 @@
           <section class="hhr-lab-results" aria-label="Análisis de laboratorio"></section>
         </div>
       `;
-      const patientHost = main.querySelector('.hhr-lab-patient');
+      const patientHost = main.querySelector('.hhr-lab-patient-identity');
+      globalThis.HhrCenterPatientContext?.setOrderEpisode(root, encId);
       const status = main.querySelector('.hhr-lab-selection');
       const list = main.querySelector('.hhr-lab-exam-list');
       const results = main.querySelector('.hhr-lab-results');
@@ -473,7 +478,7 @@
         invalidateLabAnalysis();
         if (!/^\d+$/.test(String(encId || ''))) {
           patientHost.querySelector('span').textContent =
-            'Selecciona un paciente con «Cambiar paciente» en la franja superior.';
+            'Elige un paciente en «De Eloísa».';
           status.textContent = 'Sin paciente seleccionado';
           list.innerHTML = '';
           results.innerHTML = '';
@@ -523,6 +528,7 @@
         analysis = null;
         patientHost.innerHTML = '';
         const patientName = document.createElement('strong');
+        patientName.className = 'hhr-lab-result-name';
         patientName.textContent = response.patient && response.patient.name || 'Paciente actual';
         const patientMeta = document.createElement('span');
         patientMeta.textContent = [
@@ -662,13 +668,7 @@
       });
       const printablePatient = () => patientSection.printablePatient();
       const updateCount = () => {
-        const manual = patientSection.usesLocalPatient();
-        globalThis.HhrCenterPatientContext?.set(root, {
-          encId: manual ? '' : encId,
-          patient: manual ? { ...printablePatient(), name: printablePatient()?.name || patientSection.localLabel() } : episodePatient?.patient,
-        });
-        globalThis.HhrCenterPatientContext?.refreshRoute(root,
-          globalThis.HhrPrescriptionPrint?.resolveEncounterId(window.location.href) || '');
+        globalThis.HhrCenterPatientContext?.setOrderEpisode(root, patientSection.usesLocalPatient() ? '' : encId);
         const count = selectedKeys().length + (othersInput.value.trim() ? 1 : 0);
         const label = count === 1 ? '1 examen' : count + ' exámenes';
         if (counter.textContent !== label) counter.textContent = label;

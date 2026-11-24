@@ -91,8 +91,8 @@ export const verifyLabWorkspace = async (page, worker) => {
   await root.locator('[name="hhr-labreq-patient-source"][value="manual"]').check();
   const name = root.locator('[data-manual="name"]');
   await name.fill('Paciente de prueba');
-  assert.equal(await root.locator('.hhr-patientbar-name').textContent(), 'Paciente de prueba');
-  assert.equal(await root.locator('.hhr-patientbar-episode').count(), 0);
+  assert.equal(await root.locator('.hhr-request-source').innerText(), 'Datos personalizados');
+  assert.equal(await root.locator('.hhr-center-patientbar').count(), 0);
   await root.locator('[data-panel="minimize"]').click();
   assert.equal(await root.getByRole('dialog').isVisible(), false);
   assert.equal(await page.evaluate(() => Boolean(document.documentElement.dataset.hhrCenterDocked)), false);

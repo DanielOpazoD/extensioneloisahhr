@@ -684,13 +684,6 @@ try {
   const manualPatient = page.locator(
     '#hhr-prescription-print-modal input[name="hhr-labreq-patient-source"][value="manual"]',
   );
-  const currentPatient = page.locator(
-    '#hhr-prescription-print-modal input[name="hhr-labreq-patient-source"][value="current"]',
-  );
-  for (let index = 0; index < 6; index += 1) {
-    await manualPatient.check();
-    await currentPatient.check();
-  }
   await manualPatient.check();
 
   const longUnicodeName = "Paciente limite Rapa Nui Ñ".padEnd(190, "ā");

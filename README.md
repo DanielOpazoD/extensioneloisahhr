@@ -80,7 +80,7 @@ versión se restablece esa apertura; después puedes elegir y guardar el panel l
 En pantallas amplias, el botón de acoplar deja espacio para la ficha al lado derecho.
 El borde permite ajustar su ancho con el mouse o las flechas del teclado. El encabezado
 incluye desacoplar, ampliar, minimizar y densidad compacta. Minimizar conserva el formulario;
-cerrar libera el espacio de la página. La franja superior identifica al paciente seleccionado. En Inicio, «Abrir recetas»,
+cerrar libera el espacio de la página. En Inicio, «Abrir recetas»,
 «Ver resultados», «Solicitar laboratorio» y «Solicitar imágenes» llevan a su pantalla con un clic.
 
 La solicitud de laboratorio permite buscar nombres y abreviaturas, quitar seleccionados
@@ -89,8 +89,9 @@ ya seleccionados. Chrome guarda sólo preferencias de presentación y nombres/cl
 grupos; los campos del paciente y la solicitud no forman parte de esas preferencias.
 
 Recetas, laboratorio e imágenes abren directamente el diálogo de impresión de Chrome.
-En las solicitudes de laboratorio e imágenes, «Imprimir» permanece arriba a la derecha.
-La cabecera indica si la orden usa datos personalizados o sale sin identificación. Laboratorio
+En Laboratorio e Imágenes, «De Eloísa» abre el censo para buscar por nombre, documento o cama.
+La orden conserva su origen hasta que se elige un paciente. Junto a «Imprimir» aparecen el
+nombre y el documento elegidos, «Datos personalizados» o «Sin identificación». Laboratorio
 también muestra la cantidad de exámenes seleccionados.
 En Recetas se elige Estándar o Compacta antes de imprimir. En el diálogo de Chrome se puede
 seleccionar una impresora o guardar el documento como PDF.

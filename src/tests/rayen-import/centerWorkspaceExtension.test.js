@@ -227,6 +227,7 @@ describe('Centro HHR workspace', () => {
     setupPreferences();
     const root = rootWithShell();
     root.dataset.activeModule = 'lab';
+    root.querySelector('.hhr-center-patientbar').remove();
     let resolveFirst, resolveSecond;
     const first = new Promise(resolve => { resolveFirst = resolve; });
     const second = new Promise(resolve => { resolveSecond = resolve; });
@@ -239,12 +240,12 @@ describe('Centro HHR workspace', () => {
     root.dataset.selectedEncounterId = '1'; runtime.renderLabRequestView(root, '1');
     root.dataset.selectedEncounterId = '2'; runtime.renderLabRequestView(root, '2');
     resolveSecond({ patient: { name: 'Paciente B' }, view: {} });
-    await vi.waitFor(() => expect(root.querySelector('.hhr-patientbar-name').textContent).toBe('Paciente B'));
+    await vi.waitFor(() => expect(root.querySelector('.hhr-request-source').textContent).toBe('Paciente B'));
     resolveFirst({ patient: { name: 'Paciente A' }, view: {} });
     await first; await Promise.resolve();
-    expect(root.querySelector('.hhr-patientbar-name').textContent).toBe('Paciente B');
+    expect(root.querySelector('.hhr-request-source').textContent).toBe('Paciente B');
     expect(root.dataset.hhrContextEncounter).toBe('2');
-    expect(root.querySelector('.hhr-center-patientbar').textContent).not.toContain('Episodio 2');
+    expect(root.querySelector('.hhr-center-patientbar')).toBeNull();
   });
 
   it('keeps a current route mismatch visible after laboratory form edits', () => {
@@ -252,6 +253,7 @@ describe('Centro HHR workspace', () => {
     let routeId = '1';
     vi.stubGlobal('HhrPrescriptionPrint', { resolveEncounterId: () => routeId });
     const root = rootWithShell(); root.dataset.activeModule = 'lab'; root.dataset.selectedEncounterId = '1';
+    root.querySelector('.hhr-center-patientbar').remove();
     const runtime = globalThis.HhrLabCenterRuntime.create({
       requestForms: globalThis.HhrRequestForms, labRequestPatient: globalThis.HhrLabRequestPatient,
       runtimeMessages: {}, runClinicalTransition: (_root, action) => action(), normalizedText: String,
