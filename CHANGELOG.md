@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.162
+
+- Centro HHR reúne el módulo, las pestañas y sus acciones en una cabecera común. «Vista» agrupa las opciones de presentación. Minimizar y cerrar quedan a un clic.
+- En Imágenes, la primera marca recoge los datos del paciente en una línea con «Editar». «Ajustar al ancho» y «Hoja completa» permiten cambiar la escala manteniendo las marcas en su sitio, también al imprimir.
+
 ## 0.48.161
 
 - En Laboratorio puedes elegir de 1 a 99 copias junto a «Imprimir». Al guardar como PDF, todas las copias de la orden quedan en un solo archivo. El borrador recuerda la cantidad del episodio.

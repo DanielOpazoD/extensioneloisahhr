@@ -181,7 +181,7 @@
       tabLabel: 'Consentimiento',
       image: 'forms/consentimiento.png',
       pdf: 'forms/consentimiento.pdf',
-      aspectRatio: '612 / 842',
+      aspectRatio: '4961 / 7017',
       coords: CONSENTIMIENTO_FIELD_COORDS,
       overlays: (view, physician) => [
         { text: view.nombres, left: '31.65%', top: '21.7%', small: true },

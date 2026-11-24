@@ -71,6 +71,7 @@ describe('Session-local request drafts', () => {
     input(root, '.hhr-labreq-otros', 'Solicitud sintética'); input(root, '.hhr-labreq-medico', 'Profesional de prueba');
     app.imageView(root, '1'); await readyImage(root);
     input(root, '.hhr-imaging-physician', 'Solicitante de prueba');
+    root.querySelector('[data-sheet-fit="page"]').click();
     root.querySelector('[data-doc="encuesta"]').click();
     root.querySelector('.hhr-imaging-canvas').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     expect(root.querySelectorAll('.hhr-imaging-mark')).toHaveLength(1);
@@ -80,6 +81,8 @@ describe('Session-local request drafts', () => {
     expect(root.querySelector('.hhr-labreq-medico').value).toBe('Profesional de prueba');
     app.imageView(root, '1'); await readyImage(root);
     expect(root.querySelector('[data-doc="encuesta"]').getAttribute('aria-selected')).toBe('true');
+    expect(root.querySelector('[data-sheet-fit="page"]').getAttribute('aria-pressed')).toBe('true');
+    expect(root.querySelector('.hhr-imaging-patient-summary').hidden).toBe(false);
     expect(root.querySelectorAll('.hhr-imaging-mark')).toHaveLength(1);
     expect(root.querySelector('.hhr-imaging-physician').value).toBe('Solicitante de prueba');
   });

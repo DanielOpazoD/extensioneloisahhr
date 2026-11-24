@@ -20,12 +20,33 @@
     const actions = document.createElement('div');
     actions.className = 'hhr-center-window-actions';
     actions.innerHTML = `
-      <button type="button" data-panel="density" aria-label="Alternar densidad compacta" title="Densidad compacta">≡</button>
-      <button type="button" data-panel="dock" aria-label="Alternar panel lateral" title="Acoplar o desacoplar">◧</button>
-      <button type="button" data-panel="expand" aria-label="Ampliar panel" title="Ampliar">⤢</button>
+      <div class="hhr-view-select">
+        <button type="button" data-panel="view" aria-expanded="false" aria-controls="hhr-center-view-options">Vista <span aria-hidden="true">▾</span></button>
+        <div id="hhr-center-view-options" class="hhr-view-options" role="group" aria-label="Presentación" hidden>
+          <button type="button" data-panel="density">Densidad compacta</button>
+          <button type="button" data-panel="dock">Panel lateral</button>
+          <button type="button" data-panel="expand">Ampliar panel</button>
+        </div>
+      </div>
       <button type="button" data-panel="minimize" aria-label="Minimizar Centro HHR" title="Minimizar">−</button>`;
     actions.append(root.querySelector('.hhr-rx-close'));
     header.append(actions);
+    const view = actions.querySelector('[data-panel="view"]');
+    const options = actions.querySelector('.hhr-view-options');
+    const setViewOpen = open => {
+      options.hidden = !open;
+      view.setAttribute('aria-expanded', String(open));
+    };
+    const closeOutsideView = event => {
+      if (!options.hidden && !view.parentElement.contains(event.target)) setViewOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOutsideView, true);
+    document.addEventListener('focusin', closeOutsideView, true);
+    actions.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || options.hidden) return;
+      event.preventDefault(); event.stopPropagation();
+      setViewOpen(false); view.focus();
+    });
     const handle = document.createElement('div');
     handle.className = 'hhr-center-resize';
     handle.tabIndex = 0;
@@ -44,7 +65,8 @@
       documentRoot.style.removeProperty('--hhr-center-reserved');
     };
     const syncRestoreLabel = () => {
-      const name = root.querySelector('.hhr-labreq-manual-fields:not([hidden]) [data-manual="name"]')?.value.trim()
+      const name = root.querySelector('.hhr-imaging-patient-summary:not([hidden]) .hhr-imaging-patient-name')?.textContent.trim()
+        || root.querySelector('.hhr-labreq-manual-fields:not([hidden]) [data-manual="name"]')?.value.trim()
         || root.querySelector('.hhr-patientbar-name,.hhr-request-source,.hhr-lab-result-name')?.textContent.trim();
       restore.textContent = 'Centro HHR' + (name && name !== '—' ? ' · ' + name : '');
     };
@@ -66,7 +88,7 @@
       actions.querySelector('[data-panel="dock"]').setAttribute('aria-pressed', String(current.mode === 'docked'));
       actions.querySelector('[data-panel="density"]').setAttribute('aria-pressed', String(current.density === 'compact'));
       actions.querySelector('[data-panel="expand"]').setAttribute('aria-pressed', String(expanded));
-      actions.querySelector('[data-panel="expand"]').setAttribute('aria-label', expanded ? 'Restaurar tamaño del panel' : 'Ampliar panel');
+      actions.querySelector('[data-panel="expand"]').textContent = expanded ? 'Restaurar tamaño' : 'Ampliar panel';
       if (docked && !minimized) {
         documentRoot.dataset.hhrCenterDocked = instance;
         documentRoot.style.setProperty('--hhr-center-reserved', appliedWidth + 'px');
@@ -80,6 +102,8 @@
     };
     actions.addEventListener('click', event => {
       const action = event.target.closest('[data-panel]')?.dataset.panel;
+      if (action === 'view') { setViewOpen(options.hidden); return; }
+      if (options.contains(event.target)) { setViewOpen(false); view.focus(); }
       if (action === 'dock') {
         expanded = false;
         preferences.save({ mode: preferences.get().mode === 'docked' ? 'floating' : 'docked' });
@@ -127,6 +151,8 @@
       unsubscribe();
       identityObserver.disconnect();
       removalObserver.disconnect();
+      document.removeEventListener('pointerdown', closeOutsideView, true);
+      document.removeEventListener('focusin', closeOutsideView, true);
       window.removeEventListener('resize', apply);
     };
     root.__hhrPanel = { dispose, restore: () => { minimized = false; apply(); } };

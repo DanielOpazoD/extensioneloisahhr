@@ -67,10 +67,12 @@
       let episodePatient;
       let printing = false;
       const patient = globalThis.HhrLabRequestPatient.createController({ main, readEpisodePatient: () => episodePatient });
+      const sheet = globalThis.HhrImagingRequestView.bindSheet(main, patient, field => draft?.markEdited(field));
       const refreshPatient = () => {
         const chosen = patient.printablePatient();
         globalThis.HhrCenterPatientContext?.setOrderEpisode(root, patient.usesLocalPatient() ? '' : encId);
         patient.refresh();
+        sheet.refresh();
         printButton.disabled = printing || !chosen;
         renderOverlays();
       };
@@ -121,19 +123,27 @@
 
       const renderDocument = () => {
         const doc = documents[selectedDoc];
-        canvas.style.aspectRatio = doc.aspectRatio.replace(/\s/g, '');
+        canvas.style.setProperty('--hhr-sheet-ratio', doc.aspectRatio);
         try {
           image.src = chrome.runtime.getURL(doc.image);
         } catch (_error) {}
         docTabs.forEach(tab => tab.setAttribute('aria-selected', String(tab.dataset.doc === selectedDoc)));
         renderOverlays();
       };
+      const revealKeyboardCursor = () => {
+        const cursor = overlaysHost.querySelector('.hhr-imaging-keyboard-cursor');
+        if (!cursor) return;
+        const stage = canvas.parentElement;
+        const viewport = stage.getBoundingClientRect(), point = cursor.getBoundingClientRect();
+        if (point.bottom > viewport.bottom) stage.scrollTop += point.bottom - viewport.bottom;
+        else if (point.top < viewport.top) stage.scrollTop -= viewport.top - point.top;
+      };
       const draft = globalThis.HhrRequestDrafts?.attach({ root, main, kind: 'imaging', encId,
         isManual: value => ['manual', 'blank'].includes(value.source),
         fieldForEvent: event => event.target.dataset.manual ? ['custom', event.target.dataset.manual] :
           event.target.name === 'hhr-labreq-patient-source' ? 'source' : event.target === physicianInput ? 'physician' :
           event.target.matches('.hhr-imaging-text-editor') ? ['marksByDoc', selectedDoc] : null,
-        capture: () => ({ selectedDoc, toolMode, physician: physicianInput.value, marksByDoc,
+        capture: () => ({ ...sheet.capture(), selectedDoc, toolMode, physician: physicianInput.value, marksByDoc,
           source: patient.source(), custom: Object.fromEntries(Array.from(main.querySelectorAll('[data-manual]'), input => [input.dataset.manual, input.value])) }),
         restore: state => {
           const sources = [...main.querySelectorAll('[name="hhr-labreq-patient-source"]')];
@@ -147,6 +157,7 @@
             const active = button.dataset.tool === toolMode; button.classList.toggle('is-active', active);
             button.setAttribute('aria-pressed', String(active));
           });
+          sheet.restore(state);
           refreshPatient(); renderDocument();
         } });
 
@@ -165,6 +176,7 @@
           if (text) {
             draft?.markEdited(['marksByDoc', selectedDoc]);
             marksByDoc[selectedDoc].push({ x, y, text });
+            sheet.marked();
           }
           if (!restoreCanvasFocus) keyboardActive = false;
           renderOverlays();
@@ -190,22 +202,25 @@
         editor.focus();
       };
 
+      const markAt = (x, y) => {
+        if (toolMode === 'text') { openTextEditor(x, y); return; }
+        draft?.markEdited(['marksByDoc', selectedDoc]);
+        marksByDoc[selectedDoc].push({ x, y });
+        sheet.marked();
+        renderOverlays();
+      };
       canvas.addEventListener('click', event => {
         if (!patient.printablePatient()) return;
         if (event.target.closest('.hhr-imaging-text-editor')) return;
-        draft?.markEdited(['marksByDoc', selectedDoc]);
         const rect = canvas.getBoundingClientRect();
         const x = Math.round(((event.clientX - rect.left) / rect.width) * 1000) / 10;
         const y = Math.round(((event.clientY - rect.top) / rect.height) * 1000) / 10;
-        if (toolMode === 'text') openTextEditor(x, y);
-        else {
-          marksByDoc[selectedDoc].push({ x, y });
-          renderOverlays();
-        }
+        markAt(x, y);
       });
       canvas.addEventListener('focus', () => {
         keyboardActive = true;
         renderOverlays();
+        if (canvas.matches(':focus-visible')) revealKeyboardCursor();
       });
       canvas.addEventListener('blur', event => {
         if (
@@ -224,17 +239,13 @@
         else if (event.key === 'ArrowDown') keyboardPoint.y = Math.min(100, keyboardPoint.y + step);
         else if ((event.key === 'Enter' || event.key === ' ') && patient.printablePatient()) {
           event.preventDefault();
-          draft?.markEdited(['marksByDoc', selectedDoc]);
-          if (toolMode === 'text') openTextEditor(keyboardPoint.x, keyboardPoint.y);
-          else {
-            marksByDoc[selectedDoc].push({ x: keyboardPoint.x, y: keyboardPoint.y });
-            renderOverlays();
-          }
+          markAt(keyboardPoint.x, keyboardPoint.y);
           return;
         } else return;
         event.preventDefault();
         keyboardActive = true;
         renderOverlays();
+        revealKeyboardCursor();
       });
       main.querySelectorAll('.hhr-imaging-tool').forEach(button => {
         button.addEventListener('click', () => {

@@ -8,6 +8,13 @@ const capture = async (page, name) => {
   await page.locator('#hhr-prescription-print-modal .hhr-center-dialog').screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, name + '.png'), animations: 'disabled' });
 };
 
+export const selectPanelView = async (root, action) => {
+  const view = root.getByRole('button', { name: 'Vista', exact: true });
+  await view.click();
+  await root.locator('[data-panel="' + action + '"]').click();
+  assert.equal(await view.getAttribute('aria-expanded'), 'false');
+};
+
 export const verifyCompactOperationsBar = async page => {
   const viewport = page.viewportSize();
   const bar = page.locator('#hhr-clinical-operations-bar');
@@ -51,8 +58,20 @@ export const verifyDockedPanel = async page => {
   assert.equal(await root.getByRole('dialog').getAttribute('aria-modal'), 'true');
   const initial = await root.getByRole('dialog').boundingBox();
   assert.ok(Math.abs(initial.x + initial.width / 2 - page.viewportSize().width / 2) < 2);
+  const view = root.getByRole('button', { name: 'Vista', exact: true });
+  const dock = root.locator('[data-panel="dock"]');
+  await view.focus();
+  await view.press('Enter');
+  await dock.waitFor();
+  assert.equal(await view.getAttribute('aria-expanded'), 'true');
+  await page.keyboard.press('Escape');
+  assert.equal(await dock.isVisible(), false);
+  assert.equal(await view.evaluate(node => node === document.activeElement), true);
+  await view.click();
+  await root.locator('.hhr-center-content').click({ position: { x: 2, y: 2 } });
+  assert.equal(await dock.isVisible(), false);
   await capture(page, 'workspace-default-dialog');
-  await root.locator('[data-panel="dock"]').click();
+  await selectPanelView(root, 'dock');
   assert.equal(await root.getAttribute('data-panel-mode'), 'docked');
   await page.evaluate(() => {
     const style = document.createElement('style'); style.id = 'workspace-native-header-style';
@@ -67,7 +86,7 @@ export const verifyDockedPanel = async page => {
   await page.locator('#native-validate').click();
   assert.equal(await page.locator('#native-validate').getAttribute('data-clicked'), 'true');
   assert.equal(await root.isVisible(), true);
-  await root.locator('[data-panel="dock"]').click();
+  await selectPanelView(root, 'dock');
   assert.equal(await root.getAttribute('data-panel-mode'), 'floating');
   assert.ok(Math.abs((await page.locator('#workspace-native-header').boundingBox()).width - page.viewportSize().width) < 2);
   assert.equal(await root.getByRole('dialog').getAttribute('aria-modal'), 'true');
@@ -75,13 +94,13 @@ export const verifyDockedPanel = async page => {
   await page.keyboard.press('Tab');
   assert.equal(await page.evaluate(() => document.querySelector('#hhr-prescription-print-modal').contains(document.activeElement)), false);
   await root.getByRole('button', { name: 'Restaurar Centro HHR', exact: true }).click();
-  await root.locator('[data-panel="expand"]').click();
+  await selectPanelView(root, 'expand');
   assert.equal(await root.getAttribute('data-expanded'), 'true');
-  await root.locator('[data-panel="dock"]').click();
+  await selectPanelView(root, 'dock');
   assert.equal(await root.getAttribute('data-panel-mode'), 'docked');
-  await root.locator('[data-panel="density"]').click();
+  await selectPanelView(root, 'density');
   assert.equal(await root.getAttribute('data-density'), 'compact');
-  await root.locator('[data-panel="density"]').click();
+  await selectPanelView(root, 'density');
   await page.locator('#workspace-native-header').evaluate(node => node.remove());
   await page.locator('#workspace-native-header-style').evaluate(node => node.remove());
 };
