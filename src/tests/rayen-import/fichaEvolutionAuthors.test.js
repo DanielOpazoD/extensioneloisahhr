@@ -84,6 +84,12 @@ it('rotula cada acción con el nombre nativo de su icono y retira sus marcas sin
   reader.refresh('1');
   expect(observer.takeRecords()).toEqual([]);
   observer.disconnect();
+  // Eloísa renames an icon on the same button: the caption and the hint follow the new name, never the old hint.
+  buttons[1].querySelector('svg').setAttribute('aria-label', 'Enmendar nota');
+  buttons[2].querySelector('svg').setAttribute('aria-label', 'Ocultar enmendados');
+  reader.refresh('1');
+  expect(marks(buttons)).toEqual([['more', null], ['amend', 'Enmendar'], [null, null]]);
+  expect(buttons.map(button => [button.title, button.getAttribute('data-hhr-evo-hint')])).toEqual([['Más opciones', 'Más opciones'], ['Enmendar nota', 'Enmendar nota'], ['', null]]);
 
   // A pencil without a native name is not named for it: the icon stays as Eloísa draws it.
   buttons = toolbar('', icon('EditNoteRoundedIcon') + icon('EditIcon') + '<button><svg></svg></button><button><svg></svg></button>');

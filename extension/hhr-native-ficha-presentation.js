@@ -243,6 +243,7 @@
     const summaryDensity = globalThis.HhrFichaSummaryDensity.create(Object.values(SECTIONS));
     const labels = globalThis.HhrFichaReadingLabels.create();
     const round = globalThis.HhrFichaRoundLayout.create();
+    const carePlan = globalThis.HhrFichaCarePlan.create();
     const marked = new Map();
     const links = new Map();
     let primary = null, row = null, slot = null, style = null;
@@ -289,6 +290,7 @@
       surfaces.clear();
       labels.clear();
       round.clear();
+      carePlan.clear();
       summaryDensity.clear();
       resizeObserver?.disconnect();
       links.forEach((item, element) => removeLink(element, item));
@@ -462,6 +464,7 @@
       const paragraph = readableDisclosure?.parentElement.previousElementSibling;
       noteReader.refresh(paragraph?.matches('.MuiTypography-caption') ? paragraph : null, encounterId);
       round.refresh(compact);
+      carePlan.refresh(theme === 'compact' && tab.id === 'encounter-event-tab-care-plan' ? document.querySelector('main') : null);
       const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
         ['evolucion','valoracion'].includes(normalize(element.textContent)) && element.getClientRects().length);
       const nextRow = caption?.closest('.MuiGrid-container');

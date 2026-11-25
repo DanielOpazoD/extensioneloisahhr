@@ -52,7 +52,9 @@
   // Eloísa names its icon buttons on the svg («Enmendar», «Ver enmendados»). A caption is always
   // that native word: an action without a native name keeps its icon and gets no caption.
   const plain = value => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  const nativeName = button => (button.getAttribute('aria-label') || button.title ||
+  // A tooltip this reader wrote repeats a name. It is not one.
+  const ownHint = button => button.hasAttribute('data-hhr-evo-hint') && button.title === button.getAttribute('data-hhr-evo-hint');
+  const nativeName = button => (button.getAttribute('aria-label') || (ownHint(button) ? '' : button.title) ||
     button.querySelector('svg[aria-label]')?.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
   // The kind only chooses the icon of the family. The list goes before its verb.
   const toolKinds = [
@@ -141,7 +143,7 @@
         if (caption) { if (button.getAttribute('data-hhr-evo-caption') !== caption) button.setAttribute('data-hhr-evo-caption', caption); }
         else button.removeAttribute('data-hhr-evo-caption');
         // The native name lives on the icon, where a pointer shows nothing. Offer it on the button.
-        if (!button.hasAttribute('title')) {
+        if (!button.hasAttribute('title') || ownHint(button) && button.title !== name) {
           button.title = name;
           button.setAttribute('data-hhr-evo-hint', name);
         }

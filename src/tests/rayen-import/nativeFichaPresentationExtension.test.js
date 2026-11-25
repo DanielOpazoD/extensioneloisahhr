@@ -7,6 +7,7 @@ import '../../../extension/hhr-ficha-vital-strip.js';
 import '../../../extension/hhr-ficha-summary-density.js';
 import '../../../extension/hhr-ficha-reading-labels.js';
 import '../../../extension/hhr-ficha-round-layout.js';
+import '../../../extension/hhr-ficha-care-plan.js';
 import '../../../extension/hhr-ficha-note-reader.js';
 import '../../../extension/hhr-native-ficha-presentation.js';
 

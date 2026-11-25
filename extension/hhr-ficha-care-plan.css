@@ -1,0 +1,97 @@
+/* The compact Plan de tratamiento: each scheduling card puts its title, its switch and its
+   tools on one line, and each indication on a row as tall as its text. The hours keep the
+   width Eloísa gives them, so a mark stays under its hour. Status icons keep their native
+   drawing and colour. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-plan="view"] {
+    gap:8px;
+    > * { margin-block:0 !important; }
+    /* A switch of this view filters what is listed: it reads as a note, at four fifths of its size. */
+    .MuiSwitch-root { zoom:.8; }
+    :is(.MuiFormControlLabel-label, .MuiFormControlLabel-root > .MuiTypography-root) {
+      color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans);
+    }
+  }
+  html[data-hhr-ficha-theme="compact"] [data-hhr-plan="card"] {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+    container:hhr-plan / inline-size;
+    border:1px solid var(--hhr-ficha-line); border-radius:var(--hhr-ficha-radius);
+    background:var(--hhr-ficha-surface); box-shadow:none; color:var(--hhr-ficha-ink);
+
+    > .MuiCardHeader-root {
+      grid-column:1; min-block-size:34px; gap:12px; padding:1px var(--hhr-ficha-inset) !important;
+      .MuiCardHeader-title { color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans); }
+      .MuiCardHeader-action { align-self:center; margin:0; }
+      .MuiCardHeader-action :is(label,.MuiFormControlLabel-root) { margin:0; }
+    }
+    > [data-hhr-plan="tools"] {
+      grid-column:2; grid-row:1; padding:0 6px 0 0 !important;
+      .MuiStack-root { gap:2px; padding:0 !important; }
+      button {
+        inline-size:var(--hhr-ficha-control); block-size:var(--hhr-ficha-control); padding:0;
+        border-radius:var(--hhr-ficha-radius); color:var(--hhr-ficha-action);
+        &:hover { background:var(--hhr-ficha-action-hover); }
+        &:active { background:var(--hhr-ficha-action-pressed); }
+        &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+        > svg { inline-size:18px; block-size:18px; font-size:1.125rem; }
+      }
+    }
+    /* With room, a tool says the name Eloísa gives it. Without room the name shows on hover. */
+    @container hhr-plan (min-width:62rem) {
+      > [data-hhr-plan="tools"] button[data-hhr-plan-caption] {
+        inline-size:auto; padding:0 8px 0 6px;
+        &::after {
+          content:attr(data-hhr-plan-caption) / ''; margin-inline-start:5px;
+          font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1 var(--hhr-ficha-sans);
+        }
+      }
+    }
+
+    > .MuiCardContent-root { grid-column:1 / -1; min-inline-size:0; padding:0 !important; }
+    table :is(th,td) {
+      padding:3px var(--hhr-ficha-inset) !important; border-block-end:1px solid var(--hhr-ficha-line-soft);
+      color:var(--hhr-ficha-ink); font:400 var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans);
+      :is(p,span.MuiTypography-root) { margin:0; color:inherit; font:inherit; }
+    }
+    table tbody tr:last-child > td { border-block-end:0; }
+    /* Headings situate: the day and its hours, in the small size and the soft ink. */
+    table th {
+      border-block:1px solid var(--hhr-ficha-line); background:var(--hhr-ficha-band);
+      color:var(--hhr-ficha-ink-soft); font-size:var(--hhr-ficha-text-meta);
+      .MuiButton-root {
+        min-inline-size:0; min-block-size:22px; padding:1px 6px; border-radius:var(--hhr-ficha-radius);
+        color:var(--hhr-ficha-action); text-transform:none;
+        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans);
+        &:hover { background:var(--hhr-ficha-action-hover); }
+      }
+      .MuiIconButton-root {
+        inline-size:22px; block-size:22px; padding:0; border-radius:var(--hhr-ficha-radius); color:var(--hhr-ficha-action);
+        > svg { inline-size:18px; block-size:18px; font-size:1.125rem; }
+      }
+      :is(.MuiButton-root,.MuiIconButton-root):focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+      /* «3 / 5» is one figure: it does not break between its arrows. */
+      .MuiStack-root > p { white-space:nowrap; }
+    }
+    /* An indication is what is read; its posology explains it. */
+    table td:first-child {
+      > .MuiStack-root { gap:0; }
+      > .MuiStack-root > .MuiStack-root { align-items:center; gap:2px 6px; }
+      > .MuiStack-root > .MuiStack-root > p { font-weight:var(--hhr-ficha-weight-strong); }
+      > .MuiStack-root > .MuiBox-root > p { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
+      .MuiChip-root {
+        block-size:16px; border-radius:4px; background:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft);
+        font:var(--hhr-ficha-weight-strong) .625rem/1 var(--hhr-ficha-sans);
+        > .MuiChip-label { padding-inline:5px; font:inherit; }
+      }
+    }
+    /* A mark of the schedule is as tall as a line of its indication. */
+    table td .MuiIconButton-root {
+      inline-size:var(--hhr-ficha-control); block-size:var(--hhr-ficha-control); padding:0;
+      > svg { inline-size:20px; block-size:20px; font-size:1.25rem; }
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+    }
+    table[data-hhr-plan-empty] td { padding-block:5px !important; color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
+    /* The native foot has no content. It keeps its place only when it says something. */
+    table tfoot:not(:has(td:not(:empty), th:not(:empty))) { display:none; }
+  }
+}
