@@ -1,8 +1,13 @@
 # Cambios
 
-## 0.48.168
+## 0.48.169
 
 - Al abrir «Plantillas» en Evolución, los botones de pautas permanecen en el editor. Al aplicar una pauta, la cabecera conserva su posición durante la carga y Escape permite volver al borrador de Eloísa.
+
+## 0.48.168
+
+- Rendimiento y estabilidad del transporte de Ficha Médico: agrupa en vuelo las consultas concurrentes de sesión (`getFetchInfo`, sin caché persistente) entregando copias congeladas aisladas, manteniendo separadas las lecturas directas de pestaña emisora.
+- Selección y permanencia de pestañas: relega las pestañas descartadas por Chrome (`discarded`) detrás de las pestañas activas/vivas y marca como no descartable (`autoDiscardable: false`) únicamente la pestaña activa de Ficha Médico que responde, liberando las demás.
 
 ## 0.48.167
 

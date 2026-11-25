@@ -12,6 +12,8 @@ import '../../../extension/fichamedico-transport-runtime.js';
 type Tab = {
   id?: number;
   active?: boolean;
+  discarded?: boolean;
+  autoDiscardable?: boolean;
   lastAccessed?: number;
   url?: string;
   windowId?: number;
@@ -445,6 +447,79 @@ describe('Ficha Médico transport runtime', () => {
     expect(chrome.tabs.query).toHaveBeenCalledWith({
       url: 'https://fichamedico.rayensalud.cl/*',
     });
+  });
+
+  it('coalesces concurrent shared getFetchInfo calls in flight with TTL 0 and isolated frozen copies', async () => {
+    const chrome = makeChrome();
+    let releaseInfo!: (value: { info: { token: string; apiOrigin: string } }) => void;
+    let infoCalls = 0;
+    chrome.tabs.query.mockResolvedValue([{ id: 12, active: true }]);
+    chrome.tabs.sendMessage.mockImplementation(async (_tabId, message) => {
+      if (message.type === 'RAYEN_EXTENSION_HEALTH_PING') return { ready: true };
+      infoCalls += 1;
+      if (infoCalls === 1) {
+        return new Promise(resolve => {
+          releaseInfo = resolve;
+        });
+      }
+      return { info: { token: 'fresh-token', apiOrigin: 'https://fichamedicoback.rayensalud.cl' } };
+    });
+    const { runtime } = createRuntime(chrome);
+
+    const firstWave = Promise.all([
+      runtime.getFetchInfo(),
+      runtime.getFetchInfo(),
+      runtime.getFetchInfo(),
+    ]);
+    await vi.waitFor(() => expect(releaseInfo).toBeTypeOf('function'));
+
+    // Sender-scoped reads stay isolated and never piggyback on the shared in-flight promise.
+    const senderPromise = runtime.getFetchInfo({
+      tab: { id: 99, url: 'https://fichamedico.rayensalud.cl/dashboard/reports' },
+    });
+    await expect(senderPromise).resolves.toEqual({
+      info: { token: 'fresh-token', apiOrigin: 'https://fichamedicoback.rayensalud.cl' },
+    });
+
+    releaseInfo({ info: { token: 'wave-1', apiOrigin: 'https://fichamedicoback.rayensalud.cl' } });
+    const [a, b, c] = await firstWave;
+    expect(a).toEqual({
+      info: { token: 'wave-1', apiOrigin: 'https://fichamedicoback.rayensalud.cl' },
+    });
+    expect(b).toEqual(a);
+    expect(c).toEqual(a);
+    expect(a.info).not.toBe(b.info);
+    expect(Object.isFrozen(a.info)).toBe(true);
+    expect(chrome.tabs.query).toHaveBeenCalledTimes(1);
+
+    // After the wave settles, the next call performs a fresh read (TTL = 0).
+    await expect(runtime.getFetchInfo()).resolves.toEqual({
+      info: { token: 'fresh-token', apiOrigin: 'https://fichamedicoback.rayensalud.cl' },
+    });
+    expect(chrome.tabs.query).toHaveBeenCalledTimes(2);
+  });
+
+  it('protects the active Ficha tab with autoDiscardable=false and releases previously protected siblings', async () => {
+    const chrome = makeChrome();
+    chrome.tabs.query.mockResolvedValue([
+      { id: 1, active: false, autoDiscardable: false, lastAccessed: 100 },
+      { id: 2, active: true, autoDiscardable: true, lastAccessed: 500 },
+      { id: 3, active: false, autoDiscardable: true, lastAccessed: 200 },
+    ]);
+    chrome.tabs.update.mockRejectedValueOnce(new Error('transient browser error'));
+    chrome.tabs.sendMessage.mockImplementation(async (_tabId, message) =>
+      message.type === 'RAYEN_EXTENSION_HEALTH_PING'
+        ? { ready: true }
+        : { snapshot: { encounters: [] } }
+    );
+    const { runtime } = createRuntime(chrome);
+
+    await expect(runtime.handleSnapshotRequest()).resolves.toEqual({
+      snapshot: { encounters: [] },
+    });
+    expect(chrome.tabs.update).toHaveBeenCalledWith(2, { autoDiscardable: false });
+    expect(chrome.tabs.update).toHaveBeenCalledWith(1, { autoDiscardable: true });
+    expect(chrome.tabs.update).not.toHaveBeenCalledWith(3, expect.anything());
   });
 
   it('keeps the owner loaded before background wiring and both files within budget', () => {
