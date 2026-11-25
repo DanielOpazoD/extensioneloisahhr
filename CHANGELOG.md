@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.175
+
+- Resumen distribuye las tarjetas por contenido. Un dato breve comparte línea con el título, los bloques intermedios pueden ocupar media fila y Evolución y las tablas disponen de todo el ancho.
+- Se simplifican los bordes entre registros. Fármacos puede reunir el número de filas visibles y la impresión en su cabecera.
+- Historial reúne la hora, el tipo de evento y el profesional en una línea cuando caben y mantiene visible la fecha durante el desplazamiento.
+- La navegación ocupa menos altura. Las columnas de iconos de las listas médicas y de cuidados reservan más espacio para el diagnóstico.
+
 ## 0.48.174
 
 - En Resumen, las tarjetas crecen con el contenido y las cuadrículas se adaptan al ancho disponible. Evolución puede ocupar la fila completa.
