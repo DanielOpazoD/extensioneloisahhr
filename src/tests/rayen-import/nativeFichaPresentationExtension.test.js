@@ -122,6 +122,53 @@ describe('Compact native history dates', () => {
 });
 
 describe('Native ficha presentation', () => {
+  it('opens the native summary note once and respects manual folding across refreshes and remounts', () => {
+    document.body.innerHTML = `<main><div class="MuiTabs-root"><button role="tab" aria-selected="true">Resumen</button></div>
+      <section id="evolution"><span class="MuiCardHeader-title">Evolución</span>
+        <div class="MuiCardContent-root"><div class="MuiStack-root"><div class="MuiStack-root">
+          <div class="MuiBox-root"><span class="MuiTypography-caption">Nota de prueba</span>
+            <div class="MuiBox-root" id="disclosure-host"></div></div>
+        </div></div></div></section>
+      <div class="MuiCardContent-root"><button id="other">Leer más</button></div></main>`;
+    const other = document.getElementById('other');
+    const otherClicks = vi.fn();
+    other.addEventListener('click', otherClicks);
+    other.focus();
+    const host = document.getElementById('disclosure-host');
+    const mount = () => {
+      const button = document.createElement('button');
+      button.textContent = 'LEER MÁS';
+      const click = vi.fn(() => {button.textContent = button.textContent === 'LEER MÁS' ? 'LEER MENOS' : 'LEER MÁS';});
+      button.addEventListener('click', click);
+      host.replaceChildren(button);
+      return {button, click};
+    };
+    presentation = globalThis.HhrNativeFichaPresentation.create();
+    presentation.refresh('1');
+    const first = mount();
+    for (const mode of ['off','balanced','reading']) presentation.refresh('1', mode);
+    expect(first.click).not.toHaveBeenCalled();
+    presentation.refresh('1'); presentation.refresh('1');
+    expect(first.button.textContent).toBe('LEER MENOS');
+    expect(first.click).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(other);
+    const second = mount();
+    presentation.refresh('1');
+    expect(second.button.textContent).toBe('LEER MENOS');
+    second.button.click(); presentation.refresh('1');
+    expect(second.button.textContent).toBe('LEER MÁS');
+    const remounted = mount();
+    presentation.refresh('1');
+    expect(remounted.click).not.toHaveBeenCalled();
+    host.closest('section').setAttribute('role', 'dialog');
+    presentation.refresh('2');
+    expect(remounted.click).not.toHaveBeenCalled();
+    host.closest('section').removeAttribute('role');
+    presentation.refresh('2');
+    expect(remounted.click).toHaveBeenCalledTimes(1);
+    expect(otherClicks).not.toHaveBeenCalled();
+  });
+
   it('widens read-only evolutions, preserves editable fields and restores native navigation attributes', () => {
     document.body.innerHTML = `<main><header class="MuiAppBar-root"><div class="MuiTabs-root"><div role="tablist">
       <button id="encounter-event-tab-summary" role="tab" aria-selected="true">Resumen</button></div></div></header>

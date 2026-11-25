@@ -82,8 +82,14 @@ function startFixture(route) {
           const nursing = route.pathname.endsWith('-nurse');
           const nameParts = [
             nativeJsx('span', {administrativeSexId:1, 'aria-hidden':true, children:'♂'}),
-            nativeJsx('strong', {className:'MuiTypography-root', fontWeight:'bold', children:'Paciente sintético ' + id}),
+            nativeJsx('strong', {className:'MuiTypography-root', fontWeight:'bold', children:'Paciente sintético ' + id + (discharge && id === 2 ? ' Apellido Compuesto' : '')}),
           ];
+          if (discharge && (id === 2 || id === 5)) {
+            for (const label of id === 5 ? ['Alta médica', 'Fallecimiento'] : ['Alta médica']) {
+              nameParts.push(nativeJsx('span', {className:'MuiChip-root', size:'small', label,
+                children:nativeJsx('span', {className:'MuiChip-label', children:label})}));
+            }
+          }
           const identifier = [
             ['RUN', '00.000.001-k'], ['RUN', '000000020'], ['Número de Identificación', '000000030'],
             ['RUN Materno/progenitor(a)', '000000040'], ['Pasaporte', '00000005-K'],
@@ -108,7 +114,7 @@ function startFixture(route) {
             ...(label === 'con novedad' ? ['Hace 1 hora por Profesional de prueba'] : []),
             ...(discharge || referral ? ['Detalle'] : []),
             nativeJsx('select', {'aria-label':'Asignación', children:['Sin asignación','Profesional de prueba'].map(text => nativeJsx('option',{children:text}))}),
-            nativeAction].map(child => nativeJsx('td', {children:child}));
+            nativeAction].map((child, index) => nativeJsx('td', {className:discharge && index === 1 ? 'fixture-discharge-cell' : undefined, children:child}));
           return nativeJsx('tr', {children:cells}, id);
         };
         jsx(tableProps => {
@@ -190,6 +196,8 @@ export const nativeWorklistFixture = pathname => {
     td,th { padding:13px 16px; border-bottom:1px solid #ddd; }
     .fixture-name-line { display:flex; align-items:center; }
     .fixture-name-line > strong { margin-inline-start:8px; }
+    .fixture-discharge-cell { width:150px; max-width:150px; }
+    .fixture-discharge-cell .MuiChip-root { display:inline-flex; white-space:nowrap; border-radius:4px; padding:0 6px; background:#e6eeea; }
     .MuiStack-root { display:flex; flex-direction:column; }
     .MuiStack-root > * + * { margin-top:3px; }
   </style></head><body><header class="MuiAppBar-root">Eloísa</header><main class="MuiBox-root"><div role="tablist">
@@ -810,6 +818,30 @@ const verifyLists = async (context, origin, worker) => {
         assert.equal(await page.locator('[data-hhr-bed-index]').count(), 0);
         if (name === route.sections[0][0]) await verifyTableHeader(page, table);
         const first = rows.first();
+        if (name === 'Pacientes egresados de alta') {
+          for (const [index, expectedLabels] of [[1, ['Alta médica']], [4, ['Alta médica', 'Fallecimiento']]]) {
+            const row = rows.nth(index);
+            const layout = await row.locator('td:nth-child(2)').evaluate(td => {
+              const name = td.querySelector('strong').firstChild;
+              const clippedWords = [...name.textContent.matchAll(/\S+/g)].filter(match => {
+                const range = new Range();
+                range.setStart(name, match.index);
+                range.setEnd(name, match.index + match[0].length);
+                return range.getClientRects().length !== 1;
+              }).map(match => match[0]);
+              const bounds = td.getBoundingClientRect();
+              const chips = [...td.querySelectorAll('.MuiChip-root')];
+              return { clippedWords, labels:chips.map(chip => chip.textContent),
+                inside:chips.every(chip => {
+                  const rect = chip.getBoundingClientRect();
+                  return rect.width > 0 && rect.left >= bounds.left && rect.right <= bounds.right + 1;
+                }) };
+            });
+            assert.deepEqual(layout.clippedWords, [], 'Discharge status chips must leave room for every word of the name');
+            assert.deepEqual(layout.labels, expectedLabels);
+            assert.ok(layout.inside, 'All discharge statuses must remain inside the patient cell');
+          }
+        }
         assert.equal(await first.locator('td').first().innerText(), 'AMQI\nH1C2');
         assert.equal(await first.getByText('Diagnóstico (lateral)', {exact:true}).count(), 1);
         assert.equal(await rows.getByText(/^Género:/).count(), 0);
@@ -914,7 +946,7 @@ const verifyLists = async (context, origin, worker) => {
         }
         await printAndCheck(context, worker, rows.last().getByRole('button', {name:'Imprimir indicaciones vigentes de hoy'}), 'Reporte_Indicaciones_Paciente.pdf', 2000 + total);
         const identities = await rows.locator('td:nth-child(2) strong').allTextContents();
-        assert.deepEqual(identities, Array.from({ length: total }, (_, i) => 'Paciente sintético ' + (i + 1)));
+        assert.deepEqual(identities, Array.from({ length: total }, (_, i) => 'Paciente sintético ' + (i + 1) + (name === 'Pacientes egresados de alta' && i === 1 ? ' Apellido Compuesto' : '')));
         await rows.last().getByRole('combobox').selectOption('Profesional de prueba');
         const chartLinks = rows.locator('[data-hhr-rongorongo-link]');
         if (!route.pathname.endsWith('-nurse') && name !== 'Pacientes egresados de alta') {

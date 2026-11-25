@@ -10,9 +10,18 @@ export async function verifyNursingSummary(page, worker) {
   assert.equal(await tiles.count(),9);
   const rects = await tiles.evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().toJSON()));
   assert.ok(rects.every(r => r.top === rects[0].top && r.height < 52),JSON.stringify(rects));
-  const sizes = await tiles.first().evaluate(el => ['vital-value','vital-label','vital-pam','vital-time'].map(kind =>
+  const pressure = tiles.first();
+  const visibleLabel = pressure.locator('[data-hhr-vital-short]');
+  const display = await visibleLabel.evaluate(node => {
+    const style = getComputedStyle(node,'::before');
+    return { text:style.content, size:parseFloat(style.fontSize) };
+  });
+  assert.match(display.text,/^"PA"/, 'The pressure label must visibly read PA');
+  assert.equal(display.size,12);
+  assert.match(await pressure.ariaSnapshot(),/Presión/);
+  const sizes = await pressure.evaluate(el => ['vital-value','vital-pam','vital-time'].map(kind =>
     parseFloat(getComputedStyle(el.querySelector('[data-hhr-reading="'+kind+'"]'), kind === 'vital-time' ? '::after' : null).fontSize)));
-  assert.deepEqual(sizes,[17,12,11,11]);
+  assert.deepEqual(sizes,[17,11,11]);
   const readings = await tiles.evaluateAll(nodes => nodes.map(tile => {
     const bounds = kind => tile.querySelector(`[data-hhr-reading="vital-${kind}"]`).getBoundingClientRect();
     const label = bounds('label'), value = bounds('value');

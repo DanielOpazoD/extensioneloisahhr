@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { medicalRoundWithControls } from './medical-round-visual-fixture.mjs';
+import { desktopMedicalRound } from './medical-round-visual-fixture.mjs';
 import { verifyNursingSummary } from './smoke-nursing-summary-density.mjs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -337,7 +337,7 @@ export const verifyNativeFicha = async (page, worker) => {
   try {
     await medical.setViewportSize({width:1280,height:800});
     const longNote = 'Se revisaron las observaciones del turno de prueba. '.repeat(30) + 'Referencia' + 'ABC'.repeat(46);
-    const medicalWithLongNote = medicalRoundWithControls.replace('Paciente de simulación en control de ronda.',longNote);
+    const medicalWithLongNote = desktopMedicalRound.replace('Paciente de simulación en control de ronda.',longNote);
     await medical.route(page.url(), route => route.fulfill({contentType:'text/html',body:medicalWithLongNote}));
     await medical.goto(page.url());
     const measurements = medical.locator('section#vitalSignsEntry [data-hhr-reading="vital-value"]');
@@ -345,24 +345,27 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.equal(await measurements.count(),9);
     const tops = await medical.locator('.vitals-grid > *').evaluateAll(tiles =>
       tiles.map(tile => Math.round(tile.getBoundingClientRect().top)));
-    assert.equal(new Set(tops).size,1);
+    assert.ok(new Set(tops).size <= 2, 'Las nueve mediciones deben caber en la columna de Evolución');
     assert.equal(await medical.locator('#estimatedDischargeSection').isVisible(),false);
     const handoff = medical.locator('#shiftChangeObservation');
     const disclosure = medical.locator('#evolution button[data-hhr-note-disclosure]');
     const noteBody = medical.locator('#evolution .MuiBox-root > .MuiTypography-caption');
+    await medical.waitForFunction(() => document.querySelector('#evolution button[data-hhr-note-disclosure]')?.getAttribute('aria-expanded') === 'true');
+    assert.ok((await noteBody.textContent()).includes(longNote), 'La nota íntegra debe quedar visible al entrar');
     let closed;
     for (const expanded of [false,true]) {
       await disclosure.press('Enter');
       await medical.waitForFunction(open => document.querySelector('#evolution [data-hhr-note-disclosure]')?.getAttribute('aria-expanded') === String(open),expanded);
       assert.equal(await disclosure.evaluate(el => document.activeElement === el),true);
       assert.equal((await noteBody.textContent()).includes(longNote),expanded);
-      const boxes = await medical.evaluate(() => {
+      const boxes = await medical.evaluate(async () => {
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const box = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
-        return {note:box('#evolution'),handoff:box('#shiftChangeObservation'),rest:box('#rest'),diet:box('#diet')};
+        return {note:box('#evolution'),vitals:box('section#vitalSignsEntry'),handoff:box('#shiftChangeObservation'),alerts:box('#alerts')};
       });
-      assert.ok(Math.abs(boxes.note.width - 2 * boxes.handoff.width) < 2);
-      for (const item of [boxes.rest,boxes.diet]) {
-        assert.ok(item.top >= boxes.handoff.bottom - 1 && item.left >= boxes.handoff.left - 1 && item.right <= boxes.handoff.right + 1);
+      assert.ok(boxes.note.width > boxes.handoff.width && boxes.note.right <= boxes.handoff.left + 1);
+      for (const [upper,lower] of [[boxes.note,boxes.vitals],[boxes.handoff,boxes.alerts]]) {
+        assert.ok(Math.abs(upper.left-lower.left) < 2 && Math.abs(upper.right-lower.right) < 2 && lower.top >= upper.bottom - 1);
       }
       if (!expanded) closed = boxes;
       else {
@@ -381,8 +384,8 @@ export const verifyNativeFicha = async (page, worker) => {
     }
     const notices = await medical.locator('#alerts .alerts-list').boundingBox();
     const alertForm = await medical.locator('#alerts form').boundingBox();
-    assert.ok(alertForm.x >= notices.x + notices.width - 1 && Math.abs(notices.y - alertForm.y) < 4,
-      'Una tarjeta ancha debe mostrar los avisos y el formulario en paralelo');
+    assert.ok(alertForm.y >= notices.y + notices.height - 1,
+      'En el lateral estrecho las acciones de Alertas deben quedar debajo de los avisos');
     const draft = handoff.getByRole('textbox');
     await draft.fill('Borrador ficticio');
     const history = medical.getByRole('button',{name:/ver historial completo/i});

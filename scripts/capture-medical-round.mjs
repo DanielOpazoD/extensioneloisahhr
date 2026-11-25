@@ -4,12 +4,12 @@ import { chromium } from 'playwright';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { medicalHistory, medicalRound, medicalRoundWithControls } from './medical-round-visual-fixture.mjs';
+import { desktopMedicalRound, medicalHistory, medicalRound, medicalRoundWithControls } from './medical-round-visual-fixture.mjs';
 import { captureDesktopRound } from './capture-desktop-round.mjs';
 
 const [revision, directory, comparison] = process.argv.slice(2);
-if (!revision || !directory || (comparison && !['antes','despues','escritorio'].includes(comparison))) {
-  throw Error('Uso: node scripts/capture-medical-round.mjs <ref|WORKTREE> <directorio> [antes|despues|escritorio]');
+if (!revision || !directory || (comparison && !['antes','despues','escritorio','ronda'].includes(comparison))) {
+  throw Error('Uso: node scripts/capture-medical-round.mjs <ref|WORKTREE> <directorio> [antes|despues|escritorio|ronda]');
 }
 const source = filename => revision === 'WORKTREE' ? readFile('extension/' + filename, 'utf8') :
   execFileSync('git', ['show', revision + ':extension/' + filename], {encoding:'utf8'});
@@ -20,12 +20,13 @@ const scripts = entry.js.filter(name => /^(hhr-ficha-|hhr-(history-date-navigati
 await mkdir(directory, {recursive:true});
 const browser = await chromium.launch();
 try {
-  const desktop = comparison === 'escritorio';
+  const round = comparison === 'ronda' || (comparison === 'escritorio' && revision === 'WORKTREE');
+  const desktop = comparison === 'escritorio' || round;
   for (const [width, height] of desktop ? [[1280,800],[1440,900]] : [[1366,850],[390,844]]) {
     const page = await browser.newPage({viewport:{width,height},deviceScaleFactor:1,locale:'es-CL'});
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.setContent(comparison ? medicalRoundWithControls : medicalRound);
+    await page.setContent(round ? desktopMedicalRound : comparison ? medicalRoundWithControls : medicalRound);
     for (const name of styles) await page.addStyleTag({content:await source(name)});
     for (const name of scripts) await page.addScriptTag({content:await source(name)});
     await page.evaluate(historyMarkup => {
@@ -45,6 +46,7 @@ try {
       });
       // Simulate the content-script refresh following the host's React update.
       document.getElementById('evolution').addEventListener('click', () => queueMicrotask(refresh));
+      document.addEventListener('fixture-refresh', refresh);
       refresh();
     },medicalHistory);
     await page.evaluate(async () => {
@@ -52,7 +54,7 @@ try {
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
     });
     if (desktop) {
-      await captureDesktopRound(page, directory, width, revision === 'WORKTREE');
+      await captureDesktopRound(page, directory, width, revision === 'WORKTREE', round);
       assert.deepEqual(errors, []);
       await page.close();
       continue;

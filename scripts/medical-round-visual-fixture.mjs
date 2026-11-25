@@ -63,19 +63,45 @@ const restAndDiet = `<div class="MuiGrid-container">${item(section('restEntrySec
   '<p><strong>Reposo:</strong> Relativo</p><p>Movilización asistida.</p>',stamp),'6')}
   ${item(section('nutritionOrderEntrySection','diet','Régimen',
   '<p><strong>Régimen:</strong> Común</p><p>Según tolerancia.</p>',stamp),'6')}</div>`;
+const careInstructions = (id, card, title, value, observation, source) =>
+  item(section(id,card,title,`<div class="MuiStack-root care-content">
+    <div class="MuiStack-root care-value"><strong>${title}:</strong>
+      <span class="MuiChip-root"><span class="MuiChip-label">${value}</span></span></div>
+    <div class="MuiStack-root care-observation"><strong>Observación:</strong><p class="MuiTypography-root">${observation}</p></div>
+  </div>`,source),'6');
+const nestedCare = `<div class="MuiGrid-container">
+  ${careInstructions('restEntrySection','rest','Reposo','Relativo','Movilización asistida.',stamp)}
+  ${careInstructions('nutritionOrderEntrySection','diet','Régimen','Común','-',
+    'Última actualización: 15-04-2026, 10:45:20, Enfermera Elena Ejemplo')}
+</div>`;
+const requests = item(section('diagnosisTestEntrySection','diagnosisTestEntry','Solicitud de examen',
+  '<p>No presenta solicitudes de exámenes registradas</p>')) +
+  item(section('operationTheaterRequestEntrySection','operationTheaterRequest','Solicitudes de intervención quirúrgica',
+    '<p>No se presentan Solicitudes de intervención quirúrgica registradas para este paciente</p>'));
+const orders = item(section('procedureOrderEntrySection','procedureOrder','Órdenes de atención',`
+  <table class="MuiTable-root"><thead><tr>${['Profesional','Estado','Fecha solicitud','Asignado','Motivo','Indicaciones','Acciones']
+    .map(col => '<th class="MuiTableCell-root">'+col+'</th>').join('')}</tr></thead><tbody>
+  ${['Solicitada','Realizada','Realizada'].map((state,i)=>`<tr class="MuiTableRow-root">
+    <td class="MuiTableCell-root">Kinesiólogo(a)</td><td class="MuiTableCell-root">${i === 0
+      ? '<select aria-label="Estado de la orden"><option>Solicitada</option><option>Realizada</option></select>' : state}</td>
+    <td class="MuiTableCell-root">15-04-2026</td><td class="MuiTableCell-root">Pendiente asignar</td>
+    <td class="MuiTableCell-root">Tratamiento</td><td class="MuiTableCell-root">Evaluación de movilidad de prueba.</td>
+    <td class="MuiTableCell-root"><button type="button" class="MuiIconButton-root" aria-label="Imprimir orden">⎙</button></td>
+  </tr>`).join('')}</tbody></table>`,stamp));
 const medication = action => section('medicationEntrySection','medication','Fármacos','<table><thead><tr><th>Indicación</th><th>Posología</th><th>Acciones</th></tr></thead><tbody><tr><td>Preparación de ejemplo</td><td>Según indicación de prueba</td><td><button aria-label="Ver comentario">···</button></td></tr></tbody></table>',stamp,action);
-const summaryBody = (controls,signs) => `<div class="${grid} round-grid">
+const summaryBody = (controls,signs,desktopRound) => `<div class="${grid} round-grid">
   <div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 toolbar"><p class="MuiTypography-root MuiTypography-body2">Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo</p><div><input aria-label="Resumen diario paciente" type="date" value="2026-04-15"> <button>Imprimir</button></div></div>
   ${item(`<div class="${grid}">${item(discharge)}${item(evolution)}</div>`,'6')}
   <div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-md-6">${handoff}</div>
   ${item(item(section(null,'encounterFormEntry','Instrumentos de evaluación','<p>No presentan instrumentos de evaluación registrados</p>')))}
   ${item(section('physicalExaminationEntry','physicalExam','Examen físico','<p>No presenta exámenes físicos registrados</p>'))}
   ${item(signs)}
-  ${controls ? item(restAndDiet,'6') + item(detailedAlerts,'6') : item(ordinaryAlerts)}
+  ${controls ? item(desktopRound ? nestedCare : restAndDiet,'6') + item(detailedAlerts,'6') : item(ordinaryAlerts)}
   ${item(medication(controls ? switchControl('Mostrar suspendidos') : ''))}
+  ${desktopRound ? orders + requests : ''}
 </div>`;
 const tabs = ['Resumen', 'Antecedentes', 'Plan de tratamiento', 'Historial', 'Alta'];
-const renderRound = (controls = false) => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
+const renderRound = (controls = false, desktopRound = false) => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
   *{box-sizing:border-box}body{margin:0;background:#eff1f0;color:#263432;font:14px/1.45 Arial,sans-serif}
   .banner{background:#218b80;color:white;padding:15px 24px;font-size:16px;font-weight:600}.banner small{margin-left:18px;font-size:12px;font-weight:400}
   .MuiTabs-root{display:flex;gap:8px;background:white}.MuiTabs-root button{background:none;border:0;font-size:13px}.MuiChip-root{display:inline-flex;border-radius:12px;padding:3px 11px;background:#e4e9e7;color:#344841;font-size:12px}
@@ -104,11 +130,13 @@ const renderRound = (controls = false) => `<!doctype html><html lang="es"><meta 
   .MuiSwitch-input{appearance:none;display:block;width:26px;height:14px;margin:0;border-radius:7px;background:#a7afac;
     cursor:pointer;background-image:radial-gradient(circle at 7px center,#fff 0 5px,transparent 6px)}
   .MuiSwitch-input:checked{background-color:#247d71;background-image:radial-gradient(circle at 19px center,#fff 0 5px,transparent 6px)}
+  .care-content{display:flex;flex-direction:column;gap:12px}.care-value,.care-observation{display:flex;align-items:center;gap:8px}
+  #procedureOrder .MuiTableCell-root{padding:14px 12px}#procedureOrder select{font:inherit;padding:8px 10px}
   @media(max-width:700px){main{padding:8px}.MuiGrid-grid-xs-6,.MuiGrid-grid-md-6{width:100%}.MuiTabs-root{flex-wrap:wrap}.banner small{display:block;margin:0}.toolbar{align-items:flex-end}}
 </style><header class="banner">Ficha de hospitalizados <small>Resumen médico · Episodio ficticio</small></header>
 <div class="MuiTabs-root"><div role="tablist">${tabs.map((tab,i)=>`<button role="tab" id="encounter-event-tab-${['summary','antecedents','care-plan','history','discharge'][i]}" aria-selected="${i===0}">${tab}</button>`).join('')}</div></div>
 <main class="MuiBox-root"><div class="MuiStack-root"><div class="MuiGrid-item MuiGrid-grid-xs-12"><div class="MuiGrid-container subnav">${['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales'].map(t=>`<div class="MuiGrid-item"><span class="MuiBadge-root"><span class="MuiTypography-caption">${t}</span></span></div>`).join('')}</div></div>
-${summaryBody(controls,vitals(controls))}</div></main>
+${summaryBody(controls,vitals(controls),desktopRound)}</div></main>
 ${controls ? '<dialog aria-label="Historial de signos"><p>Registro anterior de prueba</p></dialog>' : ''}<script>
   const noteText = document.querySelector('#evolution .MuiBox-root > .MuiTypography-caption');
   const disclosure = noteText.nextElementSibling.querySelector('button');
@@ -120,6 +148,7 @@ ${controls ? '<dialog aria-label="Historial de signos"><p>Registro anterior de p
     disclosure.textContent = expand ? 'Leer menos' : 'Leer más';
     disclosure.setAttribute('aria-expanded', String(expand));
   });
+  if (${desktopRound}) disclosure.click();
   const historyDialog = document.querySelector('dialog[aria-label="Historial de signos"]');
   if (historyDialog) {
     document.querySelector('section#vitalSignsEntry button').addEventListener('click', () => historyDialog.showModal());
@@ -135,6 +164,7 @@ ${controls ? '<dialog aria-label="Historial de signos"><p>Registro anterior de p
 
 export const medicalRound = renderRound();
 export const medicalRoundWithControls = renderRound(true);
+export const desktopMedicalRound = renderRound(true,true);
 
 const historyCard = (name, role, time, type, note) => `<article class="MuiCard-root"><div class="MuiCardHeader-root">
   <div class="MuiCardHeader-content"><span class="MuiCardHeader-title">${name}</span><span class="MuiCardHeader-subheader">${role}</span></div>

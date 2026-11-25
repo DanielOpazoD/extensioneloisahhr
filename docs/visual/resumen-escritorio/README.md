@@ -1,5 +1,23 @@
 # Resumen compacto en escritorio
 
+## Ronda de escritorio 0.48.186
+
+Evolución abre extendida y comparte columna con Signos vitales, Reposo y Régimen. Observaciones de entrega encabeza la segunda columna, seguida de Alertas. Las solicitudes vacías de examen y cirugía ocupan una línea cada una. Cuando llega una orden, su sección recupera el ancho completo y sus acciones.
+
+| Ficha ficticia en Chromium | 0.48.185 | 0.48.186 |
+| --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.186/antes/1280-expandida.png) | [Después](0.48.186/despues/1280-expandida.png) |
+| 1440 × 900 | [Antes](0.48.186/antes/1440-expandida.png) | [Después](0.48.186/despues/1440-expandida.png) |
+
+Con la misma nota expandida, la primera fila de Fármacos termina a 631 px del borde superior, frente a los 709 px anteriores. Las filas de Órdenes de atención pasan de 59–65 a 35 px, y cada indicación de Reposo o Régimen pasa de 69 a 45 px. Los nueve signos vitales caben en una fila a ambos anchos. PA, FC, FR, SatO₂, T° ax. y HGT conservan el nombre completo al pasar el cursor.
+
+En la lista médica de egresados se comprobó que los nombres largos saltan por palabras aunque la fila tenga dos etiquetas de estado. [Ver captura de Egresados](0.48.186/egresados.png).
+
+```sh
+node scripts/capture-medical-round.mjs v0.48.185 /tmp/ronda-anterior ronda
+node scripts/capture-medical-round.mjs WORKTREE /tmp/ronda-actual ronda
+```
+
 ## Ficha compacta 0.48.185
 
 Comparación de la misma ficha ficticia, con el zoom predeterminado de Chromium. Las cifras indican la distancia desde el borde superior de la ventana hasta el final de la primera fila de Fármacos.

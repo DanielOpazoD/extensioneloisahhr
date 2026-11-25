@@ -19,6 +19,39 @@ function attributedTable() {
   return document.querySelector('section');
 }
 
+it('resume HGT y temperatura axilar con sus propias unidades y conserva las tablas ambiguas', () => {
+  document.documentElement.dataset.hhrFichaTheme = 'compact';
+  document.body.innerHTML = '<section><table><thead><tr><th>Hora</th><th>Presión (mmHg)</th>' +
+    '<th>Hemoglucotest (mg/dL)</th><th>Temperatura (°C)</th><th>Tº axilar (°C)</th></tr></thead>' +
+    '<tbody><tr><td>10:16</td><td>116/72</td><td>108</td><td>36,5</td><td>36,2</td></tr></tbody></table></section>';
+  const section = document.querySelector('section'), table = section.querySelector('table');
+  const strip = globalThis.HhrFichaVitalStrip.create();
+  strip.refresh(section);
+  expect([...section.querySelectorAll('dt')].map(el => [el.textContent,el.getAttribute('aria-label')])).toEqual([
+    ['PA','Presión arterial'],['T°','Temperatura'],['T° ax.','Temperatura axilar'],['HGT','Hemoglucotest'],
+  ]);
+  expect([...section.querySelectorAll('dd')].map(el => el.textContent)).toEqual([
+    '116/72 mmHg10:16','36,5 °C10:16','36,2 °C10:16','108 mg/dL10:16',
+  ]);
+  const value = table.tBodies[0].rows[0].cells[2];
+  value.style.color = 'red';
+  strip.refresh(section);
+  expect(section.querySelector('dl,[data-hhr-vital-detail-folded]')).toBeNull();
+  expect(value.style.color).toBe('red');
+  value.removeAttribute('style');
+  table.tBodies[0].rows[0].cells[1].textContent = '18';
+  strip.refresh(section);
+  expect(section.querySelector('dl')).toBeNull();
+  table.tBodies[0].rows[0].cells[1].textContent = '116/72';
+  table.tHead.rows[0].cells[2].textContent = 'Sup. Oxígeno';
+  strip.refresh(section);
+  expect(section.querySelector('dl')).toBeNull();
+  table.tHead.rows[0].cells[2].textContent = 'Hemoglucotest (mg/dL)';
+  document.documentElement.dataset.hhrFichaTheme = 'balanced';
+  strip.refresh(section);
+  expect(section.querySelector('dl,[data-hhr-vital-detail-folded]')).toBeNull();
+});
+
 it('destaca la fecha anterior en su fila nativa conservando profesionales y controles', () => {
   const section = attributedTable(), table = section.querySelector('table'), rows = table.tBodies[0].rows;
   const strip = globalThis.HhrFichaVitalStrip.create();

@@ -178,13 +178,14 @@
       updateGrids();
       const next = new Set();
       for (const section of activeSections) {
-        if (row && optional.has(section.id) && explicitlyEmpty(section) && !section.contains(document.activeElement)) next.add(section);
+        if (row && optional.has(section.id) && !section.closest('[data-hhr-round="empty-request"]') &&
+            explicitlyEmpty(section) && !section.contains(document.activeElement)) next.add(section);
       }
       if (row) {
         // These marks exist only in Compacto and only for an exact, read-only native empty state.
         for (const title of row.closest('main')?.querySelectorAll('[data-hhr-reading="empty-section-title"]') || []) {
           const card = title.closest('[data-hhr-reading="status-card"]');
-          if (!card || card.contains(document.activeElement)) continue;
+          if (!card || card.closest('[data-hhr-round="empty-request"]') || card.contains(document.activeElement)) continue;
           next.add(card);
         }
       }

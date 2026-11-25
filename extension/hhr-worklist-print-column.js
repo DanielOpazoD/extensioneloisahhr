@@ -120,7 +120,7 @@
     }, link.key ?? undefined));
   }
 
-  function patientCell(jsx, cell, nursing, editId, noveltyTitle, publication, NoveltyLink) {
+  function patientCell(jsx, cell, nursing, discharge, editId, noveltyTitle, publication, NoveltyLink) {
     let run;
     function present(node) {
       if (Array.isArray(node)) {
@@ -157,7 +157,7 @@
       if (children === null && text?.props && typeof node.props.title === 'string') return null;
       const nameRow = Array.isArray(text) && text[0]?.props &&
         Object.hasOwn(text[0].props, 'administrativeSexId') && text[1]?.props?.fontWeight === 'bold';
-      const current = nameRow ? jsx(node.type, { ...node.props, 'data-hhr-patient-name-row': '',
+      const current = nameRow ? jsx(node.type, { ...node.props, 'data-hhr-patient-name-row': discharge ? 'discharge' : '',
         children: [jsx('span', { className: 'hhr-patient-sex-icon', children: children[0] }, 'sex'), ...children.slice(1)],
       }, node.key ?? undefined) : children === text ? node : withChildren(jsx, node, children);
       if (!nursing || !node.props.href) return current;
@@ -228,7 +228,7 @@
           ? 'Último cambio médico hace ' + elapsed.replace(/\s+/g, ' ')
           : 'Último cambio médico';
       }
-      cells[1] = patientCell(jsx, cells[1], nursing, encId, noveltyTitle, publications?.get(encId), NoveltyLink);
+      cells[1] = patientCell(jsx, cells[1], nursing, discharge, encId, noveltyTitle, publications?.get(encId), NoveltyLink);
       if (diagnosis >= 0) cells[diagnosis] = compactDiagnosis(jsx, cells[diagnosis]);
       if (cells[doctor]?.props) {
         const cell = cells[doctor];

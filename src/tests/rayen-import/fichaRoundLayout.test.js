@@ -147,6 +147,15 @@ it('reads two instructions without sharing their bylines or dropping observation
     delete stamp.dataset.hhrUpdateLabel;
   });
 
+  const observation = rows[0].querySelector('[data-hhr-round="care-observation"]');
+  const originalText = observation.textContent;
+  observation.textContent = '-';
+  layout.refresh(main);
+  expect(observation.dataset.hhrRound).toBe('care-placeholder');
+  observation.textContent = '- Control durante el turno';
+  layout.refresh(main);
+  expect(observation.dataset.hhrRound).toBe('care-observation');
+  observation.textContent = originalText;
   const prefix = rows[0].querySelector('strong');
   prefix.textContent = 'Detalle especial:';
   layout.refresh(main);
@@ -156,4 +165,28 @@ it('reads two instructions without sharing their bylines or dropping observation
   expect(main.querySelectorAll('[data-hhr-round="care-row"]')).toHaveLength(2);
   layout.clear();
   expect(main.innerHTML).toBe(original);
+});
+
+it('uses only isolated native branches for the two columns and returns populated requests to their original flow', () => {
+  document.body.innerHTML = '<main><div class="MuiGrid-container">' +
+    slot('observationEntrySection','Nota') + slot('shiftChangeEntrySection','<textarea></textarea>') +
+    slot('vitalSignsEntry','Signos') + slot('alertEntrySection','<button>Archivar</button>') +
+    slot('diagnosisTestEntrySection','Sin solicitudes') + slot('operationTheaterRequestEntrySection','Sin solicitudes') +
+    '</div></main>';
+  const main = document.querySelector('main');
+  const exam = main.querySelector('#diagnosisTestEntrySection');
+  const surgery = main.querySelector('#operationTheaterRequestEntrySection');
+  exam.dataset.hhrEmptyRequest = 'exam';
+  surgery.dataset.hhrEmptyRequest = 'surgery';
+  layout.refresh(main);
+  expect(main.querySelector('#vitalSignsEntry').parentElement.dataset.hhrRound).toBe('vitals');
+  expect(main.querySelector('#alertEntrySection').parentElement.dataset.hhrRound).toBe('alerts');
+  expect(exam.parentElement.dataset.hhrRound).toBe('empty-request');
+  expect(surgery.parentElement.dataset.hhrRound).toBe('empty-request');
+  delete exam.dataset.hhrEmptyRequest;
+  exam.textContent = 'Solicitud vigente';
+  surgery.after(document.createElement('button'));
+  layout.refresh(main);
+  expect(exam.parentElement.hasAttribute('data-hhr-round')).toBe(false);
+  expect(surgery.parentElement.hasAttribute('data-hhr-round')).toBe(false);
 });

@@ -59,6 +59,17 @@
       .hhr-location-bed { font-weight:750; color:#183a34; }
       [data-hhr-patient-name-row] > :nth-child(2) { color:#203b36; font-weight:700; }
       table[${marked}] td:nth-child(2) .MuiTypography-root { overflow-wrap:anywhere; }
+      /* In medical discharges Rayen caps this cell at 150px. Keep status chips
+         in normal text flow so they wrap after the name instead of squeezing it. */
+      table[${marked}] td:has([data-hhr-patient-name-row="discharge"]) {
+        width:clamp(12rem,18vw,17rem); min-width:12rem; max-width:none;
+        [data-hhr-patient-name-row="discharge"] {
+          position:relative; display:block; padding-inline-start:calc(var(--hhr-patient-icon-width) + var(--hhr-patient-name-gap));
+          > .hhr-patient-sex-icon { position:absolute; inset-inline-start:0; inset-block-start:0; width:var(--hhr-patient-icon-width); }
+          > :nth-child(2) { display:inline; white-space:normal; overflow-wrap:break-word; word-break:normal; }
+          > .MuiChip-root { display:inline-flex; vertical-align:middle; margin-inline-start:4px !important; }
+        }
+      }
       td[data-hhr-worklist-doctor] { width:136px; max-width:136px; }
       td[data-hhr-worklist-doctor] :is(.MuiFormControl-root,select) { box-sizing:border-box; width:100%; min-width:0; max-width:136px; }
       td[data-hhr-worklist-doctor] .MuiSelect-select { overflow:hidden; text-overflow:ellipsis; }

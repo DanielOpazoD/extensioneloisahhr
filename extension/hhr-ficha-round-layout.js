@@ -19,6 +19,9 @@
     return branch;
   }
 
+  const isFullRow = el => el.matches('.MuiGrid-item') && ![...el.classList].some(name =>
+    /^MuiGrid-grid-(?:xs|sm|md|lg|xl)-/.test(name) && !name.endsWith('-12'));
+
   // Only the two read-only care instructions may move ahead of another section.
   // Leave native controls, independent siblings and unfamiliar column layouts in place.
   function bedsideInstructions(frame, left, right, hidden) {
@@ -35,8 +38,7 @@
     const alert = frame.querySelector('#alertEntrySection');
     const known = new Set([left, right, hidden, group, alert && branchOf(alert, frame).at(-1)]);
     const ordinary = [...frame.children].filter(el => !known.has(el));
-    if (ordinary.some(el => !el.matches('.MuiGrid-item') || [...el.classList].some(name =>
-      /^MuiGrid-grid-(?:xs|sm|md|lg|xl)-/.test(name) && !name.endsWith('-12')))) return null;
+    if (!ordinary.every(isFullRow)) return null;
     return group;
   }
 
@@ -73,8 +75,11 @@
     if (!label) return null;
     const marks = [[card, 'care-row'], [value, 'care-value'], [label, 'care-label']];
     if (observation?.textContent.trim()) {
-      marks.push([observation, 'care-observation']);
       const prefix = leadingLabel(observation, 'Observación:');
+      const valueText = observation.textContent.slice(prefix ? observation.textContent.indexOf(prefix.textContent) + prefix.textContent.length : 0).trim();
+      const isPlaceholder = valueText === '-' && !observation.matches('[title],[aria-label]') &&
+        !observation.querySelector('img,svg,[title],[aria-label],time');
+      marks.push([observation, isPlaceholder ? 'care-placeholder' : 'care-observation']);
       if (prefix) marks.push([prefix, 'care-label']);
     }
     return marks;
@@ -121,16 +126,83 @@
         }
       }
     }
+    const isolated = section => {
+      const item = section && branchOf(section, frame).at(-1);
+      return item?.parentElement === frame && item.matches('.MuiGrid-item') ? item : null;
+    };
+    const vitals = isolated(frame.querySelector('#vitalSignsEntry'));
+    const alerts = isolated(frame.querySelector('#alertEntrySection'));
+    if (vitals && alerts && left.matches('.MuiGrid-item') && right.matches('.MuiGrid-item')) {
+      const requests = [...frame.querySelectorAll('[data-hhr-empty-request]')].map(isolated).filter(Boolean);
+      const known = new Set([left, right, vitals, alerts, instructions, hidden, ...requests]);
+      if ([...frame.children].every(el => known.has(el) || isFullRow(el))) {
+        marks.set(vitals, 'vitals');
+        marks.set(alerts, 'alerts');
+        for (const item of requests) marks.set(item, 'empty-request');
+      }
+    }
     return marks;
   }
 
+  // Sibling cards belong to React. Keep them in place on a shared CSS grid row
+  // and use their intrinsic heights to stack the two reading columns independently.
   function create() {
-    let previous = new Map();
+    let previous = new Map(), frame, first, columns = [], pending = 0;
+    const desktop = globalThis.matchMedia?.('(min-width:1100px)');
+    // Updating margins does not resize the observed border boxes. Repack before paint.
+    const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(pack) : null;
+    function schedule() {
+      if (frame && !pending) pending = requestAnimationFrame(() => { pending = 0; pack(); });
+    }
+    function set(el, name, value) {
+      if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
+    }
+    function pack() {
+      if (!frame?.isConnected || !desktop?.matches) return;
+      const siblings = [...frame.children];
+      const preceding = siblings.slice(0, siblings.indexOf(first)).filter(node => node.getClientRects().length);
+      set(frame, '--hhr-round-line', String(preceding.length + 1));
+      const offsets = [];
+      for (const column of columns) {
+        let top = 0;
+        for (const item of column) {
+          offsets.push([item, top]);
+          top += item.getBoundingClientRect().height;
+        }
+      }
+      for (const [el, top] of offsets) set(el, '--hhr-round-offset', top + 'px');
+    }
+    function resetColumns() {
+      if (pending) cancelAnimationFrame(pending);
+      pending = 0;
+      resize?.disconnect();
+      if (frame) {
+        desktop?.removeEventListener('change', schedule);
+        frame.removeAttribute('data-hhr-round-columns');
+        frame.style.removeProperty('--hhr-round-line');
+      }
+      for (const item of columns.flat()) item.style.removeProperty('--hhr-round-offset');
+      columns = []; first = frame = null;
+    }
     function refresh(main) {
       const next = layout(main);
       for (const el of previous.keys()) if (!next.has(el)) el.removeAttribute(attribute);
       for (const [el, value] of next) if (previous.get(el) !== value) el.setAttribute(attribute, value);
+      const changed = previous.size !== next.size || [...next].some(([el, role]) => previous.get(el) !== role);
       previous = next;
+      if (!changed && frame) { schedule(); return; }
+      resetColumns();
+      const roles = new Map([...next].map(([el, role]) => [role, el]));
+      if (!roles.has('vitals') || !resize || !desktop) return;
+      frame = roles.get('frame');
+      const note = roles.get('note'), handoff = roles.get('handoff');
+      first = [...frame.children].find(el => el === note || el === handoff);
+      columns = [[note, roles.get('vitals'), roles.get('care')].filter(Boolean), [handoff, roles.get('alerts'),
+        ...[...next].filter(([,role]) => role === 'empty-request').map(([el]) => el)].filter(Boolean)];
+      frame.setAttribute('data-hhr-round-columns','');
+      desktop.addEventListener('change', schedule);
+      for (const item of columns.flat()) resize.observe(item);
+      pack();
     }
     return {refresh, clear:() => refresh(null)};
   }

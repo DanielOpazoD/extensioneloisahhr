@@ -247,6 +247,19 @@
     const links = new Map();
     let primary = null, row = null, slot = null, style = null;
     let lastTarget = null, frame = 0, disposed = false;
+    let noteEncounter = null, noteDisclosure = null, keepNoteFolded = false;
+    const rememberNoteToggle = event => { keepNoteFolded = normalize(event.currentTarget.textContent) === 'leer menos'; };
+    const setNoteDisclosure = (next, encounter) => {
+      if (next === noteDisclosure && encounter === noteEncounter) return;
+      noteDisclosure?.removeEventListener('click', rememberNoteToggle, true);
+      if (encounter !== noteEncounter) keepNoteFolded = false;
+      noteEncounter = encounter;
+      noteDisclosure = next;
+      if (!next) return;
+      next.addEventListener('click', rememberNoteToggle, true);
+      // Rayen owns the full text. Its native disclosure also works without aria-expanded.
+      if (!keepNoteFolded && normalize(next.textContent) === 'leer mas') next.click();
+    };
     const mark = (element, attribute, value = '') => {
       if (!element) return;
       element.setAttribute(attribute, value);
@@ -351,13 +364,14 @@
     const refresh = (encounterId, theme = 'compact') => {
       if (disposed) return;
       if (!encounterId || theme === 'off') {
+        setNoteDisclosure(null, encounterId);
         delete document.documentElement.dataset.hhrFichaTheme;
         reset(); return;
       }
       document.documentElement.dataset.hhrFichaTheme = theme;
       const tab = Array.from(document.querySelectorAll('[role="tab"][aria-selected="true"]')).find(element =>
         (element.id?.startsWith('encounter-event-tab-') || (normalize(element.textContent) === 'resumen' && element.closest('.MuiTabs-root'))) && element.getClientRects().length);
-      if (!tab) { reset(); return; }
+      if (!tab) { setNoteDisclosure(null, encounterId); reset(); return; }
       const nextPrimary = tab.closest('.MuiTabs-root');
       if (primary && primary !== nextPrimary) reset();
       primary = nextPrimary;
@@ -371,6 +385,10 @@
       surfaces.refresh(main, theme === 'compact');
       const compact = theme === 'compact' ? main : null;
       labels.refresh(compact);
+      const disclosure = compact?.querySelector('#evolution [data-hhr-evolution-block] > .MuiBox-root > button[data-hhr-note-disclosure]:only-child');
+      setNoteDisclosure(disclosure?.getClientRects().length &&
+        !disclosure.closest('form,dialog,[role=dialog],[inert],[hidden],[aria-hidden=true]') &&
+        !disclosure.matches(':disabled,[aria-disabled=true]') ? disclosure : null, encounterId);
       round.refresh(compact);
       const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
         ['evolucion','valoracion'].includes(normalize(element.textContent)) && element.getClientRects().length);
@@ -403,6 +421,7 @@
     window.addEventListener('scroll', schedule, true);
     window.addEventListener('resize', schedule);
     return Object.freeze({ refresh, dispose: () => {
+      setNoteDisclosure(null, null);
       disposed = true; cancelAnimationFrame(frame); reset();
       delete document.documentElement.dataset.hhrFichaTheme;
       window.removeEventListener('scroll', schedule, true); window.removeEventListener('resize', schedule);
