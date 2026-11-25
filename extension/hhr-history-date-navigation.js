@@ -6,6 +6,15 @@
   const NOVELTY_HASH = '#hhr-ultima-publicacion';
   const medicalRole = /^m[eé]dic[oa](?:\s+(?:cirujan[oa]|especialista|tratante))?$/i;
   const railCss = `
+    @media screen {
+      [data-hhr-history-timeline] > .MuiBox-root > .MuiCard-root {
+        margin-block-end:6px !important;
+      }
+      [data-hhr-history-timeline] > .MuiBox-root > .MuiCard-root > :is(.MuiCardHeader-root,.MuiCardContent-root) {
+        padding-block:6px !important; padding-inline:clamp(8px,1vw,14px) !important;
+      }
+      [data-hhr-history-timeline] > .MuiBox-root > .MuiCard-root > .MuiCardHeader-root { margin-block-end:0 !important; }
+    }
     [data-hhr-history-rail] { display:flex; }
     [data-hhr-history-rail] > [role="tab"] { flex-shrink:0; }
     [data-hhr-history-rail] > [data-hhr-history-tab] ~ [role="tab"] { order:2; }
@@ -70,6 +79,7 @@
       host = null;
       rail = null;
       horizontalScroll = null;
+      timelineRoot?.removeAttribute('data-hhr-history-timeline');
       timelineRoot = null;
       groups = [];
       selected = -1;
@@ -132,6 +142,7 @@
     const mount = (timeline, tabList) => {
       rail = tabList;
       timelineRoot = timeline;
+      timeline.setAttribute('data-hhr-history-timeline', '');
       horizontalScroll = rail.closest('.MuiTabs-scroller') || rail;
       if (!document.getElementById(STYLE_ID)) {
         const style = document.createElement('style');

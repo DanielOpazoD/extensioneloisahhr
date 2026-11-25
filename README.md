@@ -8,6 +8,10 @@ una revisión comprobada; su copia de la extensión es una dependencia, no otra 
 
 [Descargar la extensión (.zip)](https://github.com/DanielOpazoD/extensioneloisahhr/releases/latest/download/eloisa-hhr.zip) · [Guía ilustrada para instalar y actualizar en Chrome](docs/instalacion/README.md)
 
+## Lectura de la ficha
+
+En Resumen, las tarjetas se ajustan a su contenido y Evolución aprovecha el ancho de la fila cuando los apartados comparten una cuadrícula. «Ver vacías» muestra los apartados de solicitudes y procedimientos que Eloísa ha marcado como vacíos. La navegación por apartado también permite recuperarlos. En Historial, los eventos ocupan menos espacio entre el encabezado y el texto.
+
 ## Pautas en Evolución
 
 En «Acciones de evolución», «Continuar pauta» recupera las respuestas al cerrar y abrir el formulario en la misma ficha y pestaña. La estrella junto al selector fija o quita la pauta favorita del profesional en ese perfil de Chrome. «Guardar» inserta la pauta confirmada por HHR y deja el cursor al final de la evolución para continuar escribiendo. La firma se realiza en Eloísa.
