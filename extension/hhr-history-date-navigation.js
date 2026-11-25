@@ -29,6 +29,10 @@
       [data-hhr-history-inline] .MuiCardHeader-avatar { order:-2; margin:0; }
       [data-hhr-history-inline] .MuiCardHeader-title { order:-1; }
       [data-hhr-history-inline] > .MuiCardContent-root > :not(:first-child) { flex:1 0 100%; min-width:0; }
+      /* Some categories put their name inside the first stack of the content. */
+      [data-hhr-history-inline] [data-hhr-history-flat] { display:contents; }
+      [data-hhr-history-flat] > p:first-child { order:-3; margin:0; }
+      [data-hhr-history-flat] > :not(:first-child) { flex:1 0 100%; min-width:0; }
       [data-hhr-history-inline="evolution"]:has(+ [data-hhr-history-inline="evolution"]),
       [data-hhr-history-inline="evolution"] + [data-hhr-history-inline="evolution"] {
         margin-block:0 !important; box-shadow:none !important; border-radius:0 !important; padding-block:4px !important;
@@ -72,6 +76,8 @@
     let timelineRoot = null;
     let newBadges = new Set();
     let inlineEvents = new Set();
+    let flatStacks = new Set();
+    let dayEdges = new Map();
     let dayLabels = new Map();
     let selected = -1;
     let frame = 0;
@@ -108,6 +114,10 @@
         card.removeAttribute('data-hhr-history-kind');
       });
       inlineEvents.clear();
+      flatStacks.forEach(stack => stack.removeAttribute('data-hhr-history-flat'));
+      flatStacks.clear();
+      dayEdges.forEach((_edge, box) => box.removeAttribute('data-hhr-history-edge'));
+      dayEdges.clear();
       dayLabels.forEach((_label, chip) => chip.removeAttribute('data-hhr-history-day'));
       dayLabels.clear();
       timelineRoot?.style.removeProperty('--hhr-history-top');
@@ -277,22 +287,33 @@
       const changed = groups.length !== nextGroups.length || nextGroups.some((group, index) =>
         group.element !== groups[index]?.element || group.label !== groups[index]?.label);
       groups = nextGroups;
-      const nextInline = new Set();
-      for (const { element } of groups) {
-        for (const card of element.querySelectorAll(':scope > .MuiCard-root')) {
+      // Eloísa opens each day with a dated box and gives most later events a box of their own.
+      // Every card of the timeline is an event, whichever box holds it.
+      const boxes = [...timeline.children].filter(el => el.matches('.MuiBox-root'));
+      const nextInline = new Map(), nextFlat = new Set();
+      for (const box of boxes) {
+        for (const card of box.querySelectorAll(':scope > .MuiCard-root')) {
           const header = card.querySelector(':scope > .MuiCardHeader-root');
           const time = header?.querySelector('.MuiCardHeader-action');
-          const category = card.querySelector(':scope > .MuiCardContent-root > p.MuiTypography-root:first-child');
+          const body = card.querySelector(':scope > .MuiCardContent-root');
+          // The category is the first paragraph of the content, or of its only stack.
+          let category = body?.querySelector(':scope > p.MuiTypography-root:first-child'), flat = null;
+          if (!category && body?.children.length === 1 && body.firstElementChild.matches('div.MuiStack-root')) {
+            flat = body.firstElementChild;
+            category = flat.querySelector(':scope > p.MuiTypography-root:first-child');
+          }
           if (category && header?.querySelector('.MuiCardHeader-title') && /^\d{1,2}:\d{2}(?:\s*(?:h|hrs?))?\.?$/i.test(time?.textContent.trim()) &&
-              !header.querySelector('button,a,input,[tabindex]') && !category.children.length) nextInline.add(card);
+              !header.querySelector('button,a,input,[tabindex]') && !category.children.length) {
+            nextInline.set(card, category.textContent.trim());
+            if (flat) nextFlat.add(flat);
+          }
         }
       }
       for (const card of inlineEvents) if (!nextInline.has(card)) {
         card.removeAttribute('data-hhr-history-inline');
         card.removeAttribute('data-hhr-history-kind');
       }
-      for (const card of nextInline) {
-        const category = card.querySelector(':scope > .MuiCardContent-root > p:first-child').textContent.trim();
+      for (const [card, category] of nextInline) {
         const style = /^evoluci[oó]n$/i.test(category) ? 'evolution' : '';
         if (card.getAttribute('data-hhr-history-inline') !== style) card.setAttribute('data-hhr-history-inline', style);
         // Medical and nursing notes read alike. Every other category is an event of the day.
@@ -300,7 +321,19 @@
         if (kind) { if (card.getAttribute('data-hhr-history-kind') !== kind) card.setAttribute('data-hhr-history-kind', kind); }
         else card.removeAttribute('data-hhr-history-kind');
       }
-      inlineEvents = nextInline;
+      for (const stack of flatStacks) if (!nextFlat.has(stack)) stack.removeAttribute('data-hhr-history-flat');
+      for (const stack of nextFlat) if (!flatStacks.has(stack)) stack.setAttribute('data-hhr-history-flat', '');
+      flatStacks = nextFlat;
+      // A day runs from its dated box to the box before the next one.
+      const dated = new Set(groups.map(group => group.element));
+      const nextEdges = new Map();
+      boxes.forEach((box, index) => {
+        const edge = [dated.has(box) ? 'start' : '', index === boxes.length - 1 || dated.has(boxes[index + 1]) ? 'end' : ''].filter(Boolean).join(' ');
+        if (edge) nextEdges.set(box, edge);
+      });
+      dayEdges.forEach((_edge, box) => { if (!nextEdges.has(box)) box.removeAttribute('data-hhr-history-edge'); });
+      nextEdges.forEach((edge, box) => { if (box.getAttribute('data-hhr-history-edge') !== edge) box.setAttribute('data-hhr-history-edge', edge); });
+      dayEdges = nextEdges;
       // The day heading shows the date that the navigation offers for the same group.
       const nextDays = new Map(groups.map(group => [group.chip, group.label]));
       dayLabels.forEach((_label, chip) => { if (!nextDays.has(chip)) chip.removeAttribute('data-hhr-history-day'); });
@@ -308,8 +341,9 @@
         if (chip.getAttribute('data-hhr-history-day') !== label) chip.setAttribute('data-hhr-history-day', label);
       });
       dayLabels = nextDays;
-      const nextBadges = new Set(groups.flatMap(({ element }) =>
-        [...element.querySelectorAll(':scope > .MuiCard-root .MuiChip-root > .MuiChip-label')]
+      inlineEvents = new Set(nextInline.keys());
+      const nextBadges = new Set(boxes.flatMap(box =>
+        [...box.querySelectorAll(':scope > .MuiCard-root .MuiChip-root > .MuiChip-label')]
           .filter(label => label.textContent.trim() === 'Nuevo').map(label => label.parentElement)));
       newBadges.forEach(chip => {
         if (!nextBadges.has(chip)) chip.removeAttribute('data-hhr-history-new');
@@ -339,7 +373,16 @@
           const [year, month, day] = minute.slice(0, 10).split('-');
           return group.label.replaceAll('/', '-').endsWith(day + '-' + month + '-' + year);
         }) : groups;
-        const matches = candidateGroups.flatMap(group => [...group.element.querySelectorAll(':scope > .MuiCard-root')])
+        // The events of a day: the cards of its dated box and of every box up to the next date.
+        const dayCards = group => {
+          const cards = [];
+          for (let index = boxes.indexOf(group.element); index >= 0 && index < boxes.length; index++) {
+            if (cards.length && dated.has(boxes[index])) break;
+            cards.push(...boxes[index].querySelectorAll(':scope > .MuiCard-root'));
+          }
+          return cards;
+        };
+        const matches = candidateGroups.flatMap(dayCards)
           .filter(element => {
             const header = element.querySelector(':scope > .MuiCardHeader-root');
             if (!element.getClientRects().length || !medicalRole.test(

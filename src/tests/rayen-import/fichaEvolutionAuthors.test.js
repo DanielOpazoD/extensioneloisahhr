@@ -124,6 +124,29 @@ it('monta «Ver evoluciones» en una cabecera que cede sus hijos a la cuadrícul
   expect(document.querySelector('.hhr-evo-entry')).toBeNull();
 });
 
+it('conserva la fecha de un día mientras alguna de sus cajas tenga una evolución visible', () => {
+  const chip = label => '<div class="MuiStack-root"><div class="MuiChip-root"><span class="MuiChip-label">' + label + '</span></div></div>';
+  document.querySelector('[data-hhr-history-timeline]').innerHTML =
+    '<div class="MuiBox-root" id="hoy">' + chip('Hoy') + event('rx1','Médico','Ana Ejemplo','Fármacos') + '</div>' +
+    '<div class="MuiBox-root">' + event('n1','Médico','Ana Ejemplo','Evolución') + '</div>' +
+    '<div class="MuiBox-root" id="ayer">' + chip('Ayer') + event('n2','Luis Ejemplo','Enfermera(o)','Evolución') + '</div>' +
+    '<div class="MuiBox-root">' + event('rx2','Médico','Ana Ejemplo','Fármacos') + '</div>' +
+    // Signs, alerts and other categories keep their name inside the only stack of the content.
+    '<div class="MuiBox-root"><article id="sv" class="MuiCard-root"><header class="MuiCardHeader-root"><span class="MuiCardHeader-title">Paramédico</span>' +
+    '<span class="MuiCardHeader-subheader">Ana Ejemplo</span></header><div class="MuiCardContent-root"><div class="MuiStack-root">' +
+    '<p class="MuiTypography-root">Signos vitales</p><p>Texto</p></div></div></article></div>';
+  const dates = () => ['hoy','ayer'].map(id => document.querySelector('#' + id + ' > .MuiStack-root').getAttribute('data-hhr-evolution-filtered'));
+  document.querySelector('#evolution .hhr-evo-entry').click();
+  // The first event of «Hoy» is not a note, but the day has one in its next box.
+  expect(hidden()).toEqual(['rx1','rx2','sv']);
+  expect(dates()).toEqual([null, null]);
+  actions().find(button => button.textContent === 'Ana Ejemplo').click();
+  expect(hidden()).toEqual(['rx1','n2','rx2','sv']);
+  expect(dates()).toEqual([null, 'date']);
+  actions().find(button => button.textContent === 'Luis Ejemplo').click();
+  expect(dates()).toEqual(['date', null]);
+});
+
 it('opens native history, restricts the explicit view to notes, and filters by the person in either header order', () => {
   const amendments = vi.fn();
   document.querySelector('#amend').addEventListener('click',amendments);

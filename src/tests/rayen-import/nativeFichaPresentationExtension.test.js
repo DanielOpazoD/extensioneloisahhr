@@ -140,6 +140,47 @@ describe('Compact native history dates', () => {
     expect(document.querySelector('[data-hhr-history-day],[data-hhr-history-kind],[data-hhr-history-inline]')).toBeNull();
   });
 
+  it('reads every event of a day across the boxes Eloísa gives them, in both native content shapes', () => {
+    // As in the real Historial: a dated box opens the day, later events have boxes of their own,
+    // the time ends in «hrs», and some categories sit inside the only stack of the content.
+    const card = (id, category, inStack = false, time = '09:12 hrs') => `<div id="${id}" class="MuiCard-root"><div class="MuiCardHeader-root">
+      <div class="MuiCardHeader-avatar"><div class="MuiAvatar-root">M</div></div>
+      <span class="MuiCardHeader-title">Médico</span><span class="MuiCardHeader-subheader">Autor de prueba</span>
+      <div class="MuiCardHeader-action"><p>${time}</p></div></div><div class="MuiCardContent-root">${inStack
+        ? '<div class="MuiStack-root"><p class="MuiTypography-root">' + category + '</p><div>Texto</div></div>'
+        : '<p class="MuiTypography-root">' + category + '</p><div class="MuiStack-root"><div>Texto</div></div>'}</div></div>`;
+    const box = (cards, date = '') => '<div class="MuiBox-root">' + (date ? '<div class="MuiStack-root"><div class="MuiChip-root"><span class="MuiChip-label">' + date + '</span></div></div>' : '') + cards + '</div>';
+    const chip = '<div class="MuiChip-root"><span class="MuiChip-label">Nuevo</span></div>';
+    document.body.innerHTML = historyTab + '<div id="timeline"><button class="hhr-evo-entry">Ver evoluciones</button>' +
+      box(card('a', 'Administrador de medicamentos'), 'Hoy') + box(card('b', 'Evolución')) +
+      box(card('c', 'Signos vitales', true) + card('d', 'Evolución', false, '08:50 hrs')) + box(card('e', 'Fármacos', true).replace('Texto', chip)) +
+      box(card('f', 'Evolución'), 'Ayer') + box(card('g', 'Alertas', true, 'ayer')) + '</div>';
+    history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
+    const boxes = [...document.querySelectorAll('#timeline > .MuiBox-root')];
+    const attr = name => id => document.getElementById(id).getAttribute(name);
+    expect(['a','b','c','d','e','f','g'].map(attr('data-hhr-history-inline'))).toEqual(['', 'evolution', '', 'evolution', '', 'evolution', null]);
+    expect(['a','b','c','d','e','f','g'].map(attr('data-hhr-history-kind'))).toEqual([null, 'note', null, 'note', null, 'note', null]);
+    // Only a recognized card has its inner stack flattened into the line of the event.
+    expect(['c','e','g'].map(id => document.querySelector('#' + id + ' .MuiCardContent-root > .MuiStack-root').hasAttribute('data-hhr-history-flat'))).toEqual([true, true, false]);
+    expect(document.querySelector('#a .MuiCardContent-root > .MuiStack-root').hasAttribute('data-hhr-history-flat')).toBe(false);
+    expect(boxes.map(el => el.getAttribute('data-hhr-history-edge'))).toEqual(['start', null, null, 'end', 'start', 'end']);
+    expect(document.querySelectorAll('[data-hhr-history-new]')).toHaveLength(1);
+    expect(document.querySelector('#e [data-hhr-history-new]')).not.toBeNull();
+    // The navigation still offers one date per day, not one per box.
+    expect(document.querySelector('#hhr-history-date-navigation').shadowRoot.querySelectorAll('option')).toHaveLength(2);
+
+    // A new dated box in the middle splits the day. An event that loses its category returns to Eloísa.
+    boxes[2].insertAdjacentHTML('afterbegin', '<div class="MuiStack-root"><div class="MuiChip-root"><span class="MuiChip-label">13-04-2026</span></div></div>');
+    document.querySelector('#e .MuiCardContent-root p').innerHTML = '<b>Fármacos</b>';
+    history.refresh('1');
+    expect(boxes.map(el => el.getAttribute('data-hhr-history-edge'))).toEqual(['start', 'end', 'start', 'end', 'start', 'end']);
+    expect(attr('data-hhr-history-inline')('e')).toBeNull();
+    expect(document.querySelector('#e [data-hhr-history-flat]')).toBeNull();
+
+    document.querySelector('[role="tab"]').setAttribute('aria-selected', 'false'); history.refresh('1');
+    expect(document.querySelector('[data-hhr-history-edge],[data-hhr-history-flat],[data-hhr-history-inline],[data-hhr-history-kind],[data-hhr-history-day]')).toBeNull();
+  });
+
   it('compacts Nuevo only within history cards and clears the style when the label changes', () => {
     const chip = '<div class="MuiChip-root"><span class="MuiChip-label">Nuevo</span></div>';
     document.body.innerHTML = historyTab + chip + '<div id="timeline">' +

@@ -90,7 +90,9 @@
     const cards = new Map();
     for (const card of timeline?.querySelectorAll(':scope > .MuiBox-root > .MuiCard-root') || []) {
       const header = card.querySelector(':scope > .MuiCardHeader-root');
-      const category = card.querySelector(':scope > .MuiCardContent-root > p.MuiTypography-root:first-child');
+      // Eloísa writes the category as the first paragraph of the content, or of its only stack.
+      const category = card.querySelector(':scope > .MuiCardContent-root > p.MuiTypography-root:first-child, ' +
+        ':scope > .MuiCardContent-root > div.MuiStack-root:only-child > p.MuiTypography-root:first-child');
       if (!header || !category || category.children.length) continue;
       const kind = text(category);
       if (!kind) continue;
@@ -206,13 +208,22 @@
         if (!info.note || (selected && info.name !== selected)) next.set(card, 'card');
         else if (info.role) next.set(info.role, 'role');
       }
-      for (const day of timeline?.querySelectorAll(':scope > .MuiBox-root') || []) {
-        const [divider, ...records] = day.children;
+      // A day opens with a dated box and runs through the boxes that follow it. Its date
+      // leaves the view only when every event up to the next date is filtered out.
+      let open = null;
+      const closeDay = () => {
+        if (open && open.records.length && open.records.every(el => next.get(el) === 'card') &&
+            !open.divider.matches(interactive) && !open.divider.querySelector(interactive)) next.set(open.divider, 'date');
+      };
+      for (const box of timeline?.querySelectorAll(':scope > .MuiBox-root') || []) {
+        const divider = box.firstElementChild;
         const chip = divider?.querySelector(':scope > .MuiChip-root:only-child > .MuiChip-label');
-        if (!chip || !/^(?:hoy|ayer|\d{2}[-/]\d{2}[-/]\d{4})$/i.test(text(chip))) continue;
-        if (records.length && records.every(el => next.get(el) === 'card') &&
-            !divider.matches(interactive) && !divider.querySelector(interactive)) next.set(divider, 'date');
+        if (chip && /^(?:hoy|ayer|\d{2}[-/]\d{2}[-/]\d{4})$/i.test(text(chip))) {
+          closeDay();
+          open = { divider, records: [...box.children].slice(1) };
+        } else if (open) open.records.push(...box.children);
       }
+      closeDay();
       for (const el of previous.keys()) if (!next.has(el)) el.removeAttribute(filtered);
       for (const [el, kind] of next) if (previous.get(el) !== kind) el.setAttribute(filtered, kind);
       previous = next;
