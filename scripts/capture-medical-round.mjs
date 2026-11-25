@@ -17,7 +17,7 @@ const source = filename => revision === 'WORKTREE' ? readFile('extension/' + fil
   execFileSync('git', ['show', revision + ':extension/' + filename], {encoding:'utf8'});
 const manifest = JSON.parse(await source('manifest.json'));
 const entry = manifest.content_scripts.find(group => group.js?.includes('hhr-native-ficha-presentation.js'));
-const styles = entry.css.filter(name => name.startsWith('hhr-ficha-'));
+const styles = entry.css.filter(name => name.startsWith('hhr-ficha-') || name === 'clinical-checklist.css');
 const scripts = entry.js.filter(name => /^(hhr-ficha-|hhr-(history-date-navigation|native-ficha-presentation)\.js$)/.test(name));
 await mkdir(directory, {recursive:true});
 const browser = await chromium.launch();

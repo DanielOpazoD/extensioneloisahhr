@@ -87,6 +87,19 @@ export async function installAdmissionFixture(page, width) {
       button.addEventListener('click', () => { expanded = !expanded; render(); });
       render();
     };
+    // The guideline menu that the extension mounts beside the native note tools.
+    const launcher = document.createElement('span');
+    launcher.className = 'hhr-checklist-launcher';
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'hhr-checklist-trigger';
+    trigger.title = 'Acciones de evolución';
+    trigger.setAttribute('aria-label', trigger.title);
+    trigger.setAttribute('aria-haspopup', 'menu');
+    trigger.setAttribute('aria-expanded', 'false');
+    launcher.append(trigger);
+    get('#evolution [aria-label="Enmendamientos"]').after(launcher);
+
     const noteText = get('#evolution .MuiBox-root > .MuiTypography-caption');
     const originalButton = noteText.nextElementSibling.querySelector('button');
     const noteButton = originalButton.cloneNode(false);

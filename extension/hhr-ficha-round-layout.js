@@ -197,7 +197,7 @@
   // Sibling cards belong to React. Keep them in place on a shared CSS grid row
   // and use their intrinsic heights to stack the two reading columns independently.
   function create() {
-    let previous = new Map(), frame, columns = [], peers = [], pending = 0;
+    let previous = new Map(), frame, columns = [], halves = [], peers = [], pending = 0;
     const desktop = globalThis.matchMedia?.('(min-width:1100px)');
     // Updating margins does not resize the observed border boxes. Repack before paint.
     const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(pack) : null;
@@ -230,15 +230,24 @@
         }
       }
       set(frame, '--hhr-round-line', String(leadingRows + 1));
-      const offsets = [];
+      const offsets = [], rowHeights = [];
+      // Measure each half at its own height before both take the height of their row.
+      for (const item of halves) set(item, '--hhr-round-row-height', '0px');
+      // A column is a stack of rows. The two halves of a row start at the same height.
       for (const column of columns) {
         let top = 0;
-        for (const item of column) {
-          offsets.push([item, top]);
-          top += item.getBoundingClientRect().height;
+        for (const row of column) {
+          let height = 0;
+          for (const item of row) {
+            offsets.push([item, top]);
+            height = Math.max(height, item.getBoundingClientRect().height);
+          }
+          if (row.length > 1) for (const item of row) rowHeights.push([item, height]);
+          top += height;
         }
       }
       for (const [el, top] of offsets) set(el, '--hhr-round-offset', top + 'px');
+      for (const [el, height] of rowHeights) set(el, '--hhr-round-row-height', height + 'px');
     }
     function resetColumns() {
       if (pending) cancelAnimationFrame(pending);
@@ -250,9 +259,13 @@
         frame.removeAttribute('data-hhr-round-columns');
         frame.style.removeProperty('--hhr-round-line');
       }
-      for (const item of columns.flat()) item.style.removeProperty('--hhr-round-offset');
+      for (const item of columns.flat(2)) item.style.removeProperty('--hhr-round-offset');
+      for (const item of halves) {
+        item.removeAttribute('data-hhr-round-half');
+        item.style.removeProperty('--hhr-round-row-height');
+      }
       for (const [peer] of peers) peer.style.removeProperty('--hhr-round-span');
-      columns = []; peers = []; frame = null;
+      columns = []; halves = []; peers = []; frame = null;
     }
     function refresh(main) {
       const next = layout(main);
@@ -268,11 +281,16 @@
       const note = roles.get('note'), handoff = roles.get('handoff');
       const items = (...roles) => [...next].filter(([,value]) => roles.includes(value)).map(([el]) => el);
       peers = [...next].filter(([,role]) => role === 'peer' || role === 'before');
-      columns = [[note, ...items('vitals'), ...items('care', 'care-card')],
-        [handoff, ...items('alerts'), ...items('empty-request')]];
+      // Two requests without records share the last line of the side column.
+      const requests = items('empty-request');
+      halves = requests.length === 2 ? requests : [];
+      halves.forEach((item, index) => item.setAttribute('data-hhr-round-half', index ? 'end' : 'start'));
+      const single = item => [item];
+      columns = [[note, ...items('vitals'), ...items('care', 'care-card')].map(single),
+        [handoff, ...items('alerts')].map(single).concat(halves.length ? [halves] : requests.map(single))];
       frame.setAttribute('data-hhr-round-columns','');
       desktop.addEventListener('change', schedule);
-      for (const item of columns.flat()) {
+      for (const item of columns.flat(2)) {
         resize.observe(item, {box:'border-box'});
         content.observe(item, {childList:true, subtree:true});
       }

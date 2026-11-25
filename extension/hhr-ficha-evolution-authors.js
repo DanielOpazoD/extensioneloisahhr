@@ -7,6 +7,11 @@
   const profession = /^(?:m[eé]dic[oa](?:\s+(?:cirujan[oa]|especialista|tratante))?|enfermer[oa](?:\([oa]\))?|kinesi[oó]log[oa]|param[eé]dic[oa]|nutricionista|matr[oó]n(?:a)?|t[eé]cnic[oa](?: de enfermer[ií]a)?|tens|terapeuta ocupacional|fonoaudi[oó]log[oa]|psic[oó]log[oa]|asistente social|trabajador(?:a)? social|qu[ií]mic[oa] farmac[eé]utic[oa])$/i;
   const isProfession = label => profession.test(label.replace(/\([oa]\)/gi, ''));
   const interactive = 'button,a[href],input,select,textarea,[role="button"],[tabindex],[contenteditable="true"]';
+  // The compact toolbar lends the header's children to the card grid, leaving the header without a box.
+  function rendered(el) {
+    while (el?.parentElement && getComputedStyle(el).display === 'contents') el = el.parentElement;
+    return el.getClientRects().length > 0;
+  }
   function author(header) {
     const title = header.querySelector('.MuiCardHeader-title');
     const sub = header.querySelector('.MuiCardHeader-subheader');
@@ -44,6 +49,37 @@
     if (!stack.lastElementChild.matches('div.MuiStack-root') || !tools?.querySelector(':scope > button')) return false;
     return [...tools.children].every(el => el.matches('.hhr-checklist-launcher') || iconButton(el));
   }
+  // Name the native icon buttons that can be identified. An unknown button keeps its own icon.
+  const plain = value => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const noteNoun = /\b(?:evolucion(?:es)?|nota|observacion)\b/;
+  // Whole icon names: EditOff, CreateNewFolder or PlaylistAddCheck are different actions.
+  const editIcon = /^(?:EditNote|PostAdd|NoteAdd|Create|Edit|BorderColor|RateReview)(?:Outlined|Rounded|Sharp|TwoTone)?Icon$/;
+  function toolAction(button, unnamedPair) {
+    const name = plain(button.getAttribute('aria-label') || button.title);
+    const icons = [...button.querySelectorAll('svg[data-testid]')].map(icon => icon.getAttribute('data-testid'));
+    if (/\b(?:opciones|menu)\b/.test(name) || icons.some(id => /^MoreVert/i.test(id))) return 'more';
+    if (/^enm(?:endamiento|ienda)s?\b/.test(name)) return 'amend';
+    if (/^editar\b/.test(name) && noteNoun.test(name)) return 'edit';
+    if (/^(?:nueva|nuevo|crear|redactar|agregar|anadir|escribir|ingresar|registrar)\b/.test(name) && noteNoun.test(name)) return 'write';
+    if (name) return null;
+    // Without a name, use the same evidence that opens the native editor for a guideline.
+    if (icons.length ? icons.every(id => editIcon.test(id)) : unnamedPair?.[0] === button) return 'edit';
+    return null;
+  }
+  const toolHints = {edit:'Editar evolución', write:'Escribir evolución', amend:'Enmiendas', more:'Más opciones'};
+  function toolActions(card) {
+    const actions = new Map();
+    if (!card) return actions;
+    const tools = [...card.querySelectorAll(':scope > .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root > button')];
+    const header = [...card.querySelectorAll(':scope > .MuiCardHeader-root > .MuiCardHeader-action button:not(.hhr-evo-entry)')];
+    const unnamed = tools.filter(el => !el.getAttribute('aria-label') && !el.title && !el.querySelector('svg[data-testid]') && el.querySelector('svg'));
+    const pair = unnamed.length === 2 && tools.length === 2 ? unnamed : null;
+    for (const button of [...header, ...tools]) {
+      const action = toolAction(button, pair);
+      if (action && (action !== 'more' || header.includes(button))) actions.set(button, action);
+    }
+    return actions;
+  }
   function readCards(timeline) {
     const cards = new Map();
     for (const card of timeline?.querySelectorAll(':scope > .MuiBox-root > .MuiCard-root') || []) {
@@ -78,8 +114,29 @@
     let previous = new Map();
     let authorButtons = new Map();
     let toolbarCard = null;
+    let toolMarks = new Map();
+    function releaseTool(button) {
+      button.removeAttribute('data-hhr-evo-action');
+      // Only remove the hint this reader added, and only while it is still intact.
+      const hint = button.getAttribute('data-hhr-evo-hint');
+      if (hint === null) return;
+      if (button.title === hint) button.removeAttribute('title');
+      button.removeAttribute('data-hhr-evo-hint');
+    }
     function markToolbar(card) {
       const next = hasNoteToolbar(card) ? card : null;
+      const actions = toolActions(next);
+      for (const button of toolMarks.keys()) if (!actions.has(button)) releaseTool(button);
+      for (const [button, action] of actions) {
+        if (button.getAttribute('data-hhr-evo-action') !== action) button.setAttribute('data-hhr-evo-action', action);
+        // A narrow card shows the icon alone. An icon without any native name gets one on hover;
+        // a named button may already show Eloísa's own tooltip.
+        if (!button.hasAttribute('aria-label') && !button.hasAttribute('title')) {
+          button.title = toolHints[action];
+          button.setAttribute('data-hhr-evo-hint', toolHints[action]);
+        }
+      }
+      toolMarks = actions;
       if (next === toolbarCard) return;
       toolbarCard?.removeAttribute('data-hhr-evo-toolbar');
       next?.setAttribute('data-hhr-evo-toolbar', '');
@@ -122,7 +179,7 @@
         if (bar.isConnected || previous.size) unfilter();
         const host = inHistory ? timeline : summary?.querySelector('.MuiCardHeader-action') ||
           summary?.querySelector('.MuiCardHeader-content');
-        if (host && historyTab && !historyTab.matches(':disabled,[aria-disabled="true"]') && host.getClientRects().length) {
+        if (host && historyTab && !historyTab.matches(':disabled,[aria-disabled="true"]') && rendered(host)) {
           if (entry.parentElement !== host) host.prepend(entry);
         } else entry.remove();
         return;
