@@ -88,6 +88,12 @@ Cada tarjeta:
   - Sin registros: una fila con `td[colspan=3] > p` «No se registra un plan de tratamiento.».
   - `tfoot` con tres celdas vacías.
 
+Pendiente de confirmar en la página real:
+
+- **Qué significa cada icono de estado.** Hasta saberlo, la vista Compacta no les da nombre ni color.
+- **Cómo fija Eloísa el ancho de la columna de horas** y cuánto mide en una ventana de 1280 px. La ficha ficticia supone 1000 px fijos.
+- **Cuándo se pliega el `.MuiCollapse-root`** de las herramientas.
+
 ## Historial
 
 `main > … > div.MuiGrid-container` con dos ítems:
@@ -109,3 +115,4 @@ Cada evento es un `div.MuiCard-root`:
 - El Historial ficticio agrupaba todas las tarjetas de un día en una caja y escribía la hora sin «hrs».
 - El Resumen ficticio usaba `input[type=date]` y un solo botón en la fila diaria, y daba `aria-label` a los botones de Evolución.
 - El lápiz de Evolución es «Enmendar», no «Editar».
+- No había ficha ficticia de Plan de tratamiento. La de `scripts/care-plan-visual-fixture.mjs` se escribió desde esta descripción.

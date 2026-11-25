@@ -88,6 +88,8 @@ export async function captureAdmissionRound(page, directory, width, verify) {
     await floating.evaluate(el => { el.style.width = '36px'; });
     await resize(); await settle(); await settle();
     await page.screenshot({path:path.join(directory, width + '-barra-plegada.png')});
+    console.info('Ingreso sintético con la barra plegada', JSON.stringify(await page.evaluate(() =>
+      Object.fromEntries(['#evolution', '#medication'].map(id => [id, Math.round(document.querySelector(id).getBoundingClientRect().top)])))));
     await floating.evaluate(el => { el.style.removeProperty('width'); });
     await resize(); await settle(); await settle();
   }

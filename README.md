@@ -16,7 +16,9 @@ En la columna derecha, «Agregar», junto al título de Observaciones de entrega
 
 En **Centro HHR → Ajustes → Vista de la ficha clínica** se elige entre Eloísa original (Desactivado), Compacto (Modo 1, predeterminado), Equilibrado (Modo 2, presentación de la 0.48.179) y Lectura (Modo 3, valores mayores y más interlineado). Chrome recuerda la elección en ese perfil y la aplica a sus pestañas de Eloísa. La densidad del cuadro Centro HHR se ajusta por separado. [Comparar los cuatro modos en la misma ficha de prueba](docs/visual/temas/README.md)
 
-En **Compacto**, el Historial se lee como una línea de tiempo: una superficie por día, la hora de cada evento en una columna al margen y un filete lateral en las evoluciones. [Ver el Historial compacto](docs/visual/historial/README.md) · [Guía de estilo y de trabajo de las vistas de la ficha](docs/estilo-ficha.md)
+En **Compacto**, el Historial se lee como una línea de tiempo: una superficie por día, la hora de cada evento en una columna al margen y un filete lateral en las evoluciones. [Ver el Historial compacto](docs/visual/historial/README.md)
+
+En **Compacto**, cada tarjeta de Plan de tratamiento reúne en una línea su título, su interruptor y sus herramientas con nombre, y cada indicación ocupa una fila tan alta como su texto. Las horas y los iconos de estado conservan el ancho, el dibujo y el color de Eloísa. [Ver el Plan de tratamiento compacto](docs/visual/plan-tratamiento/README.md) · [Guía de estilo y de trabajo de las vistas de la ficha](docs/estilo-ficha.md) · [Estructura observada en Eloísa](docs/estructura-eloisa.md)
 
 En **Compacto**, la nota aparece primero en una pantalla angosta. La fecha estimada de alta se oculta en esta vista. «Ver evoluciones» abre las notas cargadas del episodio en el Historial y permite elegir «Todos» o un profesional. La última actualización muestra fecha, hora al minuto y nombre. «Agregar a entrega» y «Agregar alerta» identifican el destino al escribir. «No reanimación» ocupa su propia línea y muestra el estado del interruptor. El reloj de Signos vitales, rotulado «Historial» en escritorio, abre el historial de mediciones.
 
