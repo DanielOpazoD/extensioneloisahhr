@@ -124,17 +124,29 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.ok(summaryLayout.cardHeight < 180, 'La tarjeta breve sigue reservando altura vacía');
     assert.ok(Math.abs(summaryLayout.evolutionWidth-summaryLayout.width) < 2);
     await link.focus();
+    if (width === 707) {
+      // Resizing or returning from Historial can move the native header before our next animation frame.
+      const result = await link.evaluate(async el => {
+        const header = document.querySelector('.MuiAppBar-root');
+        const original = header.style.top;
+        try {
+          header.style.top = '18px';
+          window.dispatchEvent(new Event('resize'));
+          el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const node = document.getElementById(el.dataset.hhrFichaLink);
+          const rail = el.closest('[data-hhr-ficha-sections]');
+          return { gap:node.getBoundingClientRect().top-rail.getBoundingClientRect().bottom, active:el.getAttribute('aria-current') };
+        } finally {
+          header.style.top = original;
+          window.dispatchEvent(new Event('resize'));
+        }
+      });
+      assert.equal(result.active,'location');
+      assert.ok(Math.abs(result.gap - 12) < 2, 'El salto debe alinearse con el borde actual de la barra');
+    }
     await link.press('Enter');
-    await page.waitForFunction(()=>document.querySelector('[data-hhr-ficha-link][aria-current="location"]')?.textContent==='Evolución').catch(async error => {
-      const state = await page.evaluate(() => ({
-        width:innerWidth, active:document.querySelector('[data-hhr-ficha-link][aria-current="location"]')?.textContent,
-        offset:scrollY, fullHeight:document.scrollingElement.scrollHeight, viewport:innerHeight,
-        railBottom:document.querySelector('[data-hhr-ficha-sections]').getBoundingClientRect().bottom,
-        targetTop:document.querySelector('#observationEntrySection').getBoundingClientRect().top,
-        targets:[...document.querySelectorAll('[data-hhr-ficha-link]')].map(el=>[el.dataset.hhrFichaLink,document.getElementById(el.dataset.hhrFichaLink)?.getBoundingClientRect().top])
-      }));
-      throw new Error('El enlace de Evolución no se activó: '+JSON.stringify(state), {cause:error});
-    });
+    await page.waitForFunction(()=>document.querySelector('[data-hhr-ficha-link][aria-current="location"]')?.textContent==='Evolución');
     const geometry=await page.evaluate(()=>{
       const row=document.querySelector('[data-hhr-ficha-sections]').getBoundingClientRect();
       const block=document.querySelector('[data-hhr-evolution-block]'), rect=block.getBoundingClientRect();
