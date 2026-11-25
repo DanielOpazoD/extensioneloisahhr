@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.170
+
+- Presupuesto único de captura en Ficha Médico: el relé envía un plazo de 43 s y el lector principal crea un `AbortController` real que cancela todos los `fetch` en vuelo al vencer el plazo, devolviendo `timeoutStage: 'ficha_main_relay'` sin snapshot parcial ni bloqueo espurio de salud (`readBlocked`).
+- Protección de integridad clínica ante cancelación (CEN-01): un aborto leyendo egresos (`filterType=2`) se propaga en lugar de tratarse como lista vacía, y ninguna lectura abortada se guarda en caché.
+
 ## 0.48.169
 
 - Al abrir «Plantillas» en Evolución, los botones de pautas permanecen en el editor. Al aplicar una pauta, la cabecera conserva su posición durante la carga y Escape permite volver al borrador de Eloísa.
