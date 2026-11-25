@@ -15,17 +15,53 @@
   }
   const dateKey = stamp => {
     const match = /^(\d{2})[-/](\d{2})[-/](\d{4})[, ]+(\d{2}):(\d{2})(?::(\d{2}))?(?:\s*(?:h|hrs?))?$/i.exec(stamp);
-    return match && match[3]+match[2]+match[1]+match[4]+match[5]+(match[6] || '00');
+    if (!match) return null;
+    const [,day,month,year,hour,minute,second = '00'] = match;
+    const calendar = new Date(Date.UTC(+year, +month - 1, +day));
+    if (calendar.getUTCFullYear() !== +year || calendar.getUTCMonth() !== +month - 1 ||
+        calendar.getUTCDate() !== +day || +hour > 23 || +minute > 59 || +second > 59) return null;
+    return year + month + day + hour + minute + second;
   };
+
+  function timeColumns(keys) {
+    let time = keys.findIndex(k => /^(?:hora|fecha y hora|fecha hora|fecha\/hora|hora de medicion)$/.test(k));
+    let date = keys.indexOf('fecha');
+    if (time < 0 && date >= 0) { time = date; date = -1; }
+    return {date,time};
+  }
+  function nativeOlderTimes(table) {
+    // An attributed row may carry flags, colours, generated content or editable controls.
+    // Keep it native. Compare only plain, visible timestamps, without copying clinical values.
+    if (table?.tHead?.rows.length !== 1 || table.tBodies.length !== 1) return [];
+    const keys = Array.from(table.tHead.rows[0].cells, cell => key(cell.textContent));
+    if (new Set(keys).size !== keys.length || !keys.some(k => /^(?:autor|profesional|registrado por|profesional que registra)$/.test(k)) ||
+        table.querySelector('[rowspan]:not([rowspan="1"]),[colspan]:not([colspan="1"])')) return [];
+    const {date,time} = timeColumns(keys);
+    const namedVitals = keys.some(k => /^(?:signo vital|signo|parametro)$/.test(k)) &&
+      keys.some(k => /^(?:valor|resultado)$/.test(k));
+    if (time < 0 || (!namedVitals && !keys.some(metric))) return [];
+    const times = [];
+    for (const row of table.tBodies[0].rows) {
+      if (row.cells.length !== keys.length) return [];
+      const timestamp = row.cells[time];
+      const parts = date < 0 ? [timestamp] : [row.cells[date],timestamp];
+      if ([...row.cells].some(cell => cell.closest('[hidden],[aria-hidden=true]') ||
+          !cell.checkVisibility?.({checkVisibilityCSS:true,checkOpacity:true}))) continue;
+      if (parts.some(cell => cell.childElementCount)) return [];
+      const value = dateKey(parts.map(cell => clean(cell.textContent)).join(' '));
+      if (!value) return [];
+      times.push({timestamp,value});
+    }
+    const newest = times.reduce((max, item) => item.value > max ? item.value : max, '');
+    return times.filter(item => item.value < newest).map(item => item.timestamp);
+  }
 
   function readings(table) {
     if (!table || table.tHead?.rows.length !== 1 || table.tBodies.length !== 1 ||
         table.querySelector('button,a,input,select,textarea,svg,img,[role=alert],[role=progressbar],[hidden],[aria-hidden=true],[aria-busy=true],.MuiSkeleton-root,[colspan]:not([colspan="1"]),[rowspan]:not([rowspan="1"])')) return null;
     const headings = Array.from(table.tHead.rows[0].cells, cell => clean(cell.textContent));
     const keys = headings.map(key);
-    let time = keys.findIndex(k => /^(?:hora|fecha y hora|fecha hora|fecha\/hora|hora de medicion)$/.test(k));
-    let date = keys.indexOf('fecha');
-    if (time < 0 && date >= 0) { time = date; date = -1; }
+    const {date,time} = timeColumns(keys);
     const sign = keys.findIndex(k => /^(?:signo vital|signo|parametro)$/.test(k));
     const value = keys.findIndex(k => /^(?:valor|resultado)$/.test(k));
     const unit = keys.indexOf('unidad');
@@ -43,7 +79,8 @@
       if (prev) {
         if (prev.stamp === stamp) return prev.display === display;
         const a = dateKey(prev.stamp), b = dateKey(stamp);
-        if (!a || !b || a === b) return false;
+        if (!a || !b) return false;
+        if (a === b) return prev.display === display;
         if (a > b) return true;
       }
       latest.set(kind.label, {label:kind.label, display, stamp});
@@ -71,13 +108,20 @@
     button.type = 'button';
     bar.append(list,button);
     let source, previous, expanded = false;
+    let markedTimes = new Set();
+    function markNativeTimes(cells) {
+      const next = new Set(cells);
+      for (const cell of markedTimes) if (!next.has(cell)) cell.removeAttribute('data-hhr-vital-older');
+      for (const cell of next) if (!markedTimes.has(cell)) cell.setAttribute('data-hhr-vital-older','');
+      markedTimes = next;
+    }
     function display() {
       source?.toggleAttribute('data-hhr-vital-detail-folded', !expanded);
       button.textContent = expanded ? 'Ocultar registros' : 'Ver registros';
       button.setAttribute('aria-expanded', String(expanded));
     }
     button.addEventListener('click', () => { expanded = !expanded; display(); });
-    function clear() {
+    function clearStrip() {
       source?.removeAttribute('data-hhr-vital-detail-folded');
       bar.remove();
       if (previous) list.replaceChildren();
@@ -86,23 +130,34 @@
     function refresh(section) {
       const tables = section?.querySelectorAll('table');
       const table = tables?.length === 1 ? tables[0] : null;
-      const data = table && !section.closest('[aria-busy=true]') && !section.querySelector('[aria-busy=true],.MuiSkeleton-root,[role=alert]') && readings(table);
-      if (!data?.length) { clear(); return; }
-      if (table !== source || bar.parentElement !== table.parentElement) {
-        clear(); source = table; table.before(bar); display();
+      const compact = document.documentElement.dataset.hhrFichaTheme === 'compact';
+      const ready = table && !section.closest('[aria-busy=true]') && !section.querySelector('[aria-busy=true],.MuiSkeleton-root,[role=alert]');
+      const data = ready && readings(table);
+      if (!data?.length) {
+        clearStrip();
+        markNativeTimes(ready && compact ? nativeOlderTimes(table) : []);
+        return;
       }
-      const signature = JSON.stringify(data);
+      markNativeTimes([]);
+      if (table !== source || bar.parentElement !== table.parentElement) {
+        clearStrip(); source = table; table.before(bar); display();
+      }
+      const signature = JSON.stringify([compact,data]);
       if (signature === previous) return;
       previous = signature;
-      list.replaceChildren(...data.map(({label, display, stamp}) => {
+      // A time without its date cannot establish which day a measurement belongs to.
+      const dates = compact ? data.map(row => dateKey(row.stamp)) : [];
+      const newest = dates.length && dates.every(Boolean) ? dates.reduce((a,b) => a > b ? a : b) : null;
+      list.replaceChildren(...data.map(({label, display, stamp}, index) => {
         const cell = document.createElement('div'), title = document.createElement('dt');
         const reading = document.createElement('dd'), time = document.createElement('small');
         title.textContent = label; reading.textContent = display; time.textContent = stamp;
+        if (newest && dates[index] < newest) time.setAttribute('data-hhr-vital-older','');
         reading.append(time); cell.append(title,reading);
         return cell;
       }));
     }
-    return {refresh,clear};
+    return {refresh, clear() { clearStrip(); markNativeTimes([]); }};
   }
   globalThis.HhrFichaVitalStrip = Object.freeze({ create });
 })();

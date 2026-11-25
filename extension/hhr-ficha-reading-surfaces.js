@@ -67,7 +67,22 @@
       !children.some(child => vitalNames.test(child.textContent.trim()));
   }
   const elapsedUnits = { minuto:'min',min:'min',hora:'h',h:'h',día:'d',dia:'d' };
-  function markTiles(card, next, compact, elapsed) {
+  const minutesPerUnit = {min:1, h:60, d:1440};
+  const hospitalClock = new Intl.DateTimeFormat('es-CL', {
+    timeZone:'Pacific/Easter', dateStyle:'short', timeStyle:'short',
+  });
+  function measurementSource(detail) {
+    // Metadata belongs to this measurement only. The card header describes the section update.
+    const time = detail.matches('time') ? detail : detail.querySelector(':scope > time:only-child');
+    const hint = (time?.getAttribute('title') || detail.getAttribute('title') || '').trim();
+    if (/\b(?:[01]?\d|2[0-3]):[0-5]\d\b/.test(hint)) return hint;
+    const author = /^(?:autor(?:a)?|profesional|registrad[oa] por)\s*:/i.test(hint) ? hint : '';
+    const iso = time?.dateTime;
+    if (!iso || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}.*(?:Z|[+-]\d{2}:\d{2})$/i.test(iso)) return author;
+    const instant = new Date(iso);
+    return Number.isFinite(instant.getTime()) ? [hospitalClock.format(instant), author].filter(Boolean).join(' · ') : author;
+  }
+  function markTiles(card, next, compact, elapsed, older, sources) {
     const labels = [...card.querySelectorAll('span,p,dt,h4,h5,h6,div')].filter(el =>
       isVitalLabel(el, compact) && !el.closest('table,dialog,[role=dialog]'));
     if (labels.length < 2) return;
@@ -79,6 +94,7 @@
     if (!tiles.every((tile,index) => tileLabels[index].length === 1 ||
         (compact && !tileLabels[index].length && tile.matches('.MuiCard-root') && tile.querySelector(':scope > .MuiCardContent-root')))) return;
     next.set(grid,'vital-grid');
+    const ages = [];
     for (const [index,tile] of tiles.entries()) {
       next.set(tile,'vital-tile');
       // Keep an unrecognised native card intact alongside known measurements.
@@ -102,15 +118,31 @@
         next.set(pressure,'vital-value');
         next.set(pam,'vital-pam');
       } else next.set(value,'vital-value');
+      const tileAges = [];
       for (const detail of details) {
         if (/^pam\s*:/i.test(detail.textContent.trim())) next.set(detail,'vital-pam');
         else {
           const time = /^(?:hace\s+)?(\d+)\s*(minuto|min|hora|h|d[ií]a)s?\.?$/i.exec(detail.textContent.trim());
           if (!time) continue;
           next.set(detail,'vital-time');
-          if (compact && !detail.childElementCount) elapsed.set(detail, time[1] + elapsedUnits[time[2].toLowerCase()]);
+          if (!compact) continue;
+          const unit = elapsedUnits[time[2].toLowerCase()];
+          if (!detail.childElementCount) elapsed.set(detail, time[1] + unit);
+          const precision = minutesPerUnit[unit];
+          const minutes = Number(time[1]) * precision;
+          if (Number.isSafeInteger(minutes + precision)) tileAges.push({ detail, minutes, precision });
         }
       }
+      if (tileAges.length === 1) {
+        ages.push(tileAges[0]);
+        const source = measurementSource(tileAges[0].detail);
+        if (source) sources.set(shell, source);
+      }
+    }
+    // Relative labels have limited precision: 1 h and 65 min can describe the same reading.
+    const newestEnd = Math.min(...ages.map(age => age.minutes + age.precision));
+    for (const age of ages) {
+      if (age.minutes >= newestEnd) older.add(age.detail);
     }
   }
 
@@ -133,6 +165,7 @@
     let previous = new Map();
     function refresh(main, compact) {
       const next = new Map(), cards = new Map(), elapsed = new Map();
+      const older = new Set(), sources = new Map();
       if (main) {
         for (const [id,kind] of Object.entries(anchors)) {
           const el = document.getElementById(id);
@@ -150,7 +183,7 @@
         for (const [card,kind] of cards) {
           next.set(card,kind);
           if (kind === 'vitals') {
-            markTiles(card,next,compact,elapsed);
+            markTiles(card,next,compact,elapsed,older,sources);
             if (compact) for (const button of card.querySelectorAll('button')) {
               if (label(button) === 'ver historial completo' && !button.closest('dialog,[role=dialog]')) next.set(button,'vital-history');
             }
@@ -179,8 +212,16 @@
           if (el.title === 'Ver historial completo') el.removeAttribute('title');
           el.removeAttribute('data-hhr-history-hint');
         }
-        if (kind === 'vital-time' && !elapsed.has(el)) el.removeAttribute('data-hhr-vital-elapsed');
+        if (kind === 'vital-time') {
+          if (!elapsed.has(el)) el.removeAttribute('data-hhr-vital-elapsed');
+          if (!older.has(el)) el.removeAttribute('data-hhr-vital-older');
+        }
+        if ((kind === 'vital-tile' || kind === 'vital-inner') && !sources.has(el)) el.removeAttribute('data-hhr-vital-source');
         if (!next.has(el)) el.removeAttribute('data-hhr-reading');
+      }
+      for (const time of older) time.toggleAttribute('data-hhr-vital-older', true);
+      for (const [el,source] of sources) {
+        if (el.dataset.hhrVitalSource !== source) el.dataset.hhrVitalSource = source;
       }
       for (const [el,text] of elapsed) {
         if (el.dataset.hhrVitalElapsed !== text) el.dataset.hhrVitalElapsed = text;

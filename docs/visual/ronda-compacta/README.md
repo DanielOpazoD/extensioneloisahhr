@@ -27,7 +27,7 @@ Con las dependencias y Chromium de Playwright instalados, ejecutar desde la raí
 
 ```sh
 node scripts/capture-medical-round.mjs 069654e docs/visual/ronda-compacta/antes antes
-node scripts/capture-medical-round.mjs WORKTREE docs/visual/ronda-compacta/despues despues
+node scripts/capture-medical-round.mjs v0.48.182 docs/visual/ronda-compacta/despues despues
 ```
 
 La muestra reproduce una variante de Eloísa en la que el nombre de cada signo es texto directo de un párrafo que además contiene un elemento auxiliar vacío. La versión anterior reconocía cero de las nueve etiquetas en esa estructura. La prueba comprueba que el rediseño reconoce las nueve, conserva la temperatura destacada, abrevia la antigüedad y abre el historial con Enter.

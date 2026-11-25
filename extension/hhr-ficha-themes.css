@@ -45,6 +45,9 @@
 /* The medical summary nests MUI cards inside a flex row. Treat the readings as a
    single band; each number, its timestamp and its source alert colour stay together. */
 @media screen {
+  html[data-hhr-ficha-theme="compact"] :is([data-hhr-reading="vitals"],.hhr-ficha-vitals) [data-hhr-vital-older] {
+    font-weight:750; font-variant-numeric:tabular-nums;
+  }
   html[data-hhr-ficha-theme="compact"] [data-hhr-reading="vitals"] {
     --hhr-ficha-tile-y:1px;
     > .MuiCardHeader-root > .MuiCardHeader-content {
@@ -98,6 +101,10 @@
     [data-hhr-vital-elapsed] {
       font-size:0 !important;
       &::after { content:attr(data-hhr-vital-elapsed) / ""; font-size:.6875rem; line-height:1.15; }
+    }
+    [data-hhr-vital-source]::after {
+      content:attr(data-hhr-vital-source); grid-column:1 / -1; font-size:.75rem;
+      line-height:1.2; overflow-wrap:anywhere;
     }
     /* Only rearrange recognised cells. Extra clinical details keep their native layout. */
     @container hhr-vital-band (min-width:50rem) {

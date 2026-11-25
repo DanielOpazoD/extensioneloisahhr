@@ -277,6 +277,25 @@ export const verifyNativeFicha = async (page, worker) => {
   assert.equal(await nativeVitals.isVisible(),false);
   await strip.getByRole('button',{name:'Ver registros'}).press('Enter');
   assert.equal(await nativeVitals.isVisible(),true);
+  await nativeVitals.evaluate(table => {
+    table.insertAdjacentHTML('beforebegin','<style>#vitalSignsEntry tr[data-filtered]{display:none}' +
+      '#vitalSignsEntry tbody tr:nth-child(3){visibility:hidden}' +
+      '#vitalSignsEntry tbody tr:first-child td:nth-child(2){color:rgb(151, 12, 44)}' +
+      '#vitalSignsEntry tbody tr:first-child td:nth-child(2)::before{content:"!"}' +
+      '#vitalSignsEntry tbody tr:first-child td:nth-child(2)::after{content:"↑"}</style>');
+    table.innerHTML = '<thead><tr><th>Signo</th><th>Valor</th><th>Fecha y hora</th><th>Autor</th></tr></thead><tbody>' +
+      '<tr><td>FC</td><td>81</td><td>25-11-2026 09:00</td><td>Profesional A</td></tr>' +
+      '<tr data-filtered><td>FC</td><td>110</td><td>25-11-2026 22:00</td><td>Profesional B</td></tr>' +
+      '<tr><td>FR</td><td>21</td><td>25-11-2026 18:00</td><td>Profesional C</td></tr>' +
+      '<tr><td>FR</td><td>17</td><td>25-11-2026 09:10</td><td>Profesional D</td></tr></tbody>';
+  });
+  await nativeVitals.locator('[data-hhr-vital-older]').waitFor();
+  assert.deepEqual(await nativeVitals.locator('[data-hhr-vital-older]').allTextContents(), ['25-11-2026 09:00']);
+  assert.equal(await strip.count(),0);
+  const result = nativeVitals.locator('tbody tr:first-child td:nth-child(2)');
+  assert.deepEqual(await result.evaluate(el => [getComputedStyle(el).color,
+    getComputedStyle(el,'::before').content,getComputedStyle(el,'::after').content]), ['rgb(151, 12, 44)','"!"','"↑"']);
+  assert.equal(await nativeVitals.locator('tbody tr:visible').count(),2);
   await page.locator('#medicationEntrySection table').evaluate(table => {
     table.innerHTML = '<thead><tr><th>Hora</th><th>Fármaco</th><th>Posología</th><th>Indicaciones específicas</th><th>Acciones</th></tr></thead>' +
       '<tbody><tr><td>09:00</td><td>Preparación sintética</td><td>Texto de prueba</td><td>Instrucciones de prueba con espacio para la lectura</td><td><button>Abrir</button></td></tr></tbody>';
@@ -316,8 +335,10 @@ export const verifyNativeFicha = async (page, worker) => {
   // their text-node labels and empty React caption boxes.
   const medical = await page.context().newPage();
   try {
-    await medical.setViewportSize({width:1366,height:850});
-    await medical.route(page.url(), route => route.fulfill({contentType:'text/html',body:medicalRoundWithControls}));
+    await medical.setViewportSize({width:1280,height:800});
+    const longNote = 'Se revisaron las observaciones del turno de prueba. '.repeat(30) + 'Referencia' + 'ABC'.repeat(46);
+    const medicalWithLongNote = medicalRoundWithControls.replace('Paciente de simulación en control de ronda.',longNote);
+    await medical.route(page.url(), route => route.fulfill({contentType:'text/html',body:medicalWithLongNote}));
     await medical.goto(page.url());
     const measurements = medical.locator('section#vitalSignsEntry [data-hhr-reading="vital-value"]');
     await measurements.nth(8).waitFor();
@@ -327,10 +348,37 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.equal(new Set(tops).size,1);
     assert.equal(await medical.locator('#estimatedDischargeSection').isVisible(),false);
     const handoff = medical.locator('#shiftChangeObservation');
-    const handoffBox = await handoff.boundingBox();
-    const restBox = await medical.locator('#rest').boundingBox();
-    assert.ok(restBox.y >= handoffBox.y + handoffBox.height - 1 && Math.abs(restBox.x - handoffBox.x) < 16,
-      'Las indicaciones de lectura deben quedar bajo la entrega en escritorio');
+    const disclosure = medical.locator('#evolution button[data-hhr-note-disclosure]');
+    const noteBody = medical.locator('#evolution .MuiBox-root > .MuiTypography-caption');
+    let closed;
+    for (const expanded of [false,true]) {
+      await disclosure.press('Enter');
+      await medical.waitForFunction(open => document.querySelector('#evolution [data-hhr-note-disclosure]')?.getAttribute('aria-expanded') === String(open),expanded);
+      assert.equal(await disclosure.evaluate(el => document.activeElement === el),true);
+      assert.equal((await noteBody.textContent()).includes(longNote),expanded);
+      const boxes = await medical.evaluate(() => {
+        const box = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
+        return {note:box('#evolution'),handoff:box('#shiftChangeObservation'),rest:box('#rest'),diet:box('#diet')};
+      });
+      assert.ok(Math.abs(boxes.note.width - 2 * boxes.handoff.width) < 2);
+      for (const item of [boxes.rest,boxes.diet]) {
+        assert.ok(item.top >= boxes.handoff.bottom - 1 && item.left >= boxes.handoff.left - 1 && item.right <= boxes.handoff.right + 1);
+      }
+      if (!expanded) closed = boxes;
+      else {
+        for (const key of Object.keys(boxes)) {
+          assert.equal(boxes[key].x,closed[key].x);
+          assert.equal(boxes[key].width,closed[key].width);
+        }
+        assert.ok(boxes.note.height > closed.note.height);
+        assert.ok(await noteBody.evaluate(text => {
+          const card = text.closest('#evolution').getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(text);
+          return [...range.getClientRects()].every(line => line.left >= card.left - 1 && line.right <= card.right + 1 && line.bottom <= card.bottom + 1);
+        }), 'Todo el texto de la nota extensa y la referencia sin espacios deben caber en Evolución');
+      }
+    }
     const notices = await medical.locator('#alerts .alerts-list').boundingBox();
     const alertForm = await medical.locator('#alerts form').boundingBox();
     assert.ok(alertForm.x >= notices.x + notices.width - 1 && Math.abs(notices.y - alertForm.y) < 4,
@@ -343,6 +391,40 @@ export const verifyNativeFicha = async (page, worker) => {
     await medical.keyboard.press('Escape');
     assert.equal(await history.evaluate(el => document.activeElement === el),true);
     assert.equal(await draft.inputValue(),'Borrador ficticio');
+    const alertSection = medical.locator('#alertEntrySection');
+    const alertDraft = alertSection.getByRole('textbox',{name:'Nueva alerta'});
+    await alertDraft.fill('Alerta ficticia');
+    const toggle = alertSection.getByRole('checkbox',{name:'No reanimación',exact:true});
+    const visits = alertSection.getByRole('checkbox',{name:'Gestión de Visitas',exact:true});
+    const toggleCaption = () => toggle.evaluate(box => getComputedStyle(box.closest('label'),'::after').content);
+    assert.match(await toggleCaption(),/Sin marcar/);
+    await toggle.press('Space');
+    assert.match(await toggleCaption(),/Marcado/);
+    assert.equal(await visits.isChecked(),true);
+    assert.equal(await draft.inputValue(),'Borrador ficticio');
+    assert.equal(await alertDraft.inputValue(),'Alerta ficticia');
+    assert.equal(await handoff.getByRole('textbox',{name:'Observación de entrega'}).count(),1);
+    for (const [section, action] of [[handoff,'Agregar a entrega'],[alertSection,'Agregar alerta']]) {
+      const button = section.getByRole('button',{name:action,exact:true});
+      assert.ok(await button.evaluate(el => el.form && el.textContent.trim() === 'Agregar' && el.disabled));
+      // Enable the fixture's native submit and observe its destination locally.
+      await button.evaluate(el => {
+        el.form.addEventListener('submit', event => {
+          event.preventDefault();
+          if (event.submitter === el) el.form.dataset.submitted = el.form.querySelector('input:not([type=checkbox])').value;
+        }, {once:true});
+        el.disabled = false;
+      });
+      await button.press('Enter');
+      assert.equal(await section.locator('form').getAttribute('data-submitted'),await section.getByRole('textbox').inputValue());
+    }
+    const older = medical.locator('.tile [data-hhr-vital-older]');
+    assert.equal(await older.count(),1);
+    assert.equal(await older.innerText(),'4 horas');
+    const ageWeight = locator => locator.evaluate(el => Number(getComputedStyle(el,'::after').fontWeight));
+    const recent = medical.locator('.tile [data-hhr-vital-elapsed]').first();
+    assert.ok(await ageWeight(older) > await ageWeight(recent));
+    assert.equal(await medical.locator('.vitals-grid [style*="color"]').evaluate(el => getComputedStyle(el).color),'rgb(204, 36, 36)');
   } finally {
     await medical.close();
   }

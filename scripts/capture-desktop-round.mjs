@@ -27,6 +27,7 @@ export async function captureDesktopRound(page, directory, width) {
       return {
         width:innerWidth, expanded:document.querySelector('#evolution [data-hhr-note-disclosure]').getAttribute('aria-expanded'),
         pageWidth:document.documentElement.scrollWidth,
+        noteWidth:Math.round(bounds('#evolution').width),
         noteHeight:Math.round(bounds('#evolution').height),
         noteTop:Math.round(bounds('#evolution').top),
         handoffTop:Math.round(bounds('#shiftChangeObservation').top),

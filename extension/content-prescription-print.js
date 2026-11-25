@@ -834,6 +834,9 @@
       updateOperationsBarPosition(bar);
     }
     if (records.some(record => {
+      if (record.type === 'attributes' && ['title', 'datetime'].includes(record.attributeName)) {
+        return !!record.target.closest('[data-hhr-reading="vital-time"]');
+      }
       if (record.type !== 'characterData') return true;
       const label = record.target.parentElement;
       if (label?.closest('[data-hhr-ficha-summary-card],[data-hhr-reading],[data-hhr-update-label],[data-hhr-note-disclosure],[data-hhr-history-timeline] .MuiCardHeader-root')) return true;
@@ -842,7 +845,7 @@
     })) scheduleEnsureButton();
   });
   observer.observe(document.documentElement, {
-    childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-selected', 'hidden', 'aria-busy'],
+    childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-selected', 'hidden', 'aria-busy', 'title', 'datetime'],
   });
   window.addEventListener('popstate', scheduleEnsureButton);
   window.addEventListener('hashchange', scheduleEnsureButton);
