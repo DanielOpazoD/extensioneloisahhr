@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.190
+
+- El consentimiento informado de Imágenes se imprime en una hoja A4 con texto seleccionable y líneas nítidas. La plantilla editable en Word conserva el contenido y los espacios de firma del formulario anterior.
+
 ## 0.48.189
 
 - En el Resumen compacto de escritorio, las acciones de Evolución muestran su nombre junto a un icono de la misma familia: «Ver evoluciones», «Editar», «Enmiendas» y «Pautas». El menú de opciones cierra la fila. En una tarjeta estrecha quedan los iconos. Al pie de la nota se leen «Leer nota completa» y «Contraer», y el historial de Signos vitales se rotula «Historial».
