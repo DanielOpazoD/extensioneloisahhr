@@ -12,6 +12,8 @@ una revisión comprobada; su copia de la extensión es una dependencia, no otra 
 
 En escritorio, el resumen compacto abre la evolución completa. Signos vitales comparte su ancho y Reposo y Régimen se leen debajo. La columna derecha reúne Observaciones de entrega, Alertas y las solicitudes de examen o cirugía que Eloísa identifica como vacías. Las órdenes de atención conservan sus acciones en filas compactas. [Ver las capturas de escritorio](docs/visual/resumen-escritorio/README.md)
 
+En la columna derecha, «Agregar observación» y «Agregar alerta» abren el campo de Eloísa. Si ya hay texto, el campo queda visible. En las tablas de tratamiento, una línea acompaña la fila que se recorre con el teclado o el puntero.
+
 En **Centro HHR → Ajustes → Vista de la ficha clínica** se elige entre Eloísa original (Desactivado), Compacto (Modo 1, predeterminado), Equilibrado (Modo 2, presentación de la 0.48.179) y Lectura (Modo 3, valores mayores y más interlineado). Chrome recuerda la elección en ese perfil y la aplica a sus pestañas de Eloísa. La densidad del cuadro Centro HHR se ajusta por separado. [Comparar los cuatro modos en la misma ficha de prueba](docs/visual/temas/README.md)
 
 En **Compacto**, la nota aparece primero en una pantalla angosta. La fecha estimada de alta se oculta en esta vista. «Ver evoluciones» abre las notas cargadas del episodio en el Historial y permite elegir «Todos» o un profesional. La última actualización muestra fecha, hora al minuto y nombre. «Agregar a entrega» y «Agregar alerta» identifican el destino al escribir. «No reanimación» ocupa su propia línea y muestra el estado del interruptor. El reloj de Signos vitales abre el historial de mediciones.

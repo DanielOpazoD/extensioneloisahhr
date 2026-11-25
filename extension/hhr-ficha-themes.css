@@ -109,6 +109,11 @@
       font-size:0 !important;
       &::after { content:attr(data-hhr-vital-elapsed) / ""; font-size:.6875rem; line-height:1.15; }
     }
+    @media (min-width:1100px) {
+      [data-hhr-reading="vital-pam"], [data-hhr-reading="vital-time"]:not([data-hhr-vital-elapsed]),
+      [data-hhr-vital-elapsed]::after { font-size:.75rem !important; }
+      [data-hhr-reading="vital-time"] :is(.MuiTypography-root,span) { font-size:inherit !important; }
+    }
     [data-hhr-vital-source]::after {
       content:attr(data-hhr-vital-source); grid-column:1 / -1; font-size:.75rem;
       line-height:1.2; overflow-wrap:anywhere;
@@ -132,6 +137,16 @@
         [data-hhr-reading="vital-pam"] { grid-area:1 / 2; justify-self:end; }
         [data-hhr-reading="vital-time"] { grid-area:2 / 2; justify-self:end; }
       }
+      @media (min-width:1100px) {
+        /* A measurement's own timestamp or author can add a third row. Share
+           the tracks so its number stays aligned even when that source wraps. */
+        &:has([data-hhr-vital-source]) {
+          > [data-hhr-reading="vital-tile"], [data-hhr-reading="vital-inner"] { grid-row:span 3; }
+          :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):not(:has(> :not([data-hhr-reading]))) {
+            grid-template-rows:subgrid;
+          }
+        }
+      }
     }
   }
 }
@@ -139,6 +154,7 @@
 /* Native cards can have both a section inset and a content inset. Use one
    shared left edge for the section title, clinical data and observations. */
 @media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] .hhr-ficha-vitals small { font-size:.75rem; line-height:1.05; }
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     --hhr-round-inset:10px;
     --hhr-round-heading:.9375rem;
@@ -192,6 +208,47 @@
 }
 
 @media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-sections] {
+    align-items:center; column-gap:2px; background:#f7f9f8;
+    [data-hhr-ficha-link] {
+      box-sizing:border-box; padding-block:2px; border-radius:6px; line-height:20px !important;
+      &[aria-current="location"] { border-color:#a8cfc5; background:#e5f2ee; color:#095e54 !important; }
+    }
+    /* Keep this utility with the links, clear of the floating extension toolbar. */
+    .hhr-ficha-empty-toggle {
+      display:inline-flex; align-items:center; gap:6px;
+      position:relative; margin-inline-start:9px; padding:2px 7px;
+      min-height:24px; background:transparent; border:1px solid transparent;
+      border-radius:5px; color:#47645d; line-height:18px;
+      &::before {
+        content:''; position:absolute; inset-inline-start:-7px;
+        inset-block:4px; border-inline-start:1px solid #b6c8c2;
+      }
+      &::after {
+        content:''; inline-size:5px; block-size:5px; margin-block-start:-3px;
+        border:solid currentColor; border-width:0 1.5px 1.5px 0; transform:rotate(45deg);
+      }
+      &[aria-expanded="true"]::after { transform:rotate(225deg); margin-block-start:3px; }
+      &:hover { background:#e7efec; color:#234f46; }
+      &:focus-visible { outline:2px solid #176f63; outline-offset:-2px; }
+    }
+  }
+
+  /* Guide the eye across the active order without painting over native status colours. */
+  html[data-hhr-ficha-theme="compact"] :is([data-hhr-reading="orders"],[data-hhr-reading="care-orders"])
+    table:has(> thead > tr > th[data-hhr-reading="narrow"]):not(:is(dialog,[role="dialog"],table) *) {
+    > thead > tr:has(> th:nth-child(5)) > th[data-hhr-reading="order-instructions"] { width:40%; }
+    > tbody:not(:focus-within) > tr:hover, > tbody > tr:focus-within {
+      > td { box-shadow:inset 0 -1px #63958a; }
+      > td:first-child { box-shadow:inset 3px 0 #307b6d, inset 0 -1px #63958a; }
+      @media (forced-colors:active) { outline:1px solid Highlight; outline-offset:-1px; }
+    }
+    > tbody > tr > td :is(button,a[href],select,[role="button"],[role="combobox"]):focus-visible {
+      outline:2px solid #176f63; outline-offset:-2px;
+      @media (forced-colors:active) { outline-color:Highlight; }
+    }
+  }
+
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="empty-request"] {
     min-width:0; overflow-wrap:anywhere;
     &[data-hhr-empty-request="exam"], [data-hhr-empty-request="exam"] { --hhr-request-label:"Exámenes"; }

@@ -386,7 +386,11 @@ export const verifyNativeFicha = async (page, worker) => {
     const alertForm = await medical.locator('#alerts form').boundingBox();
     assert.ok(alertForm.y >= notices.y + notices.height - 1,
       'En el lateral estrecho las acciones de Alertas deben quedar debajo de los avisos');
+    const openHandoff = handoff.locator('[data-hhr-entry-open]');
+    assert.ok(await openHandoff.isVisible());
+    await openHandoff.click();
     const draft = handoff.getByRole('textbox');
+    assert.ok(await draft.evaluate(el => el === document.activeElement));
     await draft.fill('Borrador ficticio');
     const history = medical.getByRole('button',{name:/ver historial completo/i});
     await history.press('Enter');
@@ -395,7 +399,11 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.equal(await history.evaluate(el => document.activeElement === el),true);
     assert.equal(await draft.inputValue(),'Borrador ficticio');
     const alertSection = medical.locator('#alertEntrySection');
+    const openAlert = alertSection.locator('[data-hhr-entry-open]');
+    assert.ok(await openAlert.isVisible());
+    await openAlert.press('Enter');
     const alertDraft = alertSection.getByRole('textbox',{name:'Nueva alerta'});
+    assert.ok(await alertDraft.evaluate(el => el === document.activeElement));
     await alertDraft.fill('Alerta ficticia');
     const toggle = alertSection.getByRole('checkbox',{name:'No reanimación',exact:true});
     const visits = alertSection.getByRole('checkbox',{name:'Gestión de Visitas',exact:true});

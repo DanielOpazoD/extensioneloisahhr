@@ -221,12 +221,14 @@
             const head = [...table.tHead.rows[0].cells], rows = [...table.rows];
             if (rows.some(row => row.cells.length !== head.length || [...row.cells].some(c => c.colSpan !== 1 || c.rowSpan !== 1))) continue;
             head.forEach((th,index) => {
-              if (!/^(tiempo|hora|horario|acciones)$/.test(label(th))) return;
+              const heading = label(th);
+              if (kind === 'care-orders' && heading === 'indicaciones') next.set(th,'order-instructions');
+              if (!/^(tiempo|hora|horario|acciones)$/.test(heading)) return;
               for (const row of rows) {
                 const cell = row.cells[index];
                 next.set(cell,'narrow');
                 const marker = cell.firstElementChild;
-                if (label(th) === 'tiempo' && marker && cell.childElementCount === 1 &&
+                if (heading === 'tiempo' && marker && cell.childElementCount === 1 &&
                     marker.matches('div,span,svg') && !marker.querySelector('button,a,[tabindex]') &&
                     (marker.matches('svg') || marker.querySelector('svg')) && /^\d{1,3}$/.test(cell.textContent.trim())) next.set(marker,'time-symbol');
               }

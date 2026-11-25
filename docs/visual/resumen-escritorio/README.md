@@ -1,5 +1,21 @@
 # Resumen compacto en escritorio
 
+## Lectura y escritura en 0.48.187
+
+En la captura inicial se pueden leer las alertas y el estado de los interruptores. «Agregar observación» y «Agregar alerta» abren sus campos con un clic o con Enter. Un borrador permanece visible al recorrer la ficha. Una línea permite seguir cada indicación hasta su control al usar el ratón o el teclado.
+
+| Escritorio | Resumen en 0.48.186 | Resumen en 0.48.187 | Orden con foco en 0.48.187 |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.187/antes/1280-expandida.png) | [Después](0.48.187/despues/1280-expandida.png) | [Ver detalle](0.48.187/despues/1280-ordenes.png) |
+| 1440 × 900 | [Antes](0.48.187/antes/1440-expandida.png) | [Después](0.48.187/despues/1440-expandida.png) | [Ver detalle](0.48.187/despues/1440-ordenes.png) |
+
+Con esta ficha ficticia, la PAM y los tiempos pasan de 11 a 12 px sin aumentar la altura de la franja de nueve signos. A 1280 px, las filas de Reposo y Régimen pasan de 45 a 29 px cada una. La columna Indicaciones pasa de 445 a 485 px en el portátil y de 507 a 549 px en escritorio. Se conserva el color original de los valores clínicos. Las dos capturas usan la misma nota, las mismas órdenes y el mismo zoom.
+
+```sh
+node scripts/capture-medical-round.mjs v0.48.186 /tmp/lectura-anterior lectura
+node scripts/capture-medical-round.mjs WORKTREE /tmp/lectura-actual lectura
+```
+
 ## Ronda de escritorio 0.48.186
 
 Evolución abre extendida y comparte columna con Signos vitales, Reposo y Régimen. Observaciones de entrega encabeza la segunda columna, seguida de Alertas. Las solicitudes vacías de examen y cirugía ocupan una línea cada una. Cuando llega una orden, su sección recupera el ancho completo y sus acciones.

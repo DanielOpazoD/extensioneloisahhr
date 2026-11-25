@@ -19,16 +19,26 @@ export async function verifyNursingSummary(page, worker) {
   assert.match(display.text,/^"PA"/, 'The pressure label must visibly read PA');
   assert.equal(display.size,12);
   assert.match(await pressure.ariaSnapshot(),/Presión/);
-  const sizes = await pressure.evaluate(el => ['vital-value','vital-pam','vital-time'].map(kind =>
+  const pressureSizes = () => pressure.evaluate(el => ['vital-value','vital-pam','vital-time'].map(kind =>
     parseFloat(getComputedStyle(el.querySelector('[data-hhr-reading="'+kind+'"]'), kind === 'vital-time' ? '::after' : null).fontSize)));
-  assert.deepEqual(sizes,[17,11,11]);
-  const readings = await tiles.evaluateAll(nodes => nodes.map(tile => {
-    const bounds = kind => tile.querySelector(`[data-hhr-reading="vital-${kind}"]`).getBoundingClientRect();
-    const label = bounds('label'), value = bounds('value');
-    return { aligned:Math.abs(label.left - value.left) < 1, below:value.top >= label.bottom, top:value.top };
-  }));
-  assert.ok(readings.every(cell => cell.aligned && cell.below && Math.abs(cell.top - readings[0].top) < 1),
+  assert.deepEqual(await pressureSizes(),[17,12,12]);
+  const alignedReadings = () => tiles.evaluateAll(nodes => {
+    const bounds = (tile, kind) => tile.querySelector(`[data-hhr-reading="vital-${kind}"]`).getBoundingClientRect();
+    const firstTop = bounds(nodes[0],'value').top;
+    return nodes.every(tile => {
+      const label = bounds(tile,'label'), value = bounds(tile,'value');
+      return Math.abs(label.left - value.left) < 1 && value.top >= label.bottom && Math.abs(value.top - firstTop) < 1;
+    });
+  });
+  assert.ok(await alignedReadings(),
     'Each desktop value must start beneath its label on the same line as the other values');
+  const glucoseTime = tiles.nth(7).locator('[data-hhr-reading="vital-time"]');
+  await glucoseTime.evaluate(node => { node.title = '08:15 · Profesional de prueba'; });
+  const glucoseSource = grid.locator('[data-hhr-vital-source="08:15 · Profesional de prueba"]');
+  await glucoseSource.waitFor();
+  assert.ok(await alignedReadings(), 'An individual measurement timestamp must keep the numbers aligned');
+  await glucoseTime.evaluate(node => node.removeAttribute('title'));
+  await glucoseSource.waitFor({state:'detached'});
   assert.equal(await tiles.first().locator('[data-hhr-reading="vital-pam"]').innerText(), 'PAM: 90');
   assert.equal(await tiles.nth(3).locator('strong').evaluate(el=>getComputedStyle(el).color),'rgb(255, 0, 0)');
   const historyButton = page.getByRole('button',{name:'Ver historial completo'});
@@ -75,6 +85,7 @@ export async function verifyNursingSummary(page, worker) {
   await page.waitForFunction(()=>!document.querySelector('[data-hhr-ficha-sections]'));
   assert.equal(await tiles.count(),9);
   await page.setViewportSize({width:390,height:844});
+  assert.deepEqual(await pressureSizes(),[15,11,11]);
   const mobileTops = await tiles.evaluateAll(nodes => new Set(nodes.map(el => Math.round(el.getBoundingClientRect().top))).size);
   assert.equal(mobileTops, 3);
   assert.equal(await tiles.nth(7).locator('p').last().textContent(),'2 horas');

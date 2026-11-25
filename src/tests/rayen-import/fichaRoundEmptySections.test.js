@@ -127,6 +127,7 @@ it('las órdenes de atención conservan controles, nombres, foco y órdenes de v
   reader.refresh(main,true);
   expect(main.querySelector('#procedureOrderEntrySection').dataset.hhrReading).toBe('care-orders');
   expect(main.querySelectorAll('[data-hhr-reading="narrow"]')).toHaveLength(2);
+  expect(main.querySelector('th[data-hhr-reading="order-instructions"]').textContent).toBe('Indicaciones');
   expect(document.activeElement).toBe(select);
   select.selectedIndex = 1;
   reader.refresh(main,true);
@@ -134,6 +135,6 @@ it('las órdenes de atención conservan controles, nombres, foco y órdenes de v
   expect(main.querySelector('button').getAttribute('aria-label')).toBe('Imprimir orden');
   expect(main.querySelector('td br')).toBeTruthy();
   reader.refresh(main,false);
-  expect(main.querySelector('[data-hhr-reading="care-orders"],[data-hhr-reading="narrow"]')).toBeNull();
+  expect(main.querySelector('[data-hhr-reading="care-orders"],[data-hhr-reading="narrow"],[data-hhr-reading="order-instructions"]')).toBeNull();
   reader.clear();
 });
