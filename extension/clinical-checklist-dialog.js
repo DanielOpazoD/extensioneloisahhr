@@ -155,7 +155,7 @@
         const copied = await copyEvolutionText(state.record.evolution);
         status(
           copied
-            ? 'Guardada en HHR y texto copiado. Pégalo en la evolución de Eloísa o pulsa «Insertar en evolución».'
+            ? 'Guardada en HHR y texto copiado.'
             : 'Guardada en HHR. Selecciona el texto de arriba para copiarlo o pulsa «Insertar en evolución».'
         );
       } catch {
@@ -326,7 +326,8 @@
     const form = dialog.querySelector('form');
     const label = make('label', 'Plantilla');
     const select = make('select');
-    label.append(select);
+    select.id = 'hhr-checklist-template';
+    label.htmlFor = select.id;
     for (const item of state.catalog.templates) select.add(new Option(item.title, item.id));
     if (!select.options.length) {
       status('HHR no tiene plantillas disponibles.');
@@ -338,7 +339,7 @@
     templateRow.className = 'hhr-checklist-template-row';
     const versionBadge = make('span');
     versionBadge.className = 'hhr-checklist-version';
-    const syncBtn = button('Sincronizar plantillas', async () => {
+    const syncBtn = button('↻', async () => {
       if (state.busy || !current(state)) return;
       syncBtn.disabled = true;
       const surface = dialog;
@@ -349,24 +350,31 @@
       } finally {
         syncBtn.disabled = false;
       }
-    });
-    templateRow.append(versionBadge, syncBtn);
+    }, 'hhr-checklist-sync');
+    syncBtn.title = 'Actualizar plantillas';
+    syncBtn.setAttribute('aria-label', syncBtn.title);
+    const caption = make('div');
+    caption.className = 'hhr-checklist-template-caption';
+    caption.append(label, versionBadge);
+    templateRow.append(caption, select, syncBtn);
 
     const fields = make('div');
     fields.className = 'fields';
     const actions = make('div');
     actions.className = 'hhr-checklist-actions';
-    const save = make('button', 'Guardar e insertar');
+    const save = make('button', 'Guardar');
     save.type = 'submit';
-    const saveAndCopy = button('Guardar en HHR y copiar texto', async event => {
+    save.title = 'Guarda en HHR e inserta el texto en Evolución';
+    const saveAndCopy = button('Copiar texto', async event => {
       if (!event.isTrusted || !navigator.userActivation.isActive || state.busy || !current(state)) return;
       await submitApplication(state, group, form, { copyOnly: true });
-    });
+    }, 'hhr-checklist-copy');
+    saveAndCopy.title = 'Guarda en HHR y copia el texto';
     actions.append(save, saveAndCopy);
 
     const group = make('fieldset');
     group.style.cssText = 'margin:0;padding:0;border:0;display:grid;gap:10px';
-    group.append(label, templateRow, fields, actions);
+    group.append(templateRow, fields, actions);
     form.replaceChildren(group);
 
     const bradenList = braden ? state.catalog.templates.filter(braden.isBradenTemplate) : [];
@@ -375,7 +383,7 @@
     const handleInlineCopy = async text => {
       try {
         if (await copyEvolutionText(text)) {
-          status('Texto copiado para pegar en la evolución. Usa «Guardar en HHR y copiar texto» o «Guardar e insertar» para respaldar en HHR.');
+          status('Borrador copiado. Pendiente de guardar en HHR.');
         } else {
           status('Selecciona el texto de la vista previa para copiarlo.');
         }
@@ -393,7 +401,7 @@
       const isMatrix = Boolean(braden?.isBradenTemplate(chosen));
       dialog?.classList.toggle('is-matrix', isMatrix);
       versionBadge.textContent = chosen
-        ? (chosen.ageRangeLabel ? chosen.ageRangeLabel + ' · ' : '') + 'Plantilla v' + chosen.version + ' · sincronizada con HHR'
+        ? (chosen.ageRangeLabel ? chosen.ageRangeLabel + ' · ' : '') + 'v' + chosen.version
         : '';
       if (isMatrix) {
         braden.renderMatrix({
