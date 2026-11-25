@@ -10,7 +10,7 @@ una revisión comprobada; su copia de la extensión es una dependencia, no otra 
 
 ## Lectura de la ficha
 
-En Resumen, las tarjetas se ajustan a su contenido y Evolución aprovecha el ancho de la fila cuando los apartados comparten una cuadrícula. «Ver vacías» muestra los apartados de solicitudes y procedimientos que Eloísa ha marcado como vacíos. La navegación por apartado también permite recuperarlos. En Historial, los eventos ocupan menos espacio entre el encabezado y el texto.
+En Resumen, las tarjetas se ajustan a su contenido y Evolución aprovecha el ancho de la fila cuando los apartados comparten una cuadrícula. «Ver vacías» muestra los apartados de solicitudes y procedimientos que Eloísa ha marcado como vacíos. La navegación por apartado también permite recuperarlos. Los apartados con un único dato breve comparten línea con su título. Las tablas usan todo el ancho y las cabeceras de fármacos pueden mostrar el número de filas visibles y la acción de impresión. En Historial, una fecha acompaña el recorrido y los eventos con hora, categoría y profesional reconocibles reúnen esos datos en una cabecera que se adapta a la pantalla.
 
 ## Pautas en Evolución
 

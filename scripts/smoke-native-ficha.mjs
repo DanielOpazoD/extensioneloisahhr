@@ -35,10 +35,15 @@ const fixture = `
         `<div class="MuiGrid-item"><span class="MuiBadge-root"><span class="MuiTypography-caption">${label}</span></span></div>`).join('')}
     </div></div>
     <div id="native-summary">
-      ${[['alertEntrySection','Alertas'],['diagnosisEntrySection','Diagnóstico'],['medicationEntrySection','Fármacos'],['procedureEntrySection','Procedimientos'],['vitalSignsEntry','Signos vitales']].map(([id,label])=>`<section id="${id}"><h2>${label}</h2>Contenido sintético</section>`).join('')}
+      ${[['alertEntrySection','Alertas'],['diagnosisEntrySection','Diagnóstico'],['procedureEntrySection','Procedimientos'],['vitalSignsEntry','Signos vitales'],['nutritionOrderEntrySection','Régimen'],['restEntrySection','Reposo']].map(([id,label])=>`<section id="${id}"><h2>${label}</h2>Contenido sintético</section>`).join('')}
+      <section id="freeIndicationEntrySection"><h2>Indicaciones</h2><p>Primera indicación de prueba.</p><p>Segunda indicación de prueba.</p></section>
+      <section id="physicalExaminationEntry"><h2>Examen físico</h2><p>Primer registro.</p><p>Segundo registro.</p></section>
+      <section id="medicationEntrySection"><div class="MuiCard-root"><div class="MuiCardHeader-root"><h2 class="MuiCardHeader-title">Fármacos</h2></div>
+        <div class="MuiCardContent-root"><table><tbody><tr><td>Preparación A</td><td>Registro 1</td></tr><tr><td>Preparación B</td><td>Registro 2</td></tr></tbody></table></div>
+        <div class="MuiCardActions-root"><button aria-label="Imprimir fármacos" type="button">Imprimir</button></div></div></section>
       <section id="observationEntrySection"><div id="evolution" class="MuiCard-root"><span class="MuiCardHeader-title">Evolución</span>
         <div class="MuiCardContent-root"><div class="MuiStack-root"><div class="MuiStack-root" style="width:100%;display:flex">
-          <div class="MuiBox-root" style="width:350px"><span class="MuiTypography-caption">Profesional de prueba</span><div class="MuiBox-root">${'Texto sintético de evolución que debe aprovechar todo el ancho disponible. '.repeat(6)}</div></div>
+          <div class="MuiBox-root" style="width:350px"><span class="MuiTypography-caption">Profesional de prueba</span><div class="MuiBox-root">${'Texto sintético de evolución que debe aprovechar todo el ancho disponible. '.repeat(28)}</div></div>
         </div></div></div></div></section>
     </div><div style="height:600px"></div>
   </div>
@@ -74,8 +79,8 @@ export const verifyNativeFicha = async page => {
     main.innerHTML=html; main.style.background='#f3f5f4';
   },fixture);
   await page.locator('main').evaluate(bindNativeTabs);
-  for(const width of [1280,840,707,390]) {
-    await page.setViewportSize({width,height:900});
+  for(const width of [1366,1280,840,707,390]) {
+    await page.setViewportSize({width,height:width === 1366 ? 768 : 900});
     await page.getByRole('tab',{name:'Resumen',exact:true}).click();
     await page.locator('[data-hhr-ficha-sections]').waitFor();
     const link=page.locator('[data-hhr-ficha-link]').filter({hasText:'Evolución'});
@@ -95,10 +100,22 @@ export const verifyNativeFicha = async page => {
     const summaryLayout = await page.evaluate(() => {
       const grid = document.querySelector('[data-hhr-ficha-summary-grid]');
       const section = document.getElementById('observationEntrySection');
-      return { columns:getComputedStyle(grid).gridTemplateColumns.split(' ').length, width:grid.clientWidth,
+      const firstTop = grid.firstElementChild.getBoundingClientRect().top;
+      const firstRow = [...grid.children].filter(item => Math.abs(item.getBoundingClientRect().top - firstTop) < 1);
+      const medium = document.getElementById('freeIndicationEntrySection');
+      const meds = document.getElementById('medicationEntrySection');
+      const print = meds.querySelector('button').getBoundingClientRect();
+      const heading = meds.querySelector('h2').getBoundingClientRect();
+      return { columns:firstRow.length, width:grid.clientWidth, mediumWidth:medium.offsetWidth,
+        sameHeader:print.top < heading.bottom && print.bottom > heading.top,
+        count:meds.querySelector('h2').dataset.hhrVisibleMedications, medsWidth:meds.offsetWidth,
         evolutionWidth:section.getBoundingClientRect().width, cardHeight:document.getElementById('diagnosisEntrySection').offsetHeight };
     });
-    assert.equal(summaryLayout.columns, width >= 1100 ? 2 : 1);
+    assert.equal(summaryLayout.columns, width >= 1100 ? 3 : width >= 800 ? 2 : 1);
+    assert.ok(Math.abs(summaryLayout.medsWidth-summaryLayout.width)<2);
+    assert.equal(summaryLayout.count,'2');
+    assert.equal(summaryLayout.sameHeader,true);
+    if (width >= 1100) assert.ok(Math.abs(summaryLayout.mediumWidth - (summaryLayout.width - 8) / 2) < 2);
     assert.ok(summaryLayout.cardHeight < 180, 'La tarjeta breve sigue reservando altura vacía');
     assert.ok(Math.abs(summaryLayout.evolutionWidth-summaryLayout.width) < 2);
     await link.focus();
@@ -135,7 +152,26 @@ export const verifyNativeFicha = async page => {
         dates.left >= scroller.left && dates.right <= scroller.right + 1;
     });
     assert.ok(inline, `Date controls not visible next to Historial at ${width}px`);
+    const layout = await page.locator('#medical-today').evaluate(card => {
+      const bounds = selector => card.querySelector(selector).getBoundingClientRect();
+      const clock = bounds('.MuiCardHeader-action'), category = bounds('.MuiCardContent-root > p'), who = bounds('.MuiCardHeader-title');
+      return { compact:card.hasAttribute('data-hhr-history-inline'), inline:clock.left < category.left && category.left < who.left &&
+        clock.bottom > category.top && category.bottom > who.top };
+    });
+    assert.ok(layout.compact);
+    if(width >= 800) assert.ok(layout.inline);
     assert.equal(await date.locator('option').count(),3);
+    if (width === 1366) {
+      const divider = page.locator('#native-timeline > .MuiBox-root:first-child > :first-child');
+      await page.evaluate(() => window.scrollBy(0,180));
+      await page.waitForFunction(() => {
+        const divider=document.querySelector('#native-timeline > .MuiBox-root > :first-child').getBoundingClientRect();
+        const rail=document.querySelector('[data-hhr-history-rail]').getBoundingClientRect();
+        return Math.abs(divider.top-rail.bottom)<2;
+      });
+      assert.equal(await divider.innerText(),'Hoy');
+      await page.evaluate(() => window.scrollTo(0,0));
+    }
     assert.equal(await toolbar.getByRole('button').count(),2);
     assert.equal(await toolbar.locator('[data-filter],[role="status"]').count(),0);
     assert.equal(await page.locator('#native-timeline .MuiCard-root').count(),7);

@@ -250,6 +250,11 @@
     table[${marked}] > :is(thead,tbody) > tr > :is(th,td) {
       padding-inline:clamp(7px, 1vw, 12px) !important;
     }
+    @media screen {
+      table[${marked}] > tbody > tr > :is(.hhr-worklist-documents,td:has([data-hhr-rongorongo-link])) {
+        width:1%; padding-inline:4px !important; white-space:nowrap;
+      }
+    }
     table[${marked}] > thead > tr > th { line-height:1.15 !important; padding-block:4px !important; }
     table[${marked}] > tbody > tr > :is(th,td) { line-height:1.15 !important; padding-block:2px !important; }
     table[${marked}] > tbody > tr > :is(th,td) .MuiTypography-root { line-height:1.15 !important; }

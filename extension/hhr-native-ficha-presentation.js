@@ -15,8 +15,8 @@
     'signos vitales': 'vitalSignsEntry',
   };
   const css = `
-    [data-hhr-ficha-primary] { padding:6px 12px !important; min-height:48px !important; box-sizing:border-box; background:#fff; border-bottom:1px solid #dce5e2; }
-    [data-hhr-ficha-primary] [role="tab"] { min-height:36px !important; min-width:0 !important; padding:7px 12px !important; border:0; border-radius:7px; font-size:13px; color:#526762; }
+    [data-hhr-ficha-primary] { padding:2px 12px !important; min-height:40px !important; box-sizing:border-box; background:#fff; border-bottom:1px solid #dce5e2; }
+    [data-hhr-ficha-primary] [role="tab"] { min-height:34px !important; min-width:0 !important; padding:4px 12px !important; border:0; border-radius:7px; font-size:13px; color:#526762; }
     [data-hhr-ficha-primary] [role="tab"][aria-selected="true"] { color:#086b63; background:#e5f3ef; font-weight:600; }
     [data-hhr-ficha-primary] [role="tab"]:focus-visible,[data-hhr-ficha-link]:focus-visible { outline:2px solid #0b6e66; outline-offset:-2px; }
     [data-hhr-ficha-section-slot] { min-height:var(--hhr-section-height,48px); }
@@ -36,10 +36,44 @@
         border-radius:6px; background:white; color:#325c53; font:inherit; font-size:12px; cursor:pointer; }
       .hhr-ficha-empty-toggle:focus-visible { outline:2px solid #0b6e66; }
       [data-hhr-ficha-folded],.MuiGrid-item:has(> [data-hhr-ficha-folded]:only-child) { display:none !important; }
-      [data-hhr-ficha-summary-grid] { display:grid !important; grid-template-columns:repeat(auto-fit,minmax(min(100%,32rem),1fr)) !important;
+      .MuiAppBar-root:has(> [data-hhr-ficha-primary]:only-child) { height:auto !important; min-height:40px !important; }
+      [data-hhr-ficha-summary-grid] { display:flex !important; flex-flow:row wrap !important; container-type:inline-size;
         align-items:start; gap:8px !important; width:100%; margin:0 !important; box-sizing:border-box; }
-      [data-hhr-ficha-summary-grid] > .MuiGrid-item { width:100% !important; max-width:none !important; padding:0 !important; }
-      [data-hhr-ficha-summary-grid] > :is(#observationEntrySection,:has(> #observationEntrySection)) { grid-column:1 / -1; }
+      [data-hhr-ficha-summary-grid] > * { flex:1 1 100% !important; min-width:0; max-width:100% !important; box-sizing:border-box; }
+      [data-hhr-ficha-summary-grid] > .MuiGrid-item { padding:0 !important; }
+      @container (min-width:44rem) {
+        [data-hhr-ficha-summary-grid] > :is([data-hhr-ficha-summary-card],.MuiGrid-item):where(:not([data-hhr-ficha-summary-card="wide"],:has(> [data-hhr-ficha-summary-card="wide"]))) {
+          flex-basis:calc((100% - 8px) / 2) !important;
+        }
+      }
+      @container (min-width:65rem) {
+        [data-hhr-ficha-summary-grid] > :is([data-hhr-ficha-summary-card="brief"],.MuiGrid-item:has(> [data-hhr-ficha-summary-card="brief"])) {
+          flex-basis:calc((100% - 16px) / 3) !important;
+        }
+      }
+      [data-hhr-ficha-summary-card="brief"]:not(:has(> .MuiCard-root)),
+      [data-hhr-ficha-summary-card="brief"] > .MuiCard-root:only-child {
+        display:flex; flex-wrap:wrap; align-items:baseline; column-gap:.65em; row-gap:2px; padding:6px 10px !important; }
+      [data-hhr-ficha-summary-card] > .MuiCard-root:only-child :is(h2,h3,h4).MuiCardHeader-title { margin:0; }
+      [data-hhr-ficha-summary-card="regular"] > p { margin-block:3px; }
+      [data-hhr-ficha-summary-card]:has(> .MuiCard-root:only-child) { padding:0 !important; }
+      [data-hhr-ficha-summary-card="brief"] :is(h2,h3,h4,.MuiCardHeader-root,.MuiCardContent-root) { margin-block:0 !important; }
+      [data-hhr-ficha-summary-card="brief"] > :is(p,div:not(.MuiCard-root)),[data-hhr-ficha-summary-card="brief"] > .MuiCard-root > .MuiCardContent-root {
+        min-width:0; overflow-wrap:anywhere; }
+      [data-hhr-ficha-summary-card] > .MuiCard-root:has(> .MuiCardHeader-root):has(> .MuiCardActions-root > button:only-child:is([aria-label*="imprimir" i],[title*="imprimir" i],:has([data-testid^="Print"]))) {
+        display:grid; grid-template-columns:minmax(0,1fr) auto;
+        > .MuiCardHeader-root { grid-column:1; grid-row:1; }
+        > .MuiCardActions-root { grid-column:2; grid-row:1; align-self:center; }
+        > .MuiCardContent-root { grid-column:1 / -1; }
+      }
+      [data-hhr-visible-medications]::after { content:" (" attr(data-hhr-visible-medications) ")"; font-weight:normal; }
+      [data-hhr-ficha-summary-card] > .MuiCard-root > .MuiCardHeader-root { align-items:center; }
+      [data-hhr-ficha-summary-card] > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-action { margin:0; align-self:center; }
+      [data-hhr-ficha-summary-card] .MuiCardContent-root > .MuiStack-root > .MuiCard-root:has(~ .MuiCard-root),
+      [data-hhr-ficha-summary-card] .MuiCardContent-root > .MuiStack-root > .MuiCard-root ~ .MuiCard-root {
+        box-shadow:none; border-radius:0; }
+      [data-hhr-ficha-summary-card] .MuiCardContent-root > .MuiStack-root > .MuiCard-root ~ .MuiCard-root {
+        border-block-start:1px solid #dce5e2; }
       [data-hhr-ficha-summary-card] {
         min-inline-size:0; min-block-size:0 !important; align-self:start;
       }
@@ -52,7 +86,7 @@
       }
     }
     @media print { .hhr-ficha-empty-toggle { display:none; } }
-    @media(max-width:600px) { [data-hhr-ficha-primary] { padding:6px 4px !important; } [data-hhr-ficha-primary] [role="tab"] { padding:7px 9px !important; font-size:12px; } }
+    @media(max-width:600px) { [data-hhr-ficha-primary] { padding:2px 4px !important; } [data-hhr-ficha-primary] [role="tab"] { padding:4px 9px !important; font-size:12px; } }
   `;
   const create = () => {
     const summaryDensity = globalThis.HhrFichaSummaryDensity.create(Object.values(SECTIONS));
@@ -97,13 +131,18 @@
       row.style.setProperty('--hhr-section-top', top + 'px');
       row.style.setProperty('--hhr-section-left', Math.max(0, bounds.left) + 'px');
       row.style.setProperty('--hhr-section-width', Math.max(0, Math.min(bounds.width, innerWidth - Math.max(0, bounds.left))) + 'px');
-      slot.style.setProperty('--hhr-section-height', row.getBoundingClientRect().height + 8 + 'px');
+      slot.style.setProperty('--hhr-section-height', row.getBoundingClientRect().height + 4 + 'px');
       const boundary = row.getBoundingClientRect().bottom + 14;
       const targets = [...links.entries()].flatMap(([element, item]) => {
         const target = document.getElementById(item.id);
         return target?.getClientRects().length ? [{ element, target, rect: target.getBoundingClientRect() }] : [];
       });
-      const active = targets.find(item => item.target === lastTarget && item.rect.top <= boundary + 2 && item.rect.bottom > boundary) ||
+      // With shorter cards the final section may be visible before it can reach the top rail.
+      const scroll = lastTarget?.scroller;
+      const atEnd = scroll && scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop <= 2;
+      const visibleBottom = scroll && scroll !== document.scrollingElement ? Math.min(innerHeight, scroll.getBoundingClientRect().bottom) : innerHeight;
+      const active = targets.find(item => item.target === lastTarget?.target && item.rect.bottom > boundary &&
+        (item.rect.top <= boundary + 2 || (atEnd && item.rect.top < visibleBottom))) ||
         targets.filter(item => item.rect.top <= boundary && item.rect.bottom > boundary).sort((a, b) => b.rect.top - a.rect.top)[0] ||
         targets.filter(item => item.rect.bottom > boundary).sort((a, b) => a.rect.top - b.rect.top)[0];
       links.forEach((_item, element) => {
@@ -117,11 +156,11 @@
       const target = document.getElementById(id);
       summaryDensity.reveal(target);
       if (!target?.getClientRects().length || !row?.isConnected) return;
-      lastTarget = target;
       let scroller = window;
       for (let parent = target.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
         if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY) && parent.scrollHeight > parent.clientHeight) { scroller = parent; break; }
       }
+      lastTarget = { target, scroller:scroller === window ? document.scrollingElement : scroller };
       scroller.scrollBy({ top: target.getBoundingClientRect().top - row.getBoundingClientRect().bottom - 12, behavior: 'instant' });
       schedule();
     };
@@ -136,7 +175,7 @@
         });
       }
       document.querySelectorAll('.MuiCard-root > .MuiCardContent-root').forEach(body => {
-        if (!body.getClientRects().length || body.closest('#hhr-prescription-print-modal') ||
+        if (!body.parentElement.getClientRects().length || body.closest('#hhr-prescription-print-modal') ||
             !Array.from(body.children).some(child => child.matches('p.MuiTypography-root') && normalize(child.textContent) === 'evolucion')) return;
         body.querySelectorAll(':scope > .MuiStack-root > .MuiStack-root').forEach(stack => {
           const text = stack.firstElementChild;
