@@ -153,7 +153,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     const modal = ficha.getByRole('dialog', { name: 'Aplicar pauta' });
     await modal.getByLabel('Observación').fill('Control sintético');
     assert.match(await modal.locator('.identity').innerText(), /Persona Sintética/);
-    const save = modal.getByRole('button', { name: 'Guardar e insertar' });
+    const save = modal.getByRole('button', { name: 'Guardar', exact: true });
     await save.evaluate(el => el.click());
     assert.equal(await save.isEnabled(), true);
     await save.focus();
@@ -167,9 +167,9 @@ export async function verifyClinicalChecklists(context, original, worker) {
     const noteBeforeCopy = await ficha.locator('#observationEntrySection textarea').inputValue();
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(ficha.url()).origin });
     await openChecklistAction(ficha);
-    await modal.getByRole('combobox', { name: /^Plantilla/ }).selectOption('otro-control');
+    await modal.getByRole('combobox', { name: 'Plantilla', exact: true }).selectOption('otro-control');
     await modal.getByLabel('Detalle').fill('Prueba de copia');
-    await modal.getByRole('button', { name: 'Guardar en HHR y copiar texto' }).click();
+    await modal.getByRole('button', { name: 'Copiar texto', exact: true }).click();
     await modal.getByRole('status').filter({ hasText: 'texto copiado' }).waitFor();
     assert.match(await ficha.evaluate(() => navigator.clipboard.readText()), /Prueba de copia\nCódigo de verificación: PT-/);
     assert.equal(await ficha.locator('#observationEntrySection textarea').inputValue(), noteBeforeCopy);
@@ -189,7 +189,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     } catch (error) {
       throw new Error('La segunda ficha no abrió su pauta: ' + await modal.innerText({ timeout: 1500 }), { cause: error });
     }
-    await modal.getByRole('button', { name: 'Guardar e insertar' }).click();
+    await modal.getByRole('button', { name: 'Guardar', exact: true }).click();
     await modal.getByRole('button', { name: 'Insertar en evolución' }).waitFor();
     await modal.getByRole('button', { name: 'Cerrar' }).click();
     await portal.close();

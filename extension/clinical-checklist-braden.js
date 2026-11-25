@@ -193,11 +193,10 @@
     const summary = evaluateDraft(template, answers);
     const bar = make('div', '', 'hhr-braden-summary' + (summary.risk ? ' is-' + summary.risk : ''));
     if (!summary.complete) {
-      const pending = summary.totalDimensions - summary.answeredCount;
       bar.append(
         make(
           'p',
-          `Completa ${pending} ${pending === 1 ? 'dimensión' : 'dimensiones'} para calcular el riesgo y los cuidados (${summary.answeredCount}/${summary.totalDimensions}).`,
+          `${summary.answeredCount} de ${summary.totalDimensions} dimensiones completas`,
           'hhr-braden-pending'
         )
       );
@@ -223,8 +222,8 @@
     const previewText = buildDraftEvolutionText(template, answers, authorName);
     const previewWrap = make('div', '', 'hhr-braden-preview-wrap');
     const previewHead = make('div', '', 'hhr-braden-preview-head');
-    previewHead.append(make('span', 'Texto para evolución (vista previa)', 'hhr-braden-preview-title'));
-    const copyBtn = make('button', 'Copiar texto', 'hhr-braden-copy-inline');
+    previewHead.append(make('span', 'Borrador de evolución', 'hhr-braden-preview-title'));
+    const copyBtn = make('button', 'Copiar borrador', 'hhr-braden-copy-inline');
     copyBtn.type = 'button';
     copyBtn.addEventListener('click', () => onCopyText(previewText));
     previewHead.append(copyBtn);
