@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.176
+
+- Diagnóstico, signos vitales, reposo y régimen ocupan menos espacio. Cuando Alertas y Evolución comparten una fila, el texto de Evolución tiene más ancho.
+- Las filas y los iconos de fármacos e indicaciones libres son más compactos. Se conserva el tamaño de la letra y la zona de clic de los iconos es de 24 × 24 px.
+- Los apartados que Eloísa identifica como vacíos también se pliegan en la barra de navegación. «Ver vacías» permite recuperarlos.
+
 ## 0.48.175
 
 - Resumen distribuye las tarjetas por contenido. Un dato breve comparte línea con el título, los bloques intermedios pueden ocupar media fila y Evolución y las tablas disponen de todo el ancho.

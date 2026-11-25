@@ -1,6 +1,6 @@
 {
   "name": "@hhr/eloisa-extension",
-  "version": "0.48.175",
+  "version": "0.48.176",
   "private": true,
   "type": "module",
   "description": "Extensión Eloísa HHR: código, pruebas y releases independientes.",

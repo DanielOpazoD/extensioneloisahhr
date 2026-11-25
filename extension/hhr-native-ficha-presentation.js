@@ -10,6 +10,7 @@
     'indicaciones (regimen)': 'nutritionOrderEntrySection',
     evolucion: 'observationEntrySection', 'examen fisico': 'physicalExaminationEntry',
     procedimientos: 'procedureEntrySection', 'ordenes de atencion': 'procedureOrderEntrySection',
+    'dispositivos invasivos': 'invasiveDeviceEntry', 'solicitud de interconsulta': 'referralRequestEntrySection',
     'solicitud interconsulta': 'referralRequestEntrySection', 'indicaciones (reposo)': 'restEntrySection',
     'solicitudes de intervencion quirurgica': 'operationTheaterRequestEntrySection',
     'signos vitales': 'vitalSignsEntry',
@@ -84,6 +85,47 @@
       [data-hhr-ficha-summary-card] :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root):not(:is([role=dialog],dialog) *) {
         padding-block:6px !important; padding-inline:clamp(8px,1vw,14px) !important;
       }
+
+      /* Tighten the native reading surfaces, including the whitespace inside each record. */
+      :is(#diagnosisEntrySection,#vitalSignsEntry,#restEntrySection,#nutritionOrderEntrySection)[data-hhr-ficha-summary-card] {
+        padding:3px 8px !important; height:auto !important;
+        :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root):not(:is(dialog,[role=dialog]) *) {
+          padding:2px 4px !important; margin-block:0 !important; min-height:0 !important;
+        }
+        :is(h2,h3,h4,h5,h6,p,ul):not(:is(dialog,[role=dialog]) *) { margin-block:1px !important; }
+        .MuiStack-root:not(:is(dialog,[role=dialog]) *) { row-gap:3px !important; }
+      }
+      :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#vitalSignsEntry,#restEntrySection,#nutritionOrderEntrySection)[data-hhr-ficha-summary-card] {
+        :is(th,td,.MuiListItem-root):not(:is(dialog,[role=dialog]) *) {
+          height:auto !important; padding:3px 7px !important; line-height:1.3 !important;
+        }
+        tr:not(:is(dialog,[role=dialog]) *) { height:auto !important; }
+        :is(th,td,.MuiListItem-root) :is(p,.MuiListItemText-root):not(:is(dialog,[role=dialog]) *) {
+          margin-block:0 !important; line-height:1.3 !important;
+        }
+      }
+      :is(#medicationEntrySection,#freeIndicationEntrySection)[data-hhr-ficha-summary-card] {
+        .MuiIconButton-root:not(:is(dialog,[role=dialog]) *) {
+          inline-size:24px !important; block-size:24px !important; padding:4px !important;
+          svg { inline-size:15px !important; block-size:15px !important; }
+        }
+        :is(.MuiCardContent-root,.MuiCardActions-root):not(:is(dialog,[role=dialog]) *) { padding-block:3px !important; }
+      }
+      [data-hhr-ficha-reading-pair] {
+        display:flex !important; flex-flow:row wrap !important; align-items:start !important;
+        gap:8px !important; container-type:inline-size;
+      }
+      [data-hhr-ficha-reading-pair] > * {
+        flex:1 1 100% !important; min-width:0 !important; max-width:100% !important; box-sizing:border-box;
+      }
+      @container (min-width:44rem) {
+        [data-hhr-ficha-reading-pair] > :first-child,
+        [data-hhr-ficha-summary-grid] > #alertEntrySection:has(+ #observationEntrySection) {
+          flex:0 0 clamp(11rem,24%,20rem) !important;
+        }
+        [data-hhr-ficha-reading-pair] > :last-child,
+        [data-hhr-ficha-summary-grid] > #alertEntrySection + #observationEntrySection { flex:1 1 55% !important; }
+      }
     }
     @media print { .hhr-ficha-empty-toggle { display:none; } }
     @media(max-width:600px) { [data-hhr-ficha-primary] { padding:2px 4px !important; } [data-hhr-ficha-primary] [role="tab"] { padding:4px 9px !important; font-size:12px; } }
@@ -94,9 +136,9 @@
     const links = new Map();
     let primary = null, row = null, slot = null, style = null;
     let lastTarget = null, frame = 0, disposed = false;
-    const mark = (element, attribute) => {
+    const mark = (element, attribute, value = '') => {
       if (!element) return;
-      element.setAttribute(attribute, '');
+      element.setAttribute(attribute, value);
       if (!marked.has(element)) marked.set(element, new Set());
       marked.get(element).add(attribute);
     };
@@ -209,8 +251,7 @@
         slot?.style.removeProperty('--hhr-section-height'); lastTarget = null;
       }
       row = nextRow || null; slot = row?.parentElement || null;
-      summaryDensity.refresh(encounterId, row);
-      if (!row || !slot) return;
+      if (!row || !slot) { summaryDensity.clear(); return; }
       resizeObserver?.observe(slot);
       mark(row, 'data-hhr-ficha-sections'); mark(slot, 'data-hhr-ficha-section-slot');
       [...links.entries()].filter(([element]) => !row.contains(element)).forEach(([element, item]) => removeLink(element, item));
@@ -222,9 +263,10 @@
         const item = { id, attributes: Object.fromEntries(['role', 'tabindex', 'aria-current'].map(name => [name, element.getAttribute(name)])) };
         item.click = event => { event.preventDefault(); event.stopPropagation(); jump(item.id); };
         item.keydown = event => { if (event.key === 'Enter' || event.key === ' ') item.click(event); };
-        mark(element, 'data-hhr-ficha-link'); element.setAttribute('role', 'link'); element.tabIndex = 0;
+        mark(element, 'data-hhr-ficha-link', id); element.setAttribute('role', 'link'); element.tabIndex = 0;
         element.addEventListener('click', item.click); element.addEventListener('keydown', item.keydown); links.set(element, item);
       });
+      summaryDensity.refresh(encounterId, row);
       schedule();
     };
     window.addEventListener('scroll', schedule, true);
