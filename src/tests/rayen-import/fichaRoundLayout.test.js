@@ -107,3 +107,53 @@ it('uses the native care pair and falls back when a control, independent sibling
   expect(document.activeElement).toBe(field);
   expect(field.value).toBe('Texto en edición');
 });
+
+it('reads two instructions without sharing their bylines or dropping observations on refresh', () => {
+  const care = (id, name, byline, body) => slot(id,
+    '<div class="MuiCard-root"><div class="MuiCardHeader-root"><div class="MuiCardHeader-content">' +
+    '<span class="MuiCardHeader-title">' + name + '</span><span class="MuiCardHeader-subheader">' + byline +
+    '</span></div></div><div class="MuiCardContent-root">' + body + '</div></div>');
+  const rest = care('restEntrySection', 'Reposo', 'Firma A',
+    '<p><strong>Reposo:</strong> Relativo</p><p>Movilización asistida.</p>');
+  const diet = care('nutritionOrderEntrySection', 'Régimen', 'Firma B',
+    '<div class="MuiStack-root"><div class="MuiStack-root"><span>Régimen:</span> <span class="MuiChip-root">Común</span></div>' +
+    '<div class="MuiStack-root"><strong>Observación:</strong> Según tolerancia.</div></div>');
+  document.body.innerHTML = '<main><div class="MuiGrid-container">' +
+    slot('observationEntrySection', 'Evolución') + slot('shiftChangeEntrySection', '<textarea></textarea>') +
+    '<div class="MuiGrid-item"><div class="MuiGrid-container">' + rest + diet + '</div></div></div></main>';
+  const main = document.querySelector('main');
+  const original = main.innerHTML;
+  layout.refresh(main);
+  const rows = [...main.querySelectorAll('[data-hhr-round="care-row"]')];
+  expect(rows.map(row => row.querySelector('.MuiCardHeader-subheader').textContent)).toEqual(['Firma A', 'Firma B']);
+  expect(rows.map(row => row.querySelector('[data-hhr-round="care-observation"]').textContent))
+    .toEqual(['Movilización asistida.', 'Observación: Según tolerancia.']);
+  expect([...main.querySelectorAll('[data-hhr-round="care-label"]')].map(el => el.textContent))
+    .toEqual(['Reposo:', 'Régimen:', 'Observación:']);
+
+  const stamps = rows.map(row => row.querySelector('.MuiCardHeader-subheader'));
+  const fullStamp = 'Última actualización: 15-04-2026, 09:12:35, Médico Tomás Ejemplo';
+  for (const stamp of stamps) {
+    stamp.textContent = fullStamp;
+    stamp.dataset.hhrUpdateLabel = '15-04-2026 · 09:12 · Tomás Ejemplo';
+  }
+  layout.refresh(main);
+  expect(stamps.map(el => el.dataset.hhrRound)).toEqual(['same-stamp', 'shared-stamp']);
+  stamps[0].textContent = fullStamp.replace(':35,', ':59,');
+  layout.refresh(main);
+  expect(stamps.map(el => el.dataset.hhrRound)).toEqual([undefined, undefined]);
+  stamps.forEach((stamp, index) => {
+    stamp.textContent = index === 0 ? 'Firma A' : 'Firma B';
+    delete stamp.dataset.hhrUpdateLabel;
+  });
+
+  const prefix = rows[0].querySelector('strong');
+  prefix.textContent = 'Detalle especial:';
+  layout.refresh(main);
+  expect(main.querySelector('[data-hhr-round="care-row"],[data-hhr-round="care-label"]')).toBeNull();
+  prefix.textContent = 'Reposo:';
+  layout.refresh(main);
+  expect(main.querySelectorAll('[data-hhr-round="care-row"]')).toHaveLength(2);
+  layout.clear();
+  expect(main.innerHTML).toBe(original);
+});

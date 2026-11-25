@@ -61,10 +61,10 @@
       > :not(.MuiTouchRipple-root) { font-size:0 !important; }
       &::before {
         content:''; box-sizing:border-box; inline-size:14px; block-size:14px;
-        border:1.5px solid currentColor; border-radius:50%;
-        background:linear-gradient(currentColor,currentColor) 5px 2px / 1.5px 5px no-repeat,
-                   linear-gradient(currentColor,currentColor) 5px 6px / 4px 1.5px no-repeat;
+        background:currentColor;
+        mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4v5h5M3.7 8.5a9 9 0 1 1-.4 6.5M12 7v5l3 2'/%3E%3C/svg%3E") center / contain no-repeat;
       }
+      @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
       &:hover { background:#e6f1ee; }
       &:focus-visible { outline:2px solid #176f63; outline-offset:2px; }
     }
@@ -125,6 +125,40 @@
         [data-hhr-reading="vital-pam"] { grid-area:1 / 2; justify-self:end; }
         [data-hhr-reading="vital-time"] { grid-area:2 / 2; justify-self:end; }
       }
+    }
+  }
+}
+
+/* Native cards can have both a section inset and a content inset. Use one
+   shared left edge for the section title, clinical data and observations. */
+@media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
+    --hhr-round-inset:10px;
+    --hhr-round-heading:.9375rem;
+    > .MuiGrid-item:has(> :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection):only-child) {
+      padding-block-start:0 !important;
+    }
+    :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection):has(> .MuiCard-root:only-child) {
+      padding:0 !important; margin-block:0 !important;
+      > .MuiCard-root {
+        margin-block:0 !important; padding-inline:0 !important; border-radius:6px !important;
+        > :is(.MuiCardHeader-root,.MuiCardContent-root) { padding-inline:var(--hhr-round-inset) !important; }
+        > .MuiCardHeader-root .MuiCardHeader-title { font-size:var(--hhr-round-heading); line-height:1.35; font-weight:650; }
+        > .MuiCardHeader-root > .MuiCardHeader-content:has(> [data-hhr-update-label]) {
+          display:flex; align-items:baseline; flex-wrap:wrap; gap:1px 8px; min-width:0;
+        }
+      }
+    }
+    /* Reserve the trailing hit target even when the author wraps onto another line. */
+    #vitalSignsEntry > .MuiCard-root:has([data-hhr-reading="vital-history"]) > .MuiCardHeader-root {
+      padding-inline-end:calc(var(--hhr-round-inset) + 30px) !important;
+    }
+    [data-hhr-reading="vital-history"] {
+      border-color:transparent; color:#376c63;
+      &:hover { border-color:#bdd4cc; }
+    }
+    :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection) thead th {
+      background-color:#f2f6f4;
     }
   }
 }

@@ -10,7 +10,7 @@ una revisión comprobada; su copia de la extensión es una dependencia, no otra 
 
 ## Lectura de la ficha
 
-En escritorio, Evolución conserva dos tercios del ancho al abrir o plegar la nota. A su derecha quedan la entrega y las indicaciones de lectura de Reposo y Régimen. Los nueve signos habituales caben en una fila. La antigüedad se destaca cuando una medición es inequívocamente anterior a otra. [Comparar el diseño en portátil y escritorio](docs/visual/resumen-escritorio/README.md)
+En escritorio, Evolución conserva dos tercios del ancho al abrir o plegar la nota. La cabecera reúne el historial y las acciones de la nota. A su derecha, Entrega, Reposo y Régimen comparten una columna. En Alertas se lee primero el mensaje y debajo su procedencia. Los nueve signos habituales caben en una fila. La antigüedad se destaca cuando una medición es inequívocamente anterior a otra. [Comparar el diseño en portátil y escritorio](docs/visual/resumen-escritorio/README.md)
 
 En **Centro HHR → Ajustes → Vista de la ficha clínica** se elige entre Eloísa original (Desactivado), Compacto (Modo 1, predeterminado), Equilibrado (Modo 2, presentación de la 0.48.179) y Lectura (Modo 3, valores mayores y más interlineado). Chrome recuerda la elección en ese perfil y la aplica a sus pestañas de Eloísa. La densidad del cuadro Centro HHR se ajusta por separado. [Comparar los cuatro modos en la misma ficha de prueba](docs/visual/temas/README.md)
 

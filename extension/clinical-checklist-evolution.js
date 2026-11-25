@@ -88,7 +88,7 @@
       el =>
         visible(el) &&
         !el.closest('.MuiCardHeader-root,.MuiCardHeader-action') &&
-        !/^leer mas$/i.test(normalize(el.textContent))
+        !/^(?:leer|ver) (?:mas|menos)$/.test(normalize(el.textContent))
     );
     for (const btn of buttons) {
       const parent = btn.parentElement;

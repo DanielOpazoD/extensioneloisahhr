@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.185
+
+- En el resumen compacto de escritorio, Evolución reúne sus acciones en la cabecera. Pautas conserva su lugar al abrir o plegar la nota.
+- Reposo y Régimen se leen debajo de Entrega en dos filas. Cuando ambas indicaciones tienen exactamente la misma firma y hora de origen, la referencia aparece una sola vez.
+- Alertas muestra el mensaje primero. Signos vitales, Alertas y Fármacos comparten margen de lectura. El historial de signos se abre con el icono de reloj con flecha.
+
 ## 0.48.184
 
 - El Resumen compacto distingue «Agregar a entrega» de «Agregar alerta». Los rótulos de los campos permanecen visibles al escribir. «No reanimación» tiene su propia línea y muestra el estado del interruptor de Eloísa.

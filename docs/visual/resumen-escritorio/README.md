@@ -1,5 +1,23 @@
 # Resumen compacto en escritorio
 
+## Ficha compacta 0.48.185
+
+Comparación de la misma ficha ficticia, con el zoom predeterminado de Chromium. Las cifras indican la distancia desde el borde superior de la ventana hasta el final de la primera fila de Fármacos.
+
+| Escritorio y estado de la nota | 0.48.184 | 0.48.185 | Espacio recuperado |
+| --- | --- | --- | --- |
+| Portátil de 1280 × 800, nota contraída | [748 px](0.48.184/1280-contraida.png) | [653 px](0.48.185/1280-contraida.png) | 95 px |
+| Escritorio de 1440 × 900, nota expandida | [791 px](0.48.184/1440-expandida.png) | [693 px](0.48.185/1440-expandida.png) | 98 px |
+
+En las dos ventanas se verificó que las acciones de Evolución comparten una línea y que Tab las recorre en orden. El texto completo de la nota reaparece al expandirla. Las nueve mediciones conservan sus valores y su propia celda. Los títulos de Signos vitales, Alertas y Fármacos empiezan a 10 px de su borde. Reposo y Régimen comparten la firma solo cuando coinciden el texto completo de origen, el rol y la hora, incluidos los segundos.
+
+Para repetir la comparación, ejecutar desde la raíz de la extensión.
+
+```sh
+node scripts/capture-medical-round.mjs 025bde6 /tmp/ronda-anterior escritorio
+node scripts/capture-medical-round.mjs WORKTREE /tmp/ronda-actual escritorio
+```
+
 ## Distribución estable en 0.48.184
 
 | Ventana y estado | 0.48.183 | 0.48.184 | Ancho de Evolución |

@@ -49,5 +49,52 @@
       > button:hover { background:#e7f2ee; }
     }
   }
+  html[data-hhr-ficha-theme="compact"] #observationEntrySection:has(> [data-hhr-evo-toolbar]) {
+    container: hhr-evolution / inline-size;
+  }
+  @supports (reading-flow:grid-rows) {
+    @container hhr-evolution (min-width:32rem) {
+      /* The buttons keep their original React parents, handlers and popover anchors. */
+      html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar] {
+        display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+        reading-flow:grid-rows; gap:3px 4px; padding:4px 9px 7px;
+        > .MuiCardHeader-root {
+          grid-area:1 / 1; min-width:0; padding:0 !important; margin:0;
+          column-gap:8px;
+          > .MuiCardHeader-content { min-width:0; flex:1 1 10rem; overflow-wrap:anywhere; }
+        }
+        > .MuiCardContent-root, > .MuiCardContent-root > .MuiStack-root { display:contents; }
+        > .MuiCardContent-root > .MuiStack-root {
+          > :first-child { grid-column:1 / -1; min-width:0; margin:0 !important; }
+          > :last-child {
+            grid-area:1 / 2; align-self:center; margin:0 !important;
+            > .MuiStack-root { display:flex; flex-flow:row nowrap; align-items:center; gap:2px; }
+          }
+        }
+        .MuiCardHeader-action { display:inline-flex; align-items:center; gap:2px; margin:0; }
+        .hhr-evo-entry { border-color:transparent; }
+        .hhr-evo-entry:hover, .hhr-evo-entry:focus-visible { background:#edf5f2; }
+        :is(.MuiCardHeader-action > .MuiStack-root,
+            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button {
+          display:inline-grid; place-items:center; width:28px; height:28px; min-width:28px;
+          box-sizing:border-box; padding:0; margin:0; border-radius:5px;
+          font-size:16px; line-height:1;
+          svg { width:16px; height:16px; }
+          &:enabled:not([aria-pressed="true"]) { background:transparent; }
+          &:enabled:hover { background:#e8f2ef; }
+          &:focus-visible { outline:2px solid #086b63; outline-offset:1px; }
+        }
+        .hhr-checklist-launcher { margin:0; }
+        .hhr-checklist-trigger {
+          border-radius:5px;
+          &::before {
+            width:16px; height:16px; box-shadow:none; border-radius:0; background:currentColor;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2'/%3E%3Crect x='8' y='3' width='8' height='4' rx='1.5'/%3E%3Cpath d='m8.5 13 2.3 2.3 4.7-5'/%3E%3C/svg%3E") center / contain no-repeat;
+          }
+          @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
+        }
+      }
+    }
+  }
 }
 @media print { .hhr-evo-entry,.hhr-evo-filters { display:none !important; } }

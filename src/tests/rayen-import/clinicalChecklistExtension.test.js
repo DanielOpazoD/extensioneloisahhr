@@ -53,6 +53,7 @@ it('monta el disparador dentro de la tarjeta MUI de Evolución y abre el editor 
         </div>
         <div class="MuiCardContent-root">
           <p>Buenas condiciones. En regresión el cuadro...</p>
+          <div><button>Leer menos</button></div>
           <div class="evo-actions">
             <button type="button" id="icon-write"><svg></svg></button>
             <button type="button" id="icon-list"><svg></svg></button>
