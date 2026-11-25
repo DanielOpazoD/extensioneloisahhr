@@ -122,7 +122,7 @@
       for (const el of previous.keys()) if (!next.has(el)) el.removeAttribute(filtered);
       for (const [el, kind] of next) if (previous.get(el) !== kind) el.setAttribute(filtered, kind);
       previous = next;
-      const choices = ['', ...names];
+      const choices = timeline ? ['', ...names] : [];
       if (choices.length !== authorButtons.size || choices.some(name => !authorButtons.has(name))) {
         const buttons = new Map();
         for (const name of choices) {
@@ -138,8 +138,8 @@
         const pressed = String(name === selected);
         if (item.getAttribute('aria-pressed') !== pressed) item.setAttribute('aria-pressed', pressed);
       }
-      if (focusOnOpen) {
-        group.firstElementChild?.focus({ preventScroll: true });
+      if (focusOnOpen && group.firstElementChild) {
+        group.firstElementChild.focus({ preventScroll: true });
         focusOnOpen = false;
       }
       const status = !timeline ? 'Aún no hay registros de historial disponibles.' :

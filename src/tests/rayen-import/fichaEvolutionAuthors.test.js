@@ -105,3 +105,15 @@ it('hides only the recognized role and the date of an entirely filtered day, the
   document.querySelector('.hhr-evo-back').click();
   expect(timeline.querySelector('[data-hhr-evolution-filtered]')).toBeNull();
 });
+
+it('only presents the author choices once the native timeline has mounted', () => {
+  const timeline = document.querySelector('[data-hhr-history-timeline]');
+  timeline.remove();
+  document.querySelector('#evolution .hhr-evo-entry').click();
+  expect(actions()).toHaveLength(0);
+  document.querySelector('main').append(timeline);
+  reader.refresh('1');
+  expect(document.activeElement).toBe(actions()[0]);
+  expect(actions()[0].textContent).toBe('Todos');
+  expect(document.querySelector('#rx').hasAttribute('data-hhr-evolution-filtered')).toBe(true);
+});
