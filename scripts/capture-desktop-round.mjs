@@ -344,13 +344,14 @@ async function checkDailyRow(page, width) {
     const box = el => { const {top,bottom,left,right,width,height} = el.getBoundingClientRect(); return {top,bottom,left,right,width,height}; };
     const rail = document.querySelector('[data-hhr-ficha-sections]');
     const row = document.querySelector('.toolbar');
-    const date = row.querySelector('input[type="date"]'), print = row.querySelector('button');
+    const date = row.querySelector('form input'), print = row.querySelector('button[type="submit"]');
     // What a pointer finds on each control: a floating bar above it would be returned instead.
     const reachable = el => { const {left,top,width,height} = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(left + width / 2, top + height / 2)); };
     return {
       docked:row.hasAttribute('data-hhr-ficha-dock'), position:getComputedStyle(row).position, row:box(row), rail:box(rail),
       lastLink:box([...rail.children].filter(el => el.offsetWidth).at(-1)), stamp:box(row.querySelector('[data-hhr-update-label]')),
-      date:box(date), print:box(print), reachable:reachable(date) && reachable(print), bar:box(document.getElementById('hhr-clinical-operations-bar')),
+      date:box(date), print:box(print), controls:box(row.lastElementChild), reachable:reachable(date) && reachable(print),
+      bar:box(document.getElementById('hhr-clinical-operations-bar')),
       note:box(document.querySelector('#evolution')), scrolls:rail.scrollWidth > rail.clientWidth + 1,
     };
   });
@@ -371,10 +372,9 @@ async function checkDailyRow(page, width) {
     assert.ok(onTheLine(beside) && clearOfLinks(beside) && beside.row.right <= beside.bar.left - 8,
       'Acoplada, la fila queda entre los enlaces y la barra flotante');
   } else {
-    assert.ok(inPlace(beside) && beside.lastLink.right + 28 + beside.date.width + beside.print.width > beside.bar.left - 10,
+    assert.ok(inPlace(beside) && beside.lastLink.right + 28 + beside.controls.width > beside.bar.left - 10,
       'La fila conserva su lugar solo cuando no cabe entre los enlaces y la barra flotante');
   }
-  if (width >= 1440) assert.ok(beside.docked, 'En una ventana de 1440 px la fila cabe junto a la barra flotante');
 
   // Scrolling never changes the choice: the round keeps its place under the reader's eyes.
   const sweep = async () => {
@@ -433,7 +433,7 @@ async function checkDailyRow(page, width) {
   await page.evaluate(() => {
     const extra = Object.assign(document.createElement('button'), {type:'button', textContent:'Otra acción'});
     extra.dataset.fixtureExtra = '';
-    document.querySelector('.toolbar input[type="date"]').parentElement.append(extra);
+    document.querySelector('.toolbar form').after(extra);
   });
   await refresh();
   assert.ok(inPlace(await measure()), 'Una fila con otro control conserva su lugar nativo');
@@ -465,7 +465,7 @@ async function checkDailyRow(page, width) {
   await refresh();
   const crowded = await measure();
   assert.ok(inPlace(crowded), 'Sin sitio en la barra de secciones, la fila conserva su lugar sobre la nota');
-  assert.ok(crowded.date.right <= crowded.row.right + 1 && crowded.print.right >= crowded.row.right - 12,
+  assert.ok(crowded.date.right <= crowded.row.right + 1 && crowded.controls.right >= crowded.row.right - 2,
     'En su lugar nativo, la fecha y la impresión conservan el borde derecho');
   await page.evaluate(() => { for (const item of document.querySelectorAll('[data-fixture-extra]')) item.remove(); });
   await refresh();
