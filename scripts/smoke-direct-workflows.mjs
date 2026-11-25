@@ -328,9 +328,9 @@ export const verifyDirectWorkflows = async (page, worker) => {
     assert.deepEqual(await favorites.getByRole('link').allTextContents(), ['SysLab', 'MMRAD', 'Gmail']);
     assert.equal(await favorites.getByRole('textbox').count(), 0);
     assert.equal(await favorites.getByRole('button').count(), 0);
-    await root.getByLabel('Densidad', { exact: true }).selectOption('compact');
+    await root.getByLabel('Densidad de Centro HHR', { exact: true }).selectOption('compact');
     assert.equal(await root.getAttribute('data-density'), 'compact');
-    await root.getByLabel('Densidad', { exact: true }).selectOption('normal');
+    await root.getByLabel('Densidad de Centro HHR', { exact: true }).selectOption('normal');
     await nav('lab'); await labReady();
     assert.equal(await root.getByRole('checkbox', { name: 'CREATININA', exact: true }).isChecked(), true);
     assert.equal(await root.getByRole('textbox', { name: 'Otros exámenes' }).inputValue(), 'Borrador de prueba');
