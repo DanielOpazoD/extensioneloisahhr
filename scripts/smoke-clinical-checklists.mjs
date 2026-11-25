@@ -81,6 +81,30 @@ async function verifyTemplateDialogs(page, evolution, portal) {
   await evolution.evaluate(editor => { editor.stopTestListeners(); editor.querySelector('textarea').remove(); });
 }
 
+async function verifyOtherProfessional(context, url) {
+  const other = await context.newPage();
+  try {
+    await other.route('**/api/auth/session*', route => route.fulfill({
+      json: { ok: true, session: { token: 'fixture-other', facilityId: '1', healthCarePractitionerId: '82',
+        healthCarePractitionerRoleId: '3', role: 'Enfermera', fullName: 'Profesional B', user: 'test-b' } },
+    }));
+    await other.goto(url);
+    await other.evaluate(() => {
+      const section = document.createElement('section');
+      section.id = 'observationEntrySection';
+      section.innerHTML = '<h2>Evolución</h2><textarea></textarea>';
+      document.querySelector('main').append(section);
+    });
+    await openChecklistAction(other);
+    const modal = other.getByRole('dialog', { name: 'Aplicar pauta' });
+    await modal.getByLabel('Plantilla', { exact: true }).selectOption('otro-control');
+    await modal.getByRole('button', { name: 'Fijar pauta favorita' }).waitFor();
+    assert.equal(await modal.getByLabel('Detalle').inputValue(), '');
+  } finally {
+    await other.close();
+  }
+}
+
 export async function verifyClinicalChecklists(context, original, worker) {
   const ficha = await context.newPage();
   await ficha.goto('https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse/661733');
@@ -181,6 +205,8 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await modal.getByRole('button', { name: 'Fijar pauta favorita' }).click();
     await modal.getByRole('button', { name: 'Quitar pauta favorita' }).waitFor();
     await modal.getByRole('button', { name: 'Cerrar' }).click();
+    await verifyOtherProfessional(context, ficha.url());
+    await ficha.bringToFront();
     await openChecklistAction(ficha, 'Otra pauta sintética');
     assert.equal(await modal.locator('#hhr-checklist-template').inputValue(), 'otro-control');
     await modal.getByLabel('Detalle').fill('Prueba de copia');
