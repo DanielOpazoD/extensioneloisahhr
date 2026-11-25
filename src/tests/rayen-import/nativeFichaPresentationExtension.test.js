@@ -190,3 +190,22 @@ it('reclasifica cuadros al editar o agregar registros y solo cuenta filas visibl
   density.clear();
   expect(diagnosis.hasAttribute('data-hhr-ficha-summary-card')).toBe(false);
 });
+
+it('recupera la etiqueta de dispositivos al recibir datos y conserva las acciones junto a una tabla vacía', () => {
+  document.body.innerHTML = '<main><nav><div class="MuiGrid-item"><span data-hhr-ficha-link="invasiveDeviceEntry">Dispositivos invasivos</span></div></nav>' +
+    '<section id="invasiveDeviceEntry"><h2>Dispositivos invasivos</h2><table><thead><tr><th>Tipo</th></tr></thead>' +
+    '<tbody><tr><td>Sin dispositivos invasivos</td></tr></tbody></table></section></main>';
+  const density = globalThis.HhrFichaSummaryDensity.create(['invasiveDeviceEntry']);
+  const nav = document.querySelector('nav'), section = document.querySelector('section');
+  const folded = () => [section, nav.firstElementChild].map(el => el.hasAttribute('data-hhr-ficha-folded'));
+  density.refresh('1', nav);
+  expect(folded()).toEqual([true,true]);
+  section.insertAdjacentHTML('beforeend','<button>Registrar</button>');
+  density.refresh('1', nav);
+  expect(folded()).toEqual([false,false]);
+  section.lastElementChild.remove();
+  section.querySelector('td').textContent = 'Dispositivo de prueba';
+  density.refresh('1', nav);
+  expect(folded()).toEqual([false,false]);
+  density.clear();
+});

@@ -90,8 +90,11 @@ export const verifyNativeFicha = async page => {
       const showEmpty = page.getByRole('button', { name:'Ver vacías (1)' });
       await showEmpty.waitFor();
       assert.equal(await optional.isVisible(), false);
+      const procedureLink = page.locator('[data-hhr-ficha-link="procedureEntrySection"]');
+      assert.equal(await procedureLink.isVisible(), false);
       await showEmpty.press('Enter');
       assert.equal(await optional.isVisible(), true);
+      assert.equal(await procedureLink.isVisible(), true);
       await page.getByRole('button', { name:'Ocultar vacías (1)' }).click();
       await optional.evaluate(el => el.lastChild.textContent = 'Procedimiento de prueba');
       await optional.waitFor();
@@ -195,6 +198,36 @@ export const verifyNativeFicha = async page => {
     const text=page.locator('#medical-today [data-hhr-evolution-text]');
     assert.ok(await text.evaluate(e=>Math.abs(e.getBoundingClientRect().width-e.parentElement.getBoundingClientRect().width)<2));
   }
+  await page.getByRole('tab',{name:'Resumen',exact:true}).click();
+  await page.locator('#native-summary').evaluate(grid => {
+    const pair = document.createElement('div');
+    const left = document.createElement('div'), right = document.createElement('div');
+    grid.before(pair);
+    pair.append(left, right);
+    left.append(document.getElementById('alertEntrySection'));
+    right.append(document.getElementById('observationEntrySection'));
+    const table = grid.querySelector('#medicationEntrySection table');
+    table.innerHTML = '<tbody><tr><td style="padding:16px">Registro de prueba</td><td style="padding:16px"><button class="MuiIconButton-root" aria-label="Abrir" style="padding:12px"><svg width="24" height="24"></svg></button></td></tr></tbody>';
+    document.getElementById('freeIndicationEntrySection').append(table.cloneNode(true));
+  });
+  const pair = page.locator('[data-hhr-ficha-reading-pair]');
+  await pair.waitFor();
+  for (const width of [1366,390]) {
+    await page.setViewportSize({width,height:768});
+    const [alerts, evolution] = await pair.locator(':scope > *').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().toJSON()));
+    if (width > 1000) {
+      assert.ok(evolution.width > alerts.width * 2 && Math.abs(alerts.top - evolution.top) < 1);
+    } else {
+      assert.ok(evolution.top >= alerts.bottom && evolution.right <= width);
+    }
+    for (const id of ['medicationEntrySection','freeIndicationEntrySection']) {
+      const row = page.locator('#'+id+' tbody tr').first();
+      assert.ok((await row.boundingBox()).height <= 34);
+      assert.equal((await row.locator('.MuiIconButton-root').boundingBox()).height,24);
+      assert.equal((await row.locator('svg').boundingBox()).height,15);
+    }
+  }
+  await page.getByRole('tab',{name:'Historial',exact:true}).click();
   // Native filtering still controls the available dates and events.
   const toolbar=page.locator('#hhr-history-date-navigation');
   await page.locator('#native-timeline').evaluate((node,html)=>{node.innerHTML=html;},group('Hoy',event('only-procedure','Médico','Procedimientos')));
