@@ -297,7 +297,8 @@
       }
       pack();
     }
-    return {refresh, clear:() => refresh(null)};
+    // For a caller that changes which leading rows take a line, before the next paint.
+    return {refresh, clear:() => refresh(null), repack:pack};
   }
   globalThis.HhrFichaRoundLayout = Object.freeze({create});
 })();

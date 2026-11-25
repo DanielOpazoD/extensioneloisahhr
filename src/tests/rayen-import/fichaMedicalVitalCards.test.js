@@ -66,6 +66,21 @@ it('dice una vez la antigüedad común de las mediciones y conserva la de la med
   expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
   second.textContent = '2 horas';
 
+  // «1 hora» and «65 minutos» can describe the same moment, but they are not one label.
+  times().forEach((time, index) => { time.textContent = index % 2 ? '65 minutos' : '1 hora'; });
+  readings.refresh(main,true);
+  expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
+  times().forEach((time, index) => { time.textContent = index === 7 ? '4 horas' : '2 horas'; });
+
+  // A card the reader does not recognize as a measurement has no age of its own to share.
+  const unknown = document.createElement('div');
+  unknown.className = 'MuiPaper-root MuiCard-root tile';
+  unknown.innerHTML = '<div class="MuiCardContent-root"><p>Balance pendiente</p></div>';
+  main.querySelector('.vitals-grid').append(unknown);
+  readings.refresh(main,true);
+  expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
+  unknown.remove();
+
   readings.refresh(main,true);
   expect(heading.getAttribute('data-hhr-vital-shared')).toBe('2 h');
   for (const [native, label] of [['35 minutos','35 min'],['1 día','1 día'],['3 días','3 días']]) {
@@ -85,9 +100,11 @@ it('retira de la vista el rótulo de la columna de acciones y conserva su texto'
   document.body.innerHTML = '<main><section id="medicationEntrySection"><table><thead><tr><th>Indicación</th><th>Hora</th><th>Acciones</th></tr></thead>' +
     '<tbody><tr><td>Preparación</td><td>08:00</td><td><button>···</button></td></tr></tbody></table></section>' +
     '<section id="freeIndicationEntrySection"><table><thead><tr><th>Indicación</th><th><b>Acciones</b></th></tr></thead>' +
-    '<tbody><tr><td>Texto</td><td><button>···</button></td></tr></tbody></table></section></main>';
+    '<tbody><tr><td>Texto</td><td><button>···</button></td></tr></tbody></table></section>' +
+    '<section id="procedureOrderEntrySection"><h6>Órdenes de atención</h6><table><thead><tr><th>Profesional</th><th>Acciones</th></tr></thead>' +
+    '<tbody><tr><td>Kinesiólogo(a)</td><td><button>⎙</button></td></tr><tr><td>Otro</td><td>Pendiente <button>Ver</button></td></tr></tbody></table></section></main>';
   const main = document.querySelector('main');
-  const [, time, actions, , marked] = main.querySelectorAll('th');
+  const [, time, actions, , marked, , mixed] = main.querySelectorAll('th');
   const readings = globalThis.HhrFichaReadingSurfaces.create();
   readings.refresh(main,true);
   expect(actions.hasAttribute('data-hhr-actions-heading')).toBe(true);
@@ -95,6 +112,9 @@ it('retira de la vista el rótulo de la columna de acciones y conserva su texto'
   expect(time.hasAttribute('data-hhr-actions-heading')).toBe(false);
   // A heading with its own markup stays as Eloísa draws it.
   expect(marked.hasAttribute('data-hhr-actions-heading')).toBe(false);
+  // A column that also carries text keeps its visible name.
+  expect(mixed.textContent).toBe('Acciones');
+  expect(mixed.hasAttribute('data-hhr-actions-heading')).toBe(false);
   readings.refresh(main,false);
   expect(main.querySelector('[data-hhr-actions-heading]')).toBeNull();
   readings.refresh(main,true);

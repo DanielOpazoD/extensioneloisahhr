@@ -373,12 +373,41 @@ async function checkDailyRow(page, width) {
   }
   if (width >= 1440) assert.ok(beside.docked, 'En una ventana de 1440 px la fila cabe junto a la barra flotante');
 
-  // With the bar folded into its pill, the row fits in both windows.
+  // Scrolling never changes the choice: the round keeps its place under the reader's eyes.
+  const sweep = async () => {
+    const states = [];
+    await page.evaluate(() => { document.body.style.paddingBlockEnd = '600px'; });
+    for (const offset of [0, 40, 64, 100, 160, 240]) {
+      await page.evaluate(top => window.scrollTo(0, top), offset);
+      await settle();
+      const state = await measure();
+      states.push([state.docked, Math.round(state.note.top + offset), state.reachable]);
+    }
+    await page.evaluate(() => { document.body.style.removeProperty('padding-block-end'); window.scrollTo(0,0); });
+    await settle();
+    return states;
+  };
+  const besideScroll = await sweep();
+  // In its native place the row scrolls away with the summary, as it always did. Docked, it must stay reachable.
+  assert.ok(besideScroll.every(([docked, noteStart, reachable]) => docked === beside.docked &&
+    Math.abs(noteStart - besideScroll[0][1]) <= 1 && (reachable || !docked)),
+    'Al desplazar la ficha, la fila no cambia de lugar ni mueve la nota: ' + JSON.stringify(besideScroll));
+
+  // With the bar folded into its pill, the row fits in both windows. No other event announces the change.
   await floating.evaluate(el => { el.style.width = '36px'; });
-  await refresh();
+  await settle();
+  await settle();
   const folded = await measure();
   assert.ok(onTheLine(folded) && clearOfLinks(folded) && folded.reachable && folded.row.right <= folded.bar.left - 8,
     'Con la barra flotante plegada, la fecha se acopla también en la ventana menor');
+
+  // Unfolded again, the row is back where it was before the next paint settles.
+  await floating.evaluate(el => { el.style.removeProperty('width'); });
+  await settle();
+  await settle();
+  const unfolded = await measure();
+  assert.ok(unfolded.docked === beside.docked && Math.abs(unfolded.note.top - beside.note.top) < 1 &&
+    Math.abs(unfolded.row.top - beside.row.top) < 1, 'Al desplegar la barra flotante, la fila recupera su lugar anterior');
 
   // Without the bar on the line, the row takes the end of it.
   await floating.evaluate(el => { el.style.display = 'none'; });
@@ -396,6 +425,18 @@ async function checkDailyRow(page, width) {
     'Al desplazar el resumen, la fecha sigue a la vista con la barra de secciones');
   await page.evaluate(() => { document.body.style.removeProperty('padding-block-end'); window.scrollTo(0,0); });
   await settle();
+
+  // A row with one more control is not the recognized daily row.
+  await page.evaluate(() => {
+    const extra = Object.assign(document.createElement('button'), {type:'button', textContent:'Otra acción'});
+    extra.dataset.fixtureExtra = '';
+    document.querySelector('.toolbar input[type="date"]').parentElement.append(extra);
+  });
+  await refresh();
+  assert.ok(inPlace(await measure()), 'Una fila con otro control conserva su lugar nativo');
+  await page.evaluate(() => { document.querySelector('.toolbar [data-fixture-extra]').remove(); });
+  await refresh();
+  assert.ok(onTheLine(await measure()), 'Sin el control añadido, la fila diaria vuelve a la línea');
 
   // Another professional updated the summary after the note: that byline is new information.
   const stamp = page.locator('.toolbar > [data-hhr-update-label]');
@@ -427,6 +468,19 @@ async function checkDailyRow(page, width) {
   await refresh();
   const again = await measure();
   assert.ok(onTheLine(again) && Math.abs(again.note.top - docked.note.top) < 1, 'Al recuperar el sitio, la fila vuelve a la barra');
+
+  // Leaving the compact view returns the row, its styles and every «once» mark to Eloísa.
+  const leftovers = () => page.evaluate(() => ({
+    marks:document.querySelectorAll('[data-hhr-ficha-dock],[data-hhr-ficha-docked],[data-hhr-vital-shared],[data-hhr-update-repeat],[data-hhr-actions-heading]').length,
+    styles:document.querySelectorAll('[style*="--hhr-dock"]').length, position:getComputedStyle(document.querySelector('.toolbar')).position,
+  }));
+  assert.ok((await leftovers()).marks > 4, 'La vista compacta deja sus marcas mientras está activa');
+  await page.evaluate(() => { document.dispatchEvent(new CustomEvent('fixture-theme', {detail:'off'})); });
+  await settle();
+  assert.deepEqual(await leftovers(), {marks:0, styles:0, position:'static'}, 'Al desactivar la vista no queda rastro del acople ni de las marcas');
+  await page.evaluate(() => { document.dispatchEvent(new CustomEvent('fixture-theme', {detail:'compact'})); });
+  await refresh();
+  assert.ok(onTheLine(await measure()), 'Al volver a la vista compacta, la fila se acopla de nuevo');
 
   // Leave the floating bar as the extension draws it for the checks and captures that follow.
   await floating.evaluate(el => { el.style.removeProperty('width'); el.style.removeProperty('display'); });
@@ -484,7 +538,7 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
         shown:times.filter(shown).map(el => [getComputedStyle(el,'::after').content, getComputedStyle(el).fontWeight]),
         inHeading:heading.getBoundingClientRect().height < 30};
     });
-    assert.match(ages.heading, /hace 2 h/, 'La antigüedad común se lee una vez, junto al título de Signos vitales');
+    assert.match(ages.heading, /medidos hace 2 h/, 'La antigüedad común de las mediciones se lee una vez, junto al título de Signos vitales');
     assert.deepEqual(ages.shown.map(([label]) => label.split('"')[1]), ['4h'], 'Solo la medición anterior conserva su propia antigüedad');
     assert.ok(Number(ages.shown[0][1]) >= 700 && ages.inHeading);
     assert.deepEqual(ages.native, ['2 horas','2 horas','2 horas','2 horas','2 horas','2 horas','2 horas','4 horas','2 horas'],

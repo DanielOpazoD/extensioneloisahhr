@@ -263,6 +263,13 @@ it('does not reserve a line of the round for a leading row docked on the section
     desktop.refresh(main);
     expect(daily.dataset.hhrRound).toBe('before');
     expect(frame.style.getPropertyValue('--hhr-round-line')).toBe('2');
+    // The caller docks or releases the row and needs the lines right before the next paint.
+    daily.setAttribute('data-hhr-ficha-dock','');
+    desktop.repack();
+    expect(frame.style.getPropertyValue('--hhr-round-line')).toBe('1');
+    daily.removeAttribute('data-hhr-ficha-dock');
+    desktop.repack();
+    expect(frame.style.getPropertyValue('--hhr-round-line')).toBe('2');
     daily.setAttribute('data-hhr-ficha-dock','');
     desktop.clear();
     desktop.refresh(main);

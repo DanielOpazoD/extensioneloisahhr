@@ -248,7 +248,7 @@
     let primary = null, row = null, slot = null, style = null;
     let lastTarget = null, frame = 0, disposed = false;
     // The native date and print row, while it rides on the free end of the section links.
-    let dailyRow = null, docked = false, roundMain = null;
+    let dailyRow = null, docked = false;
     const desktop = globalThis.matchMedia?.('(min-width:1100px)');
     let noteEncounter = null, noteDisclosure = null, keepNoteFolded = false;
     const noteReader = globalThis.HhrFichaNoteReader.create();
@@ -294,7 +294,7 @@
       links.forEach((item, element) => removeLink(element, item));
       [...marked.keys()].forEach(unmark);
       undock();
-      dailyRow = null; roundMain = null;
+      dailyRow = null;
       if (row) ['top', 'left', 'width'].forEach(key => row.style.removeProperty('--hhr-section-' + key));
       slot?.style.removeProperty('--hhr-section-height');
       primary = null; row = null; slot = null; lastTarget = null;
@@ -328,16 +328,17 @@
         const linksEnd = items.at(-1).getBoundingClientRect().right;
         const width = parts.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) + 8 * (parts.length - 1);
         const rail = row.getBoundingClientRect();
-        // The floating Centro HHR bar can cover the end of this line. Stop short of it.
+        // The floating Centro HHR bar hangs over the end of this line. Stop short of it at every
+        // scroll position: the choice uses horizontal measures only, so scrolling never moves the round.
         const bar = document.getElementById('hhr-clinical-operations-bar');
         const cover = bar?.getClientRects().length ? bar.getBoundingClientRect() : null;
-        const covered = cover && cover.bottom > rail.top + 1 && cover.top < rail.bottom - 1 && cover.left < rail.right;
-        const limit = covered ? Math.min(rail.right, cover.left - 10) : rail.right;
+        const limit = cover && cover.left < rail.right && cover.right > rail.left ? Math.min(rail.right, cover.left - 10) : rail.right;
         return items[0].getBoundingClientRect().left >= rail.left - 1 && linksEnd + 28 + width <= limit ? {rail, width, limit} : null;
       };
       const room = fits();
       if (!room) {
-        if (docked) { undock(); round.refresh(roundMain); }
+        // Give the row its line back before the next paint.
+        if (docked) { undock(); round.repack(); }
         return;
       }
       const values = [room.rail.top + 'px', Math.max(0, document.documentElement.clientWidth - room.limit) + 'px', room.rail.height + 'px'];
@@ -351,7 +352,7 @@
       dailyRow.setAttribute('data-hhr-ficha-dock', '');
       row.setAttribute('data-hhr-ficha-docked', '');
       // The round no longer has a leading line of its own.
-      round.refresh(roundMain);
+      round.repack();
     }
     const positionRow = () => {
       const bounds = slot.getBoundingClientRect();
@@ -474,7 +475,6 @@
       // Collapsing or expanding the floating bar changes the room on this line.
       const floating = dailyRow && document.getElementById('hhr-clinical-operations-bar');
       if (floating) resizeObserver?.observe(floating);
-      roundMain = compact;
       [...links.entries()].filter(([element]) => !row.contains(element)).forEach(([element, item]) => removeLink(element, item));
       row.querySelectorAll('.MuiTypography-caption').forEach(element => {
         const id = SECTIONS[normalize(element.textContent)];

@@ -323,7 +323,7 @@
     [data-hhr-update-repeat="above"]::after { content:'↑ misma firma' / ''; }
     /* One age for the measurements taken together. An older one keeps its own. */
     #vitalSignsEntry [data-hhr-vital-shared]:not([data-hhr-vital-shared=""])::after {
-      content:'· hace ' attr(data-hhr-vital-shared) / ''; color:#516963; font:normal .75rem/1.35 system-ui,sans-serif;
+      content:'· medidos hace ' attr(data-hhr-vital-shared) / ''; color:#516963; font:normal .75rem/1.35 system-ui,sans-serif;
     }
     #vitalSignsEntry [data-hhr-reading="vital-time"][data-hhr-vital-shared=""] {
       position:absolute !important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);

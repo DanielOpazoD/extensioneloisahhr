@@ -17,11 +17,17 @@ it('dice una sola vez la firma de la fila diaria y la de las tarjetas de indicac
     '<div class="MuiCardHeader-content"><span class="MuiCardHeader-title">Sección</span>' +
     '<span class="MuiCardHeader-subheader">' + text + '</span></div></div></div></section>';
   const main = document.createElement('main');
-  main.innerHTML = '<div class="MuiGrid-item"><p class="MuiTypography-body2">Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo</p></div>' +
+  const dailyText = 'Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo';
+  main.innerHTML = '<div class="MuiGrid-item"><p class="MuiTypography-body2">' + dailyText + '</p></div>' +
+    '<div class="MuiGrid-item"><p class="MuiTypography-body2">' + dailyText + '</p><div><input type="date"><button>Imprimir</button></div></div>' +
     card('observationEntrySection', stamp, 'id="evolution"') + card('medicationEntrySection', stamp) +
     card('freeIndicationEntrySection', stamp) + card('procedureOrderEntrySection', stamp.replace('09:12:35', '09:12:36'));
   document.body.append(main);
-  const daily = main.querySelector('p');
+  // jsdom paints nothing: a card counts as painted unless its own styles hide it.
+  vi.spyOn(Element.prototype, 'getClientRects').mockImplementation(function () {
+    return this.closest('[style*="display: none"]') ? [] : [{width:10, height:10}];
+  });
+  const [decoy, daily] = main.querySelectorAll('p');
   const [note, medication, free, orders] = main.querySelectorAll('.MuiCardHeader-subheader');
   const repeat = el => el.getAttribute('data-hhr-update-repeat');
   orders.title = 'Nombre nativo';
@@ -29,6 +35,8 @@ it('dice una sola vez la firma de la fila diaria y la de las tarjetas de indicac
   try {
     labels.refresh(main);
     expect([daily, note, medication, free, orders].map(repeat)).toEqual(['note', null, null, 'above', null]);
+    // Only the row with the date field is the daily row.
+    expect(repeat(decoy)).toBeNull();
     expect(free.title).toBe('15-04-2026 · 09:12 · Tomás Ejemplo');
     expect(free.textContent).toBe(stamp);
     // A different second is a different act, even when the visible label is the same.
@@ -43,6 +51,27 @@ it('dice una sola vez la firma de la fila diaria y la de las tarjetas de indicac
     expect(orders.title).toBe('Nombre nativo');
     free.closest('section').removeAttribute('data-hhr-ficha-folded');
 
+    // A copy hidden by its own styles is not the card above either: its byline must not stand in
+    // for the one the reader sees.
+    const other = stamp.replace('Tomás', 'Elena');
+    free.textContent = other;
+    orders.textContent = other;
+    free.closest('section').style.display = 'none';
+    labels.refresh(main);
+    expect([medication, free, orders].map(repeat)).toEqual([null, null, null]);
+    free.closest('section').style.display = '';
+    labels.refresh(main);
+    expect([medication, free, orders].map(repeat)).toEqual([null, null, 'above']);
+    free.textContent = stamp;
+    orders.textContent = stamp;
+    // A hidden note does not make the daily byline redundant.
+    note.closest('section').style.display = 'none';
+    labels.refresh(main);
+    expect(repeat(daily)).toBeNull();
+    note.closest('section').style.display = '';
+    labels.refresh(main);
+    expect(repeat(daily)).toBe('note');
+
     // Another professional updated the summary after the note: the daily row keeps its byline.
     daily.textContent = 'Última actualización: 15-04-2026, 11:30 - Elena Ejemplo';
     medication.textContent = stamp.replace('Tomás', 'Elena');
@@ -54,6 +83,7 @@ it('dice una sola vez la firma de la fila diaria y la de las tarjetas de indicac
   } finally {
     labels.clear();
     main.remove();
+    vi.restoreAllMocks();
   }
 });
 

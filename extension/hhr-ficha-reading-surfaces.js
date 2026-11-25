@@ -182,7 +182,7 @@
     const heading = card.querySelector(':scope > .MuiCardHeader-root > .MuiCardHeader-content, :scope > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-content');
     const recent = ages.filter(age => !older.has(age.detail));
     const text = elapsed.get(recent[0]?.detail);
-    if (compact && heading && text && recent.length > 1 && ages.length === measured &&
+    if (compact && heading && text && recent.length > 1 && ages.length === measured && measured === tiles.length &&
         recent.every(age => elapsed.get(age.detail) === text)) {
       // «2 h», «35 min», «1 día»: the heading has room for a whole word where the tile had none.
       shared.set(heading, text.replace(/^(\d+)(.*)$/, (_, count, unit) => count + ' ' + (unit === 'd' ? (count === '1' ? 'día' : 'días') : unit)));
@@ -248,7 +248,15 @@
               if (kind === 'care-orders' && heading === 'indicaciones') next.set(th,'order-instructions');
               if (!/^(tiempo|hora|horario|acciones)$/.test(heading)) return;
               // The buttons below already say what the column is for.
-              if (compact && heading === 'acciones' && !th.childElementCount && !th.closest('dialog,[role=dialog],td')) actions.add(th);
+              if (compact && heading === 'acciones' && !th.childElementCount && !th.closest('dialog,[role=dialog],td') &&
+                  rows.length > 1 && rows.slice(1).every(row => {
+                    const cell = row.cells[index];
+                    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+                    while (walker.nextNode()) {
+                      if (walker.currentNode.textContent.trim() && !walker.currentNode.parentElement.closest('button,a[href],[role=button]')) return false;
+                    }
+                    return Boolean(cell.querySelector('button,a[href],[role=button]'));
+                  })) actions.add(th);
               for (const row of rows) {
                 const cell = row.cells[index];
                 next.set(cell,'narrow');

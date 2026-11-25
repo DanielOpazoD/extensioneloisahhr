@@ -9,7 +9,7 @@ La ficha ficticia incluye desde esta versión un doble de la barra flotante de C
 | 1280 × 800 | [Antes](0.48.191/antes/1280-ingreso.png) | [Después](0.48.191/despues/1280-ingreso.png) | [Con la barra flotante plegada](0.48.191/despues/1280-barra-plegada.png) |
 | 1440 × 900 | [Antes](0.48.191/antes/1440-ingreso.png) | [Después](0.48.191/despues/1440-ingreso.png) | [Indicaciones](0.48.191/despues/1440-indicaciones.png) |
 
-La fecha del resumen diario e «Imprimir» se acoplan a la línea de los enlaces de sección cuando caben entre el último enlace y la barra flotante. A 1440 px caben. A 1280 px caben con la barra flotante plegada; con la barra desplegada conservan su fila.
+La fecha del resumen diario e «Imprimir» se acoplan a la línea de los enlaces de sección cuando caben entre el último enlace y la barra flotante. A 1440 px caben. A 1280 px caben con la barra flotante plegada; con la barra desplegada conservan su fila. La elección usa solo medidas horizontales: al desplazar la ficha, la fila no cambia de lugar y la nota no se mueve.
 
 | Medida en px, 0.48.190 → 0.48.191 | 1280 × 800 | 1280 × 800, barra plegada | 1440 × 900 |
 | --- | ---: | ---: | ---: |
@@ -21,15 +21,15 @@ La fecha del resumen diario e «Imprimir» se acoplan a la línea de los enlaces
 Lo que deja de repetirse, en las tres situaciones:
 
 - La firma de la fila diaria, cuando es la misma de Evolución. Si otro profesional actualizó el resumen después, esa firma se lee antes de la fecha.
-- La firma de Indicaciones libres y de Órdenes de atención, cuando su texto nativo coincide, segundos incluidos, con el de la tarjeta anterior a la vista. Muestran «↑ misma firma» y la firma completa al pasar el cursor.
-- La antigüedad de las mediciones. Ocho de las nueve casillas decían «2h»; ahora el título dice «hace 2 h» y solo el hemoglucotest conserva su «4h». Si alguna medición no declara su antigüedad, o las recientes no coinciden, cada casilla conserva la suya.
-- El rótulo «Acciones» de las tablas de indicaciones. La columna pasa de 70 a 49 px y cede ese ancho al texto de las indicaciones.
+- La firma de Indicaciones libres y de Órdenes de atención, cuando su texto nativo coincide, segundos incluidos, con el de la tarjeta anterior a la vista. Una tarjeta plegada u oculta por sus propios estilos no cuenta como la anterior. Muestran «↑ misma firma» y la firma completa al pasar el cursor.
+- La antigüedad de las mediciones. Ocho de las nueve casillas decían «2h»; ahora el título dice «medidos hace 2 h» y solo el hemoglucotest conserva su «4h». Si alguna casilla no es una medición reconocida, no declara su antigüedad, o las recientes no coinciden, cada casilla conserva la suya.
+- El rótulo «Acciones» de las tablas de indicaciones, cuando la columna solo contiene botones. La columna pasa de 70 a 49 px y cede ese ancho al texto de las indicaciones.
 
 El texto nativo de cada firma, antigüedad y rótulo sigue en la página para los lectores de pantalla y la impresión.
 
 ### Verificación con teclado
 
-Acoplada o en su fila, la fecha es la parada siguiente a «Ver vacías». Después van «Imprimir» y «Ver evoluciones». La barra flotante nunca queda sobre la fecha ni sobre «Imprimir»: la prueba pide al navegador el elemento que hay en el centro de cada control. Con ocho enlaces de sección más, la fila vuelve a su lugar sobre la nota y regresa a la línea al recuperar el sitio.
+Acoplada o en su fila, la fecha es la parada siguiente a «Ver vacías». Después van «Imprimir» y «Ver evoluciones». La barra flotante nunca queda sobre la fecha ni sobre «Imprimir»: la prueba pide al navegador el elemento que hay en el centro de cada control. Con ocho enlaces de sección más, o con un control añadido a la fila, esta conserva su lugar sobre la nota y regresa a la línea al recuperar el sitio. Al desactivar la vista compacta no queda ninguna marca ni estilo del acople.
 
 ```sh
 node scripts/capture-medical-round.mjs v0.48.190 /tmp/repeticiones-anterior ingreso
