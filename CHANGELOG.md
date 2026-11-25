@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.168
+
+- Al abrir «Plantillas» en Evolución, los botones de pautas permanecen en el editor. Al aplicar una pauta, la cabecera conserva su posición durante la carga y Escape permite volver al borrador de Eloísa.
+
 ## 0.48.167
 
 - Rendimiento de sincronización con Eloísa: guarda el catálogo estático de códigos CIE-10 (`diagnosisClassify`) en `chrome.storage.local` durante 12 horas (sin datos de pacientes ni sesiones), evitando volver a descargarlo tras recargar pestañas, abrir nuevas pestañas, cambiar de token o reiniciar Chrome.
