@@ -279,9 +279,7 @@
       slot?.style.removeProperty('--hhr-section-height');
       primary = null; row = null; slot = null; lastTarget = null;
     };
-    const update = () => {
-      frame = 0;
-      if (!row?.isConnected || !primary?.isConnected) return;
+    const positionRow = () => {
       const bounds = slot.getBoundingClientRect();
       const header = primary.closest('.MuiAppBar-root') || primary;
       const top = Math.max(0, header.getBoundingClientRect().bottom);
@@ -289,6 +287,11 @@
       row.style.setProperty('--hhr-section-left', Math.max(0, bounds.left) + 'px');
       row.style.setProperty('--hhr-section-width', Math.max(0, Math.min(bounds.width, innerWidth - Math.max(0, bounds.left))) + 'px');
       slot.style.setProperty('--hhr-section-height', row.getBoundingClientRect().height + 4 + 'px');
+    };
+    const update = () => {
+      frame = 0;
+      if (!row?.isConnected || !primary?.isConnected) return;
+      positionRow();
       const boundary = row.getBoundingClientRect().bottom + 14;
       const targets = [...links.entries()].flatMap(([element, item]) => {
         const target = document.getElementById(item.id);
@@ -312,7 +315,9 @@
     const jump = id => {
       const target = document.getElementById(id);
       summaryDensity.reveal(target);
-      if (!target?.getClientRects().length || !row?.isConnected) return;
+      if (!target?.getClientRects().length || !row?.isConnected || !primary?.isConnected) return;
+      // A route or viewport change may have moved the header before the pending frame.
+      positionRow();
       let scroller = window;
       for (let parent = target.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
         if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY) && parent.scrollHeight > parent.clientHeight) { scroller = parent; break; }

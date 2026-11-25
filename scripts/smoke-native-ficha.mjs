@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { medicalRoundWithControls } from './medical-round-visual-fixture.mjs';
 import { verifyNursingSummary } from './smoke-nursing-summary-density.mjs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -123,6 +124,27 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.ok(summaryLayout.cardHeight < 180, 'La tarjeta breve sigue reservando altura vacía');
     assert.ok(Math.abs(summaryLayout.evolutionWidth-summaryLayout.width) < 2);
     await link.focus();
+    if (width === 707) {
+      // Resizing or returning from Historial can move the native header before our next animation frame.
+      const result = await link.evaluate(async el => {
+        const header = document.querySelector('.MuiAppBar-root');
+        const original = header.style.top;
+        try {
+          header.style.top = '18px';
+          window.dispatchEvent(new Event('resize'));
+          el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const node = document.getElementById(el.dataset.hhrFichaLink);
+          const rail = el.closest('[data-hhr-ficha-sections]');
+          return { gap:node.getBoundingClientRect().top-rail.getBoundingClientRect().bottom, active:el.getAttribute('aria-current') };
+        } finally {
+          header.style.top = original;
+          window.dispatchEvent(new Event('resize'));
+        }
+      });
+      assert.equal(result.active,'location');
+      assert.ok(Math.abs(result.gap - 12) < 2, 'El salto debe alinearse con el borde actual de la barra');
+    }
     await link.press('Enter');
     await page.waitForFunction(()=>document.querySelector('[data-hhr-ficha-link][aria-current="location"]')?.textContent==='Evolución');
     const geometry=await page.evaluate(()=>{
@@ -290,6 +312,25 @@ export const verifyNativeFicha = async (page, worker) => {
   await toolbar.waitFor({state:'detached'});
   assert.equal(await page.locator('[data-hhr-history-filtered]').count(),0);
   await verifyNursingSummary(page, worker);
+  // Load the native-shaped medical cards through the installed extension, including
+  // their text-node labels and empty React caption boxes.
+  const medical = await page.context().newPage();
+  try {
+    await medical.setViewportSize({width:1366,height:850});
+    await medical.route(page.url(), route => route.fulfill({contentType:'text/html',body:medicalRoundWithControls}));
+    await medical.goto(page.url());
+    const measurements = medical.locator('section#vitalSignsEntry [data-hhr-reading="vital-value"]');
+    await measurements.nth(8).waitFor();
+    assert.equal(await measurements.count(),9);
+    const tops = await medical.locator('.vitals-grid > *').evaluateAll(tiles =>
+      tiles.map(tile => Math.round(tile.getBoundingClientRect().top)));
+    assert.equal(new Set(tops).size,1);
+    assert.equal(await medical.locator('#estimatedDischargeSection').isVisible(),false);
+    await medical.getByRole('button',{name:/ver historial completo/i}).press('Enter');
+    await medical.getByRole('dialog',{name:'Historial de signos'}).waitFor();
+  } finally {
+    await medical.close();
+  }
   await page.locator('main').evaluate((main,html)=>{main.innerHTML=html;main.style.removeProperty('background');},original);
   await page.setViewportSize(viewport);await page.evaluate(()=>window.scrollTo(0,0));
 };

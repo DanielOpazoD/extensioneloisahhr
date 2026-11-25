@@ -45,8 +45,39 @@
 /* The medical summary nests MUI cards inside a flex row. Treat the readings as a
    single band; each number, its timestamp and its source alert colour stay together. */
 @media screen {
-  html[data-hhr-ficha-theme="compact"] [data-hhr-reading="vital-grid"] {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-reading="vitals"] {
+    --hhr-ficha-tile-y:1px;
+    > .MuiCardHeader-root > .MuiCardHeader-content {
+      display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px;
+    }
+    [data-hhr-reading="vital-history"] {
+      display:inline-flex; align-items:center; justify-content:center; flex:none;
+      box-sizing:border-box; inline-size:26px; min-width:26px !important; block-size:26px; min-height:26px;
+      padding:0 !important; margin:0; font-size:0 !important; line-height:1;
+      color:#23685e; background:transparent; border:1px solid #c9dcd5; border-radius:5px;
+      > :not(.MuiTouchRipple-root) { font-size:0 !important; }
+      &::before {
+        content:''; box-sizing:border-box; inline-size:14px; block-size:14px;
+        border:1.5px solid currentColor; border-radius:50%;
+        background:linear-gradient(currentColor,currentColor) 5px 2px / 1.5px 5px no-repeat,
+                   linear-gradient(currentColor,currentColor) 5px 6px / 4px 1.5px no-repeat;
+      }
+      &:hover { background:#e6f1ee; }
+      &:focus-visible { outline:2px solid #176f63; outline-offset:2px; }
+    }
+    /* Put the native action in the heading only when the heading can reserve its space. */
+    &:has(> .MuiCardHeader-root):has([data-hhr-reading="vital-history"]) {
+      position:relative;
+      > .MuiCardHeader-root { padding-inline-end:34px !important; min-height:26px !important; }
+      [data-hhr-reading="vital-history"] { position:absolute; inset-block-start:1px; inset-inline-end:6px; }
+    }
+  }
+  html[data-hhr-ficha-theme="compact"] :is(#vitalSignsEntry,[data-hhr-reading="vitals"]) [data-hhr-reading="vital-grid"] {
     gap:2px !important;
+    :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-label"]) {
+      padding:2px 5px !important; align-items:center; row-gap:0 !important;
+      > [data-hhr-reading] { margin-block:0 !important; }
+    }
     [data-hhr-reading="vital-tile"] {
       border:0 !important; border-inline-start:2px solid #bfd8d1 !important; border-radius:0 !important;
       background:#f3f7f5; box-shadow:none !important;
