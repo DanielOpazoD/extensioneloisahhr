@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../extension/hhr-history-date-navigation.js';
+import '../../../extension/hhr-ficha-summary-density.js';
 import '../../../extension/hhr-native-ficha-presentation.js';
 
 const event = (role, category, note = '') => `<div class="MuiCard-root">
@@ -136,4 +137,32 @@ describe('Native ficha presentation', () => {
     expect(link.hasAttribute('role')).toBe(false); expect(link.hasAttribute('tabindex')).toBe(false);
     expect(document.querySelector('textarea').value).toBe('Trabajo en curso');
   });
+});
+
+it('pliega solo vacíos explícitos, permite revelarlos y recupera los datos que llegan después', () => {
+  const ids = ['procedureEntrySection', 'diagnosisTestEntrySection', 'referralRequestEntrySection',
+    'operationTheaterRequestEntrySection', 'alertEntrySection', 'procedureOrderEntrySection'];
+  const bodies = ['Sin registros', 'Sin registros<button>Solicitar</button>', '<div class="MuiSkeleton-root"></div>',
+    'Sin registros<p>Registro clínico</p>', 'Sin registros', 'Error al cargar'];
+  document.body.innerHTML = '<main><nav></nav><div id="grid">' + ids.map((id, i) =>
+    '<section id="'+id+'"><h2>Sección</h2><div>'+bodies[i]+'</div></section>').join('')+'</div></main>';
+  const density = globalThis.HhrFichaSummaryDensity.create(ids);
+  const row = document.querySelector('nav'), section = document.getElementById(ids[0]);
+  const refresh = () => density.refresh('1', row);
+  refresh(); refresh();
+  expect(document.querySelectorAll('[data-hhr-ficha-folded]')).toHaveLength(1);
+  expect(section.hasAttribute('data-hhr-ficha-folded')).toBe(true);
+  expect(row.children).toHaveLength(1);
+  row.firstChild.click();
+  expect(row.firstChild.getAttribute('aria-expanded')).toBe('true');
+  expect(section.hasAttribute('data-hhr-ficha-folded')).toBe(false);
+  density.refresh('2', row);
+  expect(section.hasAttribute('data-hhr-ficha-folded')).toBe(true);
+  section.lastChild.textContent = 'Nuevo procedimiento';
+  refresh();
+  expect(section.hasAttribute('data-hhr-ficha-folded')).toBe(false);
+  expect(row.children).toHaveLength(0);
+  expect(document.querySelector('#grid').hasAttribute('data-hhr-ficha-summary-grid')).toBe(true);
+  density.clear();
+  expect(document.querySelector('[data-hhr-ficha-summary-grid]')).toBeNull();
 });

@@ -12,6 +12,7 @@ const group = (date, cards) => `<div class="MuiBox-root"><div class="MuiStack-ro
 const fixture = `
   <style>
     main { font:14px/1.5 system-ui,sans-serif; }
+    .MuiCardHeader-root,.MuiCardContent-root { padding:16px; }
     .MuiCardHeader-root { display:flex;gap:12px;align-items:center;margin-bottom:10px; }
     .MuiCardHeader-subheader { font-size:12px;color:#526762; }
     .MuiCardContent-root > p { color:#0b6e66; }
@@ -78,6 +79,28 @@ export const verifyNativeFicha = async page => {
     await page.getByRole('tab',{name:'Resumen',exact:true}).click();
     await page.locator('[data-hhr-ficha-sections]').waitFor();
     const link=page.locator('[data-hhr-ficha-link]').filter({hasText:'Evolución'});
+    if (width === 1280) {
+      const optional = page.locator('#procedureEntrySection');
+      await optional.evaluate(el => el.lastChild.textContent = 'Sin registros');
+      const showEmpty = page.getByRole('button', { name:'Ver vacías (1)' });
+      await showEmpty.waitFor();
+      assert.equal(await optional.isVisible(), false);
+      await showEmpty.press('Enter');
+      assert.equal(await optional.isVisible(), true);
+      await page.getByRole('button', { name:'Ocultar vacías (1)' }).click();
+      await optional.evaluate(el => el.lastChild.textContent = 'Procedimiento de prueba');
+      await optional.waitFor();
+      await showEmpty.waitFor({state:'detached'});
+    }
+    const summaryLayout = await page.evaluate(() => {
+      const grid = document.querySelector('[data-hhr-ficha-summary-grid]');
+      const section = document.getElementById('observationEntrySection');
+      return { columns:getComputedStyle(grid).gridTemplateColumns.split(' ').length, width:grid.clientWidth,
+        evolutionWidth:section.getBoundingClientRect().width, cardHeight:document.getElementById('diagnosisEntrySection').offsetHeight };
+    });
+    assert.equal(summaryLayout.columns, width >= 1100 ? 2 : 1);
+    assert.ok(summaryLayout.cardHeight < 180, 'La tarjeta breve sigue reservando altura vacía');
+    assert.ok(Math.abs(summaryLayout.evolutionWidth-summaryLayout.width) < 2);
     await link.focus();
     await link.press('Enter');
     await page.waitForFunction(()=>document.querySelector('[data-hhr-ficha-link][aria-current="location"]')?.textContent==='Evolución');

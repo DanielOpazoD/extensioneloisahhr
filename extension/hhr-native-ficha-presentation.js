@@ -29,9 +29,33 @@
     [data-hhr-evolution-block] > .MuiBox-root { max-width:100%; overflow-wrap:anywhere; }
     [data-hhr-evolution-row] { flex-wrap:wrap !important; }
     [data-hhr-evolution-text] { flex:1 1 100% !important; width:100% !important; max-width:100% !important; min-width:0; overflow-wrap:anywhere; }
+    @media screen {
+      [data-hhr-ficha-sections] { padding-block:3px !important; gap:3px; }
+      [data-hhr-ficha-link] { padding:3px 8px; }
+      .hhr-ficha-empty-toggle { flex:none; align-self:center; min-height:26px; padding:2px 9px; border:1px solid #cdded8;
+        border-radius:6px; background:white; color:#325c53; font:inherit; font-size:12px; cursor:pointer; }
+      .hhr-ficha-empty-toggle:focus-visible { outline:2px solid #0b6e66; }
+      [data-hhr-ficha-folded],.MuiGrid-item:has(> [data-hhr-ficha-folded]:only-child) { display:none !important; }
+      [data-hhr-ficha-summary-grid] { display:grid !important; grid-template-columns:repeat(auto-fit,minmax(min(100%,32rem),1fr)) !important;
+        align-items:start; gap:8px !important; width:100%; margin:0 !important; box-sizing:border-box; }
+      [data-hhr-ficha-summary-grid] > .MuiGrid-item { width:100% !important; max-width:none !important; padding:0 !important; }
+      [data-hhr-ficha-summary-grid] > :is(#observationEntrySection,:has(> #observationEntrySection)) { grid-column:1 / -1; }
+      [data-hhr-ficha-summary-card] {
+        min-inline-size:0; min-block-size:0 !important; align-self:start;
+      }
+      [data-hhr-ficha-summary-card] > :is(h2,h3,h4) { margin-block:0 5px; }
+      [data-hhr-ficha-summary-card] > :is(.MuiCard-root,.MuiPaper-root) {
+        min-block-size:0 !important; height:auto !important;
+      }
+      [data-hhr-ficha-summary-card] :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root):not(:is([role=dialog],dialog) *) {
+        padding-block:6px !important; padding-inline:clamp(8px,1vw,14px) !important;
+      }
+    }
+    @media print { .hhr-ficha-empty-toggle { display:none; } }
     @media(max-width:600px) { [data-hhr-ficha-primary] { padding:6px 4px !important; } [data-hhr-ficha-primary] [role="tab"] { padding:7px 9px !important; font-size:12px; } }
   `;
   const create = () => {
+    const summaryDensity = globalThis.HhrFichaSummaryDensity.create(Object.values(SECTIONS));
     const marked = new Map();
     const links = new Map();
     let primary = null, row = null, slot = null, style = null;
@@ -56,6 +80,7 @@
       unmark(element); links.delete(element);
     };
     const reset = () => {
+      summaryDensity.clear();
       resizeObserver?.disconnect();
       links.forEach((item, element) => removeLink(element, item));
       [...marked.keys()].forEach(unmark);
@@ -90,6 +115,7 @@
     const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
     const jump = id => {
       const target = document.getElementById(id);
+      summaryDensity.reveal(target);
       if (!target?.getClientRects().length || !row?.isConnected) return;
       lastTarget = target;
       let scroller = window;
@@ -144,6 +170,7 @@
         slot?.style.removeProperty('--hhr-section-height'); lastTarget = null;
       }
       row = nextRow || null; slot = row?.parentElement || null;
+      summaryDensity.refresh(encounterId, row);
       if (!row || !slot) return;
       resizeObserver?.observe(slot);
       mark(row, 'data-hhr-ficha-sections'); mark(slot, 'data-hhr-ficha-section-slot');

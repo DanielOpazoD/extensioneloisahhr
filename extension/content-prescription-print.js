@@ -808,6 +808,10 @@
   const observer = new MutationObserver(records => {
     if (!active || !uiLifecycle.owns()) return;
     const pathname = window.location.pathname;
+    if (records.every(record => record.attributeName === 'aria-busy')) {
+      if (document.querySelector('[data-hhr-ficha-sections]')) scheduleEnsureButton();
+      return;
+    }
     worklistPresentation?.refresh(pathname, records);
     const bar = document.getElementById(OPERATIONS_BAR_ID);
     if (bar && (worklistPresentation?.isWorklist(pathname) || bar.hasAttribute('data-hhr-ops-awaiting-layout'))) {
@@ -816,12 +820,13 @@
     if (records.some(record => {
       if (record.type !== 'characterData') return true;
       const label = record.target.parentElement;
+      if (label?.closest('[data-hhr-ficha-summary-card]')) return true;
       return label?.matches('.MuiChip-root > .MuiChip-label') &&
         (label.textContent.trim() === 'Nuevo' || label.parentElement.hasAttribute('data-hhr-history-new'));
     })) scheduleEnsureButton();
   });
   observer.observe(document.documentElement, {
-    childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-selected', 'hidden'],
+    childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-selected', 'hidden', 'aria-busy'],
   });
   window.addEventListener('popstate', scheduleEnsureButton);
   window.addEventListener('hashchange', scheduleEnsureButton);

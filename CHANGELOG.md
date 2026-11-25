@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.174
+
+- En Resumen, las tarjetas crecen con el contenido y las cuadrículas se adaptan al ancho disponible. Evolución puede ocupar la fila completa.
+- «Ver vacías» recupera los apartados de solicitudes y procedimientos que Eloísa indica como vacíos. Al llegar registros, el apartado vuelve a mostrarse.
+- En Historial se reduce el espacio entre los eventos, sus encabezados y el texto.
+
 ## 0.48.173
 
 - En Evolución, «Continuar pauta» recupera el borrador de la ficha abierta. Cada profesional puede fijar su pauta favorita con la estrella del selector.
