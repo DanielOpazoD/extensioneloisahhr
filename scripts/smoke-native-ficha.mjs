@@ -201,11 +201,14 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.equal(await date.locator('option').count(),3);
     if (width === 1366) {
       const divider = page.locator('#native-timeline > .MuiBox-root').first().locator(':scope > :first-child');
+      // In the compact view the day heads its surface and scrolls with it: Eloísa dates only the first
+      // box of a day, so a pinned date would leave with that box. The date selector keeps the day in view.
       await page.evaluate(() => window.scrollBy(0,180));
       await page.waitForFunction(() => {
-        const divider=document.querySelector('#native-timeline > .MuiBox-root > :first-child').getBoundingClientRect();
+        const divider=document.querySelector('#native-timeline > .MuiBox-root > :first-child');
         const rail=document.querySelector('[data-hhr-history-rail]').getBoundingClientRect();
-        return Math.abs(divider.top-rail.bottom)<2;
+        return getComputedStyle(divider).position==='static' && divider.getBoundingClientRect().top<rail.bottom-2 &&
+          document.querySelector('#hhr-history-date-navigation').shadowRoot.querySelector('select').value==='0';
       });
       assert.equal(await divider.innerText(),'Hoy');
       await page.evaluate(() => window.scrollTo(0,0));

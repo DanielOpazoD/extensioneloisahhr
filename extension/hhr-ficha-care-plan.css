@@ -6,10 +6,13 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-plan="view"] {
     gap:8px;
     > * { margin-block:0 !important; }
-    /* A switch of this view filters what is listed: it reads as a note, at four fifths of its size. */
-    .MuiSwitch-root { zoom:.8; }
-    :is(.MuiFormControlLabel-label, .MuiFormControlLabel-root > .MuiTypography-root) {
-      color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans);
+    /* A switch of this view filters what is listed: it reads as a note, at four fifths of its size.
+       A card that was not recognized keeps its own. */
+    :is(& > :not(.MuiCard-root), [data-hhr-plan="card"] > .MuiCardHeader-root) {
+      .MuiSwitch-root { zoom:.8; }
+      :is(.MuiFormControlLabel-label, .MuiFormControlLabel-root > .MuiTypography-root) {
+        color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans);
+      }
     }
   }
   html[data-hhr-ficha-theme="compact"] [data-hhr-plan="card"] {

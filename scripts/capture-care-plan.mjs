@@ -20,6 +20,7 @@ const read = page => page.evaluate(() => {
     return {
       mark:card.getAttribute('data-hhr-plan'), tools:tools.getAttribute('data-hhr-plan'), empty:table.hasAttribute('data-hhr-plan-empty'),
       box:box(card), header:box(header), headerPadding:getComputedStyle(header).paddingTop, toolsBox:box(tools.querySelector('.tools')),
+      filter:{height:Math.round(box(header.querySelector('.MuiSwitch-root')).height), size:getComputedStyle(header.querySelector('.MuiFormControlLabel-label')).fontSize},
       title:{text:header.querySelector('.MuiCardHeader-title').textContent, size:getComputedStyle(header.querySelector('.MuiCardHeader-title')).fontSize},
       buttons:[...tools.querySelectorAll('button')].map(button => ({
         name:button.querySelector('svg').getAttribute('aria-label'), label:button.getAttribute('aria-label'), title:button.getAttribute('title'),
@@ -61,6 +62,7 @@ async function verifyPlan(page, width, native) {
     // Title, switch and tools share the first line of the card.
     assert.ok(card.header.height <= 36, 'La cabecera es una línea: ' + card.header.height);
     assert.equal(card.title.size, '15px');
+    assert.deepEqual([card.filter.height < before.filter.height, card.filter.size], [true, '12px'], 'El interruptor de la tarjeta se lee como una nota');
     assert.ok(card.toolsBox.top >= card.header.top - 1 && card.toolsBox.bottom <= card.header.bottom + 1 && card.toolsBox.left >= card.header.right - 1,
       'Las herramientas cierran la línea del título');
     assert.ok(card.buttons.every(button => button.box.height === 28 && button.icon === 18 && button.box.right <= card.box.right), 'Las herramientas miden lo que un control de la ficha');
@@ -122,8 +124,8 @@ async function verifyPlan(page, width, native) {
   await first.locator('th p').first().evaluate(heading => { heading.textContent = 'Prestación'; });
   await refresh(page);
   const unknown = (await read(page)).cards[0];
-  assert.deepEqual([unknown.mark, unknown.tools, unknown.headerPadding, unknown.title.size, unknown.buttons.map(button => button.title)],
-    [null, null, native.cards[0].headerPadding, native.cards[0].title.size, [null, null, null]], 'Una tabla que no es de programación no se toca');
+  assert.deepEqual([unknown.mark, unknown.tools, unknown.headerPadding, unknown.title.size, unknown.filter, unknown.buttons.map(button => button.title)],
+    [null, null, native.cards[0].headerPadding, native.cards[0].title.size, native.cards[0].filter, [null, null, null]], 'Una tabla que no es de programación no se toca');
   await first.locator('th p').first().evaluate(heading => { heading.textContent = 'Indicación'; });
   // A tool with a tooltip of its own keeps it.
   await first.locator('.tools button').first().evaluate(button => { button.title = 'Ayuda nativa'; });
