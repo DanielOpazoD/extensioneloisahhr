@@ -96,7 +96,6 @@
     session = null;
     close();
     refresh();
-    launcher?.trigger.focus({ preventScroll: true });
     return true;
   }
 
@@ -241,10 +240,45 @@
     );
   }
 
+  function hasDraft(state) {
+    return Object.entries(state.answers).some(([id, answer]) =>
+      (answer || '') !== (state.initialAnswers?.[id] || '')
+    );
+  }
+
+  const favoriteKey = actor => 'hhr-checklist-favorite:' + actor;
+  const readFavorite = async actor => {
+    const key = favoriteKey(actor);
+    return (await chrome.storage.local.get(key))[key];
+  };
+
+  async function readMenu(episode) {
+    const identity = await chrome.runtime.sendMessage({
+      type: 'RAYEN_CLINICAL_CHECKLIST', encId: episode, request: { action: 'verify' },
+    });
+    if (identity?.episode !== episode || !identity.actor || route() !== episode) return {};
+    const favorite = await readFavorite(identity.actor);
+    const own = session?.episode === episode && session.catalog?.actor === identity.actor &&
+      session.catalog.document === identity.document;
+    return { favorite, saved: own && session.record, draft: own && hasDraft(session) };
+  }
+
+  function availableTemplate(template) {
+    if (!template?.title?.trim() || !template.fields?.length) return false;
+    if (['vigilancia-cirugias', 'supervision-tacto'].includes(template.id)) return false;
+    // This editable placeholder can return once the hospital replaces its test field.
+    return !(template.id === 'p-9470a3d4-a989-4199-b822-eef1e78fe60b' &&
+      template.fields.some(field => field.label === 'asdasdasd'));
+  }
+
   async function syncCatalog(state, surface) {
     status('Sincronizando plantillas desde HHR…');
     const catalog = await call(state, { action: 'templates' });
     if (dialog !== surface) return false;
+    catalog.templates = catalog.templates.filter(availableTemplate);
+    const favorite = await readFavorite(catalog.actor);
+    if (dialog !== surface || !current(state)) return false;
+    state.favorite = catalog.templates.find(t => t.id === favorite?.id);
     const previous = state.catalog;
     if (previous && (previous.uid !== catalog.uid || previous.actor !== catalog.actor || previous.document !== catalog.document)) {
       session = null;
@@ -277,6 +311,7 @@
   function initialTemplateId(state) {
     const list = state.catalog.templates;
     if (state.templateId && list.some(t => t.id === state.templateId)) return state.templateId;
+    if (state.preferredMode?.templateId && state.favorite?.id === state.preferredMode.templateId) return state.favorite.id;
     if (state.preferredMode === 'braden' && braden) {
       const suggested = braden.suggestBradenTemplate(list, state.catalog);
       if (suggested.templateId) return suggested.templateId;
@@ -330,6 +365,7 @@
     label.htmlFor = select.id;
     for (const item of state.catalog.templates) select.add(new Option(item.title, item.id));
     if (!select.options.length) {
+      form.replaceChildren();
       status('HHR no tiene plantillas disponibles.');
       return;
     }
@@ -356,7 +392,33 @@
     const caption = make('div');
     caption.className = 'hhr-checklist-template-caption';
     caption.append(label, versionBadge);
-    templateRow.append(caption, select, syncBtn);
+    const pin = button('☆', async () => {
+      if (!current(state) || state.busy) return;
+      const template = state.catalog.templates.find(t => t.id === select.value);
+      const next = state.favorite?.id === template.id ? null : { id: template.id, title: template.title };
+      pin.disabled = true;
+      try {
+        await verifyChart(state);
+        if (!current(state) || !pin.isConnected) return;
+        const key = favoriteKey(state.catalog.actor);
+        if (next) await chrome.storage.local.set({ [key]: next });
+        else await chrome.storage.local.remove(key);
+        state.favorite = next;
+        updatePin();
+      } catch (error) {
+        if (current(state)) status(error.message);
+      } finally {
+        pin.disabled = false;
+      }
+    }, 'hhr-checklist-sync');
+    const updatePin = () => {
+      const pinned = select.value === state.favorite?.id;
+      pin.textContent = pinned ? '★' : '☆';
+      pin.title = pinned ? 'Quitar pauta favorita' : 'Fijar pauta favorita';
+      pin.setAttribute('aria-label', pin.title);
+      pin.setAttribute('aria-pressed', String(pinned));
+    };
+    templateRow.append(caption, select, pin, syncBtn);
 
     const fields = make('div');
     fields.className = 'fields';
@@ -396,7 +458,9 @@
       if (state.templateId !== select.value) {
         state.templateId = select.value;
         state.answers = {};
+        state.initialAnswers = null;
       }
+      updatePin();
       const chosen = state.catalog.templates.find(t => t.id === state.templateId);
       const isMatrix = Boolean(braden?.isBradenTemplate(chosen));
       dialog?.classList.toggle('is-matrix', isMatrix);
@@ -422,12 +486,10 @@
       } else {
         fieldsFor(state, chosen, fields);
       }
+      state.initialAnswers ??= { ...state.answers };
     };
     select.addEventListener('change', () => {
-      const answered = Object.entries(state.answers).some(
-        ([fieldId, val]) => Boolean(val) && fieldId !== 'fecha' && fieldId !== 'hora'
-      );
-      if (answered && !window.confirm('¿Descartar las respuestas de esta plantilla?')) {
+      if (hasDraft(state) && !window.confirm('¿Descartar las respuestas de esta plantilla?')) {
         select.value = state.templateId;
         return;
       }
@@ -475,7 +537,7 @@
       session = { episode, code: 'PT-' + crypto.randomUUID().toUpperCase(), answers: {}, preferredMode };
     } else if (!session.record && preferredMode) {
       session.preferredMode = preferredMode;
-      if (preferredMode === 'braden' && stateHasNoAnswers(session)) session.templateId = null;
+      if (!hasDraft(session)) session.templateId = null;
     }
     const state = session;
     dialog = make('dialog');
@@ -520,9 +582,6 @@
     }
   }
 
-  const stateHasNoAnswers = state =>
-    !Object.entries(state.answers || {}).some(([id, value]) => Boolean(value) && id !== 'fecha' && id !== 'hora');
-
   function refresh() {
     const episode = route();
     if (launcher && launcherEpisode !== episode) {
@@ -550,7 +609,7 @@
     if (!launcher) {
       launcherEpisode = episode;
       launcher = globalThis.HhrChecklistActions.create({
-        button, hasBraden: Boolean(braden), open: mode => {
+        button, hasBraden: Boolean(braden), readMenu: () => readMenu(episode), open: mode => {
           if (route() === episode) return open(mode);
         },
       });
@@ -558,7 +617,7 @@
     if (launcher.root.parentElement !== host) host.append(launcher.root);
     const activeEditor = insertedReceipt && evo.editor();
     const inserted = Boolean(activeEditor && String(activeEditor.value ?? activeEditor.innerText ?? '').includes(insertedReceipt.code));
-    launcher.update(Boolean(session?.record), inserted);
+    launcher.update(inserted);
   }
 
   const observer = new MutationObserver(() => {

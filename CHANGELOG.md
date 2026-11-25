@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.173
+
+- En Evolución, «Continuar pauta» recupera el borrador de la ficha abierta. Cada profesional puede fijar su pauta favorita con la estrella del selector.
+- Al insertar una pauta guardada, el cursor queda al final del texto para seguir escribiendo.
+- Se retiran del selector las dos pautas IAAS y el formulario de prueba «Caídas».
+
 ## 0.48.172
 
 - En Pautas, «Guardar» guarda en HHR e inserta el texto en Evolución. «Copiar texto» guarda en HHR y copia el texto al portapapeles. En Braden, «Copiar borrador» distingue la copia previa al guardado.
