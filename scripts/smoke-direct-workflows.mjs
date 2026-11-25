@@ -48,7 +48,6 @@ async function verifyImagingToolbar(page, root) {
 
 async function verifyImagingSheet(root) {
   const canvas = root.locator('.hhr-imaging-canvas');
-  const stage = root.locator('.hhr-imaging-stage');
   const name = root.locator('[data-manual="name"]');
   const expectedName = await name.inputValue();
   const expectedId = await root.locator('[data-manual="run"]').inputValue();
@@ -74,9 +73,13 @@ async function verifyImagingSheet(root) {
   await edit.waitFor();
 
   const dimensions = async () => {
-    const sheet = await canvas.boundingBox();
-    const area = await stage.boundingBox();
-    const mark = await canvas.getByText(imageAnnotation.text, { exact: true }).boundingBox();
+    const annotation = canvas.getByText(imageAnnotation.text, { exact: true });
+    await annotation.waitFor({ state: 'visible' });
+    const { sheet, area, mark } = await annotation.evaluate(node => ({
+      sheet: node.closest('.hhr-imaging-canvas').getBoundingClientRect().toJSON(),
+      area: node.closest('.hhr-imaging-stage').getBoundingClientRect().toJSON(),
+      mark: node.getBoundingClientRect().toJSON(),
+    }));
     assert.ok(Math.abs((mark.x - sheet.x) / sheet.width - imageAnnotation.x) < 0.012);
     assert.ok(Math.abs((mark.y + mark.height / 2 - sheet.y) / sheet.height - imageAnnotation.y) < 0.012);
     return { sheet, area };
