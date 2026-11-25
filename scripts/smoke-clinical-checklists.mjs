@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict';
 
+const actionsButton = scope => scope.getByRole('button', { name: 'Acciones de evolución' });
+const openChecklistAction = async (scope, name = 'Pautas') => {
+  await actionsButton(scope).click();
+  await scope.getByRole('menuitem', { name, exact: true }).click();
+};
+
 async function verifyTemplateDialogs(page, evolution, portal) {
   await evolution.evaluate(editor => {
     const draft = document.createElement('textarea');
@@ -41,7 +47,26 @@ async function verifyTemplateDialogs(page, evolution, portal) {
       editor.removeEventListener('keydown', escape);
     };
   });
-  await evolution.getByRole('button', { name: 'Aplicar pauta' }).click();
+  const actions = actionsButton(evolution);
+  await actions.press('ArrowDown');
+  const menu = evolution.getByRole('menu', { name: 'Acciones de evolución' });
+  const pautas = menu.getByRole('menuitem', { name: 'Pautas' });
+  await pautas.waitFor();
+  assert.equal(await pautas.evaluate(el => el === document.activeElement), true);
+  const anchorBox = await actions.boundingBox();
+  const menuBox = await menu.boundingBox();
+  assert.ok(Math.abs(anchorBox.x - menuBox.x) < 2 && Math.abs(anchorBox.y + anchorBox.height - menuBox.y) <= 6,
+    'El menú debe quedar junto al botón que lo abre');
+  await pautas.press('ArrowDown');
+  const braden = menu.getByRole('menuitem', { name: 'Braden' });
+  assert.equal(await braden.evaluate(el => el === document.activeElement), true);
+  await braden.press('Escape');
+  assert.equal(await actions.evaluate(el => el === document.activeElement), true);
+  assert.equal(await evolution.evaluate(el => el.open), true);
+  await actions.click();
+  await evolution.locator('textarea').click();
+  await menu.waitFor({ state: 'hidden' });
+  await openChecklistAction(evolution);
   const checklist = page.getByRole('dialog', { name: 'Aplicar pauta' });
   const topBefore = await checklist.evaluate(el => el.getBoundingClientRect().top);
   await portal.evaluate(() => setTimeout(() => document.documentElement.setAttribute('data-hhr-checklists-ready', ''), 650));
@@ -71,7 +96,9 @@ export async function verifyClinicalChecklists(context, original, worker) {
       if (e.source !== window || e.origin !== location.origin || e.data?.type !== 'HHR_CHECKLIST_REQUEST') return;
       const { request, requestId } = e.data;
       const data = request.action === 'templates' ? { uid: 'test-nurse', authorName: 'Profesional de prueba', templates: [{ id: 'seguimiento', title: 'Seguimiento IAAS', version: 1,
-        fields: [{ id: 'control', type: 'text', label: 'Observación', required: true }] }] } :
+        fields: [{ id: 'control', type: 'text', label: 'Observación', required: true }] },
+        { id: 'otro-control', title: 'Otra pauta sintética', version: 1,
+          fields: [{ id: 'control', type: 'text', label: 'Detalle', required: true }] }] } :
         { record: { code: request.code, authorUid: request.uid, patient: { episode: request.episode },
           evolution: 'Aplicación pauta IAAS\n' + request.answers.control + '\nCódigo de verificación: ' + request.code } };
       window.postMessage({ type: 'HHR_CHECKLIST_RESPONSE', requestId, data }, location.origin);
@@ -84,7 +111,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
       document.querySelector('main').append(section);
       section.querySelector('button').onclick = () => { throw new Error('La extensión intentó firmar'); };
     });
-    assert.equal(await ficha.getByRole('button', { name: 'Aplicar pauta' }).count(), 0);
+    assert.equal(await actionsButton(ficha).count(), 0);
     await worker.evaluate(async () => {
       globalThis.__checklistFetch = globalThis.fetch;
       globalThis.fetch = (input, init) => String(input).includes('/api/encounter/patientHeaderData/')
@@ -99,15 +126,30 @@ export async function verifyClinicalChecklists(context, original, worker) {
     const native = ficha.locator('#test-evolution-dialog');
     await ficha.evaluate(() => {
       const dialog = document.createElement('dialog');
-      dialog.id = 'test-evolution-dialog'; dialog.setAttribute('aria-label', 'Nueva evolución');
+      dialog.id = 'test-evolution-dialog'; dialog.setAttribute('aria-labelledby', 'test-evolution-title');
+      dialog.innerHTML = '<h2 class="MuiDialogTitle-root" id="test-evolution-title">Evolución</h2>';
       document.body.append(dialog);
+      const pencil = document.createElement('button');
+      pencil.setAttribute('aria-label', 'Editar evolución');
+      pencil.onclick = () => dialog.showModal();
+      document.querySelector('#observationEntrySection').append(pencil);
     });
-    await ficha.getByRole('button', { name: 'Aplicar pauta' }).waitFor();
-    await native.evaluate(dialog => dialog.showModal());
-    await native.getByRole('button', { name: 'Aplicar pauta' }).waitFor();
+    await actionsButton(ficha).waitFor();
+    await ficha.getByRole('button', { name: 'Editar evolución' }).click();
+    const samples = await native.evaluate(async dialog => {
+      const counts = [];
+      for (let frame = 0; frame < 24; frame++) {
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        counts.push(dialog.querySelectorAll('.MuiDialogTitle-root .hhr-checklist-trigger').length);
+      }
+      return counts.slice(2);
+    });
+    assert.ok(samples.every(count => count === 1), 'Acceso inestable al abrir con el lápiz: ' + samples.join(''));
+    await ficha.locator('#observationEntrySection [aria-label="Editar evolución"]').evaluate(el => el.remove());
+    await actionsButton(native).waitFor();
     await verifyTemplateDialogs(ficha, native, portal);
     await native.evaluate(dialog => dialog.close());
-    await ficha.locator('#observationEntrySection').getByRole('button', { name: 'Aplicar pauta' }).click();
+    await openChecklistAction(ficha.locator('#observationEntrySection'));
     const modal = ficha.getByRole('dialog', { name: 'Aplicar pauta' });
     await modal.getByLabel('Observación').fill('Control sintético');
     assert.match(await modal.locator('.identity').innerText(), /Persona Sintética/);
@@ -119,16 +161,29 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
     assert.match(await ficha.locator('#observationEntrySection textarea').inputValue(),
       /^Texto previo\n\nAplicación pauta IAAS\nControl sintético\nCódigo de verificación: PT-[0-9A-F-]{36}$/);
-    await ficha.getByRole('button', { name: 'Pauta insertada · guardar en Eloísa' }).waitFor();
+    await actionsButton(ficha).click();
+    await ficha.getByText('Pauta insertada · guardar en Eloísa', { exact: true }).waitFor();
+    await ficha.getByRole('menuitem', { name: 'Pautas' }).press('Escape');
+    const noteBeforeCopy = await ficha.locator('#observationEntrySection textarea').inputValue();
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(ficha.url()).origin });
+    await openChecklistAction(ficha);
+    await modal.getByRole('combobox', { name: /^Plantilla/ }).selectOption('otro-control');
+    await modal.getByLabel('Detalle').fill('Prueba de copia');
+    await modal.getByRole('button', { name: 'Guardar en HHR y copiar texto' }).click();
+    await modal.getByRole('status').filter({ hasText: 'texto copiado' }).waitFor();
+    assert.match(await ficha.evaluate(() => navigator.clipboard.readText()), /Prueba de copia\nCódigo de verificación: PT-/);
+    assert.equal(await ficha.locator('#observationEntrySection textarea').inputValue(), noteBeforeCopy);
+    await modal.getByRole('button', { name: 'Cerrar' }).click();
     await ficha.evaluate(() => {
       history.pushState({}, '', '/dashboard/encounter-list-nurse/661734');
       document.querySelector('#observationEntrySection textarea').value = '';
       document.getElementById('observationEntrySection').append(document.createElement('span'));
     });
-    await ficha.getByRole('button', { name: 'Aplicar pauta', exact: true }).waitFor();
-    assert.equal(await ficha.locator('.hhr-checklist-trigger').getAttribute('title'), '');
+    await actionsButton(ficha).click();
+    assert.equal(await ficha.getByText('Pauta insertada · guardar en Eloísa', { exact: true }).count(), 0);
+    await ficha.getByRole('menuitem', { name: 'Pautas' }).press('Escape');
     await ficha.locator('#observationEntrySection textarea').evaluate(el => el.remove());
-    await ficha.getByRole('button', { name: 'Aplicar pauta', exact: true }).click();
+    await openChecklistAction(ficha);
     try {
       await modal.getByLabel('Observación').fill('Seguimiento diferido de prueba', { timeout: 12000 });
     } catch (error) {
@@ -147,7 +202,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
       create.onclick = () => dialog.showModal();
       document.getElementById('observationEntrySection').append(create);
     });
-    await ficha.getByRole('button', { name: 'Insertar pauta guardada' }).click();
+    await openChecklistAction(ficha, 'Insertar pauta guardada');
     await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
     assert.match(await native.locator('textarea').inputValue(), /Seguimiento diferido de prueba\nCódigo de verificación: PT-/);
     assert.equal(await native.evaluate(dialog => dialog.open), true);

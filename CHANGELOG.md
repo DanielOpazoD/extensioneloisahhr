@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.171
+
+- En la tarjeta de Evolución y en el editor que abre el lápiz de Eloísa, un botón circular reúne «Pautas» y el acceso rápido a Braden. Las planillas del catálogo de HHR se pueden rellenar e insertar como texto en la evolución o copiar.
+- Se corrigió el parpadeo del editor al abrirlo desde el lápiz. La extensión reconoce el título nativo aunque la cabecera contenga sus propias acciones.
+
 ## 0.48.170
 
 - Presupuesto único de captura en Ficha Médico: el relé envía un plazo de 43 s y el lector principal crea un `AbortController` real que cancela todos los `fetch` en vuelo al vencer el plazo, devolviendo `timeoutStage: 'ficha_main_relay'` sin snapshot parcial ni bloqueo espurio de salud (`readBlocked`).

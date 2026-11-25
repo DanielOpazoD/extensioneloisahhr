@@ -1,7 +1,29 @@
-.hhr-checklist-trigger,.hhr-checklist-braden-trigger,.hhr-checklist-dialog button,.hhr-checklist-dialog a{font:600 13px/1.3 system-ui;color:#17665e;background:#f0f7f5;border:1px solid #bed5cf;border-radius:6px;padding:6px 10px;cursor:pointer;text-decoration:none}
-.hhr-checklist-trigger,.hhr-checklist-braden-trigger{display:inline-flex;align-items:center;gap:6px;margin:4px 6px;position:relative;z-index:2;white-space:nowrap;flex-shrink:0;vertical-align:middle}
-.hhr-checklist-braden-trigger{background:#fff;border-color:#9fc5bc;color:#14564f}
-.hhr-checklist-trigger:hover,.hhr-checklist-braden-trigger:hover,.hhr-checklist-dialog button:hover,.hhr-checklist-dialog a:hover{background:#e3f1ed}
+.hhr-checklist-launcher { display:inline-flex; flex:none; margin-inline:5px; vertical-align:middle; }
+.hhr-checklist-trigger {
+  anchor-name:--hhr-evolution-actions; display:inline-grid; place-items:center; box-sizing:border-box;
+  width:28px; height:28px; padding:0; border:1px solid #c6dad5; border-radius:50%;
+  background:#f4f9f7; color:#17665e; cursor:pointer;
+}
+.hhr-checklist-trigger::before {
+  content:""; width:3px; height:3px; border-radius:50%; background:currentColor;
+  box-shadow:-5px 0 currentColor,5px 0 currentColor;
+}
+.hhr-checklist-trigger:hover,.hhr-checklist-trigger[aria-expanded="true"] { background:#e3f1ed; border-color:#92b7ad; }
+.hhr-checklist-action-menu {
+  position:fixed; inset:auto; position-anchor:--hhr-evolution-actions; position-area:bottom span-right;
+  justify-self:start; align-self:start; position-try-fallbacks:flip-inline,flip-block,flip-block flip-inline;
+  margin:4px 0; padding:4px; min-width:142px; max-width:calc(100vw - 16px); box-sizing:border-box;
+  border:1px solid #cbdcd7; border-radius:8px; color:#203d37; background:#fff; box-shadow:0 4px 18px #163e3324;
+}
+.hhr-checklist-action-menu:popover-open { display:grid; }
+.hhr-checklist-action-menu button {
+  text-align:start; font:500 13px/1.4 system-ui; color:inherit; background:transparent;
+  border:0; border-radius:5px; padding:7px 10px; cursor:pointer;
+}
+.hhr-checklist-action-menu button:is(:hover,:focus-visible) { background:#e8f4f0; }
+.hhr-checklist-action-status:not([hidden]) { padding:4px 10px; font:12px/1.4 system-ui; color:#45665d; }
+.hhr-checklist-dialog button,.hhr-checklist-dialog a{font:600 13px/1.3 system-ui;color:#17665e;background:#f0f7f5;border:1px solid #bed5cf;border-radius:6px;padding:6px 10px;cursor:pointer;text-decoration:none}
+.hhr-checklist-dialog button:hover,.hhr-checklist-dialog a:hover{background:#e3f1ed}
 .hhr-checklist-dialog{--hhr-checklist-inset:clamp(8px,6dvh,48px);box-sizing:border-box;width:min(540px,94vw);max-height:calc(100dvh - 2 * var(--hhr-checklist-inset));overflow:auto;overscroll-behavior:contain;margin:var(--hhr-checklist-inset) auto auto;border:0;border-radius:12px;padding:18px;color:#193a35;background:white;box-shadow:0 16px 60px #123c3540;font:14px/1.4 system-ui}
 .hhr-checklist-dialog.is-matrix{width:min(860px,96vw)}
 .hhr-checklist-dialog::backdrop{background:#102f2b66}
@@ -18,7 +40,7 @@
 .hhr-checklist-code{margin:0;font:600 12px/1.4 ui-monospace,monospace;color:#37574f}
 .hhr-checklist-preview{margin:0;padding:10px;border-radius:8px;border:1px solid #d5e4e0;background:#f7fbfa;font:12.5px/1.45 system-ui;white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto}
 .hhr-checklist-dialog [role=status]{color:#3c5b55;white-space:pre-wrap;margin:6px 0 0;font-size:13px}
-.hhr-checklist-dialog :focus-visible,.hhr-checklist-trigger:focus-visible,.hhr-checklist-braden-trigger:focus-visible{outline:2px solid #00776b;outline-offset:2px}
+.hhr-checklist-dialog :focus-visible,.hhr-checklist-trigger:focus-visible,.hhr-checklist-action-menu :focus-visible{outline:2px solid #00776b;outline-offset:2px}
 .hhr-checklist-dialog [hidden]{display:none!important}
 .hhr-braden-tab{font-size:12.5px;padding:5px 10px}
 .hhr-braden-tab.is-active{background:#17665e;border-color:#17665e;color:#fff}
