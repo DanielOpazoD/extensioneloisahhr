@@ -12,15 +12,19 @@
     ['producto no farmacológico', 'productos no farmacológicos registrados'],
     ['procedimientos', 'procedimientos registrados'],
     ['dispositivos invasivos', 'dispositivos invasivos solicitados'],
-    ['solicitud de examen', 'solicitudes de exámenes registradas'],
+    ['solicitud de examen', 'solicitudes de examenes registradas'],
+    ['solicitudes de exámenes', 'solicitudes de examenes registradas'],
     ['solicitud interconsulta', 'interconsultas solicitadas'],
     ['solicitud de interconsulta', 'interconsultas solicitadas'],
-    ['solicitudes de intervención quirúrgica', 'solicitudes de intervención quirúrgica registradas'],
+    ['solicitudes de intervención quirúrgica', 'solicitudes de intervencion quirurgica registradas'],
+    ['solicitud de intervención quirúrgica', 'solicitudes de intervencion quirurgica registradas'],
     ['prestaciones', 'prestaciones registradas'],
   ]);
   const requestAnchors = new Map([
     ['solicitud de examen', ['diagnosisTestEntrySection', 'exam']],
+    ['solicitudes de exámenes', ['diagnosisTestEntrySection', 'exam']],
     ['solicitudes de intervención quirúrgica', ['operationTheaterRequestEntrySection', 'surgery']],
+    ['solicitud de intervención quirúrgica', ['operationTheaterRequestEntrySection', 'surgery']],
   ]);
   const retainedStates = new Map([
     ['ram','ram registradas'], ['alergias','alergias registradas'], ['eventos adversos','eventos adversos registrados'],
@@ -47,11 +51,12 @@
     const text = message.textContent.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\.$/,'');
     const denied = text === 'no tiene permiso para visualizar';
     const record = /^no (?:se )?presentan? (.*?)(?: para este paciente)?$/.exec(text);
-    if (!denied && record?.[1] !== expected) return;
+    const request = requestAnchors.get(name);
+    const messageKind = request ? record?.[1].normalize('NFD').replace(/[\u0300-\u036f]/g, '') : record?.[1];
+    if (!denied && messageKind !== expected) return;
     next.set(card,'status-card');
     if (message.parentElement !== card) next.set(message.parentElement,'status-message');
     if (denied || filter || !optionalStates.has(name)) return;
-    const request = requestAnchors.get(name);
     if (request) {
       const section = title.closest('#' + request[0]) || card;
       // A request may wrap its card in several MUI layout elements. Never move
@@ -189,10 +194,12 @@
   }
 
   function create() {
+    const orderDetails = globalThis.HhrFichaOrderDetails.create();
     let previous = new Map(), previousRequests = new Map(), previousLabels = new Map();
     function refresh(main, compact) {
       const next = new Map(), cards = new Map(), elapsed = new Map();
       const older = new Set(), sources = new Map(), requests = new Map(), labelsToShorten = new Map();
+      const orderCells = new Map();
       if (main) {
         for (const [id,kind] of Object.entries(anchors)) {
           const el = document.getElementById(id);
@@ -222,6 +229,9 @@
             if (rows.some(row => row.cells.length !== head.length || [...row.cells].some(c => c.colSpan !== 1 || c.rowSpan !== 1))) continue;
             head.forEach((th,index) => {
               const heading = label(th);
+              if (compact && kind === 'orders' && !table.closest('dialog,[role=dialog],td')) {
+                for (const body of table.tBodies) for (const row of body.rows) orderCells.set(row.cells[index], heading);
+              }
               if (kind === 'care-orders' && heading === 'indicaciones') next.set(th,'order-instructions');
               if (!/^(tiempo|hora|horario|acciones)$/.test(heading)) return;
               for (const row of rows) {
@@ -236,6 +246,7 @@
           }
         }
       }
+      orderDetails.refresh(orderCells, next);
       for (const [el,kind] of previous) {
         if (kind === 'vital-history' && !next.has(el) && el.hasAttribute('data-hhr-history-hint')) {
           if (el.title === 'Ver historial completo') el.removeAttribute('title');

@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.188
+
+- En el modo Compacto, las evoluciones largas tienen un área de lectura desplazable con teclado y ratón. «Leer nota completa» abre un lector más amplio para la misma evolución. Las notas breves ocupan solo su altura natural.
+- Signos vitales comparte los bordes de Evolución. Observaciones de entrega y Alertas quedan juntas en el lateral aun cuando Eloísa agrupa las tarjetas en filas anidadas. Las solicitudes de exámenes y cirugía vacías ocupan una línea cada una. Reposo y Régimen se compactan también cuando solo uno tiene datos.
+- Fármacos e Indicaciones libres muestran las instrucciones completas cuando Eloísa permite desplegarlas dentro de la tabla. SOS y Antimic se distinguen por el texto, un filete de color y la separación del nombre del fármaco.
+
 ## 0.48.187
 
 - En el Resumen compacto de escritorio, «Agregar observación» y «Agregar alerta» abren el campo de escritura. Las alertas, los interruptores y los borradores permanecen a la vista.

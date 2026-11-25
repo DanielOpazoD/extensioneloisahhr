@@ -65,7 +65,7 @@ it('pairs neighbouring note and handoff even when discharge was never mounted', 
   expect(main.querySelector('.MuiGrid-container > :last-child').hasAttribute('data-hhr-round')).toBe(false);
 });
 
-it('uses the native care pair and falls back when a control, independent sibling or another column is present', () => {
+it('keeps controls and independent siblings in their own slots and accepts adjacent native columns', () => {
   const pair = '<div class="MuiGrid-container">' + slot('restEntrySection','Reposo') +
     slot('nutritionOrderEntrySection','Régimen') + '</div>';
   document.body.innerHTML = '<main><div class="MuiGrid-container">' +
@@ -86,18 +86,19 @@ it('uses the native care pair and falls back when a control, independent sibling
   const control = document.createElement('button');
   care.querySelector('#restEntrySection').append(control);
   layout.refresh(main);
-  expect(care.hasAttribute('data-hhr-round')).toBe(false);
+  expect(care.dataset.hhrRound).not.toBe('care');
   control.remove();
   const peer = document.createElement('article');
   care.firstElementChild.append(peer);
   layout.refresh(main);
-  expect(care.hasAttribute('data-hhr-round')).toBe(false);
+  expect(care.dataset.hhrRound).not.toBe('care');
   peer.remove();
   const other = document.createElement('div');
   other.className = 'MuiGrid-item MuiGrid-grid-md-4';
   care.after(other);
   layout.refresh(main);
-  expect(care.hasAttribute('data-hhr-round')).toBe(false);
+  expect(care.dataset.hhrRound).toBe('care');
+  expect(other.dataset.hhrRound).toBe('peer');
   other.remove();
   layout.refresh(main);
   expect(main.querySelector('[data-hhr-round="care"]')).toBe(care);
@@ -159,7 +160,9 @@ it('reads two instructions without sharing their bylines or dropping observation
   const prefix = rows[0].querySelector('strong');
   prefix.textContent = 'Detalle especial:';
   layout.refresh(main);
-  expect(main.querySelector('[data-hhr-round="care-row"],[data-hhr-round="care-label"]')).toBeNull();
+  expect(rows[0].hasAttribute('data-hhr-round')).toBe(false);
+  expect(rows[0].querySelector('[data-hhr-round="care-label"]')).toBeNull();
+  expect(rows[1].dataset.hhrRound).toBe('care-row');
   prefix.textContent = 'Reposo:';
   layout.refresh(main);
   expect(main.querySelectorAll('[data-hhr-round="care-row"]')).toHaveLength(2);
@@ -187,6 +190,60 @@ it('uses only isolated native branches for the two columns and returns populated
   exam.textContent = 'Solicitud vigente';
   surgery.after(document.createElement('button'));
   layout.refresh(main);
-  expect(exam.parentElement.hasAttribute('data-hhr-round')).toBe(false);
-  expect(surgery.parentElement.hasAttribute('data-hhr-round')).toBe(false);
+  expect(exam.parentElement.dataset.hhrRound).toBe('peer');
+  expect(surgery.parentElement.dataset.hhrRound).toBe('peer');
+});
+
+it('exposes nested MUI layout slots and preserves the sibling print action, draft and hidden print copy', () => {
+  const group = body => '<section class="MuiBox-root"><div class="MuiGrid-container">' + body + '</div></section>';
+  const printCopy = '<div style="display:none">' + slot('vitalSignsEntry', 'Impresión') + '</div>';
+  document.body.innerHTML = '<main><div class="MuiGrid-container">' + printCopy +
+    group(slot('observationEntrySection','Nota') + slot('shiftChangeEntrySection','<textarea></textarea>')) +
+    group(slot('vitalSignsEntry','Signos') + '<div class="MuiGrid-item"><button>Imprimir</button></div>') +
+    group(slot('alertEntrySection','Alertas') + slot('diagnosisTestEntrySection','Vacío')) + '</div></main>';
+  const main = document.querySelector('main');
+  const draft = main.querySelector('textarea'), print = main.querySelector('button');
+  const originalParent = print.parentElement, original = main.innerHTML;
+  const request = main.querySelector('#diagnosisTestEntrySection');
+  request.dataset.hhrEmptyRequest = 'exam';
+  draft.focus();
+  draft.value = 'Borrador de prueba';
+  layout.refresh(main);
+  expect(main.querySelector('[data-hhr-round="frame"]')).toBe(main.firstElementChild);
+  expect(main.querySelector('[data-hhr-round="vitals"]').textContent).toBe('Signos');
+  expect(main.querySelector('[style="display:none"] [data-hhr-round]')).toBeNull();
+  expect(getComputedStyle(main.querySelector('[style="display:none"]')).display).toBe('none');
+  expect(main.querySelector('[data-hhr-round="alerts"]').textContent).toBe('Alertas');
+  expect(request.parentElement.dataset.hhrRound).toBe('empty-request');
+  expect(print.parentElement).toBe(originalParent);
+  expect(print.closest('[data-hhr-round="vitals"],[data-hhr-round="empty-request"]')).toBeNull();
+  expect(document.activeElement).toBe(draft);
+  delete request.dataset.hhrEmptyRequest;
+  layout.clear();
+  expect(main.innerHTML).toBe(original);
+  expect(draft.value).toBe('Borrador de prueba');
+});
+
+it.each([
+  ['restEntrySection','Reposo','No se presenta un Reposo registrado para este paciente'],
+  ['nutritionOrderEntrySection','Régimen','<b>Régimen:</b> Según tolerancia'],
+])('compacts a single read-only instruction in its native section (%s)', (id,title,body) => {
+  const card = '<div class="MuiCard-root"><div class="MuiCardHeader-root"><div class="MuiCardHeader-content">' +
+    '<span class="MuiCardHeader-title">' + title + '</span></div></div><div class="MuiCardContent-root"><p>' + body +
+    '</p></div></div>';
+  document.body.innerHTML = '<main><div class="MuiGrid-container">' + slot('observationEntrySection','Nota') +
+    slot('shiftChangeEntrySection','Entrega') + slot('vitalSignsEntry','Signos') + slot(id,card) + '</div></main>';
+  const main = document.querySelector('main');
+  layout.refresh(main);
+  const care = main.querySelector('#' + id);
+  expect(care.parentElement.dataset.hhrRound).toBe('care');
+  expect(care.firstElementChild.dataset.hhrRound).toBe('care-row');
+  expect(care.querySelector('[data-hhr-round="care-empty"],[data-hhr-round="care-value"]').textContent).toBe(
+    id === 'restEntrySection' ? body : 'Régimen: Según tolerancia');
+  const button = document.createElement('button');
+  button.textContent = 'Acción de la indicación';
+  care.append(button);
+  layout.refresh(main);
+  expect(care.closest('[data-hhr-round="care"]')).toBeNull();
+  expect(care.querySelector('[data-hhr-round="care-row"]')).toBeNull();
 });

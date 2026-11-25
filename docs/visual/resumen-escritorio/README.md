@@ -1,5 +1,23 @@
 # Resumen compacto en escritorio
 
+## Ingreso largo en 0.48.188
+
+La comparación usa la misma ficha ficticia en Chromium, con una evolución de más de cuarenta líneas, un Reposo vacío y un Régimen con observación y autor. La prueba incluye un botón de impresión y tarjetas agrupadas en cuadrículas anidadas. Tab y Fin llevan al último renglón de Evolución. «Leer nota completa» abre el texto íntegro en una ventana de lectura. Escape devuelve el foco al botón. [Ver el lector](0.48.188/despues/1440-lector.png) Las tres indicaciones de prueba se pueden leer hasta su última palabra.
+
+| Pantalla | 0.48.187 | 0.48.188 | Indicaciones |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.188/antes/1280-ingreso.png) | [Después](0.48.188/despues/1280-ingreso.png) | [Ver tabla](0.48.188/despues/1280-indicaciones.png) |
+| 1440 × 900 | [Antes](0.48.188/antes/1440-ingreso.png) | [Después](0.48.188/despues/1440-ingreso.png) | [Ver tabla](0.48.188/despues/1440-indicaciones.png) |
+
+La tarjeta de Evolución pasó de 962 px de alto a 256 px en la ventana de 1280 y a 275 px en la de 1440. Signos vitales queda justo debajo, con ambos bordes alineados. En el lateral, las solicitudes vacías ocupan 27 px cada una. En los dos tamaños, Reposo ocupa 29 px y Régimen 33 px.
+
+Para repetir la comparación, ejecutar desde la raíz del repositorio.
+
+```sh
+node scripts/capture-medical-round.mjs v0.48.187 /tmp/ingreso-anterior ingreso
+node scripts/capture-medical-round.mjs WORKTREE /tmp/ingreso-actual ingreso
+```
+
 ## Lectura y escritura en 0.48.187
 
 En la captura inicial se pueden leer las alertas y el estado de los interruptores. «Agregar observación» y «Agregar alerta» abren sus campos con un clic o con Enter. Un borrador permanece visible al recorrer la ficha. Una línea permite seguir cada indicación hasta su control al usar el ratón o el teclado.

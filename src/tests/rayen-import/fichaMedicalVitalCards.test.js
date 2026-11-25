@@ -2,6 +2,7 @@
 import { afterEach, expect, it } from 'vitest';
 import { medicalRound } from '../../../scripts/medical-round-visual-fixture.mjs';
 import '../../../extension/hhr-ficha-vital-strip.js';
+import '../../../extension/hhr-ficha-order-details.js';
 import '../../../extension/hhr-ficha-reading-surfaces.js';
 
 afterEach(() => document.body.replaceChildren());

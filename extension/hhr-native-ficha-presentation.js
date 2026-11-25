@@ -248,6 +248,7 @@
     let primary = null, row = null, slot = null, style = null;
     let lastTarget = null, frame = 0, disposed = false;
     let noteEncounter = null, noteDisclosure = null, keepNoteFolded = false;
+    const noteReader = globalThis.HhrFichaNoteReader.create();
     const rememberNoteToggle = event => { keepNoteFolded = normalize(event.currentTarget.textContent) === 'leer menos'; };
     const setNoteDisclosure = (next, encounter) => {
       if (next === noteDisclosure && encounter === noteEncounter) return;
@@ -280,6 +281,7 @@
       unmark(element); links.delete(element);
     };
     const reset = () => {
+      noteReader.refresh(null, null);
       style?.remove(); style = null;
       surfaces.clear();
       labels.clear();
@@ -386,9 +388,12 @@
       const compact = theme === 'compact' ? main : null;
       labels.refresh(compact, encounterId);
       const disclosure = compact?.querySelector('#evolution [data-hhr-evolution-block] > .MuiBox-root > button[data-hhr-note-disclosure]:only-child');
-      setNoteDisclosure(disclosure?.getClientRects().length &&
+      const readableDisclosure = disclosure?.getClientRects().length &&
         !disclosure.closest('form,dialog,[role=dialog],[inert],[hidden],[aria-hidden=true]') &&
-        !disclosure.matches(':disabled,[aria-disabled=true]') ? disclosure : null, encounterId);
+        !disclosure.matches(':disabled,[aria-disabled=true]') ? disclosure : null;
+      setNoteDisclosure(readableDisclosure, encounterId);
+      const paragraph = readableDisclosure?.parentElement.previousElementSibling;
+      noteReader.refresh(paragraph?.matches('.MuiTypography-caption') ? paragraph : null, encounterId);
       round.refresh(compact);
       const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
         ['evolucion','valoracion'].includes(normalize(element.textContent)) && element.getClientRects().length);
