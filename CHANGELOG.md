@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.178
+
+- El Resumen conserva el formato compacto cuando una etiqueta lleva subíndice, como O₂. Diagnóstico reúne el título y la última actualización cuando caben.
+- En pantallas estrechas los signos vitales se distribuyen según el ancho y las tablas amplias de fármacos se desplazan dentro de su propio cuadro. Las tres acciones de cada fila se mantienen juntas.
+- Se incorporan cuatro capturas reproducibles de una ficha ficticia y pruebas de lectura en escritorio y pantalla estrecha.
+
 ## 0.48.177
 
 - El Resumen de enfermería reconoce «Valoración» y aplica la densidad aunque falten accesos en la barra. Diagnóstico y Fármacos reducen la altura del encabezado y de las filas.
