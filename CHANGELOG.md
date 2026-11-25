@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.180
+
+- Centro HHR → Ajustes incorpora cuatro vistas de la ficha de hospitalizados. El perfil de Chrome recuerda la elección y la aplica a sus pestañas abiertas. Desactivado recupera el diseño nativo, Equilibrado conserva la densidad anterior y Lectura amplía los valores y el interlineado.
+- Compacto es el modo predeterminado. Reduce el espacio de navegación, tarjetas y filas de fármacos. Los mensajes reconocidos de secciones vacías o sin permiso ocupan menos espacio y conservan su texto.
+
 ## 0.48.179
 
 - Signos vitales reduce el alto de las tarjetas. El valor destaca a 15 px, la etiqueta usa 12 px y la PAM y la antigüedad usan 11 px con el tamaño de fuente habitual. En pantallas estrechas, los nombres largos permiten que el valor pase al renglón siguiente.
