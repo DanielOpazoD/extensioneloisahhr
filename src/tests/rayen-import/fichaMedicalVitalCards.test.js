@@ -88,3 +88,55 @@ it('recognises a direct native label with an auxiliary Box and keeps unfamiliar 
   expect(main.querySelector('button').dataset.hhrReading).toBe('vital-history');
   expect(grid.nextElementSibling.textContent).toBe('Observaciones');
 });
+
+it('destaca solo las edades distinguibles de la más reciente dentro de cada banda', () => {
+  const main = new DOMParser().parseFromString(medicalRound, 'text/html').querySelector('main');
+  document.body.append(main);
+  const readings = globalThis.HhrFichaReadingSurfaces.create();
+  readings.refresh(main,true);
+  const times = [...main.querySelectorAll('[data-hhr-reading="vital-time"]')];
+  const older = () => main.querySelectorAll('[data-hhr-vital-older]');
+  expect([...older()]).toEqual([times[7]]);
+  expect(times[7].textContent).toBe('4 horas');
+  expect(main.querySelector('[data-hhr-vital-source]')).toBeNull();
+  times[7].textContent = '120 minutos';
+  times[2].textContent = '1 día';
+  readings.refresh(main,true);
+  expect([...older()]).toEqual([times[2]]);
+  times[7].textContent = '125 minutos';
+  readings.refresh(main,true);
+  expect([...older()]).toEqual([times[2]]);
+  times[2].textContent = 'Sin registro';
+  readings.refresh(main,true);
+  expect(older()).toHaveLength(0);
+  times[2].textContent = '3 horas';
+  readings.refresh(main,true);
+  expect([...older()]).toEqual([times[2]]);
+  readings.refresh(main,false);
+  expect(older()).toHaveLength(0);
+});
+
+it('muestra metadatos explícitos de la medición sin tomar los de la cabecera', () => {
+  const main = new DOMParser().parseFromString(medicalRound, 'text/html').querySelector('main');
+  document.body.append(main);
+  const readings = globalThis.HhrFichaReadingSurfaces.create();
+  readings.refresh(main,true);
+  const elapsed = main.querySelector('[data-hhr-vital-older]');
+  const shell = elapsed.parentElement;
+  elapsed.title = '15-04-2026 06:20 · Registrado por: Profesional de prueba';
+  readings.refresh(main,true);
+  expect(shell.dataset.hhrVitalSource).toBe(elapsed.title);
+  elapsed.removeAttribute('title');
+  elapsed.innerHTML = '<time datetime="2026-11-25T03:15:00Z" title="Autor: Profesional de prueba">4 horas</time>';
+  readings.refresh(main,true);
+  const converted = new Intl.DateTimeFormat('es-CL', {timeZone:'Pacific/Easter', dateStyle:'short', timeStyle:'short'})
+    .format(new Date('2026-11-25T03:15:00Z'));
+  expect(shell.dataset.hhrVitalSource).toBe(converted + ' · Autor: Profesional de prueba');
+  const time = elapsed.querySelector('time');
+  time.dateTime = '2026-11-25T03:15:00';
+  readings.refresh(main,true);
+  expect(shell.dataset.hhrVitalSource).toBe(time.title);
+  readings.clear();
+  expect(main.querySelector('[data-hhr-vital-source],[data-hhr-vital-older]')).toBeNull();
+  expect(time.title).toBe('Autor: Profesional de prueba');
+});

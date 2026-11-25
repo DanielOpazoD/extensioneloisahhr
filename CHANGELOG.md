@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.184
+
+- El Resumen compacto distingue «Agregar a entrega» de «Agregar alerta». Los rótulos de los campos permanecen visibles al escribir. «No reanimación» tiene su propia línea y muestra el estado del interruptor de Eloísa.
+- En escritorio, Evolución conserva dos tercios del ancho al abrir y plegar la nota. Entrega, Reposo y Régimen ocupan la columna derecha cuando las indicaciones son de lectura.
+- Signos vitales destaca mediante tipografía las mediciones anteriores. La hora y el profesional se muestran cuando Eloísa los identifica en la propia medición.
+
 ## 0.48.183
 
 - En escritorio, Evolución comparte el espacio superior con Entrega, Reposo y Régimen. Al expandir la nota, aumenta su ancho y las indicaciones de lectura se sitúan debajo de Entrega. El control de plegado queda junto al texto.
