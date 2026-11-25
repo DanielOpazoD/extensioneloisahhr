@@ -31,6 +31,16 @@
         shell = shell.firstElementChild;
         next.set(shell,'vital-inner');
       }
+      const [title, value, ...details] = shell.children;
+      if (!labels.includes(title) || !value || !/^[−+<>≤≥-]?\s*\d/.test(value.textContent.trim()) ||
+          shell.querySelector('button,input,select,textarea,a,svg,[contenteditable],[role="button"]') ||
+          [...shell.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) continue;
+      next.set(title,'vital-label');
+      next.set(value,'vital-value');
+      for (const detail of details) {
+        if (/^pam\s*:/i.test(detail.textContent.trim())) next.set(detail,'vital-pam');
+        else if (/^(?:hace\s+)?\d+\s*(?:minutos?|min|horas?|h|d[ií]as?)[.]?$/i.test(detail.textContent.trim())) next.set(detail,'vital-time');
+      }
     }
   }
 

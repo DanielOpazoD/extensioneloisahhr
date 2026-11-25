@@ -36,6 +36,7 @@ try {
     }));
     console.log(revision,width,metrics);
     await page.screenshot({path:path.join(outputDirectory,width+'.png')});
+    await page.locator('#vitalSignsEntry').screenshot({path:path.join(outputDirectory,'signos-'+width+'.png')});
     await page.close();
   }
 } finally {

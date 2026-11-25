@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.179
+
+- Signos vitales reduce el alto de las tarjetas. El valor destaca a 15 px, la etiqueta usa 12 px y la PAM y la antigüedad usan 11 px con el tamaño de fuente habitual. En pantallas estrechas, los nombres largos permiten que el valor pase al renglón siguiente.
+
 ## 0.48.178
 
 - El Resumen conserva el formato compacto cuando una etiqueta lleva subíndice, como O₂. Diagnóstico reúne el título y la última actualización cuando caben.

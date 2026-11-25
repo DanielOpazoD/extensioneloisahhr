@@ -14,6 +14,8 @@ En Resumen, las tarjetas se ajustan a su contenido y Evolución aprovecha el anc
 
 El modo compacto se activa en los resúmenes médico y de enfermería, incluso si la barra solo ofrece «Valoración». Las tarjetas nativas de signos vitales se distribuyen según el ancho disponible y conservan colores, datos secundarios, tiempos, observaciones y acceso al historial. Una alerta breve puede compartir línea con su título encima de Evolución. Las notas consecutivas se distinguen por su autor, rol, hora y un separador fino. En las tablas de indicaciones, la hora y las acciones dejan más ancho a la prescripción. En Signos vitales, la franja muestra las mediciones reconocidas con las unidades y horas de origen. «Ver registros» abre la tabla completa. Si la fuente no permite asignar inequívocamente los valores a sus horas, queda visible la tabla original.
 
+Los signos vitales reúnen el nombre y el valor en una línea cuando caben. La PAM y la antigüedad tienen menor tamaño. [Ver el detalle de los signos vitales](docs/visual/signos-vitales/signos-1366.png)
+
 [Comparación visual del Resumen de enfermería en escritorio y pantalla estrecha](docs/visual/compactacion/README.md)
 
 ## Pautas en Evolución
