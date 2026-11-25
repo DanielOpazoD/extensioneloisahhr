@@ -247,6 +247,9 @@
     const links = new Map();
     let primary = null, row = null, slot = null, style = null;
     let lastTarget = null, frame = 0, disposed = false;
+    // The native date and print row, while it rides on the free end of the section links.
+    let dailyRow = null, docked = false, roundMain = null;
+    const desktop = globalThis.matchMedia?.('(min-width:1100px)');
     let noteEncounter = null, noteDisclosure = null, keepNoteFolded = false;
     const noteReader = globalThis.HhrFichaNoteReader.create();
     const rememberNoteToggle = event => { keepNoteFolded = normalize(event.currentTarget.textContent) === 'leer menos'; };
@@ -290,10 +293,66 @@
       resizeObserver?.disconnect();
       links.forEach((item, element) => removeLink(element, item));
       [...marked.keys()].forEach(unmark);
+      undock();
+      dailyRow = null; roundMain = null;
       if (row) ['top', 'left', 'width'].forEach(key => row.style.removeProperty('--hhr-section-' + key));
       slot?.style.removeProperty('--hhr-section-height');
       primary = null; row = null; slot = null; lastTarget = null;
     };
+    const dockProperties = ['--hhr-dock-top', '--hhr-dock-right', '--hhr-dock-height'];
+    function undock() {
+      if (!docked) return;
+      docked = false;
+      dailyRow?.removeAttribute('data-hhr-ficha-dock');
+      for (const name of dockProperties) dailyRow?.style.removeProperty(name);
+      row?.removeAttribute('data-hhr-ficha-docked');
+      row?.style.removeProperty('--hhr-dock-width');
+    }
+    // Only the recognized daily row: a byline, one date field and one action, with nothing else inside.
+    function findDailyRow() {
+      const round = slot?.nextElementSibling;
+      const item = round?.matches('[data-hhr-round="frame"]') ? round.firstElementChild : null;
+      if (!item?.matches('.MuiGrid-item[data-hhr-round="before"]') || !item.querySelector(':scope > [data-hhr-update-label]')) return null;
+      const controls = [...item.querySelectorAll('input,select,textarea,button,a[href],[role="button"],[tabindex],[contenteditable]')];
+      if (controls.length !== 2 || !controls[0].matches('input[type="date"]') || !controls[1].matches('button') ||
+          item.querySelector('table,img,svg:not(button svg),.MuiCard-root,[aria-live],[role="alert"],[role="status"]')) return null;
+      return item;
+    }
+    // The links never scroll under the docked row: it docks only while everything fits on the line.
+    function positionDailyRow() {
+      const fits = () => {
+        if (!dailyRow?.isConnected || !row?.isConnected || !desktop?.matches) return null;
+        const items = [...row.children].filter(el => el.getClientRects().length);
+        const parts = [...dailyRow.children].filter(el => el.getClientRects().length);
+        if (!items.length || !parts.length) return null;
+        const linksEnd = items.at(-1).getBoundingClientRect().right;
+        const width = parts.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) + 8 * (parts.length - 1);
+        const rail = row.getBoundingClientRect();
+        // The floating Centro HHR bar can cover the end of this line. Stop short of it.
+        const bar = document.getElementById('hhr-clinical-operations-bar');
+        const cover = bar?.getClientRects().length ? bar.getBoundingClientRect() : null;
+        const covered = cover && cover.bottom > rail.top + 1 && cover.top < rail.bottom - 1 && cover.left < rail.right;
+        const limit = covered ? Math.min(rail.right, cover.left - 10) : rail.right;
+        return items[0].getBoundingClientRect().left >= rail.left - 1 && linksEnd + 28 + width <= limit ? {rail, width, limit} : null;
+      };
+      const room = fits();
+      if (!room) {
+        if (docked) { undock(); round.refresh(roundMain); }
+        return;
+      }
+      const values = [room.rail.top + 'px', Math.max(0, document.documentElement.clientWidth - room.limit) + 'px', room.rail.height + 'px'];
+      dockProperties.forEach((name, index) => {
+        if (dailyRow.style.getPropertyValue(name) !== values[index]) dailyRow.style.setProperty(name, values[index]);
+      });
+      const reserved = Math.ceil(room.rail.right - room.limit + room.width + 12) + 'px';
+      if (row.style.getPropertyValue('--hhr-dock-width') !== reserved) row.style.setProperty('--hhr-dock-width', reserved);
+      if (docked) return;
+      docked = true;
+      dailyRow.setAttribute('data-hhr-ficha-dock', '');
+      row.setAttribute('data-hhr-ficha-docked', '');
+      // The round no longer has a leading line of its own.
+      round.refresh(roundMain);
+    }
     const positionRow = () => {
       const bounds = slot.getBoundingClientRect();
       const header = primary.closest('.MuiAppBar-root') || primary;
@@ -307,6 +366,7 @@
       frame = 0;
       if (!row?.isConnected || !primary?.isConnected) return;
       positionRow();
+      positionDailyRow();
       const boundary = row.getBoundingClientRect().bottom + 14;
       const targets = [...links.entries()].flatMap(([element, item]) => {
         const target = document.getElementById(item.id);
@@ -399,6 +459,7 @@
         ['evolucion','valoracion'].includes(normalize(element.textContent)) && element.getClientRects().length);
       const nextRow = caption?.closest('.MuiGrid-container');
       if (row && row !== nextRow) {
+        undock(); dailyRow = null;
         links.forEach((item, element) => removeLink(element, item));
         unmark(row); unmark(slot);
         ['top', 'left', 'width'].forEach(key => row.style.removeProperty('--hhr-section-' + key));
@@ -408,6 +469,12 @@
       if (!row || !slot) { summaryDensity.refresh(encounterId, null, isSummary); return; }
       resizeObserver?.observe(slot);
       mark(row, 'data-hhr-ficha-sections'); mark(slot, 'data-hhr-ficha-section-slot');
+      const nextDaily = compact ? findDailyRow() : null;
+      if (nextDaily !== dailyRow) { undock(); dailyRow = nextDaily; }
+      // Collapsing or expanding the floating bar changes the room on this line.
+      const floating = dailyRow && document.getElementById('hhr-clinical-operations-bar');
+      if (floating) resizeObserver?.observe(floating);
+      roundMain = compact;
       [...links.entries()].filter(([element]) => !row.contains(element)).forEach(([element, item]) => removeLink(element, item));
       row.querySelectorAll('.MuiTypography-caption').forEach(element => {
         const id = SECTIONS[normalize(element.textContent)];

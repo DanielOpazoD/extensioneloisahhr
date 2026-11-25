@@ -11,6 +11,52 @@ it('abrevia la fecha de origen y omite únicamente el cargo reconocido', () => {
   expect(stamp('Cambio de evolución, 09:12:35')).toBeNull();
 });
 
+it('dice una sola vez la firma de la fila diaria y la de las tarjetas de indicaciones consecutivas', () => {
+  const stamp = 'Última actualización: 15-04-2026, 09:12:35, Médico Tomás Ejemplo';
+  const card = (id, text, cardId = '') => '<section id="' + id + '"><div ' + cardId + ' class="MuiCard-root"><div class="MuiCardHeader-root">' +
+    '<div class="MuiCardHeader-content"><span class="MuiCardHeader-title">Sección</span>' +
+    '<span class="MuiCardHeader-subheader">' + text + '</span></div></div></div></section>';
+  const main = document.createElement('main');
+  main.innerHTML = '<div class="MuiGrid-item"><p class="MuiTypography-body2">Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo</p></div>' +
+    card('observationEntrySection', stamp, 'id="evolution"') + card('medicationEntrySection', stamp) +
+    card('freeIndicationEntrySection', stamp) + card('procedureOrderEntrySection', stamp.replace('09:12:35', '09:12:36'));
+  document.body.append(main);
+  const daily = main.querySelector('p');
+  const [note, medication, free, orders] = main.querySelectorAll('.MuiCardHeader-subheader');
+  const repeat = el => el.getAttribute('data-hhr-update-repeat');
+  orders.title = 'Nombre nativo';
+  const labels = globalThis.HhrFichaReadingLabels.create();
+  try {
+    labels.refresh(main);
+    expect([daily, note, medication, free, orders].map(repeat)).toEqual(['note', null, null, 'above', null]);
+    expect(free.title).toBe('15-04-2026 · 09:12 · Tomás Ejemplo');
+    expect(free.textContent).toBe(stamp);
+    // A different second is a different act, even when the visible label is the same.
+    expect(orders.dataset.hhrUpdateLabel).toBe(free.dataset.hhrUpdateLabel);
+
+    // A folded card is not the card above. The next one is compared with the last card on screen.
+    free.closest('section').setAttribute('data-hhr-ficha-folded', '');
+    orders.textContent = stamp;
+    labels.refresh(main);
+    expect([free, orders].map(repeat)).toEqual([null, 'above']);
+    expect(free.hasAttribute('title')).toBe(false);
+    expect(orders.title).toBe('Nombre nativo');
+    free.closest('section').removeAttribute('data-hhr-ficha-folded');
+
+    // Another professional updated the summary after the note: the daily row keeps its byline.
+    daily.textContent = 'Última actualización: 15-04-2026, 11:30 - Elena Ejemplo';
+    medication.textContent = stamp.replace('Tomás', 'Elena');
+    labels.refresh(main);
+    expect([daily, medication, free, orders].map(repeat)).toEqual([null, null, null, 'above']);
+    labels.clear();
+    expect(main.querySelector('[data-hhr-update-repeat],[data-hhr-update-label]')).toBeNull();
+    expect([free.hasAttribute('title'), orders.title]).toEqual([false, 'Nombre nativo']);
+  } finally {
+    labels.clear();
+    main.remove();
+  }
+});
+
 it('conserva el botón nativo y actualiza su presentación cuando cambia la acción', () => {
   const main = document.createElement('main');
   main.innerHTML = '<div class="MuiCardContent-root"><button>Leer menos</button></div>';

@@ -250,6 +250,30 @@ it('pairs two empty requests on the last side line and stacks each column from i
   }
 });
 
+it('does not reserve a line of the round for a leading row docked on the section links', () => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  vi.stubGlobal('matchMedia', () => ({matches:true, addEventListener() {}, removeEventListener() {}}));
+  vi.spyOn(Element.prototype,'getClientRects').mockReturnValue([{width:10,height:10}]);
+  const desktop = globalThis.HhrFichaRoundLayout.create();
+  try {
+    document.body.innerHTML = '<main><div class="MuiGrid-container"><div class="MuiGrid-item MuiGrid-grid-xs-12"><input type="date"></div>' +
+      slot('observationEntrySection','Nota') + slot('shiftChangeEntrySection','<textarea></textarea>') +
+      slot('vitalSignsEntry','Signos') + '</div></main>';
+    const main = document.querySelector('main'), frame = main.firstElementChild, daily = frame.firstElementChild;
+    desktop.refresh(main);
+    expect(daily.dataset.hhrRound).toBe('before');
+    expect(frame.style.getPropertyValue('--hhr-round-line')).toBe('2');
+    daily.setAttribute('data-hhr-ficha-dock','');
+    desktop.clear();
+    desktop.refresh(main);
+    expect(frame.style.getPropertyValue('--hhr-round-line')).toBe('1');
+  } finally {
+    desktop.clear();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  }
+});
+
 it('exposes nested MUI layout slots and preserves the sibling print action, draft and hidden print copy', () => {
   const group = body => '<section class="MuiBox-root"><div class="MuiGrid-container">' + body + '</div></section>';
   const printCopy = '<div style="display:none">' + slot('vitalSignsEntry', 'Impresión') + '</div>';

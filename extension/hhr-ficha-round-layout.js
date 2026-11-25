@@ -224,7 +224,8 @@
           }
         }
         if (span !== 12 || peer.style.getPropertyValue('--hhr-round-span')) set(peer, '--hhr-round-span', String(span));
-        if (role === 'before' && peer.getClientRects().length) {
+        // A leading row docked on the section links takes no line of the round.
+        if (role === 'before' && peer.getClientRects().length && !peer.hasAttribute('data-hhr-ficha-dock')) {
           if (!used || used + span > 12) { leadingRows++; used = 0; }
           used = (used + span) % 12;
         }

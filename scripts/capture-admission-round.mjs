@@ -187,7 +187,27 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   assert.ok(await page.getByText('No se presenta un Reposo registrado para este paciente').isVisible());
   assert.ok(await page.getByText('Preferir porciones pequeñas.').isVisible());
 
-  // Larger browser text in the narrowest desktop window: the two requests wrap inside their halves.
+  // Three prescription cards signed in one act say so once. A different byline is shown in full.
+  const bylines = () => page.evaluate(() => ['#medication','#freeIndication','#procedureOrder'].map(id => {
+    const byline = document.querySelector(id + ' .MuiCardHeader-subheader');
+    return [byline.getAttribute('data-hhr-update-repeat'), getComputedStyle(byline,'::after').content.split('"')[1], byline.title];
+  }));
+  const signature = '15-04-2026 · 09:12 · Tomás Ejemplo';
+  assert.deepEqual(await bylines(), [[null,signature,''],['above','↑ misma firma',signature],['above','↑ misma firma',signature]]);
+  const free = page.locator('#freeIndication .MuiCardHeader-subheader');
+  const nativeByline = await free.textContent();
+  await free.evaluate(el => {
+    el.textContent = 'Última actualización: 15-04-2026, 12:05:10, Enfermera Elena Ejemplo';
+    document.dispatchEvent(new Event('fixture-refresh'));
+  });
+  assert.deepEqual(await bylines(), [[null,signature,''],[null,'15-04-2026 · 12:05 · Elena Ejemplo',''],[null,signature,'']],
+    'Una firma distinta separa las tarjetas de arriba y de abajo');
+  await free.evaluate((el, text) => { el.textContent = text; document.dispatchEvent(new Event('fixture-refresh')); }, nativeByline);
+  const actions = page.locator('#medication').getByRole('columnheader',{name:'Acciones',exact:true});
+  assert.equal(await actions.count(), 1, 'La columna de acciones conserva su nombre para los lectores de pantalla');
+  assert.equal(await actions.evaluate(el => getComputedStyle(el).fontSize), '0px');
+  assert.ok((await actions.boundingBox()).width < 60, 'Sin su rótulo, la columna de acciones cede ancho a las indicaciones');
+
   const viewport = page.viewportSize();
   await page.setViewportSize({width:1100, height:viewport.height});
   await page.evaluate(() => { document.documentElement.style.fontSize = '125%'; });

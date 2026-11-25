@@ -105,7 +105,7 @@
     const instant = new Date(iso);
     return Number.isFinite(instant.getTime()) ? [hospitalClock.format(instant), author].filter(Boolean).join(' · ') : author;
   }
-  function markTiles(card, next, compact, elapsed, older, sources, labelsToShorten) {
+  function markTiles(card, next, compact, elapsed, older, sources, labelsToShorten, shared) {
     const labels = [...card.querySelectorAll('span,p,dt,h4,h5,h6,div')].filter(el =>
       !el.closest('table,dialog,[role=dialog],.hhr-ficha-vitals') && vitalLabel(el, compact));
     if (labels.length < 2) return;
@@ -118,6 +118,7 @@
         (compact && !tileLabels[index].length && tile.matches('.MuiCard-root') && tile.querySelector(':scope > .MuiCardContent-root')))) return;
     next.set(grid,'vital-grid');
     const ages = [];
+    let measured = 0;
     for (const [index,tile] of tiles.entries()) {
       next.set(tile,'vital-tile');
       // Keep an unrecognised native card intact alongside known measurements.
@@ -133,6 +134,7 @@
           shell.querySelector('button,input,select,textarea,a,svg,[contenteditable],[role="button"]') ||
           [...shell.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) continue;
       next.set(title,'vital-label');
+      measured++;
       if (compact) {
         const sign = vitalLabel(nativeLabel,true);
         const isArterialPair = globalThis.HhrFichaVitalStrip.isArterialPair;
@@ -176,6 +178,16 @@
     for (const age of ages) {
       if (age.minutes >= newestEnd) older.add(age.detail);
     }
+    // When every measurement states its age and the newest ones agree, the heading says it once.
+    const heading = card.querySelector(':scope > .MuiCardHeader-root > .MuiCardHeader-content, :scope > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-content');
+    const recent = ages.filter(age => !older.has(age.detail));
+    const text = elapsed.get(recent[0]?.detail);
+    if (compact && heading && text && recent.length > 1 && ages.length === measured &&
+        recent.every(age => elapsed.get(age.detail) === text)) {
+      // «2 h», «35 min», «1 día»: the heading has room for a whole word where the tile had none.
+      shared.set(heading, text.replace(/^(\d+)(.*)$/, (_, count, unit) => count + ' ' + (unit === 'd' ? (count === '1' ? 'día' : 'días') : unit)));
+      for (const age of recent) shared.set(age.detail, '');
+    }
   }
 
   function cardForTitle(title, kind, main, compact) {
@@ -196,10 +208,11 @@
   function create() {
     const orderDetails = globalThis.HhrFichaOrderDetails.create();
     let previous = new Map(), previousRequests = new Map(), previousLabels = new Map();
+    let previousShared = new Map(), previousActions = new Set();
     function refresh(main, compact) {
       const next = new Map(), cards = new Map(), elapsed = new Map();
       const older = new Set(), sources = new Map(), requests = new Map(), labelsToShorten = new Map();
-      const orderCells = new Map();
+      const orderCells = new Map(), shared = new Map(), actions = new Set();
       if (main) {
         for (const [id,kind] of Object.entries(anchors)) {
           const el = document.getElementById(id);
@@ -217,7 +230,7 @@
         for (const [card,kind] of cards) {
           next.set(card,kind);
           if (kind === 'vitals') {
-            markTiles(card,next,compact,elapsed,older,sources,labelsToShorten);
+            markTiles(card,next,compact,elapsed,older,sources,labelsToShorten,shared);
             if (compact) for (const button of card.querySelectorAll('button')) {
               if (label(button) === 'ver historial completo' && !button.closest('dialog,[role=dialog]')) next.set(button,'vital-history');
             }
@@ -234,6 +247,8 @@
               }
               if (kind === 'care-orders' && heading === 'indicaciones') next.set(th,'order-instructions');
               if (!/^(tiempo|hora|horario|acciones)$/.test(heading)) return;
+              // The buttons below already say what the column is for.
+              if (compact && heading === 'acciones' && !th.childElementCount && !th.closest('dialog,[role=dialog],td')) actions.add(th);
               for (const row of rows) {
                 const cell = row.cells[index];
                 next.set(cell,'narrow');
@@ -285,6 +300,11 @@
         el.title = sign.full;
         previousLabels.set(el,sign);
       }
+      for (const [el,text] of previousShared) if (shared.get(el) !== text) el.removeAttribute('data-hhr-vital-shared');
+      for (const [el,text] of shared) if (previousShared.get(el) !== text) el.setAttribute('data-hhr-vital-shared', text);
+      for (const th of previousActions) if (!actions.has(th)) th.removeAttribute('data-hhr-actions-heading');
+      for (const th of actions) if (!previousActions.has(th)) th.setAttribute('data-hhr-actions-heading', '');
+      previousShared = shared; previousActions = actions;
       previousRequests = requests;
       previous = next;
     }
