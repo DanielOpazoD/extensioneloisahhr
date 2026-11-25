@@ -440,6 +440,16 @@ async function checkDailyRow(page, width) {
   await page.evaluate(() => { document.querySelector('.toolbar [data-fixture-extra]').remove(); });
   await refresh();
   assert.ok(onTheLine(await measure()), 'Sin el control añadido, la fila diaria vuelve a la línea');
+  // The daily row is known by the name of its form and by its «Imprimir». Another form with a date is not it.
+  for (const [selector, other, why] of [['.toolbar form label', 'Fecha de control', 'Un formulario con otro nombre conserva su lugar nativo'],
+    ['.toolbar form button[type="submit"]', 'Guardar', 'Un formulario que no imprime conserva su lugar nativo']]) {
+    const native = await page.locator(selector).evaluate((element, other) => { const text = element.textContent; element.textContent = other; return text; }, other);
+    await refresh();
+    assert.ok(inPlace(await measure()), why);
+    await page.locator(selector).evaluate((element, text) => { element.textContent = text; }, native);
+    await refresh();
+    assert.ok(onTheLine(await measure()), 'Con su nombre y su «Imprimir», la fila diaria vuelve a la línea');
+  }
 
   // Another professional updated the summary after the note: that byline is new information.
   const stamp = page.locator('.toolbar > [data-hhr-update-label]');

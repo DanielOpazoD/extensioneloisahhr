@@ -22,7 +22,7 @@ Lo que no cambia:
 - **Las horas.** Cada hora conserva el ancho que le da Eloísa y cada marca queda bajo su hora. La prueba mide el centro de cada marca contra el de su rótulo.
 - **Los iconos de estado.** Conservan su dibujo y su color. La extensión no les da nombre ni color propios: su significado es de Eloísa.
 - **El encabezado fijo** de cada tabla, «Ir a Hoy» y las flechas de página.
-- **Una tarjeta con otra forma.** Si la primera columna no es «Indicación», la tarjeta conserva el aspecto de Eloísa. Si entre la cabecera y la tabla hay algo más que botones de icono, las herramientas conservan su fila.
+- **Lo que tiene otra forma.** Si la primera columna no es «Indicación», la tarjeta conserva el aspecto de Eloísa. Si entre la cabecera y la tabla hay algo más que botones de icono, las herramientas conservan su fila bajo el título. Si entre las tarjetas hay otro bloque, ese bloque y la separación entre tarjetas quedan como en Eloísa.
 
 ### Verificación con teclado
 

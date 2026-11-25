@@ -102,8 +102,8 @@ it('rotula cada acción con el nombre nativo de su icono y retira sus marcas sin
     '<button aria-label="Compartir"><svg></svg></button><button aria-label="Nueva evolución"><svg></svg></button>' +
     icon('NotesIcon', 'Ver el historial completo de enmendados') + '<button aria-label="Opciones"><svg data-testid="MoreVertIcon"></svg></button>');
   expect(marks(buttons)).toEqual([['more', null], ['edit', 'Editar'], ['amended', 'Enmendamientos'], [null, null], ['write', 'Nueva'], [null, null], [null, null]]);
-  // A native title is never replaced. A button without one shows its own native name.
-  expect(buttons.map(button => button.title)).toEqual(['Opciones de evolución', 'Editar evolución', 'Enmendamientos', '', 'Nueva evolución', '', '']);
+  // A native title is never replaced, and a button with an accessible name of its own is not described again.
+  expect(buttons.map(button => button.title)).toEqual(['', '', 'Enmendamientos', '', '', '', '']);
 
   buttons[1].title = 'Nombre que Eloísa añadió después';
   reader.clear();

@@ -83,7 +83,7 @@ export const historyPage = (days = historyDays) => `<!doctype html><html lang="e
   .MuiCardHeader-title{display:block;font-size:14px}.MuiCardHeader-subheader{display:block;color:#61716c;font-size:14px}
   .MuiCardHeader-action{color:#61716c;font-size:13px}
   .MuiCardContent-root{padding:0 16px 24px}.MuiCardContent-root>p{margin:0 0 8px;color:#0b6e66;font-weight:500}
-  .timeline .MuiBox-root{margin:0}.MuiCardContent-root .MuiStack-root{display:flex;flex-direction:column;gap:8px}
+  .timeline{display:flex;flex-direction:column}.timeline .MuiBox-root{margin:0}.MuiCardContent-root .MuiStack-root{display:flex;flex-direction:column;gap:8px}
   .MuiCardContent-root .MuiStack-root .MuiStack-root{flex-direction:row;flex-wrap:wrap;gap:4px 12px;align-items:flex-start}
   .MuiCardContent-root .MuiStack-root p{margin:0;white-space:pre-line}.MuiCardContent-root span.MuiTypography-root{display:block;width:100%}
   .MuiCardContent-root span.MuiTypography-root>span{display:inline;width:auto;margin-right:6px}.MuiCardHeader-action p{margin:0}

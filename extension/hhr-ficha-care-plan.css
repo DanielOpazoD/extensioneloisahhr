@@ -4,19 +4,20 @@
    drawing and colour. */
 @media screen {
   html[data-hhr-ficha-theme="compact"] [data-hhr-plan="view"] {
+    /* The reader marks the view only when all it holds is recognized: the cards and their switch. */
     gap:8px;
     > * { margin-block:0 !important; }
-    /* A switch of this view filters what is listed: it reads as a note, at four fifths of its size.
-       A card that was not recognized keeps its own. */
-    :is(& > :not(.MuiCard-root), [data-hhr-plan="card"] > .MuiCardHeader-root) {
-      .MuiSwitch-root { zoom:.8; }
-      :is(.MuiFormControlLabel-label, .MuiFormControlLabel-root > .MuiTypography-root) {
-        color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans);
-      }
+  }
+  /* A switch that filters what is listed reads as a note, at four fifths of its size. */
+  html[data-hhr-ficha-theme="compact"] :is([data-hhr-plan="filter"], [data-hhr-plan="card"] > .MuiCardHeader-root) {
+    .MuiSwitch-root { zoom:.8; }
+    :is(.MuiFormControlLabel-label, .MuiFormControlLabel-root > .MuiTypography-root) {
+      color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans);
     }
   }
   html[data-hhr-ficha-theme="compact"] [data-hhr-plan="card"] {
-    display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+    /* The tools close the line of the title only when they were recognized. Otherwise they keep their row. */
+    &:has(> [data-hhr-plan="tools"]) { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; }
     container:hhr-plan / inline-size;
     border:1px solid var(--hhr-ficha-line); border-radius:var(--hhr-ficha-radius);
     background:var(--hhr-ficha-surface); box-shadow:none; color:var(--hhr-ficha-ink);

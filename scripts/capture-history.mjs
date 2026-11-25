@@ -33,7 +33,7 @@ async function verifyTimeline(page, directory, width, measured) {
   });
   assert.ok(boxes.every(box => (box.rounded[0] !== '0px') === box.edge.includes('start') && (box.rounded[1] !== '0px') === box.edge.includes('end')),
     'Solo el inicio y el final de cada día redondean sus esquinas');
-  assert.ok(boxes.every(box => box.band === null || box.band === 'static'), 'La cabecera del día no queda fija a medias dentro de su caja');
+  assert.ok(boxes.every(box => box.band === null || box.band === 'sticky'), 'La fecha del día sigue fija bajo las pestañas mientras pasa su caja, como en las demás vistas');
 
   const events = await page.locator('.timeline .MuiCard-root').evaluateAll(cards => cards.map(card => {
     const box = el => el.getBoundingClientRect();
@@ -106,6 +106,18 @@ async function verifyTimeline(page, directory, width, measured) {
   await authors.getByRole('button', {name:'Marta Ejemplo', exact:true}).press('Enter');
   assert.deepEqual(await shown.locator('.MuiCardHeader-subheader').allTextContents(), ['Marta Ejemplo']);
   assert.equal(await dates.count(), 1, 'Solo queda la fecha del día que tiene una nota de esa profesional');
+  // Eloísa gives each event a box: with hundreds of them, a line or a gap per filtered box would add up.
+  const leftovers = await page.locator('.timeline > .MuiBox-root').evaluateAll(list => {
+    const seen = element => getComputedStyle(element).display !== 'none' && getComputedStyle(element).visibility !== 'hidden';
+    const empty = list.filter(box => ![...box.children].some(seen));
+    const kept = list.filter(box => [...box.children].some(seen));
+    return {empty:empty.length, height:empty.reduce((sum, box) => sum + box.getBoundingClientRect().height, 0),
+      above:Math.round(kept[0].getBoundingClientRect().top - document.querySelector('[role="group"][aria-label="Evoluciones por profesional"]').getBoundingClientRect().bottom),
+      first:kept[0].getBoundingClientRect().top, last:kept.at(-1).getBoundingClientRect().bottom,
+      content:kept.reduce((sum, box) => sum + box.getBoundingClientRect().height, 0)};
+  });
+  assert.ok(leftovers.empty >= 8 && leftovers.height === 0, 'Una caja sin eventos a la vista no deja filete: ' + JSON.stringify(leftovers));
+  assert.ok(leftovers.last - leftovers.first - leftovers.content <= 1 && leftovers.above <= 20, 'Ni deja más hueco que el de un día sobre las cajas que quedan, ni entre ellas: ' + JSON.stringify(leftovers));
   await authors.getByRole('button', {name:'Tomás Ejemplo', exact:true}).press('Enter');
   assert.equal(await shown.count(), 3);
   assert.equal(await dates.count(), 2, 'Un día conserva su fecha aunque su primer evento no sea una nota de ese profesional');

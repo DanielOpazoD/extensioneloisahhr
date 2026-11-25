@@ -5,17 +5,20 @@
     /* Eloísa gives most events a box of their own and dates only the first box of a day.
        The reader marks where a day starts and ends, and the boxes between read as one surface. */
     > .MuiBox-root { margin:0 !important; background:var(--hhr-ficha-surface); }
-    > .MuiBox-root:not([data-hhr-history-edge~="start"]) { border-block-start:1px solid var(--hhr-ficha-line-soft); }
+    /* With «Ver evoluciones», a box whose events are all filtered leaves no line and no gap: Eloísa
+       gives each event a box, and there can be hundreds. Its date stays measurable, as that filter needs. */
+    > .MuiBox-root:not([data-hhr-history-edge~="start"]):has(> :not([data-hhr-evolution-filtered])) { border-block-start:1px solid var(--hhr-ficha-line-soft); }
     > .MuiBox-root[data-hhr-history-edge~="start"] {
       border-start-start-radius:var(--hhr-ficha-radius); border-start-end-radius:var(--hhr-ficha-radius);
     }
-    > .MuiBox-root[data-hhr-history-edge~="start"] ~ .MuiBox-root[data-hhr-history-edge~="start"] { margin-block-start:8px !important; }
+    > .MuiBox-root[data-hhr-history-edge~="start"] ~ .MuiBox-root[data-hhr-history-edge~="start"]:has(> :not([data-hhr-evolution-filtered])) { margin-block-start:8px !important; }
     > .MuiBox-root[data-hhr-history-edge~="end"] {
       border-end-start-radius:var(--hhr-ficha-radius); border-end-end-radius:var(--hhr-ficha-radius);
     }
-    /* The day heads its surface. The date selector beside the tabs keeps the day in view while scrolling. */
+    > .MuiBox-root:not(:has(> .MuiCard-root:not([data-hhr-evolution-filtered]))) > :first-child:has(> .MuiChip-root:only-child) { border-block-end:0; }
+    /* The day heads its surface and, as in every view, stays under the tabs while its box passes. */
     > .MuiBox-root > :first-child:has(> .MuiChip-root:only-child) {
-      position:static; display:flex; justify-content:flex-start; box-sizing:border-box; width:auto; max-width:none;
+      display:flex; justify-content:flex-start; box-sizing:border-box; width:auto; max-width:none;
       margin:0 !important; padding:3px var(--hhr-ficha-inset);
       border-block-end:1px solid var(--hhr-ficha-line);
       border-radius:var(--hhr-ficha-radius) var(--hhr-ficha-radius) 0 0; background:var(--hhr-ficha-band);

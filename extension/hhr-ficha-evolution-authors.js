@@ -143,7 +143,8 @@
         if (caption) { if (button.getAttribute('data-hhr-evo-caption') !== caption) button.setAttribute('data-hhr-evo-caption', caption); }
         else button.removeAttribute('data-hhr-evo-caption');
         // The native name lives on the icon, where a pointer shows nothing. Offer it on the button.
-        if (!button.hasAttribute('title') || ownHint(button) && button.title !== name) {
+        // A button Eloísa already names for a screen reader is not described twice.
+        if (!button.hasAttribute('aria-label') && (!button.hasAttribute('title') || ownHint(button) && button.title !== name)) {
           button.title = name;
           button.setAttribute('data-hhr-evo-hint', name);
         }

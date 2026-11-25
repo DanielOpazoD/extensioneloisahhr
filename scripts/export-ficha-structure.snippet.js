@@ -10,11 +10,14 @@
 // Qué enmascara: cualquier otra palabra (letras → x) y todos los dígitos (→ 0), en textos, en
 // rótulos (`aria-label`, `title`, `placeholder`, `alt`) y en la ruta. Nunca lee el valor de un
 // campo de formulario.
-// Qué pasa con los identificadores: `id`, `data-testid` y los tramos de la ruta conservan sus
-// letras solo si cada una de sus palabras está en una segunda lista cerrada, la de palabras
-// de programador («medicationEntrySection», «encounter-event-tab-history»), o si nombran un
-// icono («EditNoteRoundedIcon»). Pierden sus dígitos. Cualquier otro se enmascara. De las
-// clases solo salen las de componentes (`Mui…`) y las de la extensión (`hhr-…`).
+// Qué pasa con los identificadores: `id`, `data-testid`, las marcas `data-hhr-*` y los tramos de
+// la ruta conservan sus letras solo si cada una de sus palabras está en una segunda lista
+// cerrada, la de palabras de programador («medicationEntrySection», «encounter-event-tab-history»).
+// Pierden sus dígitos. Cualquier otro se enmascara. Dos excepciones: el `data-testid` de un icono
+// de la biblioteca (`svg.MuiSvgIcon-root`) sale como está («EditNoteRoundedIcon»), y un id
+// generado por React sale como `:r0:`.
+// De las clases solo salen las de componentes (`Mui…`) y las de la extensión (`hhr-…`), tal cual,
+// con sus dígitos (`MuiGrid-grid-xs-12`): las escribe la biblioteca, no los datos.
 // Un identificador que salga como «xxxx» y haga falta se agrega a su lista, tras comprobar
 // que no nombra a nadie.
 globalThis.exportFichaStructure = function exportFichaStructure(root = document.body) {
@@ -61,11 +64,16 @@ globalThis.exportFichaStructure = function exportFichaStructure(root = document.
     'search user role device devices invasive product products instrument instruments evaluation equipment status state type name ' +
     'description comment comments new edit add delete remove save cancel close open toggle show hide collapse expand more less next ' +
     'previous first last page pages id key value data hhr clinical operations bar notices prescription note notes amend amended ' +
-    'standard single planning schedule scheduling treatment today yesterday').split(' '));
+    'standard single planning schedule scheduling treatment today yesterday frame before after tools start end write narrow above ' +
+    'half inline flat kind compact sections slot primary rail timeline link dock docked repeat shared heading folded caption hint ' +
+    'instructions vital age round reading update day edge empty').split(' '));
   const words = token => token.replace(/\p{N}/gu, '').split(/[-_:]+|(?<=[a-z])(?=[A-Z])/).filter(Boolean);
-  const developerName = token => /^[:_]r[:_]?[0-9a-z]*[:_]$/.test(token) || /^[A-Z][A-Za-z0-9]*Icon$/.test(token) ||
-    /^[A-Za-z][\w:-]*$/.test(token) && words(token).every(word => developerWords.has(word.toLowerCase()));
-  const identifier = value => value.split(/\s+/).map(token => developerName(token) ? token.replace(/\p{N}/gu, '0') : mask(token)).join(' ');
+  const developerName = token => /^[A-Za-z][\w:-]*$/.test(token) && words(token).every(word => developerWords.has(word.toLowerCase()));
+  // React writes ids such as `:r1b:` or `_r_1b_`. Nothing of them is kept but that they are one.
+  const reactId = /^([:_]r[:_]?)[0-9a-z]*([:_])$/i;
+  const identifier = (value, libraryIcon) => value.split(/\s+/).map(token =>
+    reactId.test(token) ? token.replace(reactId, '$10$2') :
+    libraryIcon && /^[A-Z][A-Za-z0-9]*Icon$/.test(token) || developerName(token) ? token.replace(/\p{N}/gu, '0') : mask(token)).join(' ');
   const described = new Set(['aria-label', 'title', 'placeholder', 'alt']);
   const skipped = 'script,style,link,noscript,iframe,template,#hhr-clinical-operations-bar,#hhr-clinical-page-notices,#hhr-prescription-print-modal';
   const signature = el => el.tagName + '.' + [...el.classList].filter(name => name.startsWith('Mui')).join('.');
@@ -77,9 +85,10 @@ globalThis.exportFichaStructure = function exportFichaStructure(root = document.
     if (classes.length) parts.push('class="' + classes.join(' ') + '"');
     for (const {name, value} of el.attributes) {
       if (structural.has(name)) parts.push(value === '' ? name : name + '="' + state(value) + '"');
-      else if (identifiers.has(name)) parts.push(name + '="' + identifier(value).slice(0, 80) + '"');
-      // A mark of the extension is a short lowercase word («frame», «note»). Any other value is text.
-      else if (name.startsWith('data-hhr-')) parts.push(name + '="' + (/^[a-z]+(?:-[a-z]+)*$/.test(value) ? value : mask(value).slice(0, 80)) + '"');
+      // The library names its icons itself. Any other test id is read as an identifier.
+      else if (identifiers.has(name)) parts.push(name + '="' + identifier(value, name === 'data-testid' && el.matches('svg.MuiSvgIcon-root')).slice(0, 80) + '"');
+      // A mark of the extension is one of its own words («frame», «note»). Any other value is text.
+      else if (name.startsWith('data-hhr-')) parts.push(name + '="' + (/^[a-z]+(?:-[a-z]+)*$/.test(value) ? identifier(value) : mask(value).slice(0, 80)) + '"');
       else if (described.has(name)) parts.push(name + '="' + mask(value).slice(0, 80) + '"');
     }
     if (el.matches('input[type=checkbox],input[type=radio]') && el.checked) parts.push('checked');
@@ -119,7 +128,7 @@ globalThis.exportFichaStructure = function exportFichaStructure(root = document.
   };
   walk(root, 0);
   // Of the route, only the names of its sections. An identifier in it reads as zeros and x.
-  const route = location.pathname.split('/').map(identifier).join('/');
+  const route = location.pathname.split('/').map(part => identifier(part)).join('/');
   return '<!-- Estructura de la ficha sin datos: textos como xxxx, dígitos como 0000. ' + route + ' ' +
     innerWidth + '×' + innerHeight + ' -->\n' + lines.join('\n');
 };

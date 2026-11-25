@@ -45,11 +45,36 @@ it('deja las herramientas en su fila cuando no son solo botones de icono o hay o
   expect(document.querySelectorAll('[data-hhr-plan="tools"],[data-hhr-plan-caption],[title]')).toHaveLength(0);
 });
 
-it('marca la vista solo si todas las tarjetas comparten contenedor', () => {
-  const main = mount(card() + `<div class="MuiBox-root">${card()}</div>`);
+const filter = '<div class="MuiBox-root" id="filter"><label><input type="checkbox"> Mostrar todos los ocultos</label></div>';
+it('marca la vista solo si contiene tarjetas de programación y, como mucho, su interruptor', () => {
+  let main = mount(filter + card() + card());
   plan.refresh(main);
-  expect(marks('.MuiCard-root')).toEqual(['card', 'card']);
-  expect(document.querySelector('[data-hhr-plan="view"]')).toBeNull();
+  expect(document.querySelector('#view').getAttribute('data-hhr-plan')).toBe('view');
+  expect(document.querySelector('#filter').getAttribute('data-hhr-plan')).toBe('filter');
+  // Anything else in the stack: each card is compacted, the stack and that block are left alone.
+  for (const other of [`<div class="MuiBox-root">${card()}</div>`, card({heading:'Prestación'}), '<div class="MuiAlert-root">Aviso</div>',
+    '<div class="MuiBox-root"><label><input type="checkbox"> Uno</label><button>Otro</button></div>', '<div class="MuiBox-root"><input type="text"></div>']) {
+    plan.clear();
+    main = mount(filter + card() + other);
+    plan.refresh(main);
+    expect(document.querySelector('#view > .MuiCard-root').getAttribute('data-hhr-plan')).toBe('card');
+    expect(document.querySelectorAll('[data-hhr-plan="view"],[data-hhr-plan="filter"]')).toHaveLength(0);
+  }
+});
+
+it('lee solo lo que está a la vista y no inventa nombres', () => {
+  const long = 'Planificación con un nombre demasiado largo para caber';
+  const main = mount(`<div hidden>${card()}</div><div aria-hidden="true">${card()}</div>` +
+    card({bar:`<div class="MuiBox-root">${tool('AccessTimeRoundedIcon', long)}${tool('HelpIcon')}<button class="MuiIconButton-root" aria-label="Planificación única"><svg></svg></button></div>`,
+      body:'<tr><td><p>Una sola celda, sin unir columnas</p></td></tr>'}));
+  plan.refresh(main);
+  expect(marks('.MuiCard-root')).toEqual([null, null, 'card']);
+  const buttons = [...document.querySelectorAll('[data-hhr-plan="tools"] button')];
+  // A long name stays on hover. An icon without a name that is not the menu gets none. A button with
+  // an accessible name of its own shows it, and is not described a second time.
+  expect(buttons.map(button => [button.getAttribute('data-hhr-plan-caption'), button.getAttribute('title')]))
+    .toEqual([[null, long], [null, null], ['Planificación única', null]]);
+  expect(document.querySelector('[data-hhr-plan-empty]')).toBeNull();
 });
 
 it('respeta el título propio de un botón y retira solo los suyos', () => {

@@ -9,6 +9,11 @@
   const nativeName = (button, ownTitle) => (button.getAttribute('aria-label') || (ownTitle ? '' : button.title) ||
     button.querySelector('svg[aria-label]')?.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
 
+  const controls = 'a,button,input,select,textarea,[role="button"],[tabindex]';
+  // The switch above the cards: one checkbox with its label and nothing else.
+  const isFilter = element => !element.matches('.MuiCard-root') && !element.querySelector('.MuiCard-root,table') &&
+    element.querySelectorAll(controls).length === 1 && Boolean(element.querySelector('input[type="checkbox"]'));
+
   // A scheduling card: a header and one table whose first heading is «Indicación» beside the hours.
   function schedule(card) {
     const header = card.querySelector(':scope > .MuiCardHeader-root');
@@ -19,7 +24,7 @@
     // The tools sit between the header and the table: icon buttons and nothing else.
     const tools = [...card.children].find(el => el !== header && el !== content);
     const buttons = tools ? [...tools.querySelectorAll('button')] : [];
-    const onlyButtons = buttons.length && buttons.length === tools.querySelectorAll('a,button,input,select,textarea,[role="button"],[tabindex]').length &&
+    const onlyButtons = buttons.length && buttons.length === tools.querySelectorAll(controls).length &&
       buttons.every(button => button.matches('.MuiIconButton-root') && button.querySelector('svg') && !button.textContent.trim());
     const rows = [...(table.tBodies[0]?.rows || [])];
     return {table, tools:onlyButtons && card.children.length === 3 ? tools : null, buttons:onlyButtons ? buttons : [],
@@ -36,9 +41,14 @@
       const next = new Map(), named = new Set();
       const cards = main ? [...main.querySelectorAll('.MuiCard-root')].filter(card => !card.closest('dialog,[role="dialog"],[hidden],[aria-hidden="true"]')) : [];
       const found = cards.map(card => [card, schedule(card)]).filter(([, plan]) => plan);
-      // The view is the stack that holds every scheduling card. Cards spread over several parents keep Eloísa's spacing.
+      // The view is the stack that holds the scheduling cards and, at most, the switch above them.
+      // With anything else in it, each card is still compacted and the stack keeps Eloísa's spacing.
       const view = found[0]?.[0].parentElement;
-      if (view && found.every(([card]) => card.parentElement === view)) set(next, view, attribute, 'view');
+      const rest = view ? [...view.children].filter(child => !found.some(([card]) => card === child)) : [];
+      if (view && found.every(([card]) => card.parentElement === view) && rest.every(isFilter)) {
+        set(next, view, attribute, 'view');
+        rest.forEach(filter => set(next, filter, attribute, 'filter'));
+      }
       for (const [card, plan] of found) {
         set(next, card, attribute, 'card');
         if (plan.empty) set(next, plan.table, attribute + '-empty');
@@ -47,8 +57,9 @@
           const name = nativeName(button, hints.has(button));
           const menu = !name && button.querySelector('svg[data-testid^="MoreVert"]');
           if (name && name.length <= 28) set(next, button, attribute + '-caption', name);
-          // A button without a tooltip of its own shows its name on hover.
-          if ((name || menu) && (!button.title || hints.has(button))) {
+          // A button without a tooltip of its own shows its name on hover. One that Eloísa already
+          // names for a screen reader is not described twice.
+          if ((name || menu) && !button.hasAttribute('aria-label') && (!button.title || hints.has(button))) {
             const hint = name || 'Más opciones';
             if (button.title !== hint) button.title = hint;
             named.add(button);

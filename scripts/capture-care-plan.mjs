@@ -42,7 +42,8 @@ const read = page => page.evaluate(() => {
     };
   });
   const rows = cards.flatMap(card => card.rows);
-  return {pageWidth:document.documentElement.scrollWidth, view:document.querySelector('.plan').getAttribute('data-hhr-plan'), cards,
+  return {pageWidth:document.documentElement.scrollWidth, view:document.querySelector('.plan').getAttribute('data-hhr-plan'),
+    filter:document.querySelector('.plan > .MuiBox-root').getAttribute('data-hhr-plan'), cards,
     summary:{cards:cards.length, rows:rows.length, visibleRows:rows.filter(row => row.bottom <= innerHeight).length,
       visibleCards:cards.filter(card => card.header.bottom <= innerHeight).length, end:Math.round(cards.at(-1).box.bottom)}};
 });
@@ -51,7 +52,7 @@ const read = page => page.evaluate(() => {
 async function verifyPlan(page, width, native) {
   const shown = await read(page);
   assert.equal(shown.pageWidth, width, 'El plan cabe en la ventana');
-  assert.equal(shown.view, 'view');
+  assert.deepEqual([shown.view, shown.filter], ['view', 'filter']);
   assert.deepEqual(shown.cards.map(card => [card.mark, card.tools, card.empty]), planCards.map(card => ['card', 'tools', !card.rows.length]), 'Las cuatro tarjetas se reconocen');
   assert.deepEqual(shown.cards.map(card => card.title.text), planCards.map(card => card.title));
   assert.ok(shown.summary.end < native.summary.end * .62, `El plan ocupa bastante menos alto: ${native.summary.end} → ${shown.summary.end}`);
@@ -109,9 +110,11 @@ async function verifyPlan(page, width, native) {
   const order = [];
   for (let step = 0; step < 4; step++) {
     await page.keyboard.press('Tab');
-    order.push(await page.evaluate(() => document.activeElement.querySelector('svg')?.dataset.testid || document.activeElement.textContent.trim()));
+    order.push(await page.evaluate(() => [document.activeElement.querySelector('svg')?.dataset.testid || document.activeElement.textContent.trim(),
+      getComputedStyle(document.activeElement).outlineStyle + ' ' + getComputedStyle(document.activeElement).outlineWidth]));
   }
-  assert.deepEqual(order, ['AccessTimeRoundedIcon', 'TouchAppIcon', 'MoreVertIcon', 'Ir a Hoy']);
+  assert.deepEqual(order.map(([name]) => name), ['AccessTimeRoundedIcon', 'TouchAppIcon', 'MoreVertIcon', 'Ir a Hoy']);
+  assert.ok(order.every(([, outline]) => outline === 'solid 2px'), 'Cada control muestra dónde está el foco del teclado: ' + order.map(([, outline]) => outline));
   await page.evaluate(() => document.activeElement.blur());
 
   // A foot that says something keeps its row.
@@ -134,10 +137,47 @@ async function verifyPlan(page, width, native) {
   await first.locator('.tools button').first().evaluate(button => button.removeAttribute('title'));
   await refresh(page);
 
+  // Tools with something that is not an icon button keep the row Eloísa gives them, under the title.
+  await first.locator('.tools').evaluate(tools => { tools.insertAdjacentHTML('beforeend', '<input type="text" aria-label="Buscar" data-fixture-extra>'); });
+  await refresh(page);
+  const mixed = (await read(page)).cards[0];
+  assert.deepEqual([mixed.mark, mixed.tools], ['card', null]);
+  assert.ok(mixed.toolsBox.top >= mixed.header.bottom - 1 && mixed.toolsBox.height === native.cards[0].toolsBox.height,
+    `Las herramientas que no se reconocen conservan su fila: ${mixed.header.bottom} → ${mixed.toolsBox.top}`);
+  await page.evaluate(() => document.querySelector('[data-fixture-extra]').remove());
+  await refresh(page);
+
+  // With anything else among the cards, the stack keeps its spacing and that block keeps its look.
+  await page.evaluate(() => {
+    const block = document.createElement('div');
+    block.className = 'MuiBox-root'; block.dataset.fixtureExtra = '';
+    block.innerHTML = document.querySelector('.plan > .MuiBox-root').innerHTML + document.querySelector('.plan > .MuiCard-root').outerHTML;
+    // The copy is a block Eloísa would draw: without the marks the reader put on the original.
+    for (const element of block.querySelectorAll('*')) {
+      for (const {name} of [...element.attributes]) if (name.startsWith('data-hhr-') || name === 'title') element.removeAttribute(name);
+    }
+    block.querySelector('th p').textContent = 'Prestación';
+    document.querySelector('.plan').append(block);
+  });
+  await refresh(page);
+  const foreign = await page.evaluate(() => {
+    const block = document.querySelector('.plan > [data-fixture-extra]'), known = document.querySelector('.plan > .MuiCard-root + .MuiCard-root');
+    return {view:document.querySelector('.plan').getAttribute('data-hhr-plan'), filter:document.querySelector('.plan > .MuiBox-root').getAttribute('data-hhr-plan'),
+      marks:block.querySelectorAll('[data-hhr-plan],[data-hhr-plan-caption],[title]').length, gap:getComputedStyle(known).marginTop, blockGap:getComputedStyle(block).marginTop,
+      switches:[...block.querySelectorAll('.MuiSwitch-root')].map(element => Math.round(element.getBoundingClientRect().height)),
+      labels:[...block.querySelectorAll('.MuiFormControlLabel-label')].map(element => getComputedStyle(element).fontSize)};
+  });
+  assert.deepEqual(foreign, {view:null, filter:null, marks:0, gap:'16px', blockGap:'16px', switches:[38, 38], labels:['16px', '16px']},
+    'Un bloque que no se reconoce conserva su aspecto y la pila su separación');
+  assert.equal((await read(page)).cards[1].mark, 'card', 'Las tarjetas reconocidas siguen compactas');
+  await page.evaluate(() => document.querySelector('.plan > [data-fixture-extra]').remove());
+  await refresh(page);
+  assert.equal((await read(page)).view, 'view');
+
   // Without the compact view the page is the one Eloísa drew.
   await theme(page, 'off');
   const restored = await read(page);
-  assert.deepEqual([restored.view, restored.cards.map(card => [card.mark, card.tools, card.empty, card.buttons.map(button => button.title)])],
+  assert.deepEqual([restored.view ?? restored.filter, restored.cards.map(card => [card.mark, card.tools, card.empty, card.buttons.map(button => button.title)])],
     [null, planCards.map(() => [null, null, false, [null, null, null]])], 'Al apagar la vista no queda ninguna marca');
   assert.deepEqual(restored.summary, native.summary, 'Al apagar la vista el plan mide lo mismo que sin la extensión');
   await theme(page, 'compact');
