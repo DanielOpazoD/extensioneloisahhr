@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.187
+
+- En el Resumen compacto de escritorio, «Agregar observación» y «Agregar alerta» abren el campo de escritura. Las alertas, los interruptores y los borradores permanecen a la vista.
+- En Signos vitales, la PAM y el tiempo de cada medición ganan tamaño y contraste.
+- Reposo y Régimen muestran el profesional y la hora en la misma línea que su indicación cuando hay ancho suficiente.
+- Al recorrer Fármacos, Indicaciones libres u Órdenes de atención con el puntero o el teclado, una línea guía la lectura hasta la acción de la misma fila. Las instrucciones de cada orden ganan ancho. «Ver vacías» se distingue de los enlaces a las secciones.
+
 ## 0.48.186
 
 - En «Pacientes egresados de alta», los nombres usan el ancho de la columna y saltan por palabras. El RUN sigue alineado debajo del nombre y se conservan las etiquetas de alta y fallecimiento.

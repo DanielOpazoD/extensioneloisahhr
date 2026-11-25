@@ -384,7 +384,7 @@
       const main = isSummary ? document.querySelector('main') : null;
       surfaces.refresh(main, theme === 'compact');
       const compact = theme === 'compact' ? main : null;
-      labels.refresh(compact);
+      labels.refresh(compact, encounterId);
       const disclosure = compact?.querySelector('#evolution [data-hhr-evolution-block] > .MuiBox-root > button[data-hhr-note-disclosure]:only-child');
       setNoteDisclosure(disclosure?.getClientRects().length &&
         !disclosure.closest('form,dialog,[role=dialog],[inert],[hidden],[aria-hidden=true]') &&

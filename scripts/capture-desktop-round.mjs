@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-export async function captureDesktopRound(page, directory, width, verifyLayout, round = false) {
+export async function captureDesktopRound(page, directory, width, verifyLayout, round = false, reading = false) {
   const note = page.locator('#evolution');
   const text = note.locator('.MuiBox-root > .MuiTypography-caption');
   const disclosure = note.locator('button[data-hhr-note-disclosure]');
@@ -104,7 +104,7 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     }
     if (round ? expanded : (width === 1280 && !expanded) || (width === 1440 && expanded)) {
       if (round) await disclosure.evaluate(button => button.blur());
-      await page.screenshot({fullPage:round && width === 1440, path:path.join(directory,width + (expanded ? '-expandida.png' : '-contraida.png'))});
+      await page.screenshot({fullPage:round && !reading && width === 1440, path:path.join(directory,width + (expanded ? '-expandida.png' : '-contraida.png'))});
     }
   }
   assert.ok(heights[1] > heights[0], 'Al desplegar, la nota completa debe ocupar más alto que el extracto');
@@ -154,7 +154,30 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         'Cada aviso debe presentar primero el mensaje y reunir autor y antigüedad debajo');
     }
   }
-  const handoff = page.locator('#shiftChangeObservation input');
+  if (reading) await checkReadingRound(page, directory, width, verifyLayout);
+  if (reading && verifyLayout && width === 1280) await checkFocusedEntryRefresh(page);
+  if (reading && verifyLayout) {
+    // Eloísa can restore a draft by assigning .value without emitting an input event.
+    for (const id of ['#shiftChangeObservation','#alerts']) {
+      const section = page.locator(id);
+      const field = section.locator('input:not([type=checkbox])');
+      const opener = section.locator('[data-hhr-entry-open]');
+      assert.ok(await opener.isVisible(), 'Debe existir una acción para abrir el campo en ' + id);
+      await field.evaluate(input => { input.value = 'Borrador recuperado'; });
+      assert.ok(await field.isVisible() && !await opener.isVisible());
+      assert.equal(await field.inputValue(),'Borrador recuperado');
+      await field.evaluate(input => { input.value = ''; });
+      assert.ok(await opener.isVisible() && !await field.isVisible());
+    }
+  }
+  const handoffCard = page.locator('#shiftChangeObservation');
+  const handoff = handoffCard.locator('input');
+  const openHandoff = handoffCard.locator('[data-hhr-entry-open]');
+  if (await openHandoff.isVisible()) {
+    assert.ok(!await handoff.isVisible(), 'Entrega empieza en modo lectura');
+    await openHandoff.click();
+    assert.ok(await handoff.evaluate(el => el === document.activeElement), 'Un clic deja el cursor en Entrega');
+  } else if (reading && verifyLayout) assert.fail('Falta el botón para escribir la entrega');
   const draft = 'Entrega de prueba';
   await handoff.fill(draft);
   await handoff.press('Tab');
@@ -191,16 +214,36 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
   await noResuscitation.press('Tab');
   assert.equal(await visits.evaluate(el => el === document.activeElement),true);
   await visits.press('Tab');
+  const openAlert = alerts.locator('[data-hhr-entry-open]');
+  if (await openAlert.isVisible()) {
+    assert.ok(!await alerts.locator('input:not([type=checkbox])').isVisible(), 'Nueva alerta empieza en modo lectura');
+    assert.ok(await openAlert.evaluate(el => el === document.activeElement), 'Tab desde Gestión de Visitas llega a Nueva alerta');
+    await openAlert.press('Enter');
+  } else if (reading && verifyLayout) assert.fail('Falta el botón para escribir una alerta');
   const alertText = alerts.getByRole('textbox');
   assert.equal(await alertText.evaluate(el => el === document.activeElement),true);
   await alertText.fill('Aviso de prueba');
   assert.equal(await alertText.inputValue(),'Aviso de prueba');
   assert.equal(await handoff.inputValue(),draft);
+  if (reading && verifyLayout) {
+    for (const [field, expected] of [[handoff,draft],[alertText,'Aviso de prueba']]) {
+      // Delete at the end of an input and Escape both leave the native draft untouched.
+      await field.press('End');
+      await field.press('Delete');
+      await field.press('Escape');
+      await page.evaluate(() => document.dispatchEvent(new Event('fixture-refresh')));
+      assert.ok(await field.isVisible(), 'Un borrador debe seguir visible después de actualizar la ficha');
+      assert.equal(await field.inputValue(),expected);
+    }
+    assert.ok(await alerts.getByRole('button',{name:'Archivar alerta'}).first().isVisible());
+    assert.ok(await alerts.getByText('Pauta de seguimiento pendiente para el próximo turno.').isVisible());
+    assert.equal(await visits.isChecked(),true);
+  }
   if (round && verifyLayout) {
     const select = page.getByRole('combobox',{name:'Estado de la orden'});
     await select.selectOption('Realizada');
     assert.equal(await select.inputValue(),'Realizada');
-    assert.equal(await page.locator('#procedureOrder').getByRole('button',{name:'Imprimir orden'}).count(),3);
+    assert.equal(await page.locator('#procedureOrder').getByRole('button',{name:'Imprimir orden'}).count(),reading ? 2 : 3);
     const exam = page.locator('#diagnosisTestEntrySection');
     const surgery = page.locator('#operationTheaterRequestEntrySection');
     assert.ok(await exam.evaluate(el => el.hasAttribute('data-hhr-empty-request')));
@@ -215,5 +258,159 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     const contents = await exam.boundingBox();
     assert.ok(contents.width > (await handoff.boundingBox()).width * 1.8, 'La solicitud poblada recupera su ancho');
     assert.equal(await handoff.inputValue(),draft);
+  }
+}
+
+async function checkFocusedEntryRefresh(page) {
+  const section = page.locator('#shiftChangeObservation');
+  const open = section.locator('[data-hhr-entry-open]');
+  const field = section.locator('input');
+  const outside = page.locator('#evolution button[data-hhr-note-disclosure]');
+  const refresh = () => page.evaluate(() => document.dispatchEvent(new Event('fixture-refresh')));
+  const assertPendingFocus = async () => {
+    // The media query and :placeholder-shown have already painted when the delayed host refresh arrives.
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.ok(await open.isVisible() && await open.evaluate(el => el === document.activeElement),
+      'El botón debe retener el foco hasta que la ficha lo entregue al campo');
+    assert.ok(await field.isVisible());
+  };
+  const viewport = page.viewportSize();
+  await open.focus();
+  await page.setViewportSize({...viewport,width:1099});
+  await assertPendingFocus();
+  await refresh();
+  assert.equal(await open.count(),0);
+  assert.ok(await field.evaluate(el => el === document.activeElement), 'Al salir de escritorio el foco debe llegar al campo de entrega');
+  await outside.focus();
+  await page.setViewportSize(viewport);
+  await refresh();
+  await open.focus();
+  await field.evaluate(input => { input.value = 'Observación recuperada en la ficha'; });
+  await assertPendingFocus();
+  await refresh();
+  assert.ok(await field.evaluate(el => el === document.activeElement), 'La recuperación entrega el foco al borrador nativo');
+  assert.equal(await field.inputValue(),'Observación recuperada en la ficha');
+  assert.ok(!await open.isVisible());
+  await field.fill('');
+  await outside.focus();
+  await refresh();
+  assert.ok(await open.isVisible());
+}
+
+async function checkReadingRound(page, directory, width, verifyLayout) {
+  const rail = page.locator('[data-hhr-ficha-sections]');
+  const nav = await rail.evaluate(el => {
+    const shown = [...el.querySelectorAll('[data-hhr-ficha-link]')].filter(link => link.offsetWidth);
+    const railBox = el.getBoundingClientRect();
+    const lastBox = shown.at(-1).getBoundingClientRect();
+    const toggle = el.querySelector('.hhr-ficha-empty-toggle');
+    const toggleBox = toggle.getBoundingClientRect();
+    return {
+      links:shown.length, visible:shown.filter(link => {
+        const box = link.getBoundingClientRect();
+        return box.left >= railBox.left - 1 && box.right <= railBox.right + 1;
+      }).length, railHeight:railBox.height, railWidth:railBox.width, scrollWidth:el.scrollWidth,
+      toggleAfterLast:toggleBox.left - lastBox.right, toggleHeight:toggleBox.height,
+      separator:getComputedStyle(toggle,'::before').borderInlineStartWidth,
+    };
+  });
+  const vitals = await page.locator('.vitals-grid').evaluate(grid => {
+    const age = getComputedStyle(grid.querySelector('[data-hhr-vital-elapsed]'),'::after');
+    const pam = getComputedStyle(grid.querySelector('[data-hhr-reading="vital-pam"] p'));
+    return {elapsedFont:age.fontSize, elapsedColor:age.color, pamFont:pam.fontSize, pamColor:pam.color,
+      pam:grid.querySelector('[data-hhr-reading="vital-pam"]').textContent.trim()};
+  });
+  const care = await page.locator('#rest,#diet').evaluateAll(cards => cards.map(card => {
+    const content = card.querySelector('.MuiCardContent-root').getBoundingClientRect();
+    const stamp = card.querySelector('[data-hhr-update-label]');
+    const signature = stamp.getBoundingClientRect(), box = card.getBoundingClientRect();
+    return {
+      value:card.querySelector('.MuiChip-label').textContent, stamp:stamp.dataset.hhrUpdateLabel,
+      height:box.height, horizontalGap:signature.left - content.right,
+      sharedBaseline:signature.bottom > content.top && content.bottom > signature.top,
+      stampFits:signature.width > 0 && signature.right <= box.right && signature.bottom <= box.bottom,
+    };
+  }));
+  assert.deepEqual(care.map(card => card.value),['Relativo','Común']);
+  assert.match(care[0].stamp,/09:12.*Tomás Ejemplo/);
+  assert.match(care[1].stamp,/10:45.*Elena Ejemplo/);
+  if (verifyLayout) assert.ok(care.every(card => card.sharedBaseline && card.horizontalGap >= 0 && card.stampFits),
+    'Cada autoría debe poder leerse junto al valor de su propia indicación');
+  console.log(JSON.stringify({width,nav,vitals,care}));
+  assert.ok(nav.links >= 7 && nav.visible > 0);
+  assert.equal(vitals.pam,'PAM:87');
+  const toggle = rail.getByRole('button',{name:/ver vacías/i});
+  const lastLink = rail.locator('[data-hhr-ficha-link]:visible').last();
+  await lastLink.press('Tab');
+  assert.ok(await toggle.evaluate(el => el === document.activeElement));
+  await toggle.press('Space');
+  const hide = rail.getByRole('button',{name:/ocultar vacías/i});
+  assert.equal(await hide.getAttribute('aria-expanded'),'true');
+  await hide.click();
+  assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+  const navOrders = rail.getByRole('link',{name:'Órdenes de atención'});
+  await navOrders.press('Enter');
+  await rail.locator('[data-hhr-ficha-link="procedureOrderEntrySection"][aria-current="location"]').waitFor();
+  assert.equal(await rail.locator('[aria-current="location"]').count(),1);
+  assert.ok(nav.toggleAfterLast >= 0);
+  if (verifyLayout) assert.ok(parseFloat(nav.separator) >= 1 && nav.toggleAfterLast >= 6);
+
+  const orders = page.locator('#procedureOrder');
+  const rows = orders.locator('tbody tr');
+  assert.equal(await rows.count(),2);
+  assert.match(await rows.first().innerText(),/Evaluar la marcha/);
+  assert.match(await rows.last().innerText(),/cubiertos adaptados/);
+  const paint = row => row.locator('td').evaluateAll(cells => cells.map(cell => ({
+    shadow:getComputedStyle(cell).boxShadow, background:getComputedStyle(cell).backgroundColor,
+    color:getComputedStyle(cell).color,
+  })));
+  await page.mouse.move(0,0);
+  const instructions = await orders.getByRole('columnheader',{name:'Indicaciones'}).boundingBox();
+  const table = await orders.getByRole('table').boundingBox();
+  const idle = await paint(rows.first());
+  const idleLast = await paint(rows.last());
+  await rows.first().locator('td').nth(5).hover();
+  const hover = await paint(rows.first());
+  const firstPrint = rows.first().getByRole('button',{name:'Imprimir orden'});
+  const lastPrint = rows.last().getByRole('button',{name:'Imprimir orden'});
+  await firstPrint.press('Tab');
+  await page.mouse.move(0,0);
+  assert.ok(await lastPrint.evaluate(el => el === document.activeElement && el.matches(':focus-visible')));
+  // This capture keeps both fictional orders, their indications, and the focused print action in view.
+  await orders.screenshot({path:path.join(directory,width + '-ordenes.png')});
+  const focus = await paint(rows.last());
+  const action = await lastPrint.evaluate(el => {
+    const style = getComputedStyle(el), {width,height} = el.getBoundingClientRect();
+    return {width,height,outline:style.outlineStyle,outlineWidth:style.outlineWidth};
+  });
+  console.log(JSON.stringify({width, tableWidth:table.width, instructionsWidth:instructions.width, orderAction:action, firstCellHover:hover[0].shadow,
+    lastCellFocus:focus.at(-1).shadow, firstCellFocus:focus[0].shadow}));
+  if (verifyLayout) {
+    assert.ok(instructions.width >= 0.40 * table.width - 1, 'Las indicaciones deben conservar el ancho reservado');
+    for (const cell of await rows.locator('td:nth-child(6)').all()) {
+      assert.ok(await cell.evaluate(el => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const box = el.getBoundingClientRect();
+        return [...range.getClientRects()].every(line => line.left >= box.left - 1 && line.right <= box.right + 1 &&
+          line.top >= box.top - 1 && line.bottom <= box.bottom + 1);
+      }), 'La indicación completa debe caber en la celda de su orden');
+    }
+    for (const [active,normal] of [[hover,idle],[focus,idleLast]]) {
+      assert.ok(active[0].shadow.includes('inset') && active.at(-1).shadow.includes('inset'));
+      assert.notEqual(active[0].shadow,normal[0].shadow);
+      assert.notEqual(active.at(-1).shadow,normal.at(-1).shadow);
+      assert.notEqual(active[0].shadow,active.at(-1).shadow, 'La primera celda debe señalar el inicio de la fila');
+      assert.deepEqual(active.map(cell => [cell.color,cell.background]),normal.map(cell => [cell.color,cell.background]));
+    }
+    assert.ok(action.width >= 24 && action.height >= 24 && action.outline !== 'none' && parseFloat(action.outlineWidth) > 0);
+    assert.deepEqual(await paint(rows.first()),idle, 'Al salir del puntero desaparece la guía de la primera fila');
+    await rows.first().locator('td').nth(5).hover();
+    assert.deepEqual(await paint(rows.first()),idle, 'El ratón sobre otra orden debe respetar la fila que tiene el foco');
+    assert.deepEqual(await paint(rows.last()),focus);
+    await page.mouse.move(0,0);
+    await navOrders.focus();
+    assert.deepEqual(await paint(rows.last()),idleLast, 'Al salir el foco desaparece la guía de la segunda fila');
+    assert.ok(parseFloat(vitals.elapsedFont) >= 12 && parseFloat(vitals.pamFont) >= 12);
   }
 }

@@ -13,11 +13,11 @@
 
   const outsideSummary = 'dialog,[role=dialog],#hhr-prescription-print-modal,[aria-hidden=true],[hidden]';
   const entrySections = [
-    { id:'shiftChangeEntrySection', field:'Observación de entrega', placeholder:'Escribir entrega…', action:'Agregar a entrega', suffix:'a entrega' },
-    { id:'alertEntrySection', field:'Nueva alerta', placeholder:'Escribir alerta…', action:'Agregar alerta', suffix:'alerta' },
+    { id:'shiftChangeEntrySection', field:'Observación de entrega', placeholder:'Escribir entrega…', action:'Agregar a entrega', suffix:'a entrega', open:'Agregar observación' },
+    { id:'alertEntrySection', field:'Nueva alerta', placeholder:'Escribir alerta…', action:'Agregar alerta', suffix:'alerta', open:'Agregar alerta' },
   ];
 
-  function matchesNativeNames(element, name, source) {
+  function matchesNativeNames(element, name, source, required = false) {
     const labelledBy = source(element, 'aria-labelledby')?.trim();
     const labels = [...Array.from(element.labels || [], label => label.textContent),
       source(element, 'aria-label'), element.title].filter(text => text?.trim());
@@ -28,10 +28,97 @@
         labels.push(label.textContent);
       }
     }
-    return labels.every(text => name.test(text.trim()));
+    return (!required || labels.length > 0) && labels.every(text => name.test(text.trim()));
   }
 
-  function entryFields(main, mark, source) {
+  const pendingEntry = '[aria-busy=true],[aria-invalid=true],[aria-errormessage],[role=alert],[role=status],[role=progressbar],[aria-live],.Mui-error,.MuiAlert-root,.MuiSkeleton-root,.MuiCircularProgress-root,.MuiLinearProgress-root,.MuiLoadingButton-loading,.MuiButton-loading';
+  // Collapse only the native pair. Extra text, feedback, links or controls
+  // inside either branch make this row unsuitable for a disclosure.
+  function isolatedEntry(row, field, action, entry) {
+    const form = field.form;
+    const nativeRow = form ? form.contains(row) && row.matches('form,div') :
+      row.matches('div.MuiStack-root,div.MuiBox-root,div.MuiCardActions-root');
+    if (!nativeRow || row.matches('[role],[aria-label],[tabindex],[contenteditable]') ||
+        row.children.length !== 2 || !row.firstElementChild.contains(field) ||
+        !row.lastElementChild.contains(action) || field.matches(':disabled,[readonly],[aria-disabled=true],[aria-describedby]') ||
+        row.closest('[inert],[hidden],[aria-hidden=true],[aria-busy=true]')) return false;
+    for (const control of form?.elements || []) {
+      if (row.contains(control) || control.matches('[data-hhr-entry-open]')) continue;
+      if (entry.id === 'alertEntrySection' && control.matches('input[type=checkbox]') &&
+          /^(?:no reanimación|gestión de visitas)$/i.test(control.closest('label')?.textContent.trim())) continue;
+      return false;
+    }
+    for (const el of row.querySelectorAll('*')) {
+      if (el === field || el === action) continue;
+      if (el.matches('div,span') && (el.contains(field) || el.contains(action)) &&
+          !el.matches('[tabindex],[role],[aria-label],[aria-labelledby],[title],[contenteditable],[onclick]')) continue;
+      if (el.matches('.MuiTouchRipple-root:empty') && el.parentElement === action) continue;
+      if (el.matches('textarea[aria-hidden=true][readonly][tabindex="-1"]') && el.parentElement === field.parentElement) continue;
+      if (el.matches('label') && el.control === field) continue;
+      if (el.closest('fieldset.MuiOutlinedInput-notchedOutline[aria-hidden=true]') && el.matches('fieldset,legend,span')) continue;
+      return false;
+    }
+    const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (action.contains(node) || field.contains(node) || !node.textContent.trim()) continue;
+      if (node.parentElement.closest('fieldset.MuiOutlinedInput-notchedOutline[aria-hidden=true],label') &&
+          /^(?:observaci[oó]n(?:es)?\s*[:*]?|\u200b)$/i.test(node.textContent.trim())) continue;
+      return false;
+    }
+    return true;
+  }
+
+  function createEntry(row, field, action, entry) {
+    const opener = document.createElement('button');
+    opener.type = 'button';
+    opener.setAttribute('data-hhr-entry-open', '');
+    opener.textContent = entry.open;
+    const generatedId = 'hhr-' + entry.id + '-editor';
+    let createdId = false;
+    const update = () => {
+      const folded = action.disabled && field.value === '' && !row.contains(document.activeElement);
+      row.toggleAttribute('data-hhr-entry-folded', folded);
+      const expanded = String(!folded);
+      if (opener.getAttribute('aria-expanded') !== expanded) opener.setAttribute('aria-expanded', expanded);
+      // Rayen may restore a draft into the editor while its opener has keyboard focus.
+      if (!folded && opener === document.activeElement) field.focus({preventScroll:true});
+    };
+    const afterBlur = () => queueMicrotask(() => { if (opener.isConnected) update(); });
+    function open(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      row.removeAttribute('data-hhr-entry-folded');
+      field.focus();
+      update();
+    }
+    opener.addEventListener('click', open);
+    row.addEventListener('focusin', update);
+    row.addEventListener('focusout', afterBlur);
+    row.addEventListener('input', update);
+    function refresh() {
+      if (!row.id && !document.getElementById(generatedId)) {
+        row.id = generatedId;
+        createdId = true;
+      }
+      if (row.id && opener.getAttribute('aria-controls') !== row.id) opener.setAttribute('aria-controls', row.id);
+      if (opener.nextElementSibling !== row) row.before(opener);
+      update();
+    }
+    function clear(restoreFocus) {
+      opener.removeEventListener('click', open);
+      row.removeEventListener('focusin', update);
+      row.removeEventListener('focusout', afterBlur);
+      row.removeEventListener('input', update);
+      row.removeAttribute('data-hhr-entry-folded');
+      if (createdId && row.id === generatedId) row.removeAttribute('id');
+      if (restoreFocus && opener === document.activeElement && field.isConnected) field.focus();
+      opener.remove();
+    }
+    return { field, action, refresh, clear };
+  }
+
+  function entryFields(main, mark, source, editors) {
     for (const entry of entrySections) {
       const section = main.querySelector('#' + entry.id);
       if (!section) continue;
@@ -46,6 +133,7 @@
       if (!matchesNativeNames(field, observationLabel, source) ||
           !matchesNativeNames(action, /^agregar$/i, source) ||
           (placeholder?.trim() && !observationLabel.test(placeholder.trim()))) continue;
+      const identified = placeholder?.trim() || matchesNativeNames(field, observationLabel, source, true);
       if (placeholder?.trim()) mark(field, 'placeholder', entry.placeholder);
       for (const [element,name] of [[field, entry.field], [action, entry.action]]) {
         mark(element, 'aria-label', name);
@@ -54,21 +142,30 @@
       }
       mark(action, 'data-hhr-entry-suffix', entry.suffix);
 
-      // The native handoff heading is already directly above its field.
-      if (entry.id !== 'alertEntrySection' && section.querySelector('.MuiCardHeader-title,h2,h3,h4')) continue;
       let row = field.parentElement;
       while (row !== section && !row.contains(action)) row = row.parentElement;
-      // Change layout only for an isolated field + button row; leave surrounding
-      // switches, notices and unfamiliar native layouts in their original flow.
-      if (row !== section && row.children.length === 2) {
+      if (row === section || row.children.length !== 2) continue;
+      // The handoff heading already names its field.
+      if (entry.id === 'alertEntrySection' || !section.querySelector('.MuiCardHeader-title,h2,h3,h4')) {
         mark(row, 'data-hhr-entry-prompt', entry.field);
+      }
+      if (editors && identified && !section.closest(pendingEntry) && !section.querySelector(pendingEntry) && isolatedEntry(row, field, action, entry)) {
+        // A native label can identify an outlined field without a placeholder.
+        // :placeholder-shown then tracks silent value updates as well as typing.
+        if (!placeholder?.trim()) mark(field, 'placeholder', entry.placeholder);
+        mark(field, 'data-hhr-entry-field', '');
+        editors.set(row, {field, action, entry});
       }
     }
   }
 
   function create() {
-    let previous = new Map();
-    const refresh = main => {
+    let previous = new Map(), editors = new Map(), episode, watchedMain;
+    const observer = new MutationObserver(() => refresh(watchedMain, episode));
+    const refresh = (main, encounter) => {
+      observer.disconnect();
+      const desktop = main && globalThis.matchMedia?.('(min-width:1100px)').matches;
+      const nextEditors = new Map();
       const next = new Map();
       const source = (element, name) => {
         const current = element.getAttribute(name);
@@ -83,7 +180,7 @@
         else element.setAttribute(name, value);
       };
       if (main) {
-        entryFields(main, label, source);
+        entryFields(main, label, source, desktop ? nextEditors : null);
         for (const control of main.querySelectorAll('label:has(input[type="checkbox"])')) {
           if (control.closest('dialog,[role=dialog],#hhr-prescription-print-modal')) continue;
           const name = control.textContent.trim();
@@ -118,6 +215,23 @@
         }
       }
       previous = next;
+      for (const [row, editor] of editors) {
+        const nextEditor = nextEditors.get(row);
+        if (episode === encounter && editor.field === nextEditor?.field && editor.action === nextEditor.action) continue;
+        editor.clear(!main || episode === encounter);
+        editors.delete(row);
+      }
+      for (const [row, {field, action, entry}] of nextEditors) {
+        if (!editors.has(row)) editors.set(row, createEntry(row, field, action, entry));
+        editors.get(row).refresh();
+      }
+      episode = encounter;
+      watchedMain = desktop ? main : null;
+      // Rayen can add feedback or mark an existing control invalid without replacing it.
+      if (desktop) for (const {id} of entrySections) {
+        const section = main.querySelector('#' + id);
+        if (section) observer.observe(section, {subtree:true, childList:true, attributes:true, characterData:true});
+      }
     };
     return { refresh, clear:() => refresh(null) };
   }

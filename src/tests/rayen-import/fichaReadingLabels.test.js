@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../extension/hhr-ficha-reading-labels.js';
 
 it('abrevia la fecha de origen y omite únicamente el cargo reconocido', () => {
@@ -149,4 +149,163 @@ it.each([
   expect(main.innerHTML).toBe(original);
   labels.clear();
   main.remove();
+});
+
+describe('acción breve de los formularios de escritorio', () => {
+  let main, labels, section, field, row, action, outside;
+  const selector = '[data-hhr-entry-open]';
+  const folded = 'data-hhr-entry-folded';
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', () => ({matches:true}));
+    main = document.createElement('main');
+    main.innerHTML = `<section id="alertEntrySection"><p>Aviso recibido</p><form>
+      <label><input type="checkbox" checked>No reanimación</label>
+      <label><input type="checkbox">Gestión de visitas</label>
+      <div><div><textarea placeholder="Observaciones"></textarea></div><button disabled>Agregar</button></div>
+      </form></section><section id="shiftChangeEntrySection"><p>Entrega recibida</p>
+      <form><input placeholder="Observaciones"><button disabled>Agregar</button></form></section><button>Continuar</button>`;
+    document.body.append(main);
+    labels = globalThis.HhrFichaReadingLabels.create();
+    section = main.querySelector('#alertEntrySection');
+    action = section.querySelector('button');
+    field = section.querySelector('textarea');
+    row = action.parentElement;
+    outside = main.lastElementChild;
+  });
+  afterEach(() => { labels.clear(); main.remove(); vi.unstubAllGlobals(); });
+
+  it('abre el campo nativo sin enviar, deja los avisos e interruptores fuera y repliega solo al salir sin texto', async () => {
+    labels.refresh(main, 'a');
+    const opener = section.querySelector(selector);
+    expect([...main.querySelectorAll(selector)].map(el => el.textContent)).toEqual(['Agregar alerta','Agregar observación']);
+    expect(opener.type).toBe('button');
+    expect(opener.getAttribute('aria-controls')).toBe(row.id);
+    expect(row.hasAttribute(folded)).toBe(true);
+    expect(main.querySelectorAll('p, label')).toHaveLength(4);
+    expect(main.querySelectorAll('[data-hhr-entry-folded] :is(p,label,input[type=checkbox])')).toHaveLength(0);
+    const submitted = vi.fn(event => event.preventDefault());
+    action.form.addEventListener('submit', submitted);
+    const parentClick = vi.fn();
+    action.form.addEventListener('click', parentClick);
+    opener.click();
+    expect(document.activeElement).toBe(field);
+    expect(submitted).not.toHaveBeenCalled();
+    expect(parentClick).not.toHaveBeenCalled();
+    expect(row.hasAttribute(folded)).toBe(false);
+    field.value = '   ';
+    field.dispatchEvent(new Event('input', {bubbles:true}));
+    outside.focus();
+    await Promise.resolve();
+    expect(row.hasAttribute(folded)).toBe(false);
+    expect(field.value).toBe('   ');
+    field.focus();
+    field.value = '';
+    field.dispatchEvent(new Event('input', {bubbles:true}));
+    expect(row.hasAttribute(folded)).toBe(false);
+    outside.focus();
+    await Promise.resolve();
+    expect(row.hasAttribute(folded)).toBe(true);
+    expect(document.activeElement).toBe(outside);
+    opener.click();
+    field.value = 'Nueva observación';
+    action.disabled = false;
+    action.click();
+    expect(submitted).toHaveBeenCalledTimes(1);
+    expect(submitted.mock.calls[0][0].submitter).toBe(action);
+    expect(section.querySelector('input[type=checkbox]').checked).toBe(true);
+  });
+
+  it('conserva borrador y foco al cambiar tamaño, modo o paciente y limpia los controles anteriores', () => {
+    labels.refresh(main, 'a');
+    const opener = section.querySelector(selector);
+    opener.focus();
+    vi.stubGlobal('matchMedia', () => ({matches:false}));
+    labels.refresh(main, 'a');
+    expect(document.activeElement).toBe(field);
+    expect(main.querySelector(selector)).toBeNull();
+    expect(row.id).toBe('');
+    vi.stubGlobal('matchMedia', () => ({matches:true}));
+    row.id = 'editor-nativo';
+    field.value = 'Borrador previo';
+    labels.refresh(main, 'a');
+    expect(section.querySelector(selector).getAttribute('aria-controls')).toBe('editor-nativo');
+    expect(row.hasAttribute(folded)).toBe(false);
+    const stale = section.querySelector(selector);
+    labels.refresh(main, 'b');
+    expect(stale.isConnected).toBe(false);
+    outside.focus();
+    stale.click();
+    expect(document.activeElement).toBe(outside);
+    labels.clear();
+    expect(main.querySelector('[data-hhr-entry-open],[data-hhr-entry-folded],[data-hhr-entry-field]')).toBeNull();
+    expect(row.id).toBe('editor-nativo');
+    expect(field.value).toBe('Borrador previo');
+  });
+
+  it('reconoce cambios de estado nativos sin reescribir el DOM en refrescos idénticos', async () => {
+    labels.refresh(main, 'a');
+    const mutations = new MutationObserver(() => {});
+    mutations.observe(main, {childList:true,subtree:true,attributes:true});
+    labels.refresh(main, 'a');
+    expect(mutations.takeRecords()).toHaveLength(0);
+    mutations.disconnect();
+    field.setAttribute('aria-invalid','true');
+    await Promise.resolve();
+    expect(section.querySelector(selector)).toBeNull();
+    expect(row.hasAttribute(folded)).toBe(false);
+    field.removeAttribute('aria-invalid');
+    await Promise.resolve();
+    expect(row.hasAttribute(folded)).toBe(true);
+    row.insertAdjacentHTML('afterbegin','<p role="status">Guardando…</p>');
+    await Promise.resolve();
+    expect(section.querySelector(selector)).toBeNull();
+    expect(action.isConnected).toBe(true);
+  });
+
+  it('reconoce una pareja MUI sin form con label asociado y restaura el placeholder ausente', () => {
+    section.innerHTML = `<div class="MuiStack-root"><label><input type="checkbox">No reanimación</label>
+      <div class="MuiStack-root"><div class="MuiFormControl-root"><label for="new-alert">Observaciones</label>
+        <div class="MuiInputBase-root"><input id="new-alert"><fieldset class="MuiOutlinedInput-notchedOutline" aria-hidden="true">
+        <legend><span>Observaciones</span></legend></fieldset></div></div><button disabled>Agregar</button></div></div>`;
+    const native = section.querySelector('#new-alert');
+    labels.refresh(main, 'a');
+    const opener = section.querySelector(selector);
+    expect(opener).toBeTruthy();
+    expect(native.form).toBeNull();
+    expect(native.placeholder).toBe('Escribir alerta…');
+    expect(native.closest('[data-hhr-entry-folded]')).toBe(opener.nextElementSibling);
+    expect(section.querySelector('input[type=checkbox]').closest('[data-hhr-entry-folded]')).toBeNull();
+    opener.click();
+    expect(document.activeElement).toBe(native);
+    labels.clear();
+    expect(native.hasAttribute('placeholder')).toBe(false);
+    expect(native.labels[0].textContent).toBe('Observaciones');
+    expect(document.activeElement).toBe(native);
+  });
+
+  it.each([
+    ['un campo sin nombre', '<input>', 'MuiStack-root'],
+    ['un contenedor sin reconocer', '<input aria-label="Observaciones">', ''],
+    ['un campo con otra finalidad', '<input aria-label="Motivo de consulta">', 'MuiBox-root'],
+  ])('conserva una pareja sin form que tiene %s', (_reason, input, wrapper) => {
+    section.innerHTML = '<div class="' + wrapper + '">' + input + '<button disabled>Agregar</button></div>';
+    labels.refresh(main, 'a');
+    expect(section.querySelector(selector)).toBeNull();
+    expect(section.querySelector('input').hasAttribute('placeholder')).toBe(false);
+  });
+
+  it.each([
+    ['mensaje recibido dentro de la fila', () => field.before('Entrega recibida')],
+    ['control adicional en el formulario', () => row.after(document.createElement('select'))],
+    ['botón de cancelación nativo', () => { action.textContent = 'Cancelar'; }],
+    ['campo de solo lectura', () => { field.readOnly = true; }],
+    ['carga en la sección', () => { section.setAttribute('aria-busy', 'true'); }],
+    ['indicador de error', () => { row.insertAdjacentHTML('afterend', '<p role="alert">Revisar observación</p>'); }],
+  ])('mantiene el formulario visible ante %s', (_label, change) => {
+    change();
+    labels.refresh(main, 'a');
+    expect(row.hasAttribute(folded)).toBe(false);
+    expect(section.querySelector(selector)).toBeNull();
+    expect(action.form).toBe(field.form);
+  });
 });

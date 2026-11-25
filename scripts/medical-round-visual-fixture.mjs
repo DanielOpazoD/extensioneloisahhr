@@ -78,18 +78,26 @@ const requests = item(section('diagnosisTestEntrySection','diagnosisTestEntry','
   '<p>No presenta solicitudes de exámenes registradas</p>')) +
   item(section('operationTheaterRequestEntrySection','operationTheaterRequest','Solicitudes de intervención quirúrgica',
     '<p>No se presentan Solicitudes de intervención quirúrgica registradas para este paciente</p>'));
-const orders = item(section('procedureOrderEntrySection','procedureOrder','Órdenes de atención',`
+const historicalOrders = ['Solicitada','Realizada','Realizada'].map(state => ({
+  state, professional:'Kinesiólogo(a)', indication:'Evaluación de movilidad de prueba.'
+}));
+const readingOrders = [
+  {state:'Solicitada', professional:'Kinesiólogo(a)', indication:'Evaluar la marcha con apoyo antes del próximo turno.'},
+  {state:'Realizada', professional:'Terapeuta ocupacional', indication:'Revisar el uso de cubiertos adaptados durante el almuerzo.'},
+];
+const printIcon = '<svg class="MuiSvgIcon-root" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19 8H5a3 3 0 0 0-3 3v6h4v4h12v-4h4v-6a3 3 0 0 0-3-3zm-3 11H8v-5h8v5zm3-7a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM18 3H6v4h12z"/></svg>';
+const orders = (rows,reading) => item(section('procedureOrderEntrySection','procedureOrder','Órdenes de atención',`
   <table class="MuiTable-root"><thead><tr>${['Profesional','Estado','Fecha solicitud','Asignado','Motivo','Indicaciones','Acciones']
     .map(col => '<th class="MuiTableCell-root">'+col+'</th>').join('')}</tr></thead><tbody>
-  ${['Solicitada','Realizada','Realizada'].map((state,i)=>`<tr class="MuiTableRow-root">
-    <td class="MuiTableCell-root">Kinesiólogo(a)</td><td class="MuiTableCell-root">${i === 0
+  ${rows.map(({state,professional,indication},i)=>`<tr class="MuiTableRow-root">
+    <td class="MuiTableCell-root">${professional}</td><td class="MuiTableCell-root">${i === 0
       ? '<select aria-label="Estado de la orden"><option>Solicitada</option><option>Realizada</option></select>' : state}</td>
     <td class="MuiTableCell-root">15-04-2026</td><td class="MuiTableCell-root">Pendiente asignar</td>
-    <td class="MuiTableCell-root">Tratamiento</td><td class="MuiTableCell-root">Evaluación de movilidad de prueba.</td>
-    <td class="MuiTableCell-root"><button type="button" class="MuiIconButton-root" aria-label="Imprimir orden">⎙</button></td>
+    <td class="MuiTableCell-root">Tratamiento</td><td class="MuiTableCell-root">${indication}</td>
+    <td class="MuiTableCell-root"><button type="button" class="MuiIconButton-root" aria-label="Imprimir orden">${reading ? printIcon : '⎙'}</button></td>
   </tr>`).join('')}</tbody></table>`,stamp));
 const medication = action => section('medicationEntrySection','medication','Fármacos','<table><thead><tr><th>Indicación</th><th>Posología</th><th>Acciones</th></tr></thead><tbody><tr><td>Preparación de ejemplo</td><td>Según indicación de prueba</td><td><button aria-label="Ver comentario">···</button></td></tr></tbody></table>',stamp,action);
-const summaryBody = (controls,signs,desktopRound) => `<div class="${grid} round-grid">
+const summaryBody = (controls,signs,desktopRound,reading) => `<div class="${grid} round-grid">
   <div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 toolbar"><p class="MuiTypography-root MuiTypography-body2">Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo</p><div><input aria-label="Resumen diario paciente" type="date" value="2026-04-15"> <button>Imprimir</button></div></div>
   ${item(`<div class="${grid}">${item(discharge)}${item(evolution)}</div>`,'6')}
   <div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-md-6">${handoff}</div>
@@ -98,10 +106,13 @@ const summaryBody = (controls,signs,desktopRound) => `<div class="${grid} round-
   ${item(signs)}
   ${controls ? item(desktopRound ? nestedCare : restAndDiet,'6') + item(detailedAlerts,'6') : item(ordinaryAlerts)}
   ${item(medication(controls ? switchControl('Mostrar suspendidos') : ''))}
-  ${desktopRound ? orders + requests : ''}
+  ${desktopRound ? orders(reading ? readingOrders : historicalOrders,reading) + requests : ''}
 </div>`;
 const tabs = ['Resumen', 'Antecedentes', 'Plan de tratamiento', 'Historial', 'Alta'];
-const renderRound = (controls = false, desktopRound = false) => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
+const historicalLinks = ['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales'];
+const readingLinks = ['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales','Indicaciones (Reposo)',
+  'Indicaciones (Régimen)','Órdenes de atención','Solicitud de examen','Examen físico'];
+const renderRound = (controls = false, desktopRound = false, reading = false) => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
   *{box-sizing:border-box}body{margin:0;background:#eff1f0;color:#263432;font:14px/1.45 Arial,sans-serif}
   .banner{background:#218b80;color:white;padding:15px 24px;font-size:16px;font-weight:600}.banner small{margin-left:18px;font-size:12px;font-weight:400}
   .MuiTabs-root{display:flex;gap:8px;background:white}.MuiTabs-root button{background:none;border:0;font-size:13px}.MuiChip-root{display:inline-flex;border-radius:12px;padding:3px 11px;background:#e4e9e7;color:#344841;font-size:12px}
@@ -135,8 +146,8 @@ const renderRound = (controls = false, desktopRound = false) => `<!doctype html>
   @media(max-width:700px){main{padding:8px}.MuiGrid-grid-xs-6,.MuiGrid-grid-md-6{width:100%}.MuiTabs-root{flex-wrap:wrap}.banner small{display:block;margin:0}.toolbar{align-items:flex-end}}
 </style><header class="banner">Ficha de hospitalizados <small>Resumen médico · Episodio ficticio</small></header>
 <div class="MuiTabs-root"><div role="tablist">${tabs.map((tab,i)=>`<button role="tab" id="encounter-event-tab-${['summary','antecedents','care-plan','history','discharge'][i]}" aria-selected="${i===0}">${tab}</button>`).join('')}</div></div>
-<main class="MuiBox-root"><div class="MuiStack-root"><div class="MuiGrid-item MuiGrid-grid-xs-12"><div class="MuiGrid-container subnav">${['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales'].map(t=>`<div class="MuiGrid-item"><span class="MuiBadge-root"><span class="MuiTypography-caption">${t}</span></span></div>`).join('')}</div></div>
-${summaryBody(controls,vitals(controls),desktopRound)}</div></main>
+<main class="MuiBox-root"><div class="MuiStack-root"><div class="MuiGrid-item MuiGrid-grid-xs-12"><div class="MuiGrid-container subnav">${(reading ? readingLinks : historicalLinks).map(t=>`<div class="MuiGrid-item"><span class="MuiBadge-root"><span class="MuiTypography-caption">${t}</span></span></div>`).join('')}</div></div>
+${summaryBody(controls,vitals(controls),desktopRound,reading)}</div></main>
 ${controls ? '<dialog aria-label="Historial de signos"><p>Registro anterior de prueba</p></dialog>' : ''}<script>
   const noteText = document.querySelector('#evolution .MuiBox-root > .MuiTypography-caption');
   const disclosure = noteText.nextElementSibling.querySelector('button');
@@ -165,6 +176,7 @@ ${controls ? '<dialog aria-label="Historial de signos"><p>Registro anterior de p
 export const medicalRound = renderRound();
 export const medicalRoundWithControls = renderRound(true);
 export const desktopMedicalRound = renderRound(true,true);
+export const readingMedicalRound = renderRound(true,true,true);
 
 const historyCard = (name, role, time, type, note) => `<article class="MuiCard-root"><div class="MuiCardHeader-root">
   <div class="MuiCardHeader-content"><span class="MuiCardHeader-title">${name}</span><span class="MuiCardHeader-subheader">${role}</span></div>

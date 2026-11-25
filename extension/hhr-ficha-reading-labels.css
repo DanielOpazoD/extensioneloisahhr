@@ -159,3 +159,26 @@
     }
   }
 }
+
+/* The two native controls stay mounted. Placeholder state also tracks values
+   assigned by the application without an input event. */
+[data-hhr-entry-open] { display:none !important; }
+/* Keep keyboard focus until the theme/viewport cleanup hands it to Eloísa. */
+@media screen {
+  [data-hhr-entry-open]:focus { display:inline-flex !important; }
+}
+@media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] :is(#shiftChangeEntrySection,#alertEntrySection) {
+    [data-hhr-entry-folded]:not(:focus-within):has([data-hhr-entry-field]:placeholder-shown):has(button:disabled) {
+      display:none !important;
+    }
+    [data-hhr-entry-open]:has(+ [data-hhr-entry-folded]:not(:focus-within) [data-hhr-entry-field]:placeholder-shown):has(+ [data-hhr-entry-folded] button:disabled) {
+      display:inline-flex !important; align-items:center; justify-content:center; align-self:start;
+      width:fit-content !important; min-height:26px; padding:2px 8px; margin:0;
+      border:1px solid #c4d8d1; border-radius:4px; background:transparent; color:#285f54;
+      font:500 .75rem/1.35 system-ui,sans-serif; cursor:pointer;
+      &:hover { background:#edf4f1; }
+      &:focus-visible { outline:2px solid #0b6e66; outline-offset:2px; }
+    }
+  }
+}

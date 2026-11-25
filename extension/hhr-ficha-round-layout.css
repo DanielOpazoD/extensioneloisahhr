@@ -124,6 +124,7 @@
       /* Both native cards are recognized. Their titles form a short left column;
          the value, observation and provenance share the reading edge on the right. */
       &:has(#restEntrySection [data-hhr-round="care-row"]) {
+        container: hhr-care-pair / inline-size;
         padding-block-start:0 !important;
         .MuiGrid-container { display:block !important; }
         .MuiGrid-container > .MuiGrid-item { width:100% !important; }
@@ -137,6 +138,12 @@
           .MuiCardHeader-title { grid-area:1 / 1; color:#405a54; font-size:.75rem; font-weight:500; }
           .MuiCardHeader-subheader { grid-area:2 / 2; min-width:0; overflow-wrap:anywhere; }
           .MuiCardHeader-subheader:empty { display:none; }
+          @container hhr-care-pair (min-width:46rem) {
+            &:has(.MuiCardHeader-subheader[data-hhr-update-label]:not([data-hhr-round])) {
+              grid-template-columns:4.1rem minmax(0,1fr) fit-content(38%);
+              .MuiCardHeader-subheader { grid-area:1 / 3; justify-self:end; text-align:end; }
+            }
+          }
           [data-hhr-round="same-stamp"] {
             position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
           }

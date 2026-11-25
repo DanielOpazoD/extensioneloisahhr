@@ -35,7 +35,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:runtime
       - name: Verify keyboard and layout in the compact desktop summary
-        run: node scripts/capture-medical-round.mjs WORKTREE "$RUNNER_TEMP/ficha-escritorio" ronda
+        run: node scripts/capture-medical-round.mjs WORKTREE "$RUNNER_TEMP/ficha-escritorio" lectura
       - run: npm run test:dau
       - run: npm run build
       - uses: actions/upload-artifact@v7
