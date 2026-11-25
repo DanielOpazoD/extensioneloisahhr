@@ -14,7 +14,22 @@ const coding = (
         item?: Record<string, unknown>
       ) => { name: string; classificationId: number | null };
       indexDiagnosisCatalog: (rows: unknown) => Map<number, string>;
-      createEnricher: (reader: () => Promise<Map<number, string>>) => {
+      serializeDiagnosisCatalog: (
+        codes: Map<number, string>,
+        origin: string,
+        now: number,
+        ttlMs: number
+      ) => Record<string, unknown> | null;
+      parsePersistedDiagnosisCatalog: (
+        raw: unknown,
+        expectedOrigin: string,
+        now: number,
+        ttlMs: number
+      ) => { codes: Map<number, string>; savedAt: number; expiresAt: number } | null;
+      createEnricher: (
+        reader: () => Promise<Map<number, string> | { codes: Map<number, string>; fromPersisted?: boolean }>,
+        refresh?: () => Promise<Map<number, string>>
+      ) => {
         queue: (index: number, diagnosis: Diagnosis) => void;
         apply: (encounters: Encounter[]) => Promise<void>;
       };
@@ -180,5 +195,96 @@ describe('Ficha Médico diagnosis coding', () => {
       [4125, 'I50.0'],
     ]);
     expect(() => coding.indexDiagnosisCatalog({ errorCode: 500 })).toThrow();
+  });
+
+  it('serializes and strictly validates persisted diagnosis catalog entries (fail-closed)', () => {
+    const origin = 'https://fichamedicoback.rayensalud.cl';
+    const now = 1_764_000_000_000;
+    const ttlMs = 12 * 60 * 60 * 1000;
+    const serialized = coding.serializeDiagnosisCatalog(
+      new Map([
+        [4405, 'J15'],
+        [6535, 'N51.2'],
+      ]),
+      origin,
+      now,
+      ttlMs
+    );
+    expect(serialized).toEqual({
+      version: 1,
+      origin,
+      savedAt: now,
+      expiresAt: now + ttlMs,
+      entries: [
+        [4405, 'J15'],
+        [6535, 'N51.2'],
+      ],
+    });
+
+    const parsed = coding.parsePersistedDiagnosisCatalog(serialized, origin, now + 1000, ttlMs);
+    expect([...(parsed?.codes.entries() || [])]).toEqual([
+      [4405, 'J15'],
+      [6535, 'N51.2'],
+    ]);
+
+    // Rejects wrong origin, expired TTL, oversized TTL, wrong version, empty or malformed entries.
+    expect(coding.parsePersistedDiagnosisCatalog(serialized, 'https://other.rayensalud.cl', now + 1000, ttlMs)).toBeNull();
+    expect(coding.parsePersistedDiagnosisCatalog(serialized, origin, now + ttlMs, ttlMs)).toBeNull();
+    expect(coding.parsePersistedDiagnosisCatalog({ ...serialized, expiresAt: now + ttlMs * 3 }, origin, now + 1000, ttlMs)).toBeNull();
+    expect(coding.parsePersistedDiagnosisCatalog({ ...serialized, version: 2 }, origin, now + 1000, ttlMs)).toBeNull();
+    expect(coding.parsePersistedDiagnosisCatalog({ ...serialized, entries: [] }, origin, now + 1000, ttlMs)).toBeNull();
+    expect(coding.parsePersistedDiagnosisCatalog({ ...serialized, entries: [[4405, 'INVALIDO']] }, origin, now + 1000, ttlMs)).toBeNull();
+    expect(coding.parsePersistedDiagnosisCatalog({ ...serialized, entries: [[-1, 'J15']] }, origin, now + 1000, ttlMs)).toBeNull();
+  });
+
+  it('refreshes once from network only when a persisted catalog misses a queued classification id', async () => {
+    let refreshes = 0;
+    const persisted = new Map([[4405, 'J15']]);
+    const refreshed = new Map([
+      [4405, 'J15'],
+      [7001, 'K35.8'],
+    ]);
+
+    // Warm persisted hit: zero refreshes.
+    const warm = coding.createEnricher(
+      async () => ({ codes: persisted, fromPersisted: true }),
+      async () => {
+        refreshes += 1;
+        return refreshed;
+      }
+    );
+    const warmEncounters: Encounter[] = [{ diagnosis: 'Neumonía' }];
+    warm.queue(0, { name: 'Neumonía', classificationId: 4405, code: '' });
+    await warm.apply(warmEncounters);
+    expect(warmEncounters[0].diagnosisCode).toBe('J15');
+    expect(refreshes).toBe(0);
+
+    // Persisted miss on new ID 7001: triggers one network refresh and resolves K35.8.
+    const miss = coding.createEnricher(
+      async () => ({ codes: persisted, fromPersisted: true }),
+      async () => {
+        refreshes += 1;
+        return refreshed;
+      }
+    );
+    const missEncounters: Encounter[] = [{ diagnosis: 'Apendicitis' }];
+    miss.queue(0, { name: 'Apendicitis', classificationId: 7001, code: '' });
+    await miss.apply(missEncounters);
+    expect(missEncounters[0].diagnosisCode).toBe('K35.8');
+    expect(refreshes).toBe(1);
+
+    // Fresh network catalog missing an uncoded ID 999: does NOT refresh again.
+    const fresh = coding.createEnricher(
+      async () => ({ codes: refreshed, fromPersisted: false }),
+      async () => {
+        refreshes += 1;
+        return refreshed;
+      }
+    );
+    const uncodedEncounters: Encounter[] = [{ diagnosis: 'Texto libre' }];
+    fresh.queue(0, { name: 'Texto libre', classificationId: 999, code: '' });
+    await fresh.apply(uncodedEncounters);
+    expect(uncodedEncounters[0].diagnosisCode).toBeUndefined();
+    expect(refreshes).toBe(1);
   });
 });

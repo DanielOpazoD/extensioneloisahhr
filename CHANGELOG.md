@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.167
+
+- Rendimiento de sincronización con Eloísa: guarda el catálogo estático de códigos CIE-10 (`diagnosisClassify`) en `chrome.storage.local` durante 12 horas (sin datos de pacientes ni sesiones), evitando volver a descargarlo tras recargar pestañas, abrir nuevas pestañas, cambiar de token o reiniciar Chrome.
+- Validación estricta de la caché de diagnósticos: rechaza cualquier entrada corrupta o vencida y ejecuta un único refresco de red si aparece un identificador de diagnóstico nuevo ausente en la caché persistida.
+
 ## 0.48.166
 
 - Sincronización con Eloísa: corrige el bloqueo que impedía el reintento interno de Ficha Médico tras un corte momentáneo de red, agrega una breve pausa antes de reintentar (cancelable) y conserva el error real del endpoint si la red sigue caída.
