@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.166
+
+- Sincronización con Eloísa: corrige el bloqueo que impedía el reintento interno de Ficha Médico tras un corte momentáneo de red, agrega una breve pausa antes de reintentar (cancelable) y conserva el error real del endpoint si la red sigue caída.
+- Diagnóstico de fallos de red en Ficha Médico: indica explícitamente `(offline)` cuando el navegador reporta pérdida de conexión local, sin incluir datos del paciente.
+
 ## 0.48.165
 
 - Pauta Braden adulto / Braden Q pediátrico (NT 234) en Evolución: agrega acceso directo «Pauta Braden» junto a «Aplicar pauta», matriz rápida 1–4 fiel a la planilla oficial del Hospital Hanga Roa (con sugerencia automática Adulto vs. Pediátrico según edad del paciente y fecha/hora de Rapa Nui prellenadas).

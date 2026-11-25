@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import '../../../extension/clinical-day-runtime.js';
 import '../../../extension/census-sync-horizon-runtime.js';
@@ -15,6 +15,7 @@ const globals = globalThis as typeof globalThis & {
   };
   HhrFichaMedicoReadResilience: {
     describeSessionStatus: (input: Record<string, unknown>) => { ready: boolean; message: string };
+    describeNetworkFailure: (error: unknown, url: string) => Error;
   };
 };
 
@@ -55,6 +56,7 @@ const capture = (
     facilityId: 1342,
     capturedAt: '2026-07-24T10:00:20.000Z',
   }),
+  extra: Record<string, unknown> = {},
 ) => {
   const readFichaScope = Array.isArray(scopes) ? vi.fn() : scopes;
   if (Array.isArray(scopes)) scopes.forEach(scope => readFichaScope.mockResolvedValueOnce(scope));
@@ -70,10 +72,13 @@ const capture = (
     readReport,
     now: () => times.shift() ?? new Date('2026-07-24T18:00:21.000Z'),
     idFactory: () => 'sync-bundle-read-block',
+    ...extra,
   });
 };
 
 describe('Rayen capture while Ficha Médico is in its read block', () => {
+  afterEach(() => vi.useRealTimers());
+
   it('reads anyway; once the network is back the read clears the block and the sync completes', async () => {
     const readSnapshot = vi.fn().mockResolvedValue(snapshot);
 
@@ -88,15 +93,114 @@ describe('Rayen capture while Ficha Médico is in its read block', () => {
     );
   });
 
-  it('still fails, with the block named, when the network is still down', async () => {
+  it('retries once after the brief pause even if attempt 1 placed Ficha Médico into readBlocked, and succeeds when the network recovers', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const readSnapshot = vi
+      .fn()
+      .mockResolvedValueOnce({
+        error: 'No se pudo leer Rayen. Detalle: Failed to fetch al consultar https://example.invalid/census',
+      })
+      .mockResolvedValueOnce(snapshot);
+    const readReport = vi.fn().mockResolvedValue({
+      ok: true,
+      rows: [],
+      facilityId: 1342,
+      capturedAt: '2026-07-24T10:00:20.000Z',
+    });
+
+    const pending = capture([ready, readBlocked, ready], readSnapshot, ['1342:3:5', '1342:3:5'], readReport);
+    await vi.advanceTimersByTimeAsync(1199);
+    expect(readSnapshot).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    const result = await pending;
+
+    expect(readSnapshot).toHaveBeenCalledTimes(2);
+    expect(readReport).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(
+      expect.objectContaining({
+        ok: true,
+        bundle: expect.objectContaining({ id: 'sync-bundle-read-block', captureRetries: 1 }),
+      })
+    );
+  });
+
+  it('retries once while readBlocked and preserves the real endpoint failure when the network stays down', async () => {
+    const networkError =
+      'No se pudo leer Rayen. Detalle: Failed to fetch al consultar https://example.invalid/census';
+    const readSnapshot = vi.fn().mockResolvedValue({ error: networkError });
+
+    const result = await capture(
+      [readBlocked, readBlocked],
+      readSnapshot,
+      ['1342:3:5', '1342:3:5'],
+      undefined,
+      { retryDelayMs: 0 },
+    );
+
+    expect(readSnapshot).toHaveBeenCalledTimes(2);
+    expect(result.ok).toBeUndefined();
+    expect(result.error).toBe(networkError);
+    expect(result.captureRetries).toBe(1);
+  });
+
+  it('aborts cleanly if cancelled during the pause before retrying', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    let cancelled = false;
     const readSnapshot = vi.fn().mockResolvedValue({
       error: 'No se pudo leer Rayen. Detalle: Failed to fetch al consultar https://example.invalid/census',
     });
 
-    const result = await capture([readBlocked, readBlocked], readSnapshot);
+    const pending = capture([ready, readBlocked], readSnapshot, ['1342:3:5'], undefined, {
+      isCancelled: () => cancelled,
+    });
+    await vi.advanceTimersByTimeAsync(500);
+    cancelled = true;
+    await vi.advanceTimersByTimeAsync(700);
+    const result = await pending;
 
-    expect(result.ok).toBeUndefined();
-    expect(result.error).toBe(readBlocked.fichaMedico.message);
+    expect(readSnapshot).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ error: 'Sincronización cancelada desde HHR.', cancelled: true });
+  });
+
+  it('does not retry during recovery when Ficha Médico session actually expired or Gestión de Camas disconnected', async () => {
+    const readSnapshot = vi.fn().mockResolvedValue({
+      error: 'No se pudo leer Rayen. Detalle: Failed to fetch al consultar https://example.invalid/census',
+    });
+
+    const expired = await capture(
+      [ready, { ...ready, fichaMedico: { status: 'stale', message: 'La sesión de Ficha Médico venció.' } }],
+      readSnapshot,
+      ['1342:3:5'],
+    );
+    expect(readSnapshot).toHaveBeenCalledTimes(1);
+    expect(expired).toEqual({ error: 'La sesión de Ficha Médico venció.' });
+  });
+
+  it('annotates network errors with (offline) only when navigator.onLine is explicitly false', () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    try {
+      Object.defineProperty(globalThis, 'navigator', { value: { onLine: false }, configurable: true });
+      expect(
+        globals.HhrFichaMedicoReadResilience.describeNetworkFailure(
+          new TypeError('Failed to fetch'),
+          'https://fichamedicoback.rayensalud.cl/api/encounter/noveltyNurseList/1342?x=1'
+        ).message
+      ).toBe(
+        'Failed to fetch (offline) al consultar https://fichamedicoback.rayensalud.cl/api/encounter/noveltyNurseList/{id}'
+      );
+      Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, configurable: true });
+      expect(
+        globals.HhrFichaMedicoReadResilience.describeNetworkFailure(
+          new TypeError('Failed to fetch'),
+          'https://fichamedicoback.rayensalud.cl/api/encounter/noveltyNurseList/1342?x=1'
+        ).message
+      ).toBe(
+        'Failed to fetch al consultar https://fichamedicoback.rayensalud.cl/api/encounter/noveltyNurseList/{id}'
+      );
+    } finally {
+      if (original) Object.defineProperty(globalThis, 'navigator', original);
+      else delete (globalThis as Record<string, unknown>).navigator;
+    }
   });
 
   it('does not read when Ficha Médico is unavailable for any other reason', async () => {
