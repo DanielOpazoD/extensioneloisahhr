@@ -8,9 +8,15 @@
   const anchors = { diagnosisEntrySection:'diagnosis', vitalSignsEntry:'vitals', medicationEntrySection:'orders', freeIndicationEntrySection:'orders' };
   const label = el => el.textContent.trim().toLowerCase();
   const vitalNames = /^(?:presi[oó]n(?: arterial)?|(?:fre\.?|frec\.?|frecuencia)\s*(?:card[ií]aca|respiratoria)|saturaci[oó]n(?: (?:de ox[ií]geno|o[2₂]))?|t[°º]? axilar|temperatura|glasgow|sup\. ox[ií]geno|hemoglucotest|eva)$/i;
+  function isVitalLabel(el) {
+    // A unit may be typeset inside the label, e.g. O<sub>2</sub>.
+    return [...el.children].every(child => child.matches('sub,sup,b,strong,em,span')) &&
+      vitalNames.test(el.textContent.trim()) &&
+      ![...el.children].some(child => vitalNames.test(child.textContent.trim()));
+  }
   function markTiles(card, next) {
     const labels = [...card.querySelectorAll('span,p,dt,h4,h5,h6,div')].filter(el =>
-      !el.childElementCount && !el.closest('table,dialog,[role=dialog]') && vitalNames.test(el.textContent.trim()));
+      isVitalLabel(el) && !el.closest('table,dialog,[role=dialog]'));
     if (labels.length < 2) return;
     let grid = labels[0].parentElement;
     while (grid !== card && !labels.every(el => grid.contains(el))) grid = grid.parentElement;
@@ -35,7 +41,7 @@
     for (let node=title.parentElement; node && node !== main; node=node.parentElement) {
       if (node.matches('body,html') || node.querySelector('nav,[role=tablist]')) break;
       if (!node.matches('.MuiBox-root,.MuiStack-root,.MuiGrid-item')) continue;
-      if (kind === 'vitals' ? [...node.querySelectorAll('p,span')].some(el => !el.childElementCount && vitalNames.test(el.textContent.trim())) : node.querySelector('table')) {
+      if (kind === 'vitals' ? [...node.querySelectorAll('p,span')].some(isVitalLabel) : node.querySelector('table')) {
         if (node.querySelectorAll('table').length > 1) return null;
         return node;
       }
