@@ -51,3 +51,36 @@ it('describe la estructura sin nombres, cifras, valores de campos ni texto clín
   expect(structure).not.toContain('xxxxxxxxxxxxx 00 xx');
   expect(structure).not.toContain('css-');
 });
+
+it('no deja salir datos por identificadores, clases, estados, la ruta ni las partes que no recorre', () => {
+  window.history.replaceState(null, '', '/dashboard/encounter-list/12345678-K/jacinta-olmedo/abc9');
+  document.body.innerHTML = `<main>
+    <div id="paciente-jacinta-olmedo" class="Olmedo MuiBox-root MuiGrid-grid-xs-12 css-9z" data-testid="Jacinta" data-hhr-round="frame"
+      data-hhr-update-label="15-04-2026 · 09:12 · Jacinta Olmedo" data-run="12.345.678-9" tabindex="12345678" aria-current="2026-04-15" hidden="jacinta">
+      <i id="jacintaOlmedo" data-testid="olmedo" class="MuiOlmedo.jacinta hhr-Jacinta" role="rigoberto" type="fuentealba"></i>
+      <label for="Rigoberto Fuentealba">Nombre</label>
+      <select aria-label="Diagnóstico"><option selected>Neumonía de Rigoberto</option></select>
+      <div contenteditable="true">Rigoberto refiere dolor</div>
+      <a href="/pacientes/Rigoberto-Fuentealba/12345678">Ver</a><button value="Rigoberto" name="Fuentealba">Guardar</button>
+      <div role="slider" aria-valuetext="Rigoberto 37,5" aria-valuenow="375"></div>
+      <svg data-testid="EditNoteRoundedIcon" aria-label="Enmendar"><title>Rigoberto</title><desc>Fuentealba</desc><text>Olmedo</text></svg>
+      <!-- Comentario con Rigoberto --><template><p>Rigoberto</p></template>
+      <section id="medicationEntrySection"><span id="_r_1b_">Fármacos</span><button id="encounter-event-tab-history" aria-selected="true" role="tab">Historial</button></section>
+    </div></main>`;
+  const structure = globalThis.exportFichaStructure(document.body);
+  for (const secret of ['Jacinta', 'jacinta', 'Olmedo', 'olmedo', 'Rigoberto', 'Fuentealba', 'Neumon', 'dolor', '12345678', '12.345', '2026', '09:12', '375', '37,5', 'abc9', '-K/'])
+    expect(structure).not.toContain(secret);
+  expect(structure.split('\n').filter(line => /[1-9]/.test(line.replace(/<!--.*?-->/g, '').replace(/MuiGrid-grid-xs-12/g, '')))).toEqual([]);
+  // What describes the page is kept.
+  expect(structure).toContain('/dashboard/encounter-list/00000000-x/xxxxxxx-xxxxxx/xxx0');
+  expect(structure).toContain('<div class="MuiBox-root MuiGrid-grid-xs-12" id="paciente-xxxxxxx-xxxxxx" data-testid="xxxxxxx" data-hhr-round="frame" ' +
+    'data-hhr-update-label="00-00-0000 · 00:00 · xxxxxxx xxxxxx" aria-current="0000-00-00" hidden="xxxxxxx"');
+  expect(structure).toContain('<i id="xxxxxxxxxxxxx" data-testid="xxxxxx" role="xxxxxxxxx" type="xxxxxxxxxx">');
+  expect(structure).toContain('data-hhr-round="frame"');
+  expect(structure).toContain('<section id="medicationEntrySection">');
+  expect(structure).toContain('id="_r_0b_"');
+  expect(structure).toContain('<button id="encounter-event-tab-history" aria-selected="true" role="tab">');
+  expect(structure).toContain('<svg data-testid="EditNoteRoundedIcon" aria-label="Enmendar">');
+  expect(structure).toContain('<select aria-label="Diagnóstico">');
+  window.history.replaceState(null, '', '/');
+});

@@ -7,10 +7,18 @@
 //
 // Qué conserva: etiquetas, clases de componentes, roles, estados (seleccionado, deshabilitado)
 // y las palabras de interfaz de una lista cerrada («Fármacos», «Agregar», «Acciones»…).
-// Qué enmascara: cualquier otra palabra (letras → x) y todos los dígitos (→ 0), en textos y en
-// atributos. Nunca lee el valor de un campo de formulario.
+// Qué enmascara: cualquier otra palabra (letras → x) y todos los dígitos (→ 0), en textos, en
+// rótulos (`aria-label`, `title`, `placeholder`, `alt`) y en la ruta. Nunca lee el valor de un
+// campo de formulario.
+// Qué pasa con los identificadores: `id`, `data-testid` y los tramos de la ruta conservan sus
+// letras solo si cada una de sus palabras está en una segunda lista cerrada, la de palabras
+// de programador («medicationEntrySection», «encounter-event-tab-history»), o si nombran un
+// icono («EditNoteRoundedIcon»). Pierden sus dígitos. Cualquier otro se enmascara. De las
+// clases solo salen las de componentes (`Mui…`) y las de la extensión (`hhr-…`).
+// Un identificador que salga como «xxxx» y haga falta se agrega a su lista, tras comprobar
+// que no nombra a nadie.
 globalThis.exportFichaStructure = function exportFichaStructure(root = document.body) {
-  const plain = word => word.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = word => word.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   // Palabras de interfaz. Ninguna es un nombre propio habitual.
   const vocabulary = new Set(('a al con de del el en la las los no o para por que se sin su un una y este esta ' +
     'resumen antecedentes plan tratamiento historial alta ficha paciente pacientes episodio hospitalizados ' +
@@ -21,31 +29,58 @@ globalThis.exportFichaStructure = function exportFichaStructure(root = document.
     'entrega turno gestion visitas reanimacion fecha estimada hora horario tiempo estado motivo asignado profesional posologia dosis ' +
     'via frecuencia duracion cantidad unidad inicio termino acciones accion detalle tipo nombre descripcion comentario comentarios ' +
     'agregar anadir nuevo nueva editar modificar eliminar borrar guardar cancelar cerrar aceptar confirmar validar firmar imprimir ' +
-    'buscar filtrar filtros limpiar ver leer mas menos mostrar ocultar suspendidos suspender suspendido reanudar historial completo ' +
+    'enmendar enmendado enmendados notas programacion cuidados planificacion estandar unica ir hrs solicitante administrador externo ' +
+    'buscar filtrar filtros limpiar ver leer menos mostrar ocultar ocultos suspendidos suspender suspendido reanudar historial completo ' +
     'ultima actualizacion hoy ayer registrado registrada registrados registradas presenta presentan permiso visualizar tiene ' +
     'medico medica enfermera enfermero kinesiologo kinesiologa paramedico nutricionista matron matrona tens tecnico enfermeria ' +
     'terapeuta ocupacional fonoaudiologo psicologo quimico farmaceutico cirujano tratante especialista ' +
     'solicitada realizada pendiente pendientes asignar vigente vigentes activo activa activos activas todos todas ninguno ninguna ' +
-    'si seleccione seleccionar opcion opciones requerido obligatorio pagina filas siguiente anterior total sos antimic antimicrobiano ' +
+    'si seleccione seleccionar opcion opciones requerido obligatorio pagina filas siguiente anterior sos antimic antimicrobiano ' +
     'pa fc fr hgt presion frecuencia cardiaca respiratoria saturacion temperatura axilar hemoglucotest oxigeno').split(' '));
   const mask = text => text.replace(/[\p{L}\p{N}]+/gu, word =>
     /^\p{L}+$/u.test(word) && vocabulary.has(plain(word)) ? word : word.replace(/\p{N}/gu, '0').replace(/\p{L}/gu, 'x'));
+  // A structural attribute says a state. Its value is kept only when it is one of the words a state can take.
   const structural = new Set(['role', 'type', 'aria-selected', 'aria-expanded', 'aria-checked', 'aria-disabled', 'aria-haspopup',
-    'aria-current', 'aria-pressed', 'disabled', 'hidden', 'colspan', 'rowspan', 'multiple', 'readonly', 'tabindex']);
-  // An identifier is written by a developer: it keeps its letters and loses its digits.
+    'aria-current', 'aria-pressed', 'disabled', 'hidden', 'colspan', 'rowspan', 'multiple', 'readonly']);
+  const states = new Set(('true false mixed page step location date time datetime-local month week text number email tel url search password ' +
+    'file range color hidden submit reset button checkbox radio switch slider spinbutton textbox searchbox combobox listbox option menu ' +
+    'menubar menuitem menuitemcheckbox menuitemradio tab tablist tabpanel dialog alertdialog alert status log timer progressbar tooltip ' +
+    'presentation none img figure link heading list listitem table grid treegrid row rowgroup cell gridcell columnheader rowheader tree ' +
+    'treeitem group radiogroup region navigation main banner complementary contentinfo form article document application separator ' +
+    'toolbar scrollbar note until-found').split(' '));
+  const state = value => states.has(value) || /^\d{1,2}$/.test(value) ? value : mask(value);
+  // An identifier keeps its letters only when a developer wrote every word of it, and loses its digits.
   const identifiers = new Set(['id', 'data-testid', 'for', 'aria-labelledby', 'aria-controls']);
+  const developerWords = new Set(('encounter event tab tabs tabpanel panel history care plan summary background discharge list dashboard ' +
+    'entry entries section form medication medications no pharma free indication indications procedure procedures diagnosis diagnostic ' +
+    'referral request requests order orders test tests ram allergy allergies operation theater input output hydric balance adverse ' +
+    'obstetric vital signs physical examination shift change observation observations estimated evolution rest nutrition alert alerts ' +
+    'daily date time label helper text field button icon root main content header footer title subheader action actions menu item items ' +
+    'dialog modal popover select option checkbox radio switch table row cell head body container wrapper card paper box grid stack ' +
+    'simple full width scrollable auto mui patient patients hospitalization hospital episode detail details view print filter filters ' +
+    'search user role device devices invasive product products instrument instruments evaluation equipment status state type name ' +
+    'description comment comments new edit add delete remove save cancel close open toggle show hide collapse expand more less next ' +
+    'previous first last page pages id key value data hhr clinical operations bar notices prescription note notes amend amended ' +
+    'standard single planning schedule scheduling treatment today yesterday').split(' '));
+  const words = token => token.replace(/\p{N}/gu, '').split(/[-_:]+|(?<=[a-z])(?=[A-Z])/).filter(Boolean);
+  const developerName = token => /^[:_]r[:_]?[0-9a-z]*[:_]$/.test(token) || /^[A-Z][A-Za-z0-9]*Icon$/.test(token) ||
+    /^[A-Za-z][\w:-]*$/.test(token) && words(token).every(word => developerWords.has(word.toLowerCase()));
+  const identifier = value => value.split(/\s+/).map(token => developerName(token) ? token.replace(/\p{N}/gu, '0') : mask(token)).join(' ');
   const described = new Set(['aria-label', 'title', 'placeholder', 'alt']);
   const skipped = 'script,style,link,noscript,iframe,template,#hhr-clinical-operations-bar,#hhr-clinical-page-notices,#hhr-prescription-print-modal';
   const signature = el => el.tagName + '.' + [...el.classList].filter(name => name.startsWith('Mui')).join('.');
   const lines = [];
   const open = el => {
     const parts = [el.tagName.toLowerCase()];
-    const classes = [...el.classList].filter(name => /^[A-Za-z][A-Za-z-]*$/.test(name) && !name.startsWith('css-'));
+    // Component classes (MuiGrid-grid-xs-12, MuiTypography-body2) and the extension's own. Nothing else.
+    const classes = [...el.classList].filter(name => /^(?:Mui[A-Za-z0-9-]+|PrivateSwitchBase-[a-z]+|hhr-[a-z-]+)$/.test(name));
     if (classes.length) parts.push('class="' + classes.join(' ') + '"');
     for (const {name, value} of el.attributes) {
-      if (structural.has(name)) parts.push(value === '' ? name : name + '="' + value.replace(/[^a-z0-9-]/gi, '') + '"');
-      else if (identifiers.has(name)) parts.push(name + '="' + value.replace(/\p{N}/gu, '0').slice(0, 80) + '"');
-      else if (described.has(name) || name.startsWith('data-hhr-')) parts.push(name + '="' + mask(value).slice(0, 80) + '"');
+      if (structural.has(name)) parts.push(value === '' ? name : name + '="' + state(value) + '"');
+      else if (identifiers.has(name)) parts.push(name + '="' + identifier(value).slice(0, 80) + '"');
+      // A mark of the extension is a short lowercase word («frame», «note»). Any other value is text.
+      else if (name.startsWith('data-hhr-')) parts.push(name + '="' + (/^[a-z]+(?:-[a-z]+)*$/.test(value) ? value : mask(value).slice(0, 80)) + '"');
+      else if (described.has(name)) parts.push(name + '="' + mask(value).slice(0, 80) + '"');
     }
     if (el.matches('input[type=checkbox],input[type=radio]') && el.checked) parts.push('checked');
     const style = getComputedStyle(el);
@@ -83,7 +118,9 @@ globalThis.exportFichaStructure = function exportFichaStructure(root = document.
     close();
   };
   walk(root, 0);
-  return '<!-- Estructura de la ficha sin datos: textos como xxxx, dígitos como 0000. ' + location.pathname.replace(/\d/g, '0') + ' ' +
+  // Of the route, only the names of its sections. An identifier in it reads as zeros and x.
+  const route = location.pathname.split('/').map(identifier).join('/');
+  return '<!-- Estructura de la ficha sin datos: textos como xxxx, dígitos como 0000. ' + route + ' ' +
     innerWidth + '×' + innerHeight + ' -->\n' + lines.join('\n');
 };
 (() => {
