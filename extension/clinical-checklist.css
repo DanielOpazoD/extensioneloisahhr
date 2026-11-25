@@ -38,7 +38,7 @@
 .hhr-checklist-dialog button[type=submit]:hover,.hhr-checklist-dialog button.is-primary:hover{background:#12524b}
 .hhr-checklist-version{font-size:12px;color:#4a6b64}
 .hhr-checklist-dialog fieldset{min-inline-size:0}
-.hhr-checklist-template-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:3px 6px}
+.hhr-checklist-template-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:3px 6px}
 .hhr-checklist-template-caption{grid-column:1/-1;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .hhr-checklist-dialog .hhr-checklist-sync{width:34px;height:34px;padding:0;font:20px/1 system-ui}
 .hhr-checklist-dialog .hhr-checklist-sync,.hhr-checklist-dialog .hhr-checklist-copy{color:#315850;background:transparent;border-color:transparent}
@@ -81,3 +81,5 @@
 .hhr-braden-preview-wrap{display:grid;gap:5px;margin-top:8px}
 .hhr-braden-preview-title{font-size:12px;font-weight:600;color:#37574f}
 .hhr-braden-copy-inline{padding:3px 9px!important;font-size:12px!important}
+
+.hhr-checklist-action-menu [hidden]{display:none}

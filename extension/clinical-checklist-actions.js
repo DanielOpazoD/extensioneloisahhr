@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  function create({ button, open, hasBraden }) {
+  function create({ button, open, hasBraden, readMenu }) {
     const root = document.createElement('span');
     root.className = 'hhr-checklist-launcher';
     root.dataset.hhrChecklist = chrome.runtime.id;
@@ -26,7 +26,7 @@
       const item = button(label, () => {
         menu.hidePopover();
         trigger.focus({ preventScroll: true });
-        void open(mode);
+        void open(typeof mode === 'function' ? mode() : mode);
       });
       item.setAttribute('role', 'menuitem');
       item.tabIndex = -1;
@@ -35,14 +35,30 @@
     };
     const pautas = addItem('Pautas', null);
     pautas.autofocus = true;
-    if (hasBraden) addItem('Braden', 'braden');
+    let shortcutMode;
+    const shortcut = addItem('Braden', () => shortcutMode);
+    const showMenu = ({ saved, draft, favorite } = {}) => {
+      pautas.textContent = saved ? 'Insertar pauta guardada' : draft ? 'Continuar pauta' : 'Pautas';
+      shortcutMode = favorite ? { templateId: favorite.id } : 'braden';
+      shortcut.textContent = favorite?.title || 'Braden';
+      shortcut.hidden = Boolean(saved || draft || (!favorite && !hasBraden));
+    };
+    let menuRevision = 0;
     const status = document.createElement('span');
     status.className = 'hhr-checklist-action-status';
     status.hidden = true;
     menu.append(status);
 
     menu.addEventListener('beforetoggle', event => {
-      trigger.setAttribute('aria-expanded', String(event.newState === 'open'));
+      const opening = event.newState === 'open';
+      trigger.setAttribute('aria-expanded', String(opening));
+      const revision = ++menuRevision;
+      if (opening) {
+        showMenu();
+        void readMenu().then(info => {
+          if (revision === menuRevision) showMenu(info);
+        }).catch(() => {});
+      }
     });
     trigger.addEventListener('keydown', event => {
       if (event.key !== 'ArrowDown') return;
@@ -51,7 +67,7 @@
       pautas.focus({ preventScroll: true });
     });
     menu.addEventListener('keydown', event => {
-      const items = Array.from(menu.querySelectorAll('[role=menuitem]'));
+      const items = Array.from(menu.querySelectorAll('[role=menuitem]:not([hidden])'));
       const index = items.indexOf(document.activeElement);
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -75,9 +91,7 @@
     root.append(trigger, menu);
     return {
       root, trigger,
-      update(saved, inserted) {
-        const label = saved ? 'Insertar pauta guardada' : 'Pautas';
-        if (pautas.textContent !== label) pautas.textContent = label;
+      update(inserted) {
         const message = inserted ? 'Pauta insertada · guardar en Eloísa' : '';
         if (status.textContent !== message) {
           status.textContent = message;

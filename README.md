@@ -8,6 +8,10 @@ una revisión comprobada; su copia de la extensión es una dependencia, no otra 
 
 [Descargar la extensión (.zip)](https://github.com/DanielOpazoD/extensioneloisahhr/releases/latest/download/eloisa-hhr.zip) · [Guía ilustrada para instalar y actualizar en Chrome](docs/instalacion/README.md)
 
+## Pautas en Evolución
+
+En «Acciones de evolución», «Continuar pauta» recupera las respuestas al cerrar y abrir el formulario en la misma ficha y pestaña. La estrella junto al selector fija o quita la pauta favorita del profesional en ese perfil de Chrome. «Guardar» inserta la pauta confirmada por HHR y deja el cursor al final de la evolución para continuar escribiendo. La firma se realiza en Eloísa.
+
 ## Preparar un cambio
 
 Usa Node 22.22 y `npm ci`. Crea una rama desde `main`, realiza el cambio y guarda un commit.

@@ -270,28 +270,40 @@
     return hasMarker(readEditorText(el), marker);
   };
 
+  function focusEnd(el) {
+    el.focus({ preventScroll: true });
+    if (el instanceof HTMLTextAreaElement) {
+      el.setSelectionRange(el.value.length, el.value.length);
+    } else {
+      const selection = el.ownerDocument.getSelection();
+      selection?.selectAllChildren(el);
+      selection?.collapseToEnd();
+    }
+  }
+
   function insert(record) {
     const el = editor();
     if (!el || typeof record?.evolution !== 'string' || !record.code) return false;
     const marker = 'Código de verificación: ' + record.code;
     if (!record.evolution.replace(/\r\n?/g, '\n').split('\n').includes(marker)) return false;
     const previous = readEditorText(el);
-    if (hasMarker(previous, marker)) return true;
+    if (hasMarker(previous, marker)) {
+      focusEnd(el);
+      return true;
+    }
     const value = (previous.trim() ? '\n\n' : '') + record.evolution;
     if (el instanceof HTMLTextAreaElement) {
       if (el.maxLength >= 0 && (previous + value).length > el.maxLength) return false;
       el.focus();
       const nextValue = previous + value;
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, nextValue);
-      try {
-        el.setSelectionRange(nextValue.length, nextValue.length);
-      } catch {
-        // Ignore selection errors in non-interactive test environments.
-      }
       dispatchTextEvents(el, value);
-      return hasMarker(el.value, marker);
+      if (!hasMarker(el.value, marker)) return false;
+    } else if (!insertIntoContentEditable(el, value, marker)) {
+      return false;
     }
-    return insertIntoContentEditable(el, value, marker);
+    focusEnd(el);
+    return true;
   }
 
   globalThis.HhrChecklistEvolution = {

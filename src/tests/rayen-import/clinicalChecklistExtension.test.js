@@ -21,6 +21,8 @@ it('conserva la nota previa, notifica al editor nativo y evita insertar dos vece
   expect(area.value).toBe('Nota previa');
   expect(globalThis.HhrChecklistEvolution.insert(record)).toBe(true);
   expect(globalThis.HhrChecklistEvolution.insert(record)).toBe(true);
+  expect(document.activeElement).toBe(area);
+  expect([area.selectionStart, area.selectionEnd]).toEqual([area.value.length, area.value.length]);
   expect(area.value).toBe('Nota previa\n\n' + record.evolution);
   expect(input).toHaveBeenCalledTimes(1);
   expect(change).toHaveBeenCalledTimes(1);
@@ -71,6 +73,12 @@ it('monta el disparador dentro de la tarjeta MUI de Evolución y abre el editor 
 
   expect(await globalThis.HhrChecklistEvolution.openEditor(() => true)).toBe(true);
   expect(globalThis.HhrChecklistEvolution.insert(record)).toBe(true);
+  const rich = document.getElementById('rich-evo');
+  expect(document.activeElement).toBe(rich);
+  const caret = document.getSelection().getRangeAt(0);
+  expect(caret.collapsed).toBe(true);
+  expect(caret.endContainer).toBe(rich);
+  expect(caret.endOffset).toBe(rich.childNodes.length);
   expect(document.getElementById('rich-evo').textContent).toContain(record.code);
 });
 
