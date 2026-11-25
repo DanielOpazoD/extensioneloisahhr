@@ -40,17 +40,23 @@
     return raw.filter(el => !raw.some(other => other !== el && other.contains(el)));
   };
 
+  // Our actions can sit inside the very heading that identifies the native editor.
+  const nativeText = node => {
+    if (!node || node.matches?.('button,[role="button"],' + EXTENSION_OVERLAY)) return '';
+    if (node.nodeType === Node.TEXT_NODE) return node.data;
+    return Array.from(node.childNodes, nativeText).join('');
+  };
   const dialogTitle = dialog => {
     const labelledBy = String(dialog.getAttribute('aria-labelledby') || '')
       .split(/\s+/)
-      .map(id => document.getElementById(id)?.textContent)
+      .map(id => nativeText(document.getElementById(id)))
       .filter(Boolean)
       .join(' ');
-    const label = labelledBy || dialog.getAttribute('aria-label') || dialog.querySelector('.MuiDialogTitle-root')?.textContent;
+    const label = labelledBy || dialog.getAttribute('aria-label') || nativeText(dialog.querySelector('.MuiDialogTitle-root'));
     if (label) return normalize(label);
     return normalize(Array.from(dialog.querySelectorAll(
       'h1,h2,h3,h4,h5,h6,.MuiTypography-h5,.MuiTypography-h6,.MuiTypography-subtitle1,.MuiCardHeader-title'
-    )).filter(el => !el.closest(EXTENSION_OVERLAY)).slice(0, 4).map(el => el.textContent).join(' '));
+    )).filter(el => !el.closest(EXTENSION_OVERLAY)).slice(0, 4).map(nativeText).join(' '));
   };
   const isTemplateTitle = title => /^(?:(?:seleccionar|seleccion de|mis|catalogo de|biblioteca de|gestor de) )?plantillas?\b/.test(title);
   const templateDialog = dialog => isTemplateTitle(dialogTitle(dialog));

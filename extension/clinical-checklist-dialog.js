@@ -9,8 +9,8 @@
   const evo = globalThis.HhrChecklistEvolution;
   const braden = globalThis.HhrChecklistBraden;
   let enabled = false,
-    trigger,
-    bradenTrigger,
+    launcher,
+    launcherEpisode,
     dialog,
     session,
     insertedReceipt,
@@ -96,7 +96,7 @@
     session = null;
     close();
     refresh();
-    trigger?.focus();
+    launcher?.trigger.focus({ preventScroll: true });
     return true;
   }
 
@@ -515,15 +515,12 @@
   const stateHasNoAnswers = state =>
     !Object.entries(state.answers || {}).some(([id, value]) => Boolean(value) && id !== 'fecha' && id !== 'hora');
 
-  function removeTriggers() {
-    trigger?.remove();
-    trigger = null;
-    bradenTrigger?.remove();
-    bradenTrigger = null;
-  }
-
   function refresh() {
     const episode = route();
+    if (launcher && launcherEpisode !== episode) {
+      launcher.root.remove();
+      launcher = null;
+    }
     if (!enabled || (session && session.episode !== episode)) {
       session = null;
       close();
@@ -537,26 +534,23 @@
     const nativeDialog = nativeDialogs.find(evo.evolutionDialog);
     const host = enabled && episode ? evo.resolveTriggerHost(nativeDialog) : null;
     if (!host) {
-      if (enabled && episode && trigger?.isConnected && trigger.closest('[inert],[aria-hidden="true"]')) return;
-      removeTriggers();
+      if (enabled && episode && launcher?.root.isConnected && launcher.root.closest('[inert],[aria-hidden="true"]')) return;
+      launcher?.root.remove();
+      launcher = null;
       return;
     }
-    if (!trigger) {
-      trigger = button('Aplicar pauta', () => void open(null), 'hhr-checklist-trigger');
-      trigger.dataset.hhrChecklist = chrome.runtime.id;
+    if (!launcher) {
+      launcherEpisode = episode;
+      launcher = globalThis.HhrChecklistActions.create({
+        button, hasBraden: Boolean(braden), open: mode => {
+          if (route() === episode) return open(mode);
+        },
+      });
     }
-    if (trigger.parentElement !== host) host.append(trigger);
-    if (!bradenTrigger && braden) {
-      bradenTrigger = button('Pauta Braden', () => void open('braden'), 'hhr-checklist-braden-trigger');
-      bradenTrigger.dataset.hhrChecklist = chrome.runtime.id;
-      bradenTrigger.title = 'Valoración rápida Braden adulto / Braden Q (NT 234)';
-    }
-    if (bradenTrigger && bradenTrigger.parentElement !== host) host.append(bradenTrigger);
+    if (launcher.root.parentElement !== host) host.append(launcher.root);
     const activeEditor = insertedReceipt && evo.editor();
     const inserted = Boolean(activeEditor && String(activeEditor.value ?? activeEditor.innerText ?? '').includes(insertedReceipt.code));
-    const text = session?.record ? 'Insertar pauta guardada' : inserted ? 'Pauta insertada · guardar en Eloísa' : 'Aplicar pauta';
-    if (trigger.textContent !== text) trigger.textContent = text;
-    trigger.title = inserted ? 'Aplicar otra pauta' : '';
+    launcher.update(Boolean(session?.record), inserted);
   }
 
   const observer = new MutationObserver(() => {

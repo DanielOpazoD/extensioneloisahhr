@@ -273,6 +273,7 @@
         "nursing-handoff-dialog.js",
         "clinical-checklist-evolution.js",
         "clinical-checklist-braden.js",
+        "clinical-checklist-actions.js",
         "clinical-checklist-dialog.js"
       ],
       "css": [
