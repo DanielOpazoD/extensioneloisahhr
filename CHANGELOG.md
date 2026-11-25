@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.182
+
+- En el Resumen compacto, Evolución comparte fila con una columna estrecha para las observaciones de entrega de turno. En pantallas pequeñas la nota va primero. La fecha estimada de alta queda oculta en esta vista.
+- Signos vitales reconoce las tarjetas de la ficha médica y reúne las mediciones en una franja adaptable. El botón de reloj abre el historial original y se puede activar con el teclado.
+- Alertas reúne «No reanimación» y «Gestión de visitas» en una fila y compacta los avisos. «Mostrar suspendidos» usa el mismo tamaño de letra que los demás interruptores.
+
 ## 0.48.181
 
 - En el Modo 1, Evolución ocupa todo el ancho debajo de la fecha estimada de alta y las observaciones de entrega de turno. «Ver evoluciones» abre las notas del episodio en el Historial, con «Todos» y un filtro por profesional.
