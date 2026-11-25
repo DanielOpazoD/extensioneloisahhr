@@ -199,6 +199,29 @@
           const compact = stamp(el.textContent);
           if (compact) label(el, 'data-hhr-update-label', compact);
         }
+        // Say a byline once. The daily row repeats the note's own, and the three
+        // prescription cards often carry the byline of the card just above.
+        // «Above» means painted above: a copy hidden by its own styles is not a card the reader can see.
+        const shown = el => Boolean(el) && !el.closest('[data-hhr-ficha-folded],[hidden],[aria-hidden=true],dialog,[role=dialog]') &&
+          (typeof el.checkVisibility === 'function' ? el.checkVisibility({visibilityProperty:true}) : el.getClientRects().length > 0);
+        const daily = [...candidates].find(el => !el.matches('.MuiCardHeader-subheader') && next.get(el)?.has('data-hhr-update-label') &&
+          el.parentElement.querySelector('input[type="date"]'));
+        const note = main.querySelector('#evolution > .MuiCardHeader-root .MuiCardHeader-subheader');
+        const labelOf = el => next.get(el)?.get('data-hhr-update-label')?.value;
+        if (daily && shown(note) && labelOf(daily) && labelOf(daily) === labelOf(note)) label(daily, 'data-hhr-update-repeat', 'note');
+        let above = null;
+        for (const section of main.querySelectorAll('#medicationEntrySection,#freeIndicationEntrySection,#procedureOrderEntrySection')) {
+          if (!shown(section)) continue;
+          const bylines = section.querySelectorAll('.MuiCardHeader-subheader');
+          const byline = bylines.length === 1 && labelOf(bylines[0]) && shown(bylines[0]) ? bylines[0] : null;
+          // Compare the native text, including seconds and role, as for Reposo and Régimen.
+          const text = byline?.textContent.trim().replace(/\s+/g, ' ');
+          if (byline && text === above) {
+            label(byline, 'data-hhr-update-repeat', 'above');
+            if (!source(byline, 'title')) label(byline, 'title', labelOf(byline));
+          }
+          above = text || null;
+        }
         for (const button of main.querySelectorAll('.MuiCardContent-root button')) {
           if (button.closest('dialog,[role=dialog],#hhr-prescription-print-modal')) continue;
           const text = button.textContent.trim().toLowerCase();

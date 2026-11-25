@@ -286,3 +286,48 @@
     }
   }
 }
+
+/* With room after the last section link, the daily date and its print action ride on that
+   line and stay in view while the summary scrolls. The row keeps its native place otherwise. */
+@media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-sections][data-hhr-ficha-docked] {
+    padding-inline-end:var(--hhr-dock-width) !important;
+  }
+  html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-section-slot] + [data-hhr-round="frame"] > .MuiGrid-item[data-hhr-round="before"][data-hhr-ficha-dock] {
+    position:fixed !important; z-index:26;
+    /* An out-of-flow item would otherwise be the last stop of the round for the Tab key. */
+    reading-order:-1;
+    inset-block-start:var(--hhr-dock-top); inset-inline-end:var(--hhr-dock-right);
+    box-sizing:border-box; block-size:var(--hhr-dock-height); min-height:0 !important;
+    inline-size:max-content !important; max-inline-size:none !important;
+    display:flex !important; align-items:center; justify-content:flex-end; gap:8px;
+    margin:0 !important; padding:0 6px 0 0 !important; background:transparent;
+    > [data-hhr-update-label] { margin:0 !important; white-space:nowrap; }
+    > :not([data-hhr-update-label]) { display:inline-flex; align-items:center; gap:6px; }
+    input[type="date"]:not(.MuiInputBase-input) { min-height:26px; padding-block:1px; }
+    button { min-height:26px; padding-block:2px; }
+  }
+}
+
+/* Say each thing once on the desktop round. The native words stay in the page for
+   screen readers, search and print. */
+@media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
+    /* The byline of the daily row, when the note below carries the same one. */
+    [data-hhr-update-repeat="note"] {
+      position:absolute !important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
+      /* Its date and print action keep the trailing edge of the row. */
+      & + * { margin-inline-start:auto; }
+    }
+    /* A prescription card signed like the card above it. */
+    [data-hhr-update-repeat="above"]::after { content:'↑ misma firma' / ''; }
+    /* One age for the measurements taken together. An older one keeps its own. */
+    #vitalSignsEntry [data-hhr-vital-shared]:not([data-hhr-vital-shared=""])::after {
+      content:'· medidos hace ' attr(data-hhr-vital-shared) / ''; color:#516963; font:normal .75rem/1.35 system-ui,sans-serif;
+    }
+    #vitalSignsEntry [data-hhr-reading="vital-time"][data-hhr-vital-shared=""] {
+      position:absolute !important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
+    }
+    th[data-hhr-actions-heading] { font-size:0 !important; }
+  }
+}

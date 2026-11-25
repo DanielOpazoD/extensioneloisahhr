@@ -38,6 +38,90 @@ it('conserva la presión compuesta, la PAM y el tiempo original al cambiar de te
   expect(since.textContent).toBe('Hora no disponible');
 });
 
+it('dice una vez la antigüedad común de las mediciones y conserva la de la medición anterior', () => {
+  const main = new DOMParser().parseFromString(medicalRound, 'text/html').querySelector('main');
+  document.body.append(main);
+  const readings = globalThis.HhrFichaReadingSurfaces.create();
+  const heading = main.querySelector('#vitalSignsEntry .MuiCardHeader-content');
+  const times = () => [...main.querySelectorAll('[data-hhr-reading="vital-time"]')];
+  const shared = () => times().map(el => el.getAttribute('data-hhr-vital-shared'));
+  readings.refresh(main,true);
+  expect(heading.getAttribute('data-hhr-vital-shared')).toBe('2 h');
+  expect(shared()).toEqual(['','','','','','','',null,'']);
+  expect(times()[7].hasAttribute('data-hhr-vital-older')).toBe(true);
+  expect(times().map(el => el.textContent)).toEqual(['2 horas','2 horas','2 horas','2 horas','2 horas','2 horas','2 horas','4 horas','2 horas']);
+
+  // A measurement without a readable age leaves every age on its own tile.
+  const first = times()[0];
+  first.textContent = 'Hora no disponible';
+  readings.refresh(main,true);
+  expect(heading.hasAttribute('data-hhr-vital-shared')).toBe(false);
+  expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
+  first.textContent = '2 horas';
+
+  // Two recent measurements with different labels are not summarized.
+  const second = main.querySelectorAll('.tile')[1].querySelector('[data-hhr-reading="vital-time"]');
+  second.textContent = '110 minutos';
+  readings.refresh(main,true);
+  expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
+  second.textContent = '2 horas';
+
+  // «1 hora» and «65 minutos» can describe the same moment, but they are not one label.
+  times().forEach((time, index) => { time.textContent = index % 2 ? '65 minutos' : '1 hora'; });
+  readings.refresh(main,true);
+  expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
+  times().forEach((time, index) => { time.textContent = index === 7 ? '4 horas' : '2 horas'; });
+
+  // A card the reader does not recognize as a measurement has no age of its own to share.
+  const unknown = document.createElement('div');
+  unknown.className = 'MuiPaper-root MuiCard-root tile';
+  unknown.innerHTML = '<div class="MuiCardContent-root"><p>Balance pendiente</p></div>';
+  main.querySelector('.vitals-grid').append(unknown);
+  readings.refresh(main,true);
+  expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
+  unknown.remove();
+
+  readings.refresh(main,true);
+  expect(heading.getAttribute('data-hhr-vital-shared')).toBe('2 h');
+  for (const [native, label] of [['35 minutos','35 min'],['1 día','1 día'],['3 días','3 días']]) {
+    for (const time of times()) time.textContent = native;
+    readings.refresh(main,true);
+    expect(heading.getAttribute('data-hhr-vital-shared')).toBe(label);
+    expect(shared()).toEqual(Array(9).fill(''));
+  }
+  readings.refresh(main,false);
+  expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
+  readings.refresh(main,true);
+  readings.clear();
+  expect(main.querySelector('[data-hhr-vital-shared]')).toBeNull();
+});
+
+it('retira de la vista el rótulo de la columna de acciones y conserva su texto', () => {
+  document.body.innerHTML = '<main><section id="medicationEntrySection"><table><thead><tr><th>Indicación</th><th>Hora</th><th>Acciones</th></tr></thead>' +
+    '<tbody><tr><td>Preparación</td><td>08:00</td><td><button>···</button></td></tr></tbody></table></section>' +
+    '<section id="freeIndicationEntrySection"><table><thead><tr><th>Indicación</th><th><b>Acciones</b></th></tr></thead>' +
+    '<tbody><tr><td>Texto</td><td><button>···</button></td></tr></tbody></table></section>' +
+    '<section id="procedureOrderEntrySection"><h6>Órdenes de atención</h6><table><thead><tr><th>Profesional</th><th>Acciones</th></tr></thead>' +
+    '<tbody><tr><td>Kinesiólogo(a)</td><td><button>⎙</button></td></tr><tr><td>Otro</td><td>Pendiente <button>Ver</button></td></tr></tbody></table></section></main>';
+  const main = document.querySelector('main');
+  const [, time, actions, , marked, , mixed] = main.querySelectorAll('th');
+  const readings = globalThis.HhrFichaReadingSurfaces.create();
+  readings.refresh(main,true);
+  expect(actions.hasAttribute('data-hhr-actions-heading')).toBe(true);
+  expect(actions.textContent).toBe('Acciones');
+  expect(time.hasAttribute('data-hhr-actions-heading')).toBe(false);
+  // A heading with its own markup stays as Eloísa draws it.
+  expect(marked.hasAttribute('data-hhr-actions-heading')).toBe(false);
+  // A column that also carries text keeps its visible name.
+  expect(mixed.textContent).toBe('Acciones');
+  expect(mixed.hasAttribute('data-hhr-actions-heading')).toBe(false);
+  readings.refresh(main,false);
+  expect(main.querySelector('[data-hhr-actions-heading]')).toBeNull();
+  readings.refresh(main,true);
+  readings.clear();
+  expect(main.querySelector('[data-hhr-actions-heading]')).toBeNull();
+});
+
 it('keeps the native history action, accessible name and optional tooltip when switching views', () => {
   document.body.innerHTML = '<main><section id="vitalSignsEntry"><h3>Signos vitales</h3>' +
     '<button>Ver historial completo</button><dialog><button>Ver historial completo</button></dialog></section>' +

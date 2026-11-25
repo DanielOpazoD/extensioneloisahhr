@@ -328,7 +328,168 @@ async function checkFocusedEntryRefresh(page) {
   assert.ok(await open.isVisible());
 }
 
+// The daily date and its print action ride on the free end of the section links,
+// short of the floating Centro HHR bar when that bar covers the end of the line.
+async function checkDailyRow(page, width) {
+  const settle = () => page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
+  const refresh = async () => {
+    await page.evaluate(() => { document.dispatchEvent(new Event('fixture-refresh')); window.dispatchEvent(new Event('resize')); });
+    await settle();
+    await settle();
+  };
+  const measure = () => page.evaluate(() => {
+    const box = el => { const {top,bottom,left,right,width,height} = el.getBoundingClientRect(); return {top,bottom,left,right,width,height}; };
+    const rail = document.querySelector('[data-hhr-ficha-sections]');
+    const row = document.querySelector('.toolbar');
+    const date = row.querySelector('input[type="date"]'), print = row.querySelector('button');
+    // What a pointer finds on each control: a floating bar above it would be returned instead.
+    const reachable = el => { const {left,top,width,height} = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(left + width / 2, top + height / 2)); };
+    return {
+      docked:row.hasAttribute('data-hhr-ficha-dock'), position:getComputedStyle(row).position, row:box(row), rail:box(rail),
+      lastLink:box([...rail.children].filter(el => el.offsetWidth).at(-1)), stamp:box(row.querySelector('[data-hhr-update-label]')),
+      date:box(date), print:box(print), reachable:reachable(date) && reachable(print), bar:box(document.getElementById('hhr-clinical-operations-bar')),
+      note:box(document.querySelector('#evolution')), scrolls:rail.scrollWidth > rail.clientWidth + 1,
+    };
+  });
+  const clearOfLinks = state => state.row.left >= state.lastLink.right + 12 && !state.scrolls;
+  const onTheLine = state => state.docked && state.position === 'fixed' && state.row.top >= state.rail.top - 1 &&
+    state.row.bottom <= state.rail.bottom + 1 && state.note.top - state.rail.bottom < 16;
+  const inPlace = state => !state.docked && state.position !== 'fixed' && state.row.top >= state.rail.bottom - 1 &&
+    state.note.top >= state.row.bottom - 1;
+  const floating = page.locator('#hhr-clinical-operations-bar');
+  await page.evaluate(() => window.scrollTo(0,0));
+  await refresh();
+
+  // As the extension draws it: the bar covers the end of the line.
+  const beside = await measure();
+  assert.ok(beside.bar.bottom > beside.rail.top + 1 && beside.bar.width > 200, 'La ficha de prueba incluye la barra flotante sobre el final de la línea');
+  assert.ok(beside.reachable, 'La barra flotante nunca tapa la fecha ni la impresión del resumen');
+  if (beside.docked) {
+    assert.ok(onTheLine(beside) && clearOfLinks(beside) && beside.row.right <= beside.bar.left - 8,
+      'Acoplada, la fila queda entre los enlaces y la barra flotante');
+  } else {
+    assert.ok(inPlace(beside) && beside.lastLink.right + 28 + beside.date.width + beside.print.width > beside.bar.left - 10,
+      'La fila conserva su lugar solo cuando no cabe entre los enlaces y la barra flotante');
+  }
+  if (width >= 1440) assert.ok(beside.docked, 'En una ventana de 1440 px la fila cabe junto a la barra flotante');
+
+  // Scrolling never changes the choice: the round keeps its place under the reader's eyes.
+  const sweep = async () => {
+    const states = [];
+    await page.evaluate(() => { document.body.style.paddingBlockEnd = '600px'; });
+    for (const offset of [0, 40, 64, 100, 160, 240]) {
+      await page.evaluate(top => window.scrollTo(0, top), offset);
+      await settle();
+      const state = await measure();
+      states.push([state.docked, Math.round(state.note.top + offset), state.reachable]);
+    }
+    await page.evaluate(() => { document.body.style.removeProperty('padding-block-end'); window.scrollTo(0,0); });
+    await settle();
+    return states;
+  };
+  const besideScroll = await sweep();
+  // In its native place the row scrolls away with the summary, as it always did. Docked, it must stay reachable.
+  assert.ok(besideScroll.every(([docked, noteStart, reachable]) => docked === beside.docked &&
+    Math.abs(noteStart - besideScroll[0][1]) <= 1 && (reachable || !docked)),
+    'Al desplazar la ficha, la fila no cambia de lugar ni mueve la nota: ' + JSON.stringify(besideScroll));
+
+  // With the bar folded into its pill, the row fits in both windows. No other event announces the change.
+  await floating.evaluate(el => { el.style.width = '36px'; });
+  await settle();
+  await settle();
+  const folded = await measure();
+  assert.ok(onTheLine(folded) && clearOfLinks(folded) && folded.reachable && folded.row.right <= folded.bar.left - 8,
+    'Con la barra flotante plegada, la fecha se acopla también en la ventana menor');
+
+  // Unfolded again, the row is back where it was before the next paint settles.
+  await floating.evaluate(el => { el.style.removeProperty('width'); });
+  await settle();
+  await settle();
+  const unfolded = await measure();
+  assert.ok(unfolded.docked === beside.docked && Math.abs(unfolded.note.top - beside.note.top) < 1 &&
+    Math.abs(unfolded.row.top - beside.row.top) < 1, 'Al desplegar la barra flotante, la fila recupera su lugar anterior');
+
+  // Without the bar on the line, the row takes the end of it.
+  await floating.evaluate(el => { el.style.display = 'none'; });
+  await refresh();
+  const docked = await measure();
+  assert.ok(onTheLine(docked) && clearOfLinks(docked) && Math.abs(docked.row.right - docked.rail.right) <= 1,
+    'Sin barra flotante en la línea, la fila ocupa su final');
+  assert.ok(docked.stamp.width <= 1 && docked.date.width > 80 && docked.print.width > 30,
+    'La firma repetida de la nota no se muestra otra vez junto a la fecha');
+  // This synthetic summary is shorter than the window: give it room to scroll.
+  await page.evaluate(() => { document.body.style.paddingBlockEnd = '600px'; window.scrollTo(0,240); });
+  await settle();
+  const scrolled = await measure();
+  assert.ok(Math.abs(scrolled.row.top - scrolled.rail.top - (docked.row.top - docked.rail.top)) < 1 && scrolled.note.top < docked.note.top - 200,
+    'Al desplazar el resumen, la fecha sigue a la vista con la barra de secciones');
+  await page.evaluate(() => { document.body.style.removeProperty('padding-block-end'); window.scrollTo(0,0); });
+  await settle();
+
+  // A row with one more control is not the recognized daily row.
+  await page.evaluate(() => {
+    const extra = Object.assign(document.createElement('button'), {type:'button', textContent:'Otra acción'});
+    extra.dataset.fixtureExtra = '';
+    document.querySelector('.toolbar input[type="date"]').parentElement.append(extra);
+  });
+  await refresh();
+  assert.ok(inPlace(await measure()), 'Una fila con otro control conserva su lugar nativo');
+  await page.evaluate(() => { document.querySelector('.toolbar [data-fixture-extra]').remove(); });
+  await refresh();
+  assert.ok(onTheLine(await measure()), 'Sin el control añadido, la fila diaria vuelve a la línea');
+
+  // Another professional updated the summary after the note: that byline is new information.
+  const stamp = page.locator('.toolbar > [data-hhr-update-label]');
+  const original = await stamp.textContent();
+  await stamp.evaluate(el => { el.textContent = 'Última actualización: 15-04-2026, 11:30 - Elena Ejemplo'; });
+  await refresh();
+  const distinct = await measure();
+  assert.ok(distinct.stamp.width > 60 && distinct.stamp.right <= distinct.date.left + 1, 'Una firma distinta se lee antes de la fecha');
+  assert.ok(distinct.docked ? clearOfLinks(distinct) : inPlace(distinct), 'Con la firma a la vista, la fila tampoco tapa los enlaces');
+  await stamp.evaluate((el, text) => { el.textContent = text; }, original);
+
+  // A line full of section links keeps the row in its native place.
+  await page.evaluate(() => {
+    const rail = document.querySelector('[data-hhr-ficha-sections]');
+    for (let index = 0; index < 8; index++) {
+      const item = document.createElement('div');
+      item.className = 'MuiGrid-item';
+      item.dataset.fixtureExtra = '';
+      item.innerHTML = '<span class="MuiBadge-root"><span class="MuiTypography-caption">Sección de prueba ' + index + '</span></span>';
+      rail.insertBefore(item, rail.querySelector('.hhr-ficha-empty-toggle'));
+    }
+  });
+  await refresh();
+  const crowded = await measure();
+  assert.ok(inPlace(crowded), 'Sin sitio en la barra de secciones, la fila conserva su lugar sobre la nota');
+  assert.ok(crowded.date.right <= crowded.row.right + 1 && crowded.print.right >= crowded.row.right - 12,
+    'En su lugar nativo, la fecha y la impresión conservan el borde derecho');
+  await page.evaluate(() => { for (const item of document.querySelectorAll('[data-fixture-extra]')) item.remove(); });
+  await refresh();
+  const again = await measure();
+  assert.ok(onTheLine(again) && Math.abs(again.note.top - docked.note.top) < 1, 'Al recuperar el sitio, la fila vuelve a la barra');
+
+  // Leaving the compact view returns the row, its styles and every «once» mark to Eloísa.
+  const leftovers = () => page.evaluate(() => ({
+    marks:document.querySelectorAll('[data-hhr-ficha-dock],[data-hhr-ficha-docked],[data-hhr-vital-shared],[data-hhr-update-repeat],[data-hhr-actions-heading]').length,
+    styles:document.querySelectorAll('[style*="--hhr-dock"]').length, position:getComputedStyle(document.querySelector('.toolbar')).position,
+  }));
+  assert.ok((await leftovers()).marks > 4, 'La vista compacta deja sus marcas mientras está activa');
+  await page.evaluate(() => { document.dispatchEvent(new CustomEvent('fixture-theme', {detail:'off'})); });
+  await settle();
+  assert.deepEqual(await leftovers(), {marks:0, styles:0, position:'static'}, 'Al desactivar la vista no queda rastro del acople ni de las marcas');
+  await page.evaluate(() => { document.dispatchEvent(new CustomEvent('fixture-theme', {detail:'compact'})); });
+  await refresh();
+  assert.ok(onTheLine(await measure()), 'Al volver a la vista compacta, la fila se acopla de nuevo');
+
+  // Leave the floating bar as the extension draws it for the checks and captures that follow.
+  await floating.evaluate(el => { el.style.removeProperty('width'); el.style.removeProperty('display'); });
+  await refresh();
+  return (await measure()).docked;
+}
+
 async function checkReadingRound(page, directory, width, verifyLayout) {
+  const dailyDocked = verifyLayout && await checkDailyRow(page, width);
   const rail = page.locator('[data-hhr-ficha-sections]');
   const nav = await rail.evaluate(el => {
     const shown = [...el.querySelectorAll('[data-hhr-ficha-link]')].filter(link => link.offsetWidth);
@@ -346,7 +507,7 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
     };
   });
   const vitals = await page.locator('.vitals-grid').evaluate(grid => {
-    const age = getComputedStyle(grid.querySelector('[data-hhr-vital-elapsed]'),'::after');
+    const age = getComputedStyle(grid.querySelector('[data-hhr-vital-elapsed]:not([data-hhr-vital-shared]),[data-hhr-vital-elapsed]'),'::after');
     const pam = getComputedStyle(grid.querySelector('[data-hhr-reading="vital-pam"] p'));
     return {elapsedFont:age.fontSize, elapsedColor:age.color, pamFont:pam.fontSize, pamColor:pam.color,
       pam:grid.querySelector('[data-hhr-reading="vital-pam"]').textContent.trim()};
@@ -367,6 +528,28 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
   assert.match(care[1].stamp,/10:45.*Elena Ejemplo/);
   if (verifyLayout) assert.ok(care.every(card => card.sharedBaseline && card.horizontalGap >= 0 && card.stampFits),
     'Cada autoría debe poder leerse junto al valor de su propia indicación');
+  if (verifyLayout) {
+    // One age for the measurements taken together. The older one keeps its own, in bold.
+    const ages = await page.locator('section#vitalSignsEntry').evaluate(section => {
+      const heading = section.querySelector('.MuiCardHeader-content');
+      const times = [...section.querySelectorAll('[data-hhr-reading="vital-time"]')];
+      const shown = el => { const {width,height} = el.getBoundingClientRect(); return width > 4 && height > 4; };
+      return {heading:getComputedStyle(heading,'::after').content, native:times.map(el => el.textContent.trim()),
+        shown:times.filter(shown).map(el => [getComputedStyle(el,'::after').content, getComputedStyle(el).fontWeight]),
+        inHeading:heading.getBoundingClientRect().height < 30};
+    });
+    assert.match(ages.heading, /medidos hace 2 h/, 'La antigüedad común de las mediciones se lee una vez, junto al título de Signos vitales');
+    assert.deepEqual(ages.shown.map(([label]) => label.split('"')[1]), ['4h'], 'Solo la medición anterior conserva su propia antigüedad');
+    assert.ok(Number(ages.shown[0][1]) >= 700 && ages.inHeading);
+    assert.deepEqual(ages.native, ['2 horas','2 horas','2 horas','2 horas','2 horas','2 horas','2 horas','4 horas','2 horas'],
+      'El texto nativo de cada antigüedad sigue en la página');
+    // The care orders are signed like the prescription card above them.
+    const repeats = await page.evaluate(() => ['#medication','#procedureOrder'].map(id => {
+      const byline = document.querySelector(id + ' .MuiCardHeader-subheader');
+      return [byline.getAttribute('data-hhr-update-repeat'), getComputedStyle(byline,'::after').content.split('"')[1], byline.title];
+    }));
+    assert.deepEqual(repeats, [[null,'15-04-2026 · 09:12 · Tomás Ejemplo',''],['above','↑ misma firma','15-04-2026 · 09:12 · Tomás Ejemplo']]);
+  }
   console.log(JSON.stringify({width,nav,vitals,care}));
   assert.ok(nav.links >= 7 && nav.visible > 0);
   assert.equal(vitals.pam,'PAM:87');
@@ -374,6 +557,13 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
   const lastLink = rail.locator('[data-hhr-ficha-link]:visible').last();
   await lastLink.press('Tab');
   assert.ok(await toggle.evaluate(el => el === document.activeElement));
+  if (verifyLayout) {
+    // Docked or in its native place, the date is the next stop after the section links.
+    await toggle.press('Tab');
+    assert.ok(await page.getByLabel('Resumen diario paciente').evaluate(el => el === document.activeElement),
+      'Después de los enlaces, Tab llega a la fecha del resumen' + (dailyDocked ? ' acoplada en la misma línea' : ''));
+    await toggle.focus();
+  }
   await toggle.press('Space');
   const hide = rail.getByRole('button',{name:/ocultar vacías/i});
   assert.equal(await hide.getAttribute('aria-expanded'),'true');

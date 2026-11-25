@@ -38,11 +38,14 @@ try {
       const summary = window.HhrNativeFichaPresentation.create();
       const dates = window.HhrHistoryDateNavigation.create();
       const authors = window.HhrFichaEvolutionAuthors?.create();
+      let theme = 'compact';
       const refresh = () => {
-        summary.refresh('1', 'compact');
+        summary.refresh('1', theme);
         dates.refresh('1');
         authors?.refresh('1');
       };
+      // The Chrome profile can change the view of an open ficha.
+      document.addEventListener('fixture-theme', event => { theme = event.detail; refresh(); });
       document.getElementById('encounter-event-tab-history').addEventListener('click', event => {
         document.querySelector('[aria-selected="true"]').setAttribute('aria-selected','false');
         event.currentTarget.setAttribute('aria-selected','true');

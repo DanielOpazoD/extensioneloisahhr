@@ -108,6 +108,17 @@ const summaryBody = (controls,signs,desktopRound,reading) => `<div class="${grid
   ${item(medication(controls ? switchControl('Mostrar suspendidos') : ''))}
   ${desktopRound ? orders(reading ? readingOrders : historicalOrders,reading) + requests : ''}
 </div>`;
+// Stand-in for the floating Centro HHR bar: 5 px below the banner, 18 px from the right edge,
+// 38 px high, and narrower up to 1280 px, as the extension draws it. It has no controls.
+const floatingBar = `<div id="hhr-clinical-operations-bar" aria-hidden="true"><style>
+  #hhr-clinical-operations-bar{position:fixed;top:58px;right:18px;z-index:2147483000;display:flex;align-items:center;gap:6px;
+    box-sizing:border-box;width:350px;height:38px;padding:3px 8px;border:1px solid rgba(16,42,67,.14);border-radius:13px;
+    background:rgba(255,255,255,.98);box-shadow:0 1px 2px rgba(16,42,67,.08),0 9px 24px rgba(16,42,67,.14)}
+  #hhr-clinical-operations-bar i{flex:none;width:26px;height:24px;border-radius:8px;background:#e3efec}
+  #hhr-clinical-operations-bar i:first-of-type{background:#2f8f84}
+  #hhr-clinical-operations-bar b{flex:1;height:10px;border-radius:5px;background:#e3e9e7}
+  @media(max-width:1280px){#hhr-clinical-operations-bar{width:250px}#hhr-clinical-operations-bar b{display:none}}
+</style><i></i><i></i><i></i><i></i><i></i><b></b><i></i></div>`;
 const tabs = ['Resumen', 'Antecedentes', 'Plan de tratamiento', 'Historial', 'Alta'];
 const historicalLinks = ['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales'];
 const readingLinks = ['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales','Indicaciones (Reposo)',
@@ -148,7 +159,8 @@ const renderRound = (controls = false, desktopRound = false, reading = false) =>
 <div class="MuiTabs-root"><div role="tablist">${tabs.map((tab,i)=>`<button role="tab" id="encounter-event-tab-${['summary','antecedents','care-plan','history','discharge'][i]}" aria-selected="${i===0}">${tab}</button>`).join('')}</div></div>
 <main class="MuiBox-root"><div class="MuiStack-root"><div class="MuiGrid-item MuiGrid-grid-xs-12"><div class="MuiGrid-container subnav">${(reading ? readingLinks : historicalLinks).map(t=>`<div class="MuiGrid-item"><span class="MuiBadge-root"><span class="MuiTypography-caption">${t}</span></span></div>`).join('')}</div></div>
 ${summaryBody(controls,vitals(controls),desktopRound,reading)}</div></main>
-${controls ? '<dialog aria-label="Historial de signos"><p>Registro anterior de prueba</p></dialog>' : ''}<script>
+${controls ? '<dialog aria-label="Historial de signos"><p>Registro anterior de prueba</p></dialog>' : ''}
+${reading ? floatingBar : ''}<script>
   const noteText = document.querySelector('#evolution .MuiBox-root > .MuiTypography-caption');
   const disclosure = noteText.nextElementSibling.querySelector('button');
   const fullNote = noteText.textContent;
