@@ -166,3 +166,27 @@ it('pliega solo vacíos explícitos, permite revelarlos y recupera los datos que
   density.clear();
   expect(document.querySelector('[data-hhr-ficha-summary-grid]')).toBeNull();
 });
+
+it('reclasifica cuadros al editar o agregar registros y solo cuenta filas visibles en una tabla simple', () => {
+  document.body.innerHTML = '<main><nav></nav><div><section id="diagnosisEntrySection"><h2>Diagnóstico</h2><p>Dato breve</p></section>' +
+    '<section id="medicationEntrySection"><h2>Fármacos</h2><table><tbody><tr><td>A</td><td>B</td></tr></tbody></table></section></div></main>';
+  const density = globalThis.HhrFichaSummaryDensity.create(['diagnosisEntrySection','medicationEntrySection']);
+  const refresh = () => density.refresh('1',document.querySelector('nav'));
+  const diagnosis = document.querySelector('#diagnosisEntrySection'), meds = document.querySelector('#medicationEntrySection');
+  const title = meds.querySelector('h2');
+  refresh();
+  expect(diagnosis.dataset.hhrFichaSummaryCard).toBe('brief');
+  expect(meds.dataset.hhrFichaSummaryCard).toBe('wide');
+  expect(title.dataset.hhrVisibleMedications).toBe('1');
+  diagnosis.insertAdjacentHTML('beforeend','<p>Otro dato</p>');
+  meds.querySelector('tr').hidden = true;
+  refresh();
+  expect(diagnosis.dataset.hhrFichaSummaryCard).toBe('regular');
+  expect(title.hasAttribute('data-hhr-visible-medications')).toBe(false);
+  diagnosis.lastElementChild.remove();
+  diagnosis.insertAdjacentHTML('beforeend','<button>Editar</button>');
+  refresh();
+  expect(diagnosis.dataset.hhrFichaSummaryCard).toBe('regular');
+  density.clear();
+  expect(diagnosis.hasAttribute('data-hhr-ficha-summary-card')).toBe(false);
+});

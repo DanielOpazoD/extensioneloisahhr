@@ -8,9 +8,9 @@
   const handoffColumns = new Set(['location', 'patient', 'hhrPrint', 'diagnosisAdmission', 'activity']);
   const loadingColumns = [
     ['location', 'Ubicación', '8%'], ['patient', 'Paciente', '20%'], ['hhrPrint', 'Imprimir', '1%'],
-    ['diagnosisAdmission', 'Diagnóstico Ingreso', '35%'], ['crd', 'CRD', '5%'],
+    ['diagnosisAdmission', 'Diagnóstico Ingreso', 'auto'], ['crd', 'CRD', '5%'],
     ['assignesDoctor', 'Médico tratante', '136px'], ['isolated', 'Aislado', '6%'],
-    ['activity', 'Entrega de turno', '10%'], ['actions', '', '5%'], ['link', '', '5%'],
+    ['activity', 'Entrega de turno', '10%'], ['actions', '', '1%'], ['link', '', '1%'],
   ].map(([id, label, width]) => ({ id, label, style: { width } }));
   const loadingVisibleColumns = loadingColumns.filter(column => column.id !== 'activity');
   const emptySource = { columns: [], children: [] };

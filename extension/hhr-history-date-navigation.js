@@ -15,6 +15,20 @@
       }
       [data-hhr-history-timeline] > .MuiBox-root > .MuiCard-root > .MuiCardHeader-root { margin-block-end:0 !important; }
     }
+    @media screen {
+      [data-hhr-history-timeline] > .MuiBox-root > :first-child:has(> .MuiChip-root:only-child) {
+        position:sticky; top:var(--hhr-history-top,0px); z-index:1; width:fit-content; max-width:100%; margin-inline:auto; }
+      [data-hhr-history-inline] {
+        display:flex; flex-wrap:wrap; align-items:baseline; gap:3px 10px;
+        padding:7px clamp(8px,1vw,14px) !important; }
+      [data-hhr-history-inline] > :is(.MuiCardHeader-root,.MuiCardContent-root),
+      [data-hhr-history-inline] > .MuiCardHeader-root > .MuiCardHeader-content { display:contents; }
+      [data-hhr-history-inline] .MuiCardHeader-action { order:-4; margin:0; align-self:baseline; font-variant-numeric:tabular-nums; }
+      [data-hhr-history-inline] > .MuiCardContent-root > p:first-child { order:-3; margin:0; }
+      [data-hhr-history-inline] .MuiCardHeader-avatar { order:-2; margin:0; }
+      [data-hhr-history-inline] .MuiCardHeader-title { order:-1; }
+      [data-hhr-history-inline] > .MuiCardContent-root > :not(:first-child) { flex:1 0 100%; min-width:0; }
+    }
     [data-hhr-history-rail] { display:flex; }
     [data-hhr-history-rail] > [role="tab"] { flex-shrink:0; }
     [data-hhr-history-rail] > [data-hhr-history-tab] ~ [role="tab"] { order:2; }
@@ -49,6 +63,7 @@
     let horizontalScroll = null;
     let timelineRoot = null;
     let newBadges = new Set();
+    let inlineEvents = new Set();
     let selected = -1;
     let frame = 0;
     let novelty;
@@ -79,6 +94,9 @@
       host = null;
       rail = null;
       horizontalScroll = null;
+      inlineEvents.forEach(card => card.removeAttribute('data-hhr-history-inline'));
+      inlineEvents.clear();
+      timelineRoot?.style.removeProperty('--hhr-history-top');
       timelineRoot?.removeAttribute('data-hhr-history-timeline');
       timelineRoot = null;
       groups = [];
@@ -91,7 +109,10 @@
     const update = () => {
       frame = 0;
       if (!host?.isConnected || !groups.length) return;
-      const boundary = visibleTop() + 16;
+      const top = visibleTop();
+      const inset = Math.max(0, top - (scroller === window ? 0 : scroller.getBoundingClientRect().top));
+      timelineRoot.style.setProperty('--hhr-history-top', inset + 'px');
+      const boundary = top + 16;
       let index = 0;
       groups.forEach((group, candidate) => {
         if (group.element.getBoundingClientRect().top <= boundary) index = candidate;
@@ -115,8 +136,10 @@
     };
     const jumpTo = element => {
       if (!host?.isConnected || !element?.isConnected) return;
+      const divider = element.matches('.MuiCard-root') ? element.parentElement.firstElementChild : null;
+      const inset = divider?.getBoundingClientRect().height || 0;
       const align = () => scroller.scrollBy({
-        top: element.getBoundingClientRect().top - visibleTop() - 12,
+        top: element.getBoundingClientRect().top - visibleTop() - inset - 12,
         behavior: 'instant',
       });
       align();
@@ -238,6 +261,19 @@
       const changed = groups.length !== nextGroups.length || nextGroups.some((group, index) =>
         group.element !== groups[index]?.element || group.label !== groups[index]?.label);
       groups = nextGroups;
+      const nextInline = new Set();
+      for (const { element } of groups) {
+        for (const card of element.querySelectorAll(':scope > .MuiCard-root')) {
+          const header = card.querySelector(':scope > .MuiCardHeader-root');
+          const time = header?.querySelector('.MuiCardHeader-action');
+          const category = card.querySelector(':scope > .MuiCardContent-root > p.MuiTypography-root:first-child');
+          if (category && header?.querySelector('.MuiCardHeader-title') && /^\d{1,2}:\d{2}(?:\s*(?:h|hrs?))?\.?$/i.test(time?.textContent.trim()) &&
+              !header.querySelector('button,a,input,[tabindex]') && !category.children.length) nextInline.add(card);
+        }
+      }
+      for (const card of inlineEvents) if (!nextInline.has(card)) card.removeAttribute('data-hhr-history-inline');
+      for (const card of nextInline) if (!inlineEvents.has(card)) card.setAttribute('data-hhr-history-inline', '');
+      inlineEvents = nextInline;
       const nextBadges = new Set(groups.flatMap(({ element }) =>
         [...element.querySelectorAll(':scope > .MuiCard-root .MuiChip-root > .MuiChip-label')]
           .filter(label => label.textContent.trim() === 'Nuevo').map(label => label.parentElement)));

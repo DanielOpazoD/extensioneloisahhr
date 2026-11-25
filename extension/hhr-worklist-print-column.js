@@ -203,8 +203,13 @@
     const activity = nursing ? columns.findIndex(col => col.id === 'lastNovelty' ||
       col.id === '"lastNursePublishDatetime"' || /última atención/i.test(col.label)) : -1;
     const hasNovelty = columns[activity]?.id === 'lastNovelty';
-    const nextColumns = columns.map(column =>
-      column.id === 'actions' && column.label === 'Acciones' ? { ...column, label: '' } : column);
+    const nextColumns = columns.map(column => {
+      if (column.id === 'diagnosisAdmission') return { ...column, width:'auto', style:{ ...column.style, width:'auto' } };
+      if (column.id === 'actions' || column.id === 'link') {
+        return { ...column, label:column.label === 'Acciones' ? '' : column.label, width:'1%', style:{ ...column.style, width:'1%' } };
+      }
+      return column;
+    });
     if (doctor >= 0) {
       const column = nextColumns[doctor];
       nextColumns[doctor] = { ...column, width: '136px', style: { ...column.style, width: '136px' } };
