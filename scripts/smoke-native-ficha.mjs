@@ -365,7 +365,8 @@ export const verifyNativeFicha = async (page, worker) => {
       });
       assert.ok(boxes.note.width > boxes.handoff.width && boxes.note.right <= boxes.handoff.left + 1);
       for (const [upper,lower] of [[boxes.note,boxes.vitals],[boxes.handoff,boxes.alerts]]) {
-        assert.ok(Math.abs(upper.left-lower.left) < 2 && Math.abs(upper.right-lower.right) < 2 && lower.top >= upper.bottom - 1);
+        assert.ok(Math.abs(upper.left-lower.left) < 2 && Math.abs(upper.right-lower.right) < 2 && lower.top >= upper.bottom - 1,
+          JSON.stringify({expanded, upper, lower}));
       }
       if (!expanded) closed = boxes;
       else {
@@ -375,11 +376,18 @@ export const verifyNativeFicha = async (page, worker) => {
         }
         assert.ok(boxes.note.height > closed.note.height);
         assert.ok(await noteBody.evaluate(text => {
-          const card = text.closest('#evolution').getBoundingClientRect();
+          const view = text.getBoundingClientRect();
           const range = document.createRange();
           range.selectNodeContents(text);
-          return [...range.getClientRects()].every(line => line.left >= card.left - 1 && line.right <= card.right + 1 && line.bottom <= card.bottom + 1);
-        }), 'Todo el texto de la nota extensa y la referencia sin espacios deben caber en Evolución');
+          return [...range.getClientRects()].every(line => line.left >= view.left - 1 && line.right <= view.right + 1 &&
+            line.bottom <= view.top + text.scrollHeight + 1);
+        }), 'Cada línea debe caber en el área de lectura, incluida la referencia sin espacios');
+        await noteBody.focus();
+        await noteBody.press('End');
+        await medical.waitForFunction(() => {
+          const note = document.querySelector('#evolution [data-hhr-note-text]');
+          return note && note.scrollHeight - note.clientHeight - note.scrollTop < 2;
+        });
       }
     }
     const notices = await medical.locator('#alerts .alerts-list').boundingBox();

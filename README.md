@@ -10,7 +10,7 @@ una revisión comprobada; su copia de la extensión es una dependencia, no otra 
 
 ## Lectura de la ficha
 
-En escritorio, el resumen compacto abre la evolución completa. Signos vitales comparte su ancho y Reposo y Régimen se leen debajo. La columna derecha reúne Observaciones de entrega, Alertas y las solicitudes de examen o cirugía que Eloísa identifica como vacías. Las órdenes de atención conservan sus acciones en filas compactas. [Ver las capturas de escritorio](docs/visual/resumen-escritorio/README.md)
+En escritorio, el resumen compacto abre Evolución y muestra hasta doce líneas a la vez. En una nota larga puedes desplazarte dentro del texto con el ratón o el teclado. Signos vitales comparte su ancho y Reposo y Régimen se leen debajo. La columna derecha reúne Observaciones de entrega, Alertas y las solicitudes de examen o cirugía que Eloísa identifica como vacías. Las indicaciones largas se despliegan dentro de su celda. [Ver las capturas de escritorio](docs/visual/resumen-escritorio/README.md)
 
 En la columna derecha, «Agregar observación» y «Agregar alerta» abren el campo de Eloísa. Si ya hay texto, el campo queda visible. En las tablas de tratamiento, una línea acompaña la fila que se recorre con el teclado o el puntero.
 

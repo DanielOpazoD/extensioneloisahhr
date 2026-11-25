@@ -1,0 +1,20 @@
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-reading="orders"] {
+    [data-hhr-reading="order-text"] {
+      white-space:pre-wrap !important; overflow-wrap:anywhere;
+      -webkit-line-clamp:unset !important; text-overflow:clip !important;
+      max-height:none !important; height:auto !important; overflow:visible !important;
+    }
+    [data-hhr-reading="order-disclosure"] { display:none !important; }
+    .MuiChip-root[data-hhr-reading^="order-marker-"] {
+      background:var(--hhr-marker-surface) !important; color:var(--hhr-marker-ink) !important;
+      border:0 !important; border-inline-start:2px solid currentColor !important; border-radius:0 !important;
+      box-shadow:none !important; margin-inline-start:6px !important; padding:0 3px !important;
+      height:auto !important; min-height:0; font:650 .75rem/1.35 system-ui,sans-serif;
+      > .MuiChip-label { padding:0 !important; }
+      &:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+    }
+    [data-hhr-reading="order-marker-sos"] { --hhr-marker-ink:#704200; --hhr-marker-surface:#fff4dd; }
+    [data-hhr-reading="order-marker-antimicrobial"] { --hhr-marker-ink:#155754; --hhr-marker-surface:#e8f5f1; }
+  }
+}

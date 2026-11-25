@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../extension/hhr-history-date-navigation.js';
+import '../../../extension/hhr-ficha-order-details.js';
 import '../../../extension/hhr-ficha-reading-surfaces.js';
 import '../../../extension/hhr-ficha-vital-strip.js';
 import '../../../extension/hhr-ficha-summary-density.js';
 import '../../../extension/hhr-ficha-reading-labels.js';
 import '../../../extension/hhr-ficha-round-layout.js';
+import '../../../extension/hhr-ficha-note-reader.js';
 import '../../../extension/hhr-native-ficha-presentation.js';
 
 const event = (role, category, note = '') => `<div class="MuiCard-root">
@@ -122,6 +124,38 @@ describe('Compact native history dates', () => {
 });
 
 describe('Native ficha presentation', () => {
+  it('dismisses the complete reader when the source or episode changes and restores the native attributes', () => {
+    document.body.innerHTML = '<div><span aria-label="Nota nativa">Ingreso ficticio</span></div>';
+    const source = document.querySelector('span');
+    Object.defineProperties(source, {
+      scrollHeight:{value:480}, clientHeight:{value:180}, innerText:{get:() => source.textContent},
+    });
+    const createElement = document.createElement.bind(document);
+    const create = vi.spyOn(document,'createElement').mockImplementation(tag => {
+      const node = createElement(tag);
+      if (tag === 'dialog') {
+        node.showModal = () => { node.open = true; };
+        node.close = () => { node.open = false; };
+      }
+      return node;
+    });
+    const reader = globalThis.HhrFichaNoteReader.create();
+    reader.refresh(source,'uno');
+    document.querySelector('.hhr-note-open').click();
+    expect(document.querySelector('.hhr-note-content').textContent).toBe('Ingreso ficticio');
+    source.textContent = 'Nota corregida';
+    reader.refresh(source,'uno');
+    expect(document.querySelector('dialog')).toBeNull();
+    document.querySelector('.hhr-note-open').click();
+    reader.refresh(source,'dos');
+    expect(document.querySelector('dialog')).toBeNull();
+    reader.refresh(null,null);
+    expect(source.getAttribute('aria-label')).toBe('Nota nativa');
+    expect(source.hasAttribute('tabindex')).toBe(false);
+    expect(document.querySelector('.hhr-note-open')).toBeNull();
+    create.mockRestore();
+  });
+
   it('opens the native summary note once and respects manual folding across refreshes and remounts', () => {
     document.body.innerHTML = `<main><div class="MuiTabs-root"><button role="tab" aria-selected="true">Resumen</button></div>
       <section id="evolution"><span class="MuiCardHeader-title">Evolución</span>

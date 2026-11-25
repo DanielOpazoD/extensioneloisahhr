@@ -38,7 +38,7 @@
     > [data-hhr-round="note"] { flex:2 1 60% !important; }
     > [data-hhr-round="handoff"] { flex:1 1 30% !important; }
   }
-  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"]:is(:has(> [data-hhr-round="care"]),[data-hhr-round-columns]) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"]:is(:has(> :is([data-hhr-round="care"],[data-hhr-round="care-card"])),[data-hhr-round-columns]) {
     display:grid !important;
     grid-template-columns:minmax(0,2fr) minmax(0,1fr);
     --hhr-round-row-gap:6px;
@@ -48,7 +48,7 @@
       grid-column:1 / -1; width:100% !important; max-width:100% !important; min-width:0;
     }
     > [data-hhr-round="note"] { grid-column:1; grid-row:span 2; }
-    > [data-hhr-round="handoff"], > [data-hhr-round="care"] { grid-column:2; order:-1; }
+    > [data-hhr-round="handoff"], > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) { grid-column:2; order:-1; }
     /* When the note spans two rows, give surplus height to the last row.
        Otherwise a long note pushes read-only instructions below the fold. */
     &:not([data-hhr-round-columns]):has(> :first-child:is([data-hhr-round="note"],[data-hhr-round="handoff"])) {
@@ -57,40 +57,48 @@
     &:not([data-hhr-round-columns]):has(> :first-child:not([data-hhr-round]) + :is([data-hhr-round="note"],[data-hhr-round="handoff"])) {
       grid-template-rows:max-content max-content minmax(auto,1fr);
     }
-    &:has(> [data-hhr-round="care"] [data-hhr-round="care-row"]) #shiftChangeObservation {
+    &:has(> :is([data-hhr-round="care"],[data-hhr-round="care-card"]) :is([data-hhr-round="care-row"],[data-hhr-round="care-card"])) #shiftChangeObservation {
       border-end-start-radius:0; border-end-end-radius:0;
     }
     &[data-hhr-round-columns] {
+      grid-template-columns:repeat(12,minmax(0,1fr));
       column-gap:1px !important;
+      :is([data-hhr-round="bridge"],[data-hhr-round="inner"]) { display:contents !important; }
+      :is([data-hhr-round="before"],[data-hhr-round="peer"]) {
+        grid-column:span var(--hhr-round-span,12);
+        box-sizing:border-box; min-width:0; width:100% !important; max-width:100% !important;
+      }
+      [data-hhr-round="before"] { order:-3; }
       --hhr-round-edge:#d6e2dd;
-      > :is([data-hhr-round="note"],[data-hhr-round="vitals"],[data-hhr-round="handoff"],[data-hhr-round="alerts"],[data-hhr-round="care"],[data-hhr-round="empty-request"]) {
+      :is([data-hhr-round="note"],[data-hhr-round="vitals"],[data-hhr-round="handoff"],[data-hhr-round="alerts"],:is([data-hhr-round="care"],[data-hhr-round="care-card"]),[data-hhr-round="empty-request"]) {
         grid-row:var(--hhr-round-line,2); order:-1; box-sizing:border-box; min-height:0 !important;
+        min-width:0; width:100% !important; max-width:100% !important;
         align-self:start; height:auto !important; padding:0 !important; margin:var(--hhr-round-offset,0px) 0 0 !important;
-        > section { margin-block:0 !important; padding:0 !important; }
+        section:is(#vitalSignsEntry,#alertEntrySection,#shiftChangeEntrySection,#observationEntrySection,[data-hhr-empty-request]), > section { margin-block:0 !important; padding:0 !important; }
         > section > .MuiCard-root { margin-block:0 !important; border-radius:0 !important; }
       }
-      > :is([data-hhr-round="note"],[data-hhr-round="vitals"],[data-hhr-round="care"]) { grid-column:1; }
-      > :is([data-hhr-round="handoff"],[data-hhr-round="alerts"],[data-hhr-round="empty-request"]) { grid-column:2; }
-      > [data-hhr-round="note"] #evolution { border-radius:6px 0 0 0 !important; }
-      > [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root {
+      :is([data-hhr-round="note"],[data-hhr-round="vitals"],:is([data-hhr-round="care"],[data-hhr-round="care-card"])) { grid-column:1 / 9; }
+      :is([data-hhr-round="handoff"],[data-hhr-round="alerts"],[data-hhr-round="empty-request"]) { grid-column:9 / -1; }
+      [data-hhr-round="note"] #evolution { border-radius:6px 0 0 0 !important; }
+      [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root {
         border-block-start:1px solid var(--hhr-round-edge); border-radius:0 0 5px 5px !important;
       }
-      > [data-hhr-round="handoff"] #shiftChangeObservation { border-radius:0 6px 0 0 !important; }
-      > [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root,
-      > [data-hhr-round="empty-request"] [data-hhr-empty-request] > .MuiCard-root {
+      [data-hhr-round="handoff"] #shiftChangeObservation { border-radius:0 6px 0 0 !important; }
+      [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root,
+      [data-hhr-round="empty-request"] [data-hhr-empty-request] > .MuiCard-root {
         border-block-start:1px solid var(--hhr-round-edge); border-radius:0 !important;
       }
-      &:has(> [data-hhr-round="care"]) > [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root { border-radius:0 !important; }
-      &:not(:has(> [data-hhr-round="empty-request"])) > [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root,
-      > [data-hhr-round="empty-request"]:not(:has(~ [data-hhr-round="empty-request"])) [data-hhr-empty-request] > .MuiCard-root {
+      &:has(:is([data-hhr-round="care"],[data-hhr-round="care-card"])) [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root { border-radius:0 !important; }
+      &:not(:has([data-hhr-round="empty-request"])) [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root,
+      [data-hhr-round="empty-request"]:not(:has(~ [data-hhr-round="empty-request"])) [data-hhr-empty-request] > .MuiCard-root {
         border-radius:0 0 5px 5px !important;
       }
-      > [data-hhr-round="vitals"] section#vitalSignsEntry { container:hhr-round-signs / inline-size; }
-      > [data-hhr-round="vitals"] :is([data-hhr-reading="vital-value"],[data-hhr-reading="vital-pam"]) { white-space:nowrap; }
+      [data-hhr-round="vitals"] section#vitalSignsEntry { container:hhr-round-signs / inline-size; }
+      [data-hhr-round="vitals"] :is([data-hhr-reading="vital-value"],[data-hhr-reading="vital-pam"]) { white-space:nowrap; }
       /* Fit the standard nine measurements without splitting the pressure pair.
          Use the native wrapping band for other arrangements and narrower columns. */
       @container hhr-round-signs (min-width:51rem) {
-        > [data-hhr-round="vitals"] #vitalSignsEntry [data-hhr-reading="vital-grid"]:has(
+        [data-hhr-round="vitals"] #vitalSignsEntry [data-hhr-reading="vital-grid"]:has(
           > [data-hhr-reading="vital-tile"]:first-child [data-hhr-reading="vital-pam"]
         ):has(> [data-hhr-reading="vital-tile"]:nth-child(9):last-child) {
           grid-template-columns:minmax(7rem,max-content) repeat(8,auto) !important;
@@ -101,15 +109,15 @@
         }
       }
       /* The alert form follows its own messages even on a wide monitor. */
-      > [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root > .MuiCardContent-root {
+      [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root > .MuiCardContent-root {
         margin:0 !important;
         form, > .MuiStack-root:has([data-hhr-reading-toggle="alert"]) { margin-block:3px 0 !important; }
       }
     }
-    &:not([data-hhr-round-columns]) > [data-hhr-round="care"]:has([data-hhr-round="care-row"]) {
+    &:not([data-hhr-round-columns]) > :is([data-hhr-round="care"],[data-hhr-round="care-card"]):has(:is([data-hhr-round="care-row"],[data-hhr-round="care-card"])) {
       margin-block-start:calc(-1 * var(--hhr-round-row-gap));
     }
-    > [data-hhr-round="care"] {
+    :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
       padding-block-start:0 !important;
       .MuiGrid-container { margin:0 !important; width:100% !important; gap:3px !important; }
       .MuiGrid-item { width:auto !important; max-width:100% !important; flex:1 1 12rem !important; padding:0 !important; }
@@ -121,15 +129,15 @@
       .MuiCardContent-root { padding:2px 9px 5px !important; }
       .MuiCardContent-root :is(p,.MuiTypography-body1,.MuiTypography-body2) { margin:0; font-size:.8125rem; line-height:1.35; }
 
-      /* Both native cards are recognized. Their titles form a short left column;
+      /* Recognized native cards use a compact row. Their titles form a short left column;
          the value, observation and provenance share the reading edge on the right. */
-      &:has(#restEntrySection [data-hhr-round="care-row"]) {
+      &:is([data-hhr-round="care-card"],:has([data-hhr-round="care-row"])) {
         container: hhr-care-pair / inline-size;
         padding-block-start:0 !important;
         .MuiGrid-container { display:block !important; }
         .MuiGrid-container > .MuiGrid-item { width:100% !important; }
         :is(#restEntrySection,#nutritionOrderEntrySection) { padding:0 !important; }
-        :is(#restEntrySection,#nutritionOrderEntrySection) > [data-hhr-round="care-row"] {
+        &[data-hhr-round="care-card"], [data-hhr-round="care-row"] {
           display:grid; grid-template-columns:4.1rem minmax(0,1fr); align-items:baseline;
           column-gap:8px; padding:3px 9px; border-radius:0;
           &:is(.MuiGrid-item:last-child > section > *) { border-end-start-radius:5px; border-end-end-radius:5px; }
@@ -157,6 +165,7 @@
             display:inline !important; font-size:.8125rem; line-height:1.35;
           }
           [data-hhr-round="care-value"] { font-weight:650; }
+          [data-hhr-round="care-empty"] { margin:0 !important; font-size:.75rem; line-height:1.35; color:#516963; }
           [data-hhr-round="care-value"] .MuiChip-root { max-width:100%; height:auto; }
           [data-hhr-round="care-value"] .MuiChip-label { white-space:normal; overflow-wrap:anywhere; }
           /* Typography children of a Stack are block elements, even for a single word. */
@@ -166,7 +175,7 @@
           :is([data-hhr-round="care-label"],[data-hhr-round="care-placeholder"]) { display:none !important; }
           [data-hhr-round="care-observation"]::before { content:' · ' / ''; color:#687c76; }
         }
-        [data-hhr-round="care-row"] { border-block-start:1px solid #dce5e2; }
+        :is([data-hhr-round="care-row"],[data-hhr-round="care-card"]) { border-block-start:1px solid #dce5e2; }
       }
     }
   }

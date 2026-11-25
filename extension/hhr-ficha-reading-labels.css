@@ -66,6 +66,11 @@
         > [data-hhr-reading-toggle="alert"] { width:fit-content; margin:0; min-height:24px; }
         > :not([data-hhr-reading-toggle="alert"]) { width:100%; }
       }
+      [data-hhr-resuscitation-toggle] {
+        border-inline-start:2px solid #91a59e; padding-inline-start:4px;
+        .MuiFormControlLabel-label { font-weight:650; }
+        &:has(input:checked) { border-inline-start-color:#965924; background:#fff4e7; }
+      }
       [data-hhr-resuscitation-toggle]::after {
         content:'Sin marcar' / ''; margin-inline-start:.35em; color:#4b635e;
         font:500 .7rem/1.3 system-ui,sans-serif;

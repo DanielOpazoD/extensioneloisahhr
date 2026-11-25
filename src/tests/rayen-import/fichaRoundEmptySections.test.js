@@ -1,4 +1,5 @@
 import { afterEach, expect, it } from 'vitest';
+import '../../../extension/hhr-ficha-order-details.js';
 import '../../../extension/hhr-ficha-reading-surfaces.js';
 import '../../../extension/hhr-ficha-vital-strip.js';
 import '../../../extension/hhr-ficha-summary-density.js';
@@ -72,7 +73,7 @@ it('conserva los controles, las esperas y los avisos de acceso aunque el texto c
 });
 
 it('conserva visibles los dos avisos del lateral y retira la marca cuando llegan órdenes o un control', () => {
-  const exam = 'No presenta solicitudes de exámenes registradas';
+  const exam = 'No presenta solicitudes de examenes registradas';
   const surgery = 'No se presentan Solicitudes de intervención quirúrgica registradas para este paciente';
   document.body.innerHTML = '<main><nav></nav><section id="diagnosisTestEntrySection">' +
     makeCard('', 'Solicitud de examen', exam) + '</section>' +

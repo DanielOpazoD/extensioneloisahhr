@@ -36,6 +36,8 @@ jobs:
       - run: npm run test:runtime
       - name: Verify keyboard and layout in the compact desktop summary
         run: node scripts/capture-medical-round.mjs WORKTREE "$RUNNER_TEMP/ficha-escritorio" lectura
+      - name: Verify long admissions, bedside columns and full prescriptions
+        run: node scripts/capture-medical-round.mjs WORKTREE "$RUNNER_TEMP/ficha-ingreso" ingreso
       - run: npm run test:dau
       - run: npm run build
       - uses: actions/upload-artifact@v7
