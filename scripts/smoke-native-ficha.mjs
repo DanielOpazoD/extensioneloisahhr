@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { medicalRoundWithControls } from './medical-round-visual-fixture.mjs';
 import { verifyNursingSummary } from './smoke-nursing-summary-density.mjs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -124,7 +125,16 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.ok(Math.abs(summaryLayout.evolutionWidth-summaryLayout.width) < 2);
     await link.focus();
     await link.press('Enter');
-    await page.waitForFunction(()=>document.querySelector('[data-hhr-ficha-link][aria-current="location"]')?.textContent==='Evolución');
+    await page.waitForFunction(()=>document.querySelector('[data-hhr-ficha-link][aria-current="location"]')?.textContent==='Evolución').catch(async error => {
+      const state = await page.evaluate(() => ({
+        width:innerWidth, active:document.querySelector('[data-hhr-ficha-link][aria-current="location"]')?.textContent,
+        offset:scrollY, fullHeight:document.scrollingElement.scrollHeight, viewport:innerHeight,
+        railBottom:document.querySelector('[data-hhr-ficha-sections]').getBoundingClientRect().bottom,
+        targetTop:document.querySelector('#observationEntrySection').getBoundingClientRect().top,
+        targets:[...document.querySelectorAll('[data-hhr-ficha-link]')].map(el=>[el.dataset.hhrFichaLink,document.getElementById(el.dataset.hhrFichaLink)?.getBoundingClientRect().top])
+      }));
+      throw new Error('El enlace de Evolución no se activó: '+JSON.stringify(state), {cause:error});
+    });
     const geometry=await page.evaluate(()=>{
       const row=document.querySelector('[data-hhr-ficha-sections]').getBoundingClientRect();
       const block=document.querySelector('[data-hhr-evolution-block]'), rect=block.getBoundingClientRect();
@@ -290,6 +300,25 @@ export const verifyNativeFicha = async (page, worker) => {
   await toolbar.waitFor({state:'detached'});
   assert.equal(await page.locator('[data-hhr-history-filtered]').count(),0);
   await verifyNursingSummary(page, worker);
+  // Load the native-shaped medical cards through the installed extension, including
+  // their text-node labels and empty React caption boxes.
+  const medical = await page.context().newPage();
+  try {
+    await medical.setViewportSize({width:1366,height:850});
+    await medical.route(page.url(), route => route.fulfill({contentType:'text/html',body:medicalRoundWithControls}));
+    await medical.goto(page.url());
+    const measurements = medical.locator('section#vitalSignsEntry [data-hhr-reading="vital-value"]');
+    await measurements.nth(8).waitFor();
+    assert.equal(await measurements.count(),9);
+    const tops = await medical.locator('.vitals-grid > *').evaluateAll(tiles =>
+      tiles.map(tile => Math.round(tile.getBoundingClientRect().top)));
+    assert.equal(new Set(tops).size,1);
+    assert.equal(await medical.locator('#estimatedDischargeSection').isVisible(),false);
+    await medical.getByRole('button',{name:/ver historial completo/i}).press('Enter');
+    await medical.getByRole('dialog',{name:'Historial de signos'}).waitFor();
+  } finally {
+    await medical.close();
+  }
   await page.locator('main').evaluate((main,html)=>{main.innerHTML=html;main.style.removeProperty('background');},original);
   await page.setViewportSize(viewport);await page.evaluate(()=>window.scrollTo(0,0));
 };

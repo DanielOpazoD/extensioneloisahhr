@@ -21,6 +21,7 @@ it('recognises the adjacent branches within the medical summary and restores the
   const original = main.innerHTML;
   layout.refresh(main);
   expect(main.querySelector('[data-hhr-round="frame"]').children).toHaveLength(23);
+  expect(main.querySelector('[data-hhr-round="date"] input[type=date]')).not.toBeNull();
   expect(main.querySelector('[data-hhr-round="handoff"] textarea')).toBe(field);
   expect(main.querySelector('[data-hhr-round="note"] #evolution')).not.toBeNull();
 
@@ -38,5 +39,28 @@ it('recognises the adjacent branches within the medical summary and restores the
   extra.textContent = 'Acción adicional';
   main.querySelector('#shiftChangeEntrySection').after(extra);
   layout.refresh(main);
+  expect(main.querySelector('[data-hhr-round="frame"]')).toBeNull();
+  expect(main.querySelector('[data-hhr-round="date"] input')).not.toBeNull();
+  expect(extra.closest('[data-hhr-round="date"]')).toBeNull();
+});
+
+it('hides the discharge card independently while retaining an adjacent native control', () => {
+  document.body.innerHTML = '<main><div class="MuiGrid-item"><div id="estimatedDischarge">Fecha estimada de alta</div><button>Otra acción</button></div></main>';
+  const main = document.querySelector('main');
+  layout.refresh(main);
+  expect(main.querySelector('#estimatedDischarge').dataset.hhrRound).toBe('date');
+  expect(main.querySelector('button').closest('[data-hhr-round]')).toBeNull();
+  layout.clear();
   expect(main.querySelector('[data-hhr-round]')).toBeNull();
+});
+
+it('pairs neighbouring note and handoff even when discharge was never mounted', () => {
+  document.body.innerHTML = '<main><div class="MuiGrid-container">' +
+    slot('shiftChangeEntrySection','<input>') + slot('observationEntrySection','Evolución') +
+    '<div class="MuiGrid-item">Más información</div></div></main>';
+  const main = document.querySelector('main');
+  layout.refresh(main);
+  expect(main.querySelector('[data-hhr-round="handoff"] input')).not.toBeNull();
+  expect(main.querySelector('#observationEntrySection').parentElement.dataset.hhrRound).toBe('note');
+  expect(main.querySelector('.MuiGrid-container > :last-child').hasAttribute('data-hhr-round')).toBe(false);
 });

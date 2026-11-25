@@ -15,7 +15,15 @@ export async function verifyNursingSummary(page, worker) {
   assert.deepEqual(sizes,[15,12,11,11]);
   assert.equal(await tiles.first().locator('[data-hhr-reading="vital-pam"]').innerText(), 'PAM: 90');
   assert.equal(await tiles.nth(3).locator('strong').evaluate(el=>getComputedStyle(el).color),'rgb(255, 0, 0)');
-  assert.ok(await page.getByRole('button',{name:'Ver historial completo'}).isVisible());
+  const historyButton = page.getByRole('button',{name:'Ver historial completo'});
+  assert.ok(await historyButton.isVisible());
+  assert.equal(await historyButton.getAttribute('title'),'Ver historial completo');
+  const historyWidth = (await historyButton.boundingBox()).width;
+  assert.ok(historyWidth >= 24 && historyWidth <= 32);
+  await historyButton.evaluate(button => button.addEventListener('click', () => button.dataset.opened = 'true', {once:true}));
+  await historyButton.focus();
+  await historyButton.press('Enter');
+  assert.equal(await historyButton.getAttribute('data-opened'),'true');
   assert.equal(await tiles.nth(2).locator('sub').textContent(), '2');
   const actions = page.locator('#nursing-test section:last-child tbody tr').first().getByRole('button');
   const controls = await actions.evaluateAll(buttons => buttons.map(el => el.getBoundingClientRect().toJSON()));

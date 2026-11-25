@@ -51,25 +51,38 @@
   const anchors = { diagnosisEntrySection:'diagnosis', vitalSignsEntry:'vitals', medicationEntrySection:'orders', freeIndicationEntrySection:'orders' };
   const label = el => el.textContent.trim().toLowerCase();
   const vitalNames = /^(?:presi[oó]n(?: arterial)?|(?:fre\.?|frec\.?|frecuencia)\s*(?:card[ií]aca|respiratoria)|saturaci[oó]n(?: (?:de ox[ií]geno|o[2₂]))?|t[°º]? axilar|temperatura|glasgow|sup\. ox[ií]geno|hemoglucotest|eva)$/i;
-  function isVitalLabel(el) {
+  function isVitalLabel(el, compact) {
+    const children = [...el.children];
+    // The native medical card puts its caption beside the label's text node, in a MUI Box.
+    // Read the name separately so a unit or extra detail in that Box remains on screen.
+    if (compact && el.matches('p.MuiTypography-root') && children.some(child => child.matches('.MuiBox-root'))) {
+      const name = [...el.childNodes].filter(node =>
+        node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE && node.matches('sup,sub')
+      ).map(node => node.textContent).join('').trim();
+      if (vitalNames.test(name)) return true;
+    }
     // A unit may be typeset inside the label, e.g. O<sub>2</sub>.
-    return [...el.children].every(child => child.matches('sub,sup,b,strong,em,span')) &&
+    return children.every(child => child.matches('sub,sup,b,strong,em,span')) &&
       vitalNames.test(el.textContent.trim()) &&
-      ![...el.children].some(child => vitalNames.test(child.textContent.trim()));
+      !children.some(child => vitalNames.test(child.textContent.trim()));
   }
   const elapsedUnits = { minuto:'min',min:'min',hora:'h',h:'h',día:'d',dia:'d' };
   function markTiles(card, next, compact, elapsed) {
     const labels = [...card.querySelectorAll('span,p,dt,h4,h5,h6,div')].filter(el =>
-      isVitalLabel(el) && !el.closest('table,dialog,[role=dialog]'));
+      isVitalLabel(el, compact) && !el.closest('table,dialog,[role=dialog]'));
     if (labels.length < 2) return;
     let grid = labels[0].parentElement;
     while (grid !== card && !labels.every(el => grid.contains(el))) grid = grid.parentElement;
     // Leave observations, the history button and any unknown siblings in their native position.
     const tiles = [...grid.children];
-    if (!tiles.every(tile => labels.filter(el => tile.contains(el)).length === 1)) return;
+    const tileLabels = tiles.map(tile => labels.filter(el => tile.contains(el)));
+    if (!tiles.every((tile,index) => tileLabels[index].length === 1 ||
+        (compact && !tileLabels[index].length && tile.matches('.MuiCard-root') && tile.querySelector(':scope > .MuiCardContent-root')))) return;
     next.set(grid,'vital-grid');
-    for (const tile of tiles) {
+    for (const [index,tile] of tiles.entries()) {
       next.set(tile,'vital-tile');
+      // Keep an unrecognised native card intact alongside known measurements.
+      if (!tileLabels[index].length) continue;
       let shell = tile;
       while (shell.childElementCount === 1 && !labels.includes(shell.firstElementChild)) {
         shell = shell.firstElementChild;
@@ -101,14 +114,14 @@
     }
   }
 
-  function cardForTitle(title, kind, main) {
+  function cardForTitle(title, kind, main, compact) {
     const card = title.closest('.MuiCard-root,.MuiPaper-root,section');
     if (card && !Object.keys(anchors).some(id => card.querySelector('#'+id))) return card;
     // Some nurse screens use Box/Stack for the entire card instead of MuiCard.
     for (let node=title.parentElement; node && node !== main; node=node.parentElement) {
       if (node.matches('body,html') || node.querySelector('nav,[role=tablist]')) break;
       if (!node.matches('.MuiBox-root,.MuiStack-root,.MuiGrid-item')) continue;
-      if (kind === 'vitals' ? [...node.querySelectorAll('p,span')].some(isVitalLabel) : node.querySelector('table')) {
+      if (kind === 'vitals' ? [...node.querySelectorAll('p,span')].some(el => isVitalLabel(el, compact)) : node.querySelector('table')) {
         if (node.querySelectorAll('table').length > 1) return null;
         return node;
       }
@@ -131,12 +144,17 @@
           if (compact) markStatus(title,name,next);
           const kind = names.get(name);
           if (!kind) continue;
-          const card = cardForTitle(title,kind,main);
+          const card = cardForTitle(title,kind,main,compact);
           if (card) cards.set(card,kind);
         }
         for (const [card,kind] of cards) {
           next.set(card,kind);
-          if (kind === 'vitals') markTiles(card,next,compact,elapsed);
+          if (kind === 'vitals') {
+            markTiles(card,next,compact,elapsed);
+            if (compact) for (const button of card.querySelectorAll('button')) {
+              if (label(button) === 'ver historial completo' && !button.closest('dialog,[role=dialog]')) next.set(button,'vital-history');
+            }
+          }
           if (kind !== 'orders') continue;
           for (const table of card.querySelectorAll('table')) {
             if (table.tHead?.rows.length !== 1) continue;
@@ -157,13 +175,23 @@
         }
       }
       for (const [el,kind] of previous) {
+        if (kind === 'vital-history' && !next.has(el) && el.hasAttribute('data-hhr-history-hint')) {
+          if (el.title === 'Ver historial completo') el.removeAttribute('title');
+          el.removeAttribute('data-hhr-history-hint');
+        }
         if (kind === 'vital-time' && !elapsed.has(el)) el.removeAttribute('data-hhr-vital-elapsed');
         if (!next.has(el)) el.removeAttribute('data-hhr-reading');
       }
       for (const [el,text] of elapsed) {
         if (el.dataset.hhrVitalElapsed !== text) el.dataset.hhrVitalElapsed = text;
       }
-      for (const [el,kind] of next) if (previous.get(el) !== kind) el.setAttribute('data-hhr-reading',kind);
+      for (const [el,kind] of next) {
+        if (previous.get(el) !== kind) el.setAttribute('data-hhr-reading',kind);
+        if (kind === 'vital-history' && !el.hasAttribute('title')) {
+          el.title = 'Ver historial completo';
+          el.setAttribute('data-hhr-history-hint','');
+        }
+      }
       previous = next;
     }
     return { refresh, clear:() => refresh(null) };
