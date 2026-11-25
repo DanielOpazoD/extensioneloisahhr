@@ -5,26 +5,32 @@ import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { visualSummary } from './nursing-summary-visual-fixture.mjs';
 
-const [revision, outputDirectory] = process.argv.slice(2);
-if (!revision || !outputDirectory) throw new Error('Uso: node scripts/capture-nursing-summary.mjs <etiqueta|WORKTREE> <directorio>');
+const [revision, outputDirectory, theme] = process.argv.slice(2);
+if (!revision || !outputDirectory) throw new Error('Uso: node scripts/capture-nursing-summary.mjs <etiqueta|WORKTREE> <directorio> [off|compact|balanced|reading]');
 await mkdir(outputDirectory, {recursive:true});
 const browser = await chromium.launch();
 try {
   for (const width of [1366,390]) {
     const page = await browser.newPage({viewport:{width,height:768},deviceScaleFactor:1});
     await page.setContent('<main>'+visualSummary+'</main>');
+    const themeFile = 'extension/hhr-ficha-themes.css';
+    if (revision === 'WORKTREE') await page.addStyleTag({path:themeFile});
+    else if (execFileSync('git',['ls-tree','--name-only',revision,themeFile],{encoding:'utf8'}).trim()) {
+      await page.addStyleTag({content:execFileSync('git',['show',revision+':'+themeFile],{encoding:'utf8'})});
+    }
     for (const name of ['hhr-ficha-reading-surfaces','hhr-ficha-vital-strip','hhr-ficha-summary-density','hhr-native-ficha-presentation']) {
       const file = 'extension/'+name+'.js';
       const content = revision === 'WORKTREE' ? await readFile(file,'utf8') :
         execFileSync('git',['show',revision+':'+file],{encoding:'utf8'});
       await page.addScriptTag({content});
     }
-    await page.evaluate(async () => {
-      window.HhrNativeFichaPresentation.create().refresh('1');
+    await page.evaluate(async theme => {
+      window.HhrNativeFichaPresentation.create().refresh('1',theme);
       await document.fonts.ready;
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-    });
+    }, theme);
     const metrics = await page.evaluate(() => ({
+      summaryHeight:document.querySelector('#nursing-test').getBoundingClientRect().height,
       vitalHeight:document.querySelector('.readings').getBoundingClientRect().height,
       diagnosisHeight:document.querySelector('section').getBoundingClientRect().height,
       completeOrders:[...document.querySelectorAll('section:last-of-type tbody tr')].filter(row => {

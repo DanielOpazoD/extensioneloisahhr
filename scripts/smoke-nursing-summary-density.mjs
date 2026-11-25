@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { visualSummary } from './nursing-summary-visual-fixture.mjs';
 
-export async function verifyNursingSummary(page) {
+export async function verifyNursingSummary(page, worker) {
   await page.setViewportSize({width:1366,height:768});
   await page.locator('main').evaluate((main, html) => { main.innerHTML = html; }, visualSummary);
   const grid = page.locator('[data-hhr-reading="vital-grid"]');
@@ -22,6 +22,30 @@ export async function verifyNursingSummary(page) {
   assert.equal(controls.length,3);
   assert.ok(controls.every(r => Math.abs(r.top-controls[0].top)<1 && r.width>=24 && r.height>=24));
   assert.ok((await page.locator('#nursing-test tbody tr').last().boundingBox()).height < 46);
+  const themeKey = 'hhr-ficha-theme-v1';
+  const setTheme = mode => worker.evaluate(([key,value]) => chrome.storage.local.set({[key]:value}), [themeKey,mode]);
+  const diagnosis = page.locator('#nursing-test section').first();
+  const compactHeight = (await diagnosis.boundingBox()).height;
+  await page.locator('#hhr-clinical-operations-bar .brand').click();
+  const center = page.locator('#hhr-prescription-print-modal');
+  await center.locator('[data-module="settings"].hhr-center-nav-button').click();
+  const picker = center.getByLabel('Vista de la ficha clínica');
+  assert.equal(await picker.locator('option').count(),4);
+  for (const mode of ['off','reading','balanced','compact']) {
+    if (mode === 'reading') await setTheme(mode); // Change from another extension context.
+    else await picker.selectOption(mode);
+    await page.waitForFunction(mode => (document.documentElement.dataset.hhrFichaTheme || 'off') === mode, mode);
+    assert.equal(await picker.inputValue(),mode);
+    assert.equal(await worker.evaluate(key => chrome.storage.local.get(key).then(result => result[key]),themeKey), mode);
+    assert.equal(await page.locator('.reading').count(),9);
+    if (mode === 'off') {
+      assert.equal(await grid.count(),0);
+      assert.equal(await page.locator('#nursing-test .reading').first().evaluate(el => getComputedStyle(el).minHeight),'122px');
+    }
+    if (mode === 'balanced') assert.ok((await diagnosis.boundingBox()).height > compactHeight);
+  }
+  await center.locator('.hhr-center-nav-button[data-module="home"]').click();
+  await center.locator('.hhr-rx-close').click();
   // Partial navigation must not undo density while the section itself is still mounted.
   await page.locator('#nursing-test nav').evaluate(el=>el.remove());
   await page.waitForFunction(()=>!document.querySelector('[data-hhr-ficha-sections]'));

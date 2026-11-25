@@ -73,7 +73,7 @@ const screenshot = async (page, name) => {
   await page.screenshot({ path:path.join(process.env.HHR_VISUAL_ARTIFACT_DIR,name+'.png') });
 };
 
-export const verifyNativeFicha = async page => {
+export const verifyNativeFicha = async (page, worker) => {
   const original = await page.locator('main').innerHTML();
   const viewport = page.viewportSize();
   await page.locator('main').evaluate((main, html) => {
@@ -110,7 +110,7 @@ export const verifyNativeFicha = async page => {
       const meds = document.getElementById('medicationEntrySection');
       const print = meds.querySelector('button').getBoundingClientRect();
       const heading = meds.querySelector('h2').getBoundingClientRect();
-      return { columns:firstRow.length, width:grid.clientWidth, mediumWidth:medium.offsetWidth,
+      return { columns:firstRow.length, width:grid.clientWidth, gap:parseFloat(getComputedStyle(grid).columnGap), mediumWidth:medium.offsetWidth,
         sameHeader:print.top < heading.bottom && print.bottom > heading.top,
         count:meds.querySelector('h2').dataset.hhrVisibleMedications, medsWidth:meds.offsetWidth,
         evolutionWidth:section.getBoundingClientRect().width, cardHeight:document.getElementById('diagnosisEntrySection').offsetHeight };
@@ -119,7 +119,7 @@ export const verifyNativeFicha = async page => {
     assert.ok(Math.abs(summaryLayout.medsWidth-summaryLayout.width)<2);
     assert.equal(summaryLayout.count,'2');
     assert.equal(summaryLayout.sameHeader,true);
-    if (width >= 1100) assert.ok(Math.abs(summaryLayout.mediumWidth - (summaryLayout.width - 8) / 2) < 2);
+    if (width >= 1100) assert.ok(Math.abs(summaryLayout.mediumWidth - (summaryLayout.width - summaryLayout.gap) / 2) < 2);
     assert.ok(summaryLayout.cardHeight < 180, 'La tarjeta breve sigue reservando altura vacía');
     assert.ok(Math.abs(summaryLayout.evolutionWidth-summaryLayout.width) < 2);
     await link.focus();
@@ -277,7 +277,7 @@ export const verifyNativeFicha = async page => {
   await page.getByRole('tab',{name:'Resumen',exact:true}).click();
   await toolbar.waitFor({state:'detached'});
   assert.equal(await page.locator('[data-hhr-history-filtered]').count(),0);
-  await verifyNursingSummary(page);
+  await verifyNursingSummary(page, worker);
   await page.locator('main').evaluate((main,html)=>{main.innerHTML=html;main.style.removeProperty('background');},original);
   await page.setViewportSize(viewport);await page.evaluate(()=>window.scrollTo(0,0));
 };

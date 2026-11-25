@@ -239,6 +239,7 @@
         "hhr-center-patient-context.js",
         "hhr-request-drafts.js",
         "hhr-read-recovery.js",
+        "hhr-ficha-themes.js",
         "hhr-center-settings.js",
         "hhr-center-shell-runtime.js",
         "hhr-document-preview-runtime.js",
@@ -280,6 +281,7 @@
         "clinical-checklist-dialog.js"
       ],
       "css": [
+        "hhr-ficha-themes.css",
         "nursing-handoff-dialog.css",
         "clinical-checklist.css"
       ],
