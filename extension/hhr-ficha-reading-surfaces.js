@@ -5,18 +5,48 @@
     ['diagnóstico','diagnosis'],['signos vitales','vitals'],['fármacos','orders'],
     ['indicaciones libres','orders'],['indicaciones (indicación libre)','orders'],
   ]);
-  // Condense only a title and a single explicit native status. Permission messages stay visible.
-  const statusTitles = new Set(['instrumentos de evaluación','producto no farmacológico','procedimientos',
-    'dispositivos invasivos','solicitud de examen','solicitud interconsulta','prestaciones','ram','alergias','eventos adversos']);
-  const statusMessage = /^(?:no tiene permiso para visualizar|no (?:se )?presentan? (?:instrumentos de evaluaci[oó]n|productos? no farmacol[oó]gicos?|procedimientos|dispositivos invasivos|solicitudes de ex[aá]menes|interconsultas|prestaciones)(?: (?:registrad[oa]s?|solicitad[oa]s?))?(?: para este paciente)?)\.?$/i;
-  function markStatus(title, next) {
-    const card = title.closest('.MuiCard-root,section,.MuiPaper-root');
-    if (!card || card.querySelector('table,button,input,a,select,textarea,svg,[role],[contenteditable],[aria-busy=true]')) return;
-    const message = [...card.querySelectorAll('p,span,div')].find(el =>
-      !el.childElementCount && statusMessage.test(el.textContent.trim()));
-    if (!message || card.textContent.replace(/\s+/g,'') !== (title.textContent + message.textContent).replace(/\s+/g,'')) return;
+  // Match each native message to its own heading before it can be folded.
+  const optionalStates = new Map([
+    ['instrumentos de evaluación', 'instrumentos de evaluación registrados'],
+    ['examen físico', 'exámenes físicos registrados'],
+    ['producto no farmacológico', 'productos no farmacológicos registrados'],
+    ['procedimientos', 'procedimientos registrados'],
+    ['dispositivos invasivos', 'dispositivos invasivos solicitados'],
+    ['solicitud de examen', 'solicitudes de exámenes registradas'],
+    ['solicitud interconsulta', 'interconsultas solicitadas'],
+    ['solicitud de interconsulta', 'interconsultas solicitadas'],
+    ['solicitudes de intervención quirúrgica', 'solicitudes de intervención quirúrgica registradas'],
+    ['prestaciones', 'prestaciones registradas'],
+  ]);
+  const retainedStates = new Map([
+    ['ram','ram registradas'], ['alergias','alergias registradas'], ['eventos adversos','eventos adversos registrados'],
+  ]);
+  const statusGuard = 'button,input,label,select,textarea,a,svg,img,canvas,table,iframe,details,[role],[tabindex],[contenteditable],[title],[aria-label],[aria-labelledby],[aria-live],[aria-busy=true],.MuiSkeleton-root,.MuiAlert-root,.MuiCircularProgress-root,.MuiLinearProgress-root';
+  function markStatus(title, name, next) {
+    const expected = optionalStates.get(name) || retainedStates.get(name);
+    if (!expected || title.closest('dialog,[role=dialog],[role=alert],[aria-busy=true],nav')) return;
+    const card = title.closest('section,.MuiPaper-root,.MuiCard-root') || title.closest('.MuiGrid-item');
+    if (!card || card.matches(statusGuard)) return;
+    const labels = card.querySelectorAll('label');
+    const filter = labels.length === 1 && /^mostrar suspendidos$/i.test(labels[0].textContent.trim()) &&
+      labels[0].querySelector('input[type="checkbox"]') ? labels[0] : null;
+    if ([...card.querySelectorAll(statusGuard)].some(el => !filter?.contains(el))) return;
+    const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+    let message;
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!node.textContent.trim() || title.contains(node) || filter?.contains(node)) continue;
+      if (message) return;
+      message = node;
+    }
+    if (!message) return;
+    const text = message.textContent.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\.$/,'');
+    const denied = text === 'no tiene permiso para visualizar';
+    const record = /^no (?:se )?presentan? (.*?)(?: para este paciente)?$/.exec(text);
+    if (!denied && record?.[1] !== expected) return;
     next.set(card,'status-card');
-    next.set(message,'status-message');
+    if (message.parentElement !== card) next.set(message.parentElement,'status-message');
+    if (!denied && !filter && optionalStates.has(name)) next.set(title,'empty-section-title');
   }
   const anchors = { diagnosisEntrySection:'diagnosis', vitalSignsEntry:'vitals', medicationEntrySection:'orders', freeIndicationEntrySection:'orders' };
   const label = el => el.textContent.trim().toLowerCase();
@@ -27,7 +57,8 @@
       vitalNames.test(el.textContent.trim()) &&
       ![...el.children].some(child => vitalNames.test(child.textContent.trim()));
   }
-  function markTiles(card, next) {
+  const elapsedUnits = { minuto:'min',min:'min',hora:'h',h:'h',día:'d',dia:'d' };
+  function markTiles(card, next, compact, elapsed) {
     const labels = [...card.querySelectorAll('span,p,dt,h4,h5,h6,div')].filter(el =>
       isVitalLabel(el) && !el.closest('table,dialog,[role=dialog]'));
     if (labels.length < 2) return;
@@ -45,14 +76,27 @@
         next.set(shell,'vital-inner');
       }
       const [title, value, ...details] = shell.children;
-      if (!labels.includes(title) || !value || !/^[−+<>≤≥-]?\s*\d/.test(value.textContent.trim()) ||
+      const nativeLabel = labels.find(label => title?.contains(label));
+      if (!(compact ? nativeLabel : labels.includes(title)) || !value || !/^[−+<>≤≥-]?\s*\d/.test(value.textContent.trim()) ||
           shell.querySelector('button,input,select,textarea,a,svg,[contenteditable],[role="button"]') ||
           [...shell.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) continue;
       next.set(title,'vital-label');
-      next.set(value,'vital-value');
+      // Pressure has a value row (two numbers separated by a slash) and a separate PAM row.
+      const [pressure,pam] = value.children;
+      if (compact && value.childElementCount === 2 && /^\s*\d+\s*\/\s*\d+\s*$/.test(pressure.textContent) &&
+          /^\s*pam\s*:\s*\d+(?:[.,]\d+)?\s*$/i.test(pam.textContent)) {
+        next.set(value,'vital-pressure-group');
+        next.set(pressure,'vital-value');
+        next.set(pam,'vital-pam');
+      } else next.set(value,'vital-value');
       for (const detail of details) {
         if (/^pam\s*:/i.test(detail.textContent.trim())) next.set(detail,'vital-pam');
-        else if (/^(?:hace\s+)?\d+\s*(?:minutos?|min|horas?|h|d[ií]as?)[.]?$/i.test(detail.textContent.trim())) next.set(detail,'vital-time');
+        else {
+          const time = /^(?:hace\s+)?(\d+)\s*(minuto|min|hora|h|d[ií]a)s?\.?$/i.exec(detail.textContent.trim());
+          if (!time) continue;
+          next.set(detail,'vital-time');
+          if (compact && !detail.childElementCount) elapsed.set(detail, time[1] + elapsedUnits[time[2].toLowerCase()]);
+        }
       }
     }
   }
@@ -75,7 +119,7 @@
   function create() {
     let previous = new Map();
     function refresh(main, compact) {
-      const next = new Map(), cards = new Map();
+      const next = new Map(), cards = new Map(), elapsed = new Map();
       if (main) {
         for (const [id,kind] of Object.entries(anchors)) {
           const el = document.getElementById(id);
@@ -84,7 +128,7 @@
         for (const title of main.querySelectorAll('h2,h3,h4,h5,h6,.MuiCardHeader-title,.MuiTypography-h6,p.MuiTypography-root')) {
           if (title.closest('dialog,[role=dialog],table,nav')) continue;
           const name = label(title);
-          if (compact && statusTitles.has(name)) markStatus(title,next);
+          if (compact) markStatus(title,name,next);
           const kind = names.get(name);
           if (!kind) continue;
           const card = cardForTitle(title,kind,main);
@@ -92,7 +136,7 @@
         }
         for (const [card,kind] of cards) {
           next.set(card,kind);
-          if (kind === 'vitals') markTiles(card,next);
+          if (kind === 'vitals') markTiles(card,next,compact,elapsed);
           if (kind !== 'orders') continue;
           for (const table of card.querySelectorAll('table')) {
             if (table.tHead?.rows.length !== 1) continue;
@@ -112,7 +156,13 @@
           }
         }
       }
-      for (const el of previous.keys()) if (!next.has(el)) el.removeAttribute('data-hhr-reading');
+      for (const [el,kind] of previous) {
+        if (kind === 'vital-time' && !elapsed.has(el)) el.removeAttribute('data-hhr-vital-elapsed');
+        if (!next.has(el)) el.removeAttribute('data-hhr-reading');
+      }
+      for (const [el,text] of elapsed) {
+        if (el.dataset.hhrVitalElapsed !== text) el.dataset.hhrVitalElapsed = text;
+      }
       for (const [el,kind] of next) if (previous.get(el) !== kind) el.setAttribute('data-hhr-reading',kind);
       previous = next;
     }

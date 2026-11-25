@@ -180,10 +180,27 @@
       for (const section of activeSections) {
         if (row && optional.has(section.id) && explicitlyEmpty(section) && !section.contains(document.activeElement)) next.add(section);
       }
+      if (row) {
+        // These marks exist only in Compacto and only for an exact, read-only native empty state.
+        for (const title of row.closest('main')?.querySelectorAll('[data-hhr-reading="empty-section-title"]') || []) {
+          const card = title.closest('[data-hhr-reading="status-card"]');
+          if (!card || card.contains(document.activeElement)) continue;
+          next.add(card);
+        }
+      }
       for (const el of previous) if (!next.has(el)) el.removeAttribute('data-hhr-ficha-folded');
       const nextNav = new Set();
+      // MUI spacing sits on each nested grid item. Hide the empty wrappers with the card
+      // only while each contains nothing else, without affecting its native ID or link.
+      for (const card of next) {
+        for (let item = card.parentElement; item?.matches('.MuiGrid-item,section.MuiBox-root') && item.children.length === 1 &&
+            !item.matches(protectedContent) && ![...item.childNodes].some(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim()); item = item.parentElement) {
+          nextNav.add(item);
+        }
+      }
       for (const link of (row?.querySelectorAll('[data-hhr-ficha-link]') || [])) {
-        if (!next.has(document.getElementById(link.dataset.hhrFichaLink))) continue;
+        const target = document.getElementById(link.dataset.hhrFichaLink);
+        if (!next.has(target) && !nextNav.has(target)) continue;
         const item = link.closest('.MuiGrid-item');
         nextNav.add(item?.parentElement === row && item.querySelectorAll('[data-hhr-ficha-link],button,a,input,select').length === 1 ? item : link);
       }
@@ -191,12 +208,14 @@
       navItems = nextNav;
       previous = next;
       if (!next.size) { toggle.remove(); return; }
-      toggle.setAttribute('aria-controls', [...next].map(el => el.id).join(' '));
+      const ids = [...next].map(el => el.id).filter(Boolean);
+      if (ids.length) toggle.setAttribute('aria-controls', ids.join(' '));
+      else toggle.removeAttribute('aria-controls');
       display();
       if (toggle.parentElement !== row) row.append(toggle);
     }
     function reveal(target) {
-      if (previous.has(target) && !expanded) { expanded = true; display(); }
+      if ((previous.has(target) || navItems.has(target)) && !expanded) { expanded = true; display(); }
     }
     return { refresh, clear, reveal };
   }

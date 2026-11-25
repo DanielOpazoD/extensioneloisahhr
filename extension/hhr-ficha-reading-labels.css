@@ -1,0 +1,34 @@
+@media screen {
+  html[data-hhr-ficha-theme="compact"] {
+    /* This grid already follows the placeholder for the pinned section rail. */
+    [data-hhr-ficha-section-slot] + .MuiGrid-container:has(> .MuiGrid-item #observationEntrySection) {
+      padding-block-start:4px !important;
+      margin-block-start:0 !important;
+      > .MuiGrid-item { padding-block-start:6px !important; }
+    }
+    [data-hhr-update-label] {
+      font-size:0 !important; line-height:1 !important;
+      &::after { content:attr(data-hhr-update-label) / ''; font:normal .75rem/1.35 system-ui,sans-serif; color:#516963; }
+    }
+    button[data-hhr-note-disclosure] {
+      display:inline-flex; align-items:center; justify-content:center; gap:3px;
+      min-height:24px !important; min-width:24px !important; padding:1px 5px !important;
+      color:#22665d !important; font-size:0 !important; border-radius:4px;
+      &::after { content:''; width:6px; height:6px; border:solid currentColor; border-width:0 1.5px 1.5px 0; transform:rotate(225deg); }
+      &[data-hhr-note-disclosure="more"]::before { content:'Ver más' / ''; font:500 .75rem/1.2 system-ui,sans-serif; text-transform:none; }
+      &[data-hhr-note-disclosure="more"]::after { transform:rotate(45deg); }
+      &:focus-visible { outline:2px solid #0b6e66; outline-offset:1px; }
+    }
+    [data-hhr-ficha-sections] { align-items:center; }
+    [data-hhr-ficha-link] { font-size: .75rem !important; padding-inline:7px; }
+    [data-hhr-ficha-link="freeIndicationEntrySection"],[data-hhr-ficha-link="medicationEntrySection"],
+    [data-hhr-ficha-link="nutritionOrderEntrySection"],[data-hhr-ficha-link="restEntrySection"] {
+      font-size:0 !important;
+      &::after { font-size:.75rem; }
+    }
+    [data-hhr-ficha-link="freeIndicationEntrySection"]::after { content:'Indicaciones libres' / ''; }
+    [data-hhr-ficha-link="medicationEntrySection"]::after { content:'Fármacos' / ''; }
+    [data-hhr-ficha-link="nutritionOrderEntrySection"]::after { content:'Régimen' / ''; }
+    [data-hhr-ficha-link="restEntrySection"]::after { content:'Reposo' / ''; }
+  }
+}

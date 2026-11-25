@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.181
+
+- En el Modo 1, Evolución ocupa todo el ancho debajo de la fecha estimada de alta y las observaciones de entrega de turno. «Ver evoluciones» abre las notas del episodio en el Historial, con «Todos» y un filtro por profesional.
+- Los encabezados muestran fecha, hora al minuto y nombre. Las notas expandidas usan un botón de repliegue y la barra de secciones usa títulos breves.
+- Signos vitales reúne las mediciones en una franja adaptable con antigüedades como «2h». «Ver vacías» recupera los apartados sin registros que se pliegan en el Resumen.
+
 ## 0.48.180
 
 - Centro HHR → Ajustes incorpora cuatro vistas de la ficha de hospitalizados. El perfil de Chrome recuerda la elección y la aplica a sus pestañas abiertas. Desactivado recupera el diseño nativo, Equilibrado conserva la densidad anterior y Lectura amplía los valores y el interlineado.
