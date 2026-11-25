@@ -1,5 +1,42 @@
 # Resumen compacto en escritorio
 
+## Cada dato una vez y la fecha en la línea de secciones en 0.48.191
+
+La ficha ficticia incluye desde esta versión un doble de la barra flotante de Centro HHR, en el lugar y con el tamaño que le da la extensión: 5 px bajo la cabecera, a 18 px del borde derecho, 250 px de ancho hasta 1280 px y 350 px por encima. Las capturas anteriores no la mostraban.
+
+| Pantalla | 0.48.190 | 0.48.191 | Detalle |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.191/antes/1280-ingreso.png) | [Después](0.48.191/despues/1280-ingreso.png) | [Con la barra flotante plegada](0.48.191/despues/1280-barra-plegada.png) |
+| 1440 × 900 | [Antes](0.48.191/antes/1440-ingreso.png) | [Después](0.48.191/despues/1440-ingreso.png) | [Indicaciones](0.48.191/despues/1440-indicaciones.png) |
+
+La fecha del resumen diario e «Imprimir» se acoplan a la línea de los enlaces de sección cuando caben entre el último enlace y la barra flotante. A 1440 px caben. A 1280 px caben con la barra flotante plegada; con la barra desplegada conservan su fila.
+
+| Medida en px, 0.48.190 → 0.48.191 | 1280 × 800 | 1280 × 800, barra plegada | 1440 × 900 |
+| --- | ---: | ---: | ---: |
+| Inicio de Evolución | 165 → 165 | 165 → 129 | 165 → 129 |
+| Inicio de Fármacos | 594 → 594 | 594 → 558 | 613 → 577 |
+| Inicio de Indicaciones libres | 730 → 730 | 730 → 694 | 732 → 696 |
+| Final de Órdenes de atención | 947 → 947 | 947 → 911 | 941 → 905 |
+
+Lo que deja de repetirse, en las tres situaciones:
+
+- La firma de la fila diaria, cuando es la misma de Evolución. Si otro profesional actualizó el resumen después, esa firma se lee antes de la fecha.
+- La firma de Indicaciones libres y de Órdenes de atención, cuando su texto nativo coincide, segundos incluidos, con el de la tarjeta anterior a la vista. Muestran «↑ misma firma» y la firma completa al pasar el cursor.
+- La antigüedad de las mediciones. Ocho de las nueve casillas decían «2h»; ahora el título dice «hace 2 h» y solo el hemoglucotest conserva su «4h». Si alguna medición no declara su antigüedad, o las recientes no coinciden, cada casilla conserva la suya.
+- El rótulo «Acciones» de las tablas de indicaciones. La columna pasa de 70 a 49 px y cede ese ancho al texto de las indicaciones.
+
+El texto nativo de cada firma, antigüedad y rótulo sigue en la página para los lectores de pantalla y la impresión.
+
+### Verificación con teclado
+
+Acoplada o en su fila, la fecha es la parada siguiente a «Ver vacías». Después van «Imprimir» y «Ver evoluciones». La barra flotante nunca queda sobre la fecha ni sobre «Imprimir»: la prueba pide al navegador el elemento que hay en el centro de cada control. Con ocho enlaces de sección más, la fila vuelve a su lugar sobre la nota y regresa a la línea al recuperar el sitio.
+
+```sh
+node scripts/capture-medical-round.mjs v0.48.190 /tmp/repeticiones-anterior ingreso
+node scripts/capture-medical-round.mjs WORKTREE /tmp/repeticiones-actual ingreso
+node scripts/capture-medical-round.mjs WORKTREE /tmp/acople-actual lectura
+```
+
 ## Acciones con nombre y líneas compartidas en 0.48.189
 
 La comparación usa las dos fichas ficticias de la versión anterior. El ingreso largo incluye ahora el menú de pautas que la extensión monta junto a las herramientas nativas de la nota.

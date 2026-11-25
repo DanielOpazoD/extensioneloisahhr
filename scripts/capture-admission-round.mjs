@@ -81,6 +81,16 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   });
   console.info('Ingreso sintético', JSON.stringify(measured));
   await page.screenshot({path:path.join(directory, width + '-ingreso.png')});
+  // Folded into its pill, the floating bar leaves the end of the section line free in the smaller window.
+  if (width === 1280) {
+    const floating = page.locator('#hhr-clinical-operations-bar');
+    const resize = () => page.evaluate(() => { window.dispatchEvent(new Event('resize')); });
+    await floating.evaluate(el => { el.style.width = '36px'; });
+    await resize(); await settle(); await settle();
+    await page.screenshot({path:path.join(directory, width + '-barra-plegada.png')});
+    await floating.evaluate(el => { el.style.removeProperty('width'); });
+    await resize(); await settle(); await settle();
+  }
   await page.locator('#medication').evaluate(card => window.scrollBy(0, card.getBoundingClientRect().top - 40));
   await settle();
   await page.screenshot({path:path.join(directory, width + '-indicaciones.png')});

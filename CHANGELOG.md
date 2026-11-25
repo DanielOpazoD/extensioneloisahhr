@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.191
+
+- En el Resumen compacto de escritorio, la fecha del resumen diario e «Imprimir» pasan a la línea de los enlaces de sección cuando caben entre el último enlace y la barra flotante de Centro HHR. Ahí siguen a la vista al desplazar la ficha. Si no caben, conservan su fila.
+- Cada dato se dice una vez. La firma de esa fila se omite cuando repite la de Evolución. Una tarjeta de Fármacos, Indicaciones libres u Órdenes de atención firmada igual que la anterior muestra «↑ misma firma» y la firma completa al pasar el cursor. Signos vitales indica una vez la antigüedad común de las mediciones junto al título; una medición anterior conserva la suya.
+- En las tablas de indicaciones, la columna de acciones deja de mostrar su rótulo y cede ese ancho al texto.
+
 ## 0.48.190
 
 - El consentimiento informado de Imágenes se imprime en una hoja A4 con texto seleccionable y líneas nítidas. La plantilla editable en Word conserva el contenido y los espacios de firma del formulario anterior.
