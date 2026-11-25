@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.186
+
+- En «Pacientes egresados de alta», los nombres usan el ancho de la columna y saltan por palabras. El RUN sigue alineado debajo del nombre y se conservan las etiquetas de alta y fallecimiento.
+- En el resumen compacto de escritorio, Evolución se abre completa y comparte los bordes de su columna con Signos vitales. Al contraerla se respeta esa elección en el episodio. Observaciones de entrega queda encima de Alertas, en la segunda columna.
+- Signos vitales abrevia las etiquetas conocidas, entre ellas PA, FC, FR y HGT. El nombre completo está disponible al pasar el cursor.
+- Reposo y Régimen reúnen valor, observaciones y autoría en menos espacio. Las solicitudes de examen y de intervención quirúrgica vacías se muestran en el lateral. Cuando tienen registros, se usa su sección completa.
+- Las órdenes de atención tienen filas más bajas, con espacio para las indicaciones y sus controles nativos.
+
 ## 0.48.185
 
 - En el resumen compacto de escritorio, Evolución reúne sus acciones en la cabecera. Pautas conserva su lugar al abrir o plegar la nota.

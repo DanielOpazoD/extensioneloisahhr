@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it } from 'vitest';
 import { medicalRound } from '../../../scripts/medical-round-visual-fixture.mjs';
+import '../../../extension/hhr-ficha-vital-strip.js';
 import '../../../extension/hhr-ficha-reading-surfaces.js';
 
 afterEach(() => document.body.replaceChildren());
@@ -12,6 +13,11 @@ it('conserva la presión compuesta, la PAM y el tiempo original al cambiar de te
   readings.refresh(main,true);
   const values = main.querySelectorAll('[data-hhr-reading="vital-value"]');
   expect(values).toHaveLength(9);
+  expect([...main.querySelectorAll('[data-hhr-vital-short]')].map(el => [el.dataset.hhrVitalShort,el.title])).toEqual([
+    ['PA','Presión arterial'],['FC','Frecuencia cardíaca'],['SatO₂','Saturación de oxígeno'],
+    ['T° ax.','Temperatura axilar'],['FR','Frecuencia respiratoria'],['HGT','Hemoglucotest'],
+  ]);
+  expect(values[3].getAttribute('style')).toContain('color:');
   expect(values[0].textContent.replace(/\s+/g,'')).toBe('118/72');
   expect(main.querySelector('[data-hhr-reading="vital-pam"]').textContent.replace(/\s+/g,'')).toBe('PAM:87');
   const since = main.querySelector('[data-hhr-vital-elapsed]');
@@ -24,6 +30,7 @@ it('conserva la presión compuesta, la PAM y el tiempo original al cambiar de te
   readings.refresh(main,true);
   expect(since.hasAttribute('data-hhr-vital-elapsed')).toBe(false);
   readings.refresh(main,false);
+  expect(main.querySelector('[data-hhr-vital-short], [title="Frecuencia cardíaca"]')).toBeNull();
   expect(main.querySelector('[data-hhr-vital-elapsed],[data-hhr-reading="vital-pressure-group"]')).toBeNull();
   readings.clear();
   expect(main.querySelector('[data-hhr-reading]')).toBeNull();
@@ -83,10 +90,35 @@ it('recognises a direct native label with an auxiliary Box and keeps unfamiliar 
   expect(grid.querySelectorAll('[data-hhr-reading="vital-value"]')).toHaveLength(2);
   expect(grid.querySelectorAll('[data-hhr-vital-elapsed="1h"]')).toHaveLength(2);
   expect(grid.children[1].querySelector('.MuiTypography-caption').textContent).toBe('°C');
+  expect(grid.children[1].querySelector('[data-hhr-vital-short]').title).toBe('Temperatura axilar');
   expect(grid.lastChild.textContent).toContain('Otra medición41 hora');
   expect(grid.lastChild.querySelector('[data-hhr-reading]')).toBeNull();
   expect(main.querySelector('button').dataset.hhrReading).toBe('vital-history');
   expect(grid.nextElementSibling.textContent).toBe('Observaciones');
+});
+
+it('deja la presión sin relación sistólica/diastólica y las etiquetas con información propia intactas', () => {
+  const main = new DOMParser().parseFromString(medicalRound, 'text/html').querySelector('main');
+  document.body.append(main);
+  const readings = globalThis.HhrFichaReadingSurfaces.create();
+  readings.refresh(main,true);
+  const pressure = main.querySelector('[data-hhr-vital-short="PA"]');
+  const heart = main.querySelector('[data-hhr-vital-short="FC"]');
+  const glucose = main.querySelector('[data-hhr-vital-short="HGT"]');
+  pressure.closest('.tile').querySelector('.numeric').textContent = '18';
+  heart.title = 'Unidad indicada por la fuente';
+  glucose.textContent = 'Hemoglucotest (mg/dL)';
+  readings.refresh(main,true);
+  expect(main.querySelector('[data-hhr-vital-short="PA"],[data-hhr-vital-short="FC"],[data-hhr-vital-short="HGT"]')).toBeNull();
+  expect(pressure.textContent).toBe('Presión');
+  expect(heart.title).toBe('Unidad indicada por la fuente');
+  expect(glucose.textContent).toBe('Hemoglucotest (mg/dL)');
+  const observer = new MutationObserver(() => {});
+  observer.observe(main,{subtree:true,childList:true,attributes:true});
+  readings.refresh(main,true);
+  expect(observer.takeRecords()).toHaveLength(0);
+  observer.disconnect();
+  readings.clear();
 });
 
 it('destaca solo las edades distinguibles de la más reciente dentro de cada banda', () => {

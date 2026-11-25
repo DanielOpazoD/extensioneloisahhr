@@ -70,3 +70,70 @@ it('conserva los controles, las esperas y los avisos de acceso aunque el texto c
   expect(main.querySelectorAll('[data-hhr-reading="status-card"]')).toHaveLength(1);
   density.clear(); reader.clear();
 });
+
+it('conserva visibles los dos avisos del lateral y retira la marca cuando llegan órdenes o un control', () => {
+  const exam = 'No presenta solicitudes de exámenes registradas';
+  const surgery = 'No se presentan Solicitudes de intervención quirúrgica registradas para este paciente';
+  document.body.innerHTML = '<main><nav></nav><section id="diagnosisTestEntrySection">' +
+    makeCard('', 'Solicitud de examen', exam) + '</section>' +
+    makeCard('operationTheaterRequestEntrySection','Solicitudes de intervención quirúrgica',surgery) + '</main>';
+  const main = document.querySelector('main'), reader = globalThis.HhrFichaReadingSurfaces.create();
+  const density = globalThis.HhrFichaSummaryDensity.create(['diagnosisTestEntrySection','operationTheaterRequestEntrySection']);
+  const test = document.querySelector('#diagnosisTestEntrySection');
+  const operation = document.querySelector('#operationTheaterRequestEntrySection');
+  reader.refresh(main,true);
+  expect(test.dataset.hhrEmptyRequest).toBe('exam');
+  expect(operation.dataset.hhrEmptyRequest).toBe('surgery');
+  for (const section of [test, operation]) section.setAttribute('data-hhr-round', 'empty-request');
+  density.refresh('round',main.querySelector('nav'));
+  expect(main.querySelector('[data-hhr-ficha-folded]')).toBeNull();
+  test.querySelector('.MuiCardContent-root p').textContent = 'Solicitud ingresada';
+  operation.insertAdjacentHTML('beforeend','<button>Ver solicitud</button>');
+  reader.refresh(main,true);
+  expect(main.querySelector('[data-hhr-empty-request]')).toBeNull();
+  operation.querySelector('button').remove();
+  reader.refresh(main,true);
+  expect(operation.dataset.hhrEmptyRequest).toBe('surgery');
+  reader.refresh(main,false);
+  expect(main.querySelector('[data-hhr-empty-request]')).toBeNull();
+  density.clear(); reader.clear();
+});
+
+it('respeta permisos, estados pendientes y controles fuera de la tarjeta al detectar solicitudes', () => {
+  const empty = 'No se presentan solicitudes de exámenes registradas';
+  const main = document.createElement('main');
+  document.body.append(main);
+  const reader = globalThis.HhrFichaReadingSurfaces.create();
+  for (const extra of ['<button>Ingresar solicitud</button>','<span>Registro anterior</span>','<i role="progressbar"></i>']) {
+    main.innerHTML = '<section id="diagnosisTestEntrySection">' + makeCard('','Solicitud de examen',empty) + extra + '</section>';
+    reader.refresh(main,true);
+    expect(main.querySelector('[data-hhr-empty-request],[data-hhr-reading="empty-section-title"]')).toBeNull();
+  }
+  main.innerHTML = makeCard('diagnosisTestEntrySection','Solicitud de examen','No tiene permiso para visualizar');
+  reader.refresh(main,true);
+  expect(main.querySelector('[data-hhr-empty-request],[data-hhr-reading="empty-section-title"]')).toBeNull();
+  reader.clear();
+});
+
+it('las órdenes de atención conservan controles, nombres, foco y órdenes de varias líneas', () => {
+  document.body.innerHTML = '<main><section id="procedureOrderEntrySection"><div class="MuiCard-root">' +
+    '<h3>Órdenes de atención</h3><table><thead><tr><th>Estado</th><th>Indicaciones</th><th>Acciones</th></tr></thead>' +
+    '<tbody><tr><td><select aria-label="Estado"><option>Solicitada</option><option>Realizada</option></select></td>' +
+    '<td>Primera instrucción<br>Segunda instrucción</td><td><button aria-label="Imprimir orden">Imprimir</button></td></tr></tbody>' +
+    '</table></div></section></main>';
+  const reader = globalThis.HhrFichaReadingSurfaces.create(), main = document.querySelector('main');
+  const select = main.querySelector('select');
+  select.focus();
+  reader.refresh(main,true);
+  expect(main.querySelector('#procedureOrderEntrySection').dataset.hhrReading).toBe('care-orders');
+  expect(main.querySelectorAll('[data-hhr-reading="narrow"]')).toHaveLength(2);
+  expect(document.activeElement).toBe(select);
+  select.selectedIndex = 1;
+  reader.refresh(main,true);
+  expect(main.querySelector('select').value).toBe('Realizada');
+  expect(main.querySelector('button').getAttribute('aria-label')).toBe('Imprimir orden');
+  expect(main.querySelector('td br')).toBeTruthy();
+  reader.refresh(main,false);
+  expect(main.querySelector('[data-hhr-reading="care-orders"],[data-hhr-reading="narrow"]')).toBeNull();
+  reader.clear();
+});

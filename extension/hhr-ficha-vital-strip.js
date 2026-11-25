@@ -3,15 +3,31 @@
   'use strict';
   const clean = value => value.trim().replace(/\s+/g, ' ');
   const key = value => clean(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const signs = new Map([
-    ['presion arterial','PA'], ['pa','PA'], ['frecuencia cardiaca','FC'], ['fc','FC'],
-    ['frecuencia respiratoria','FR'], ['fr','FR'], ['saturacion','SatO₂'], ['saturacion de oxigeno','SatO₂'],
-    ['saturacion o2','SatO₂'], ['sato2','SatO₂'], ['spo2','SatO₂'], ['temperatura','T°'], ['t°','T°'],
-  ]);
-  function metric(text) {
+  // Names used by both medical and nursing cards, and by the native detail table.
+  const signs = [
+    ['PA','Presión arterial',['PA'],['Presión']],
+    ['FC','Frecuencia cardíaca',['FC'],['Fre. Cardíaca','Frec. Cardíaca']],
+    ['FR','Frecuencia respiratoria',['FR'],['Fre. respiratoria','Frec. respiratoria']],
+    ['SatO₂','Saturación de oxígeno',['Saturación','Saturación O2','SatO2','SpO2']],
+    ['T°','Temperatura',['T°']],
+    ['T° ax.','Temperatura axilar',null,['T° axilar','T° ax.']],
+    ['HGT','Hemoglucotest',null,['HGT']],
+    ['','Glasgow',null],['','Suplemento de oxígeno',null,['Sup. Oxígeno']],['','EVA',null],
+  ];
+  const nameKey = text => key(text).replaceAll('₂','2').replaceAll('º','°').replaceAll('.','');
+  const names = new Map();
+  for (const [label,full,usual,compactAliases = []] of signs) {
+    for (const alias of [full,...(usual || []),...compactAliases]) {
+      const name = nameKey(alias);
+      names.set(name,{label,full,compactOnly:!usual || compactAliases.includes(alias),pairedPressure:name === 'presion'});
+    }
+  }
+  const identify = text => names.get(nameKey(text));
+  const isArterialPair = (text, unit = '') => /^\s*\d{1,3}\s*\/\s*\d{1,3}\b/.test(text) && (!unit || /^mm\s*hg$/i.test(unit));
+  function metric(text, compact = true) {
     const parts = /^([^()]+?)(?:\s*\(([^()]+)\))?$/.exec(clean(text));
-    const label = parts && signs.get(key(parts[1]).replaceAll('₂','2'));
-    return label && { label, unit:parts[2] || '' };
+    const sign = parts && identify(parts[1]);
+    return sign?.label && (compact || !sign.compactOnly) && { ...sign, unit:parts[2] || '' };
   }
   const dateKey = stamp => {
     const match = /^(\d{2})[-/](\d{2})[-/](\d{4})[, ]+(\d{2}):(\d{2})(?::(\d{2}))?(?:\s*(?:h|hrs?))?$/i.exec(stamp);
@@ -39,7 +55,7 @@
     const {date,time} = timeColumns(keys);
     const namedVitals = keys.some(k => /^(?:signo vital|signo|parametro)$/.test(k)) &&
       keys.some(k => /^(?:valor|resultado)$/.test(k));
-    if (time < 0 || (!namedVitals && !keys.some(metric))) return [];
+    if (time < 0 || (!namedVitals && !keys.some(text => metric(text)))) return [];
     const times = [];
     for (const row of table.tBodies[0].rows) {
       if (row.cells.length !== keys.length) return [];
@@ -56,16 +72,18 @@
     return times.filter(item => item.value < newest).map(item => item.timestamp);
   }
 
-  function readings(table) {
+  function readings(table, compact) {
     if (!table || table.tHead?.rows.length !== 1 || table.tBodies.length !== 1 ||
         table.querySelector('button,a,input,select,textarea,svg,img,[role=alert],[role=progressbar],[hidden],[aria-hidden=true],[aria-busy=true],.MuiSkeleton-root,[colspan]:not([colspan="1"]),[rowspan]:not([rowspan="1"])')) return null;
+    // Preserve native rows that may encode clinical flags in styling, markup or tooltips.
+    if (table.tBodies[0].querySelector('td *,[style],[class],[title],[aria-label]')) return null;
     const headings = Array.from(table.tHead.rows[0].cells, cell => clean(cell.textContent));
     const keys = headings.map(key);
     const {date,time} = timeColumns(keys);
     const sign = keys.findIndex(k => /^(?:signo vital|signo|parametro)$/.test(k));
     const value = keys.findIndex(k => /^(?:valor|resultado)$/.test(k));
     const unit = keys.indexOf('unidad');
-    const columns = headings.map(metric);
+    const columns = headings.map(text => metric(text,compact));
     if (time < 0 || (sign >= 0 ? value < 0 : !columns.some(Boolean))) return null;
     if (new Set(keys).size !== keys.length || (sign < 0 && (value >= 0 || unit >= 0)) ||
         (sign >= 0 && columns.some(Boolean))) return null;
@@ -74,6 +92,7 @@
     function add(kind, raw, stamp, units) {
       if (!kind || !raw || !stamp || !/\b\d{1,2}:\d{2}\b/.test(stamp)) return false;
       const suffix = units || kind.unit;
+      if (kind.pairedPressure && !isArterialPair(raw,suffix)) return false;
       const display = suffix && !raw.toLowerCase().endsWith(suffix.toLowerCase()) ? raw+' '+suffix : raw;
       const prev = latest.get(kind.label);
       if (prev) {
@@ -83,7 +102,7 @@
         if (a === b) return prev.display === display;
         if (a > b) return true;
       }
-      latest.set(kind.label, {label:kind.label, display, stamp});
+      latest.set(kind.label, {label:kind.label, full:kind.full, display, stamp});
       return true;
     }
     for (const row of table.tBodies[0].rows) {
@@ -91,14 +110,14 @@
       if (cells.length !== headings.length) return null;
       const stamp = (date < 0 ? '' : cells[date]+' ') + cells[time];
       if (sign >= 0) {
-        if (!add(metric(cells[sign]), cells[value], stamp, cells[unit])) return null;
+        if (!add(metric(cells[sign],compact), cells[value], stamp, cells[unit])) return null;
       } else {
         for (const [i, kind] of columns.entries()) {
           if (kind && cells[i] && !add(kind, cells[i], stamp)) return null;
         }
       }
     }
-    return ['PA','FC','FR','SatO₂','T°'].map(label => latest.get(label)).filter(Boolean);
+    return signs.map(([label]) => latest.get(label)).filter(Boolean);
   }
 
   function create() {
@@ -132,7 +151,7 @@
       const table = tables?.length === 1 ? tables[0] : null;
       const compact = document.documentElement.dataset.hhrFichaTheme === 'compact';
       const ready = table && !section.closest('[aria-busy=true]') && !section.querySelector('[aria-busy=true],.MuiSkeleton-root,[role=alert]');
-      const data = ready && readings(table);
+      const data = ready && readings(table,compact);
       if (!data?.length) {
         clearStrip();
         markNativeTimes(ready && compact ? nativeOlderTimes(table) : []);
@@ -148,10 +167,12 @@
       // A time without its date cannot establish which day a measurement belongs to.
       const dates = compact ? data.map(row => dateKey(row.stamp)) : [];
       const newest = dates.length && dates.every(Boolean) ? dates.reduce((a,b) => a > b ? a : b) : null;
-      list.replaceChildren(...data.map(({label, display, stamp}, index) => {
+      list.replaceChildren(...data.map(({label, full, display, stamp}, index) => {
         const cell = document.createElement('div'), title = document.createElement('dt');
         const reading = document.createElement('dd'), time = document.createElement('small');
-        title.textContent = label; reading.textContent = display; time.textContent = stamp;
+        title.textContent = label; title.title = full;
+        title.setAttribute('aria-label', full);
+        reading.textContent = display; time.textContent = stamp;
         if (newest && dates[index] < newest) time.setAttribute('data-hhr-vital-older','');
         reading.append(time); cell.append(title,reading);
         return cell;
@@ -159,5 +180,5 @@
     }
     return {refresh, clear() { clearStrip(); markNativeTimes([]); }};
   }
-  globalThis.HhrFichaVitalStrip = Object.freeze({ create });
+  globalThis.HhrFichaVitalStrip = Object.freeze({ create, identify, isArterialPair });
 })();

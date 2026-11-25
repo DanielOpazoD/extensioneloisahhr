@@ -97,6 +97,13 @@
     [data-hhr-reading="vital-pressure-group"] + [data-hhr-reading="vital-time"] { grid-column:2; grid-row:2; }
     :is([data-hhr-reading="vital-label"],[data-hhr-reading="vital-pam"],[data-hhr-reading="vital-value"])
       :is(.MuiTypography-root,h5,p,span) { font-size:inherit !important; line-height:inherit !important; margin:0 !important; }
+    /* Keep the native name in the accessibility tree. The adjacent MUI caption may carry a unit. */
+    :is([data-hhr-reading="vital-label"],[data-hhr-reading="vital-label"] *)[data-hhr-vital-short] {
+      font-size:0 !important;
+      &::before { content:attr(data-hhr-vital-short) / ""; font-size:.75rem; line-height:1.15; }
+      > .MuiBox-root { font-size:.75rem !important; }
+      > :is(sub,sup,span,strong,b,em):not(.MuiBox-root) { font-size:0 !important; }
+    }
     [data-hhr-reading="vital-value"] :is(h5,span) { font-weight:inherit; }
     [data-hhr-vital-elapsed] {
       font-size:0 !important;
@@ -135,10 +142,10 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     --hhr-round-inset:10px;
     --hhr-round-heading:.9375rem;
-    > .MuiGrid-item:has(> :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection):only-child) {
+    > .MuiGrid-item:has(> :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection):only-child) {
       padding-block-start:0 !important;
     }
-    :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection):has(> .MuiCard-root:only-child) {
+    :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection):has(> .MuiCard-root:only-child) {
       padding:0 !important; margin-block:0 !important;
       > .MuiCard-root {
         margin-block:0 !important; padding-inline:0 !important; border-radius:6px !important;
@@ -157,8 +164,49 @@
       border-color:transparent; color:#376c63;
       &:hover { border-color:#bdd4cc; }
     }
-    :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection) thead th {
+    :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection) thead th {
       background-color:#f2f6f4;
+    }
+  }
+}
+
+@media screen {
+  html[data-hhr-ficha-theme="compact"] :is(#procedureOrderEntrySection,[data-hhr-reading="care-orders"]) {
+    table:not(:is(dialog,[role=dialog],table) *) {
+      width:100%; table-layout:auto;
+      :is(th,td) {
+        padding:3px 7px !important; height:auto !important;
+        font-size:.8125rem; line-height:1.35 !important; vertical-align:middle;
+      }
+      th { padding-block:2px !important; font-size:.75rem; }
+      tr { height:auto !important; }
+      :is(p,.MuiTypography-body1,.MuiTypography-body2) { margin-block:0; font-size:inherit; line-height:inherit; }
+      [data-hhr-reading="narrow"] { width:1%; white-space:nowrap; }
+      td .MuiIconButton-root { padding:4px !important; min-width:28px; min-height:28px; }
+      td .MuiIconButton-root svg { width:16px; height:16px; }
+      td :is(.MuiSelect-select,select:not([multiple],[size])) { padding-block:4px !important; min-height:24px; font-size:.8125rem; }
+      td .MuiInputBase-root:has(.MuiSelect-select) { height:auto !important; min-height:28px; }
+      td .MuiFormControl-root { margin-block:0; }
+    }
+  }
+}
+
+@media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="empty-request"] {
+    min-width:0; overflow-wrap:anywhere;
+    &[data-hhr-empty-request="exam"], [data-hhr-empty-request="exam"] { --hhr-request-label:"Exámenes"; }
+    &[data-hhr-empty-request="surgery"], [data-hhr-empty-request="surgery"] { --hhr-request-label:"Cirugía"; }
+    [data-hhr-reading="status-card"], &[data-hhr-reading="status-card"] {
+      display:flex; align-items:baseline; flex-wrap:wrap; justify-content:space-between; gap:1px 8px;
+      border-radius:0 !important; margin:0 !important; padding:4px 10px !important;
+      :is(.MuiCardHeader-root,.MuiCardContent-root) { padding:0 !important; margin:0 !important; }
+      /* Short visual labels apply only to the recognized read-only empty message.
+         Keep the full native wording for screen readers and printed records. */
+      :is([data-hhr-reading="empty-section-title"],[data-hhr-reading="status-message"]) {
+        font-size:0 !important; line-height:1 !important; margin:0 !important;
+      }
+      [data-hhr-reading="empty-section-title"]::after { content:var(--hhr-request-label) / ''; font:600 .8125rem/1.35 system-ui,sans-serif; }
+      [data-hhr-reading="status-message"]::after { content:"Sin solicitudes registradas" / ''; font:normal .75rem/1.35 system-ui,sans-serif; color:#516963; }
     }
   }
 }

@@ -10,7 +10,7 @@ una revisión comprobada; su copia de la extensión es una dependencia, no otra 
 
 ## Lectura de la ficha
 
-En escritorio, Evolución conserva dos tercios del ancho al abrir o plegar la nota. La cabecera reúne el historial y las acciones de la nota. A su derecha, Entrega, Reposo y Régimen comparten una columna. En Alertas se lee primero el mensaje y debajo su procedencia. Los nueve signos habituales caben en una fila. La antigüedad se destaca cuando una medición es inequívocamente anterior a otra. [Comparar el diseño en portátil y escritorio](docs/visual/resumen-escritorio/README.md)
+En escritorio, el resumen compacto abre la evolución completa. Signos vitales comparte su ancho y Reposo y Régimen se leen debajo. La columna derecha reúne Observaciones de entrega, Alertas y las solicitudes de examen o cirugía que Eloísa identifica como vacías. Las órdenes de atención conservan sus acciones en filas compactas. [Ver las capturas de escritorio](docs/visual/resumen-escritorio/README.md)
 
 En **Centro HHR → Ajustes → Vista de la ficha clínica** se elige entre Eloísa original (Desactivado), Compacto (Modo 1, predeterminado), Equilibrado (Modo 2, presentación de la 0.48.179) y Lectura (Modo 3, valores mayores y más interlineado). Chrome recuerda la elección en ese perfil y la aplica a sus pestañas de Eloísa. La densidad del cuadro Centro HHR se ajusta por separado. [Comparar los cuatro modos en la misma ficha de prueba](docs/visual/temas/README.md)
 
@@ -20,7 +20,7 @@ En Resumen, las tarjetas se ajustan a su contenido y Evolución aprovecha el anc
 
 El modo compacto se activa en los resúmenes médico y de enfermería, incluso si la barra solo ofrece «Valoración». Las tarjetas nativas de signos vitales se distribuyen según el ancho disponible y conservan colores, datos secundarios, tiempos, observaciones y acceso al historial. Una alerta breve puede compartir línea con su título encima de Evolución. Las notas consecutivas se distinguen por su autor, rol, hora y un separador fino. En las tablas de indicaciones, la hora y las acciones dejan más ancho a la prescripción. En Signos vitales, la franja muestra las mediciones reconocidas con las unidades y horas de origen. «Ver registros» abre la tabla completa. Si la fuente no permite asignar inequívocamente los valores a sus horas, queda visible la tabla original.
 
-Los signos vitales reúnen el nombre y el valor en una línea cuando caben. La PAM y la antigüedad tienen menor tamaño. [Ver el detalle de los signos vitales](docs/visual/signos-vitales/signos-1366.png)
+En el modo compacto, cada medición muestra la etiqueta encima del valor. Se usan PA, FC, FR, SatO₂, T° ax. y HGT. Al pasar el cursor se ve el nombre completo. La PAM y la antigüedad tienen menor tamaño. [Ver los signos vitales en escritorio](docs/visual/resumen-escritorio/0.48.186/despues/1280-expandida.png)
 
 [Comparación visual del Resumen de enfermería en escritorio y pantalla estrecha](docs/visual/compactacion/README.md)
 

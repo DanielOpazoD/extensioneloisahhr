@@ -18,11 +18,15 @@
     ['solicitudes de intervención quirúrgica', 'solicitudes de intervención quirúrgica registradas'],
     ['prestaciones', 'prestaciones registradas'],
   ]);
+  const requestAnchors = new Map([
+    ['solicitud de examen', ['diagnosisTestEntrySection', 'exam']],
+    ['solicitudes de intervención quirúrgica', ['operationTheaterRequestEntrySection', 'surgery']],
+  ]);
   const retainedStates = new Map([
     ['ram','ram registradas'], ['alergias','alergias registradas'], ['eventos adversos','eventos adversos registrados'],
   ]);
   const statusGuard = 'button,input,label,select,textarea,a,svg,img,canvas,table,iframe,details,[role],[tabindex],[contenteditable],[title],[aria-label],[aria-labelledby],[aria-live],[aria-busy=true],.MuiSkeleton-root,.MuiAlert-root,.MuiCircularProgress-root,.MuiLinearProgress-root';
-  function markStatus(title, name, next) {
+  function markStatus(title, name, next, requests) {
     const expected = optionalStates.get(name) || retainedStates.get(name);
     if (!expected || title.closest('dialog,[role=dialog],[role=alert],[aria-busy=true],nav')) return;
     const card = title.closest('section,.MuiPaper-root,.MuiCard-root') || title.closest('.MuiGrid-item');
@@ -46,25 +50,39 @@
     if (!denied && record?.[1] !== expected) return;
     next.set(card,'status-card');
     if (message.parentElement !== card) next.set(message.parentElement,'status-message');
-    if (!denied && !filter && optionalStates.has(name)) next.set(title,'empty-section-title');
+    if (denied || filter || !optionalStates.has(name)) return;
+    const request = requestAnchors.get(name);
+    if (request) {
+      const section = title.closest('#' + request[0]) || card;
+      // A request may wrap its card in several MUI layout elements. Never move
+      // or fold a notice if another control or record belongs to that section.
+      for (let item = card; item !== section; item = item.parentElement) {
+        const parent = item.parentElement;
+        if (!parent || parent.children.length !== 1 || parent.matches(statusGuard) ||
+            [...parent.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) return;
+      }
+      requests.set(section,request[1]);
+    }
+    next.set(title,'empty-section-title');
   }
-  const anchors = { diagnosisEntrySection:'diagnosis', vitalSignsEntry:'vitals', medicationEntrySection:'orders', freeIndicationEntrySection:'orders' };
+  const anchors = { diagnosisEntrySection:'diagnosis', vitalSignsEntry:'vitals', medicationEntrySection:'orders', freeIndicationEntrySection:'orders', procedureOrderEntrySection:'care-orders' };
   const label = el => el.textContent.trim().toLowerCase();
-  const vitalNames = /^(?:presi[oó]n(?: arterial)?|(?:fre\.?|frec\.?|frecuencia)\s*(?:card[ií]aca|respiratoria)|saturaci[oó]n(?: (?:de ox[ií]geno|o[2₂]))?|t[°º]? axilar|temperatura|glasgow|sup\. ox[ií]geno|hemoglucotest|eva)$/i;
-  function isVitalLabel(el, compact) {
+  function vitalLabel(el, compact) {
+    const identify = globalThis.HhrFichaVitalStrip.identify;
     const children = [...el.children];
     // The native medical card puts its caption beside the label's text node, in a MUI Box.
     // Read the name separately so a unit or extra detail in that Box remains on screen.
-    if (compact && el.matches('p.MuiTypography-root') && children.some(child => child.matches('.MuiBox-root'))) {
+    if (compact && el.matches('.MuiTypography-root') && children.some(child => child.matches('.MuiBox-root')) &&
+        children.every(child => child.matches('.MuiBox-root,sup,sub'))) {
       const name = [...el.childNodes].filter(node =>
         node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE && node.matches('sup,sub')
       ).map(node => node.textContent).join('').trim();
-      if (vitalNames.test(name)) return true;
+      const sign = identify(name);
+      if (sign) return sign;
     }
     // A unit may be typeset inside the label, e.g. O<sub>2</sub>.
-    return children.every(child => child.matches('sub,sup,b,strong,em,span')) &&
-      vitalNames.test(el.textContent.trim()) &&
-      !children.some(child => vitalNames.test(child.textContent.trim()));
+    if (children.every(child => child.matches('sub,sup,b,strong,em,span')) &&
+        !children.some(child => identify(child.textContent))) return identify(el.textContent);
   }
   const elapsedUnits = { minuto:'min',min:'min',hora:'h',h:'h',día:'d',dia:'d' };
   const minutesPerUnit = {min:1, h:60, d:1440};
@@ -82,9 +100,9 @@
     const instant = new Date(iso);
     return Number.isFinite(instant.getTime()) ? [hospitalClock.format(instant), author].filter(Boolean).join(' · ') : author;
   }
-  function markTiles(card, next, compact, elapsed, older, sources) {
+  function markTiles(card, next, compact, elapsed, older, sources, labelsToShorten) {
     const labels = [...card.querySelectorAll('span,p,dt,h4,h5,h6,div')].filter(el =>
-      isVitalLabel(el, compact) && !el.closest('table,dialog,[role=dialog]'));
+      !el.closest('table,dialog,[role=dialog],.hhr-ficha-vitals') && vitalLabel(el, compact));
     if (labels.length < 2) return;
     let grid = labels[0].parentElement;
     while (grid !== card && !labels.every(el => grid.contains(el))) grid = grid.parentElement;
@@ -110,6 +128,15 @@
           shell.querySelector('button,input,select,textarea,a,svg,[contenteditable],[role="button"]') ||
           [...shell.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) continue;
       next.set(title,'vital-label');
+      if (compact) {
+        const sign = vitalLabel(nativeLabel,true);
+        const isArterialPair = globalThis.HhrFichaVitalStrip.isArterialPair;
+        const caption = nativeLabel.querySelector(':scope > .MuiBox-root')?.textContent.trim();
+        if (sign.label && (!sign.pairedPressure || isArterialPair(value.textContent,caption) ||
+            (value.firstElementChild && isArterialPair(value.firstElementChild.textContent,caption)))) {
+          labelsToShorten.set(nativeLabel,sign);
+        }
+      }
       // Pressure has a value row (two numbers separated by a slash) and a separate PAM row.
       const [pressure,pam] = value.children;
       if (compact && value.childElementCount === 2 && /^\s*\d+\s*\/\s*\d+\s*$/.test(pressure.textContent) &&
@@ -153,7 +180,7 @@
     for (let node=title.parentElement; node && node !== main; node=node.parentElement) {
       if (node.matches('body,html') || node.querySelector('nav,[role=tablist]')) break;
       if (!node.matches('.MuiBox-root,.MuiStack-root,.MuiGrid-item')) continue;
-      if (kind === 'vitals' ? [...node.querySelectorAll('p,span')].some(el => isVitalLabel(el, compact)) : node.querySelector('table')) {
+      if (kind === 'vitals' ? [...node.querySelectorAll('p,span')].some(el => vitalLabel(el, compact)) : node.querySelector('table')) {
         if (node.querySelectorAll('table').length > 1) return null;
         return node;
       }
@@ -162,20 +189,20 @@
   }
 
   function create() {
-    let previous = new Map();
+    let previous = new Map(), previousRequests = new Map(), previousLabels = new Map();
     function refresh(main, compact) {
       const next = new Map(), cards = new Map(), elapsed = new Map();
-      const older = new Set(), sources = new Map();
+      const older = new Set(), sources = new Map(), requests = new Map(), labelsToShorten = new Map();
       if (main) {
         for (const [id,kind] of Object.entries(anchors)) {
           const el = document.getElementById(id);
-          if (el && main.contains(el)) cards.set(el,kind);
+          if (el && main.contains(el) && (compact || kind !== 'care-orders')) cards.set(el,kind);
         }
         for (const title of main.querySelectorAll('h2,h3,h4,h5,h6,.MuiCardHeader-title,.MuiTypography-h6,p.MuiTypography-root')) {
           if (title.closest('dialog,[role=dialog],table,nav')) continue;
           const name = label(title);
-          if (compact) markStatus(title,name,next);
-          const kind = names.get(name);
+          if (compact) markStatus(title,name,next,requests);
+          const kind = compact && name === 'órdenes de atención' ? 'care-orders' : names.get(name);
           if (!kind) continue;
           const card = cardForTitle(title,kind,main,compact);
           if (card) cards.set(card,kind);
@@ -183,12 +210,12 @@
         for (const [card,kind] of cards) {
           next.set(card,kind);
           if (kind === 'vitals') {
-            markTiles(card,next,compact,elapsed,older,sources);
+            markTiles(card,next,compact,elapsed,older,sources,labelsToShorten);
             if (compact) for (const button of card.querySelectorAll('button')) {
               if (label(button) === 'ver historial completo' && !button.closest('dialog,[role=dialog]')) next.set(button,'vital-history');
             }
           }
-          if (kind !== 'orders') continue;
+          if (kind !== 'orders' && kind !== 'care-orders') continue;
           for (const table of card.querySelectorAll('table')) {
             if (table.tHead?.rows.length !== 1) continue;
             const head = [...table.tHead.rows[0].cells], rows = [...table.rows];
@@ -233,6 +260,19 @@
           el.setAttribute('data-hhr-history-hint','');
         }
       }
+      for (const section of previousRequests.keys()) if (!requests.has(section)) section.removeAttribute('data-hhr-empty-request');
+      for (const [section,kind] of requests) if (previousRequests.get(section) !== kind) section.setAttribute('data-hhr-empty-request',kind);
+      for (const [el,sign] of previousLabels) if (labelsToShorten.get(el) !== sign || el.title !== sign.full) {
+        el.removeAttribute('data-hhr-vital-short');
+        if (el.title === sign.full) el.removeAttribute('title');
+        previousLabels.delete(el);
+      }
+      for (const [el,sign] of labelsToShorten) if (!previousLabels.has(el) && !el.hasAttribute('title')) {
+        el.dataset.hhrVitalShort = sign.label;
+        el.title = sign.full;
+        previousLabels.set(el,sign);
+      }
+      previousRequests = requests;
       previous = next;
     }
     return { refresh, clear:() => refresh(null) };
