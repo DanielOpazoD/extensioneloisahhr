@@ -129,6 +129,25 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   }
 
   await page.evaluate(() => window.scrollTo(0,0));
+  // With the guideline menu mounted, the five note actions and the byline still share one line.
+  const toolbar = await page.locator('#evolution').evaluate(card => {
+    const box = el => el.getBoundingClientRect();
+    const tools = ['.hhr-evo-entry','[aria-label="Editar evolución"]','[aria-label="Enmendamientos"]','.hhr-checklist-trigger',
+      '[aria-label="Opciones de evolución"]'].map(selector => card.querySelector(selector));
+    return {
+      lefts:tools.map(tool => box(tool).left), tops:tools.map(tool => Math.round(box(tool).top)),
+      sizes:tools.map(tool => [box(tool).width, box(tool).height]),
+      captions:tools.map(tool => getComputedStyle(tool,'::after').content),
+      inside:box(tools.at(-1)).right <= box(card).right + 1,
+      heading:box(card.querySelector('.MuiCardHeader-title')), byline:box(card.querySelector('[data-hhr-update-label]')),
+    };
+  });
+  assert.deepEqual(toolbar.lefts, [...toolbar.lefts].sort((a,b) => a - b), 'Las acciones se leen de las evoluciones al menú');
+  assert.equal(new Set(toolbar.tops).size, 1, 'Las cinco acciones de la nota comparten una línea');
+  assert.ok(toolbar.sizes.every(([w,h]) => w >= 28 && h >= 28) && toolbar.inside, 'Cada acción conserva su área activa dentro de la tarjeta');
+  assert.deepEqual(toolbar.captions.slice(1,4).map(text => text.split('"')[1]), ['Editar','Enmiendas','Pautas']);
+  assert.ok(toolbar.byline.top < toolbar.heading.bottom && toolbar.byline.left >= toolbar.heading.right,
+    'La fecha y el profesional siguen al título en su misma línea');
   const focusStart = page.getByRole('button',{name:'Ver evoluciones',exact:true});
   await focusStart.focus();
   const noteOwnsFocusedScroller = () => noteText.evaluate(text => {
