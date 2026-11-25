@@ -129,6 +129,25 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   }
 
   await page.evaluate(() => window.scrollTo(0,0));
+  // With the guideline menu mounted, the five note actions and the byline still share one line.
+  const toolbar = await page.locator('#evolution').evaluate(card => {
+    const box = el => el.getBoundingClientRect();
+    const tools = ['.hhr-evo-entry','[aria-label="Editar evolución"]','[aria-label="Enmendamientos"]','.hhr-checklist-trigger',
+      '[aria-label="Opciones de evolución"]'].map(selector => card.querySelector(selector));
+    return {
+      lefts:tools.map(tool => box(tool).left), tops:tools.map(tool => Math.round(box(tool).top)),
+      sizes:tools.map(tool => [box(tool).width, box(tool).height]),
+      captions:tools.map(tool => getComputedStyle(tool,'::after').content),
+      inside:box(tools.at(-1)).right <= box(card).right + 1,
+      heading:box(card.querySelector('.MuiCardHeader-title')), byline:box(card.querySelector('[data-hhr-update-label]')),
+    };
+  });
+  assert.deepEqual(toolbar.lefts, [...toolbar.lefts].sort((a,b) => a - b), 'Las acciones se leen de las evoluciones al menú');
+  assert.equal(new Set(toolbar.tops).size, 1, 'Las cinco acciones de la nota comparten una línea');
+  assert.ok(toolbar.sizes.every(([w,h]) => w >= 28 && h >= 28) && toolbar.inside, 'Cada acción conserva su área activa dentro de la tarjeta');
+  assert.deepEqual(toolbar.captions.slice(1,4).map(text => text.split('"')[1]), ['Editar','Enmiendas','Pautas']);
+  assert.ok(toolbar.byline.top < toolbar.heading.bottom && toolbar.byline.left >= toolbar.heading.right,
+    'La fecha y el profesional siguen al título en su misma línea');
   const focusStart = page.getByRole('button',{name:'Ver evoluciones',exact:true});
   await focusStart.focus();
   const noteOwnsFocusedScroller = () => noteText.evaluate(text => {
@@ -153,14 +172,37 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   assert.ok(aligned(note,signs) && Math.abs(signs.y - bottom(note)) < 2, 'Signos sigue a la nota con ambos bordes alineados');
   assert.ok(aligned(observations,alerts) && Math.abs(alerts.y - bottom(observations)) < 2, 'Alertas sigue a Observaciones sin hueco');
   for (const request of [exam,surgery]) {
-    assert.ok(aligned(request,alerts) && request.y >= bottom(alerts) - 1 && request.height > 0 && request.height <= 36,
+    assert.ok(request.x >= alerts.x - 1 && right(request) <= right(alerts) + 1 && request.height > 0 && request.height <= 36,
       'La solicitud vacía se lee en una fila lateral');
   }
-  assert.ok(aligned(exam,surgery) && Math.abs(exam.y - bottom(alerts)) < 2 && Math.abs(surgery.y - bottom(exam)) < 2,
-    'Las dos solicitudes forman filas consecutivas debajo de Alertas');
-  assert.ok(aligned(signs,rest) && aligned(rest,diet) && Math.abs(rest.y - bottom(signs)) < 2 && Math.abs(diet.y - bottom(rest)) < 2,
-    'Reposo y Régimen se leen debajo de Signos');
+  assert.ok(Math.abs(exam.x - alerts.x) < 2 && Math.abs(right(surgery) - right(alerts)) < 2 &&
+    Math.abs(surgery.x - right(exam)) <= 2 && Math.abs(exam.y - surgery.y) < 2 && Math.abs(exam.y - bottom(alerts)) < 2 &&
+    Math.abs(exam.height - surgery.height) < 1, 'Las dos solicitudes comparten una línea debajo de Alertas');
+  // Without a rest order, both instructions fit on one line below the measurements.
+  assert.ok(Math.abs(rest.x - signs.x) < 2 && Math.abs(right(diet) - right(signs)) < 2 && Math.abs(diet.x - right(rest)) < 2 &&
+    Math.abs(rest.y - bottom(signs)) < 2 && Math.abs(diet.y - rest.y) < 2, 'Reposo y Régimen comparten la línea debajo de Signos');
   assert.ok(rest.height > 0 && rest.height <= 36 && diet.height > 0 && diet.height <= 52, 'Reposo vacío y Régimen con observación y firma son compactos');
+  const emptyRest = await page.locator('#rest [data-hhr-round="care-empty"]').evaluate(el => getComputedStyle(el,'::after').content);
+  assert.match(emptyRest, /^"Sin registro"/, 'Un reposo sin registro se resume en dos palabras');
   assert.ok(await page.getByText('No se presenta un Reposo registrado para este paciente').isVisible());
   assert.ok(await page.getByText('Preferir porciones pequeñas.').isVisible());
+
+  // Larger browser text in the narrowest desktop window: the two requests wrap inside their halves.
+  const viewport = page.viewportSize();
+  await page.setViewportSize({width:1100, height:viewport.height});
+  await page.evaluate(() => { document.documentElement.style.fontSize = '125%'; });
+  await settle();
+  await settle();
+  const halves = await page.evaluate(() => ['exam','surgery'].map(kind => {
+    const half = document.querySelector('[data-hhr-round-half] [data-hhr-empty-request="' + kind + '"]').closest('[data-hhr-round-half]');
+    const card = half.querySelector('[data-hhr-reading="status-card"]');
+    const box = half.getBoundingClientRect();
+    return {top:box.top, bottom:box.bottom, clipped:card.scrollWidth - card.clientWidth};
+  }));
+  assert.ok(halves.every(half => half.clipped <= 0), 'Con letra más grande, ninguna solicitud vacía queda recortada');
+  assert.ok(Math.abs(halves[0].top - halves[1].top) < 1 && Math.abs(halves[0].bottom - halves[1].bottom) < 1,
+    'Las dos mitades empiezan y terminan en la misma línea aunque solo una salte de renglón');
+  await page.evaluate(() => { document.documentElement.style.removeProperty('font-size'); });
+  await page.setViewportSize(viewport);
+  await settle();
 }

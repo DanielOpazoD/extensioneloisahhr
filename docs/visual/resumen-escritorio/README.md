@@ -1,5 +1,41 @@
 # Resumen compacto en escritorio
 
+## Acciones con nombre y líneas compartidas en 0.48.189
+
+La comparación usa las dos fichas ficticias de la versión anterior. El ingreso largo incluye ahora el menú de pautas que la extensión monta junto a las herramientas nativas de la nota.
+
+| Pantalla | 0.48.188 | 0.48.189 | Indicaciones |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.189/antes/1280-ingreso.png) | [Después](0.48.189/despues/1280-ingreso.png) | [Ver tabla](0.48.189/despues/1280-indicaciones.png) |
+| 1440 × 900 | [Antes](0.48.189/antes/1440-ingreso.png) | [Después](0.48.189/despues/1440-ingreso.png) | [Ver tabla](0.48.189/despues/1440-indicaciones.png) |
+
+En Evolución se leen, en este orden, «Ver evoluciones», «Editar», «Enmiendas», «Pautas» y el menú de opciones. Cada nombre acompaña a un icono del mismo trazo. Con menos de 768 px de tarjeta quedan los iconos, y un icono sin nombre nativo muestra el suyo al pasar el cursor. Un botón que la extensión no reconoce conserva el icono de Eloísa.
+
+| Medida en px, 0.48.188 → 0.48.189 | 1280 × 800 | 1440 × 900 |
+| --- | ---: | ---: |
+| Inicio de Fármacos | 622 → 594 | 641 → 613 |
+| Inicio de Indicaciones libres | 760 → 730 | 763 → 732 |
+| Final de Órdenes de atención | 996 → 947 | 990 → 941 |
+| Final del lateral | 471 → 395 | 471 → 395 |
+| Alto de Observaciones de entrega | 59 → 34 | 59 → 34 |
+| Alto de Alertas | 194 → 169 | 194 → 169 |
+
+En el ingreso, Reposo no tiene registro y comparte la línea con Régimen. Con dos indicaciones firmadas por profesionales distintos, la línea común cabe en la ventana de 1440 px: Fármacos pasa de 531 a 497 px. [Antes](0.48.189/antes/1440-expandida.png) · [Después](0.48.189/despues/1440-expandida.png). En la de 1280 px cada indicación conserva su renglón y Fármacos queda en 530 px. Las dos solicitudes vacías ocupan 27 px en total, frente a 53.
+
+En las tablas, el nombre de cada columna y la primera celda empiezan en el margen del título de su tarjeta. Las marcas SOS y Antimic conservan su texto, su filete y su contraste. «No reanimación», una vez marcada, ocupa toda la línea de Alertas.
+
+Con el texto del navegador al 125 % en una ventana de 1100 px, el estado de cada solicitud vacía pasa debajo de su nombre y las dos mitades terminan en la misma línea.
+
+### Verificación con teclado
+
+Tab recorre «Ver evoluciones», el menú de opciones, «Editar», «Enmiendas», «Pautas» y el texto de la nota. El menú se ve al final de la fila y recibe el foco en segundo lugar. Eloísa lo mantiene en la cabecera de la tarjeta y Chromium ordena el foco de la cabecera antes que el de las herramientas. Un clic en «Agregar» deja el cursor en el campo de entrega. Después de «Gestión de Visitas», Tab llega a «Agregar alerta» en la misma línea.
+
+```sh
+node scripts/capture-medical-round.mjs v0.48.188 /tmp/acciones-anterior ingreso
+node scripts/capture-medical-round.mjs WORKTREE /tmp/acciones-actual ingreso
+node scripts/capture-medical-round.mjs WORKTREE /tmp/lineas-actual lectura
+```
+
 ## Ingreso largo en 0.48.188
 
 La comparación usa la misma ficha ficticia en Chromium, con una evolución de más de cuarenta líneas, un Reposo vacío y un Régimen con observación y autor. La prueba incluye un botón de impresión y tarjetas agrupadas en cuadrículas anidadas. Tab y Fin llevan al último renglón de Evolución. «Leer nota completa» abre el texto íntegro en una ventana de lectura. Escape devuelve el foco al botón. [Ver el lector](0.48.188/despues/1440-lector.png) Las tres indicaciones de prueba se pueden leer hasta su última palabra.
