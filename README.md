@@ -10,6 +10,8 @@ una revisión comprobada; su copia de la extensión es una dependencia, no otra 
 
 ## Lectura de la ficha
 
+En escritorio, el Resumen compacto distribuye la evolución, la entrega y las indicaciones de Reposo y Régimen según esté abierta o plegada la nota. Los nueve signos habituales pueden leerse en una fila y las tarjetas de Alertas con ancho suficiente presentan los avisos junto a su formulario. [Comparar el diseño de escritorio a 1280 y 1440 px](docs/visual/resumen-escritorio/README.md)
+
 En **Centro HHR → Ajustes → Vista de la ficha clínica** se elige entre Eloísa original (Desactivado), Compacto (Modo 1, predeterminado), Equilibrado (Modo 2, presentación de la 0.48.179) y Lectura (Modo 3, valores mayores y más interlineado). Chrome recuerda la elección en ese perfil y la aplica a sus pestañas de Eloísa. La densidad del cuadro Centro HHR se ajusta por separado. [Comparar los cuatro modos en la misma ficha de prueba](docs/visual/temas/README.md)
 
 En **Compacto**, Evolución comparte fila con una columna estrecha de observaciones de entrega. En una pantalla angosta, la nota aparece primero. La fecha estimada de alta se oculta en esta vista. «Ver evoluciones» abre las notas cargadas del episodio en el Historial y permite elegir «Todos» o un profesional. La última actualización muestra fecha, hora al minuto y nombre. Los dos interruptores de Alertas comparten fila cuando caben. En Signos vitales, el botón de reloj abre el historial de mediciones. [Comparar el resumen en escritorio y móvil](docs/visual/ronda-compacta/README.md)

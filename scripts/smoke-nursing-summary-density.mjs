@@ -12,7 +12,14 @@ export async function verifyNursingSummary(page, worker) {
   assert.ok(rects.every(r => r.top === rects[0].top && r.height < 52),JSON.stringify(rects));
   const sizes = await tiles.first().evaluate(el => ['vital-value','vital-label','vital-pam','vital-time'].map(kind =>
     parseFloat(getComputedStyle(el.querySelector('[data-hhr-reading="'+kind+'"]'), kind === 'vital-time' ? '::after' : null).fontSize)));
-  assert.deepEqual(sizes,[15,12,11,11]);
+  assert.deepEqual(sizes,[17,12,11,11]);
+  const readings = await tiles.evaluateAll(nodes => nodes.map(tile => {
+    const bounds = kind => tile.querySelector(`[data-hhr-reading="vital-${kind}"]`).getBoundingClientRect();
+    const label = bounds('label'), value = bounds('value');
+    return { aligned:Math.abs(label.left - value.left) < 1, below:value.top >= label.bottom, top:value.top };
+  }));
+  assert.ok(readings.every(cell => cell.aligned && cell.below && Math.abs(cell.top - readings[0].top) < 1),
+    'Each desktop value must start beneath its label on the same line as the other values');
   assert.equal(await tiles.first().locator('[data-hhr-reading="vital-pam"]').innerText(), 'PAM: 90');
   assert.equal(await tiles.nth(3).locator('strong').evaluate(el=>getComputedStyle(el).color),'rgb(255, 0, 0)');
   const historyButton = page.getByRole('button',{name:'Ver historial completo'});

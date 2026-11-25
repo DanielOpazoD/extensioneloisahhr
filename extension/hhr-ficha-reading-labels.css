@@ -70,3 +70,41 @@
     [data-hhr-ficha-link="restEntrySection"]::after { content:'Reposo' / ''; }
   }
 }
+
+/* Only a wide alerts card gets a second column. A narrow card or a different
+   native form keeps its normal reading and keyboard order. */
+@media screen and (min-width:64rem) {
+  html[data-hhr-ficha-theme="compact"] {
+    [data-hhr-ficha-primary] [role="tab"][aria-selected="true"] {
+      background:transparent; border-radius:0; box-shadow:inset 0 -2px #18796c;
+    }
+    /* The pinned section links already reserve their height in the first slot. */
+    main:has(> .MuiStack-root:first-child > [data-hhr-ficha-section-slot]:first-child + [data-hhr-round="frame"]) {
+      padding-block-start:2px !important;
+    }
+    [data-hhr-ficha-section-slot] + [data-hhr-round="frame"] {
+      padding-block-start:0 !important;
+      > .MuiGrid-item:has(> [data-hhr-update-label]):has(input):has(button) {
+        padding-block:0 !important; min-height:30px; align-items:center;
+        > [data-hhr-update-label] { margin-block:2px; }
+        input[type="date"]:not(.MuiInputBase-input) {
+          box-sizing:border-box; min-height:28px; padding:2px 6px; font:inherit;
+        }
+      }
+    }
+  }
+  html[data-hhr-ficha-theme="compact"] #alertEntrySection > .MuiCard-root {
+    container: hhr-alerts / inline-size;
+  }
+  @container hhr-alerts (min-width:48rem) {
+    html[data-hhr-ficha-theme="compact"] #alertEntrySection > .MuiCard-root > .MuiCardContent-root:has(> .MuiBox-root:first-child + :last-child [data-hhr-reading-toggle="alert"]) {
+      display:grid; grid-template-columns:minmax(0,1fr) minmax(18rem,31%); align-items:start;
+      column-gap:clamp(12px,1.5vw,24px);
+      > :first-child { min-width:0; }
+      > :last-child {
+        min-width:0; margin:0 !important; box-sizing:border-box;
+        padding-inline-start:12px; border-inline-start:1px solid #d6e4df;
+      }
+    }
+  }
+}

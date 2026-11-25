@@ -110,6 +110,16 @@ const renderRound = (controls = false) => `<!doctype html><html lang="es"><meta 
 <main class="MuiBox-root"><div class="MuiStack-root"><div class="MuiGrid-item MuiGrid-grid-xs-12"><div class="MuiGrid-container subnav">${['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales'].map(t=>`<div class="MuiGrid-item"><span class="MuiBadge-root"><span class="MuiTypography-caption">${t}</span></span></div>`).join('')}</div></div>
 ${summaryBody(controls,vitals(controls))}</div></main>
 ${controls ? '<dialog aria-label="Historial de signos"><p>Registro anterior de prueba</p></dialog>' : ''}<script>
+  const noteText = document.querySelector('#evolution .MuiBox-root > .MuiTypography-caption');
+  const disclosure = noteText.nextElementSibling.querySelector('button');
+  const fullNote = noteText.textContent;
+  disclosure.setAttribute('aria-expanded', 'true');
+  disclosure.addEventListener('click', () => {
+    const expand = disclosure.getAttribute('aria-expanded') === 'false';
+    noteText.textContent = expand ? fullNote : fullNote.slice(0, 140).trimEnd() + '…';
+    disclosure.textContent = expand ? 'Leer menos' : 'Leer más';
+    disclosure.setAttribute('aria-expanded', String(expand));
+  });
   const historyDialog = document.querySelector('dialog[aria-label="Historial de signos"]');
   if (historyDialog) {
     document.querySelector('section#vitalSignsEntry button').addEventListener('click', () => historyDialog.showModal());

@@ -64,3 +64,46 @@ it('pairs neighbouring note and handoff even when discharge was never mounted', 
   expect(main.querySelector('#observationEntrySection').parentElement.dataset.hhrRound).toBe('note');
   expect(main.querySelector('.MuiGrid-container > :last-child').hasAttribute('data-hhr-round')).toBe(false);
 });
+
+it('uses the native care pair and falls back when a control, independent sibling or another column is present', () => {
+  const pair = '<div class="MuiGrid-container">' + slot('restEntrySection','Reposo') +
+    slot('nutritionOrderEntrySection','Régimen') + '</div>';
+  document.body.innerHTML = '<main><div class="MuiGrid-container">' +
+    slot('observationEntrySection','Evolución') + slot('shiftChangeEntrySection','<textarea></textarea>') +
+    slot('vitalSignsEntry','Signos') + '<div class="MuiGrid-item MuiGrid-grid-xs-6">' + pair + '</div>' +
+    slot('alertEntrySection','<button>Archivar</button>') + '</div></main>';
+  const main = document.querySelector('main');
+  const original = main.innerHTML;
+  const field = main.querySelector('textarea');
+  field.value = 'Texto en edición';
+  field.focus();
+  layout.refresh(main);
+  const care = main.querySelector('[data-hhr-round="care"]');
+  expect(care.querySelector('#nutritionOrderEntrySection')).not.toBeNull();
+  expect(care.querySelector('#restEntrySection')).not.toBeNull();
+  expect(main.querySelector('#alertEntrySection').closest('[data-hhr-round="care"]')).toBeNull();
+
+  const control = document.createElement('button');
+  care.querySelector('#restEntrySection').append(control);
+  layout.refresh(main);
+  expect(care.hasAttribute('data-hhr-round')).toBe(false);
+  control.remove();
+  const peer = document.createElement('article');
+  care.firstElementChild.append(peer);
+  layout.refresh(main);
+  expect(care.hasAttribute('data-hhr-round')).toBe(false);
+  peer.remove();
+  const other = document.createElement('div');
+  other.className = 'MuiGrid-item MuiGrid-grid-md-4';
+  care.after(other);
+  layout.refresh(main);
+  expect(care.hasAttribute('data-hhr-round')).toBe(false);
+  other.remove();
+  layout.refresh(main);
+  expect(main.querySelector('[data-hhr-round="care"]')).toBe(care);
+
+  layout.clear();
+  expect(main.innerHTML).toBe(original);
+  expect(document.activeElement).toBe(field);
+  expect(field.value).toBe('Texto en edición');
+});

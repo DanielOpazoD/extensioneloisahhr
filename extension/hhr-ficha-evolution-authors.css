@@ -23,4 +23,31 @@
   .hhr-evo-entry:hover,.hhr-evo-author:hover,.hhr-evo-back:hover { background:#edf5f2; }
   .hhr-evo-entry:focus-visible,.hhr-evo-back:focus-visible,.hhr-evo-author:focus-visible { outline:2px solid #086b63; }
 }
+@media screen and (min-width:64rem) {
+  html[data-hhr-ficha-theme="compact"] #evolution {
+    > .MuiCardHeader-root { align-items:center; flex-wrap:wrap; gap:2px 12px; }
+    > .MuiCardHeader-root > .MuiCardHeader-content:has(> [data-hhr-update-label]) {
+      display:flex; flex:1 1 18rem; flex-wrap:wrap; align-items:baseline; gap:2px 10px; min-width:0;
+    }
+    > .MuiCardHeader-root > .MuiCardHeader-action { margin-inline-start:auto; }
+    .hhr-evo-entry {
+      display:inline-flex; align-items:center; gap:6px; min-height:28px;
+      padding:3px 8px; border:1px solid #c7dbd5; background:transparent; font-size:.75rem;
+      &::before {
+        content:''; width:13px; height:12px; flex:none;
+        background:repeating-linear-gradient(to bottom,currentColor 0 2px,transparent 2px 5px)
+          left top / 2px 100% no-repeat,
+          repeating-linear-gradient(to bottom,currentColor 0 2px,transparent 2px 5px)
+          right top / 9px 100% no-repeat;
+      }
+      &:hover { background:#edf5f2; border-color:#7da99e; }
+    }
+    /* Leave the native disclosure in the reading flow, beside the end of its own note. */
+    [data-hhr-evolution-block] > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) {
+      display:inline-flex; width:auto; vertical-align:middle;
+      > button { margin:0; background:transparent; }
+      > button:hover { background:#e7f2ee; }
+    }
+  }
+}
 @media print { .hhr-evo-entry,.hhr-evo-filters { display:none !important; } }

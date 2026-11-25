@@ -73,6 +73,7 @@
     }
   }
   html[data-hhr-ficha-theme="compact"] :is(#vitalSignsEntry,[data-hhr-reading="vitals"]) [data-hhr-reading="vital-grid"] {
+    container:hhr-vital-band / inline-size;
     gap:2px !important;
     :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-label"]) {
       padding:2px 5px !important; align-items:center; row-gap:0 !important;
@@ -97,6 +98,26 @@
     [data-hhr-vital-elapsed] {
       font-size:0 !important;
       &::after { content:attr(data-hhr-vital-elapsed) / ""; font-size:.6875rem; line-height:1.15; }
+    }
+    /* Only rearrange recognised cells. Extra clinical details keep their native layout. */
+    @container hhr-vital-band (min-width:50rem) {
+      [data-hhr-reading="vital-tile"] {
+        background:#f4f7f6; border-inline-start:1px solid #cfddd8 !important;
+        &:first-child { border-start-start-radius:4px !important; border-end-start-radius:4px !important; }
+        &:last-child { border-start-end-radius:4px !important; border-end-end-radius:4px !important; }
+      }
+      :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-inner"]) {
+        display:grid; align-items:stretch;
+      }
+      :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-label"]):not(:has(> :not([data-hhr-reading]))) {
+        grid-template-columns:minmax(0,1fr) auto; grid-template-rows:1fr auto;
+        padding:3px 8px !important; gap:1px 4px !important; align-items:baseline; align-content:stretch;
+        [data-hhr-reading="vital-label"] { grid-area:1 / 1 / 2 / -1; }
+        &:has([data-hhr-reading="vital-pam"]) > [data-hhr-reading="vital-label"] { grid-column-end:2; }
+        [data-hhr-reading="vital-value"] { grid-area:2 / 1; font-size:1.0625rem !important; font-weight:650; }
+        [data-hhr-reading="vital-pam"] { grid-area:1 / 2; justify-self:end; }
+        [data-hhr-reading="vital-time"] { grid-area:2 / 2; justify-self:end; }
+      }
     }
   }
 }
