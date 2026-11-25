@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { verifyNursingSummary } from './smoke-nursing-summary-density.mjs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -215,11 +216,7 @@ export const verifyNativeFicha = async page => {
   for (const width of [1366,390]) {
     await page.setViewportSize({width,height:768});
     const [alerts, evolution] = await pair.locator(':scope > *').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().toJSON()));
-    if (width > 1000) {
-      assert.ok(evolution.width > alerts.width * 2 && Math.abs(alerts.top - evolution.top) < 1);
-    } else {
-      assert.ok(evolution.top >= alerts.bottom && evolution.right <= width);
-    }
+    assert.ok(evolution.top >= alerts.bottom && evolution.right <= width && Math.abs(evolution.width - alerts.width) < 2);
     for (const id of ['medicationEntrySection','freeIndicationEntrySection']) {
       const row = page.locator('#'+id+' tbody tr').first();
       assert.ok((await row.boundingBox()).height <= 34);
@@ -227,7 +224,51 @@ export const verifyNativeFicha = async page => {
       assert.equal((await row.locator('svg').boundingBox()).height,15);
     }
   }
+  await page.setViewportSize({width:1366,height:768});
+  await page.locator('#alertEntrySection').evaluate(section => {
+    section.innerHTML = '<h2>Alertas</h2><div role="alert">Alerta A</div><div role="alert">Alerta B</div>';
+  });
+  await page.waitForFunction(() => {
+    const [a,e] = [...document.querySelector('[data-hhr-ficha-reading-pair]').children].map(el => el.getBoundingClientRect());
+    return e.width > a.width*2 && Math.abs(e.top-a.top)<1;
+  });
+  await page.locator('#vitalSignsEntry').evaluate(el => {
+    el.innerHTML = '<h2>Signos vitales</h2><table><thead><tr><th>Signo</th><th>Valor</th><th>Unidad</th><th>Hora</th></tr></thead>' +
+      '<tbody><tr><td>FC</td><td>74</td><td>lpm</td><td>09:45</td></tr><tr><td>FR</td><td>16</td><td>rpm</td><td>08:25</td></tr></tbody></table>';
+  });
+  const strip = page.locator('.hhr-ficha-vitals');
+  await strip.waitFor();
+  assert.deepEqual(await strip.locator('dd').allTextContents(),['74 lpm09:45','16 rpm08:25']);
+  const nativeVitals = page.locator('#vitalSignsEntry table');
+  assert.equal(await nativeVitals.isVisible(),false);
+  await strip.getByRole('button',{name:'Ver registros'}).press('Enter');
+  assert.equal(await nativeVitals.isVisible(),true);
+  await page.locator('#medicationEntrySection table').evaluate(table => {
+    table.innerHTML = '<thead><tr><th>Hora</th><th>Fármaco</th><th>Posología</th><th>Indicaciones específicas</th><th>Acciones</th></tr></thead>' +
+      '<tbody><tr><td>09:00</td><td>Preparación sintética</td><td>Texto de prueba</td><td>Instrucciones de prueba con espacio para la lectura</td><td><button>Abrir</button></td></tr></tbody>';
+  });
+  const narrow = page.locator('#medicationEntrySection th[data-hhr-reading="narrow"]');
+  await narrow.first().waitFor();
+  assert.deepEqual(await narrow.allTextContents(),['Hora','Acciones']);
+  const widths = await page.locator('#medicationEntrySection tbody td').evaluateAll(cells => cells.map(cell => cell.offsetWidth));
+  assert.ok(widths[3] > widths[0] && widths[3] > widths[4]);
   await page.getByRole('tab',{name:'Historial',exact:true}).click();
+  const firstNote = page.locator('#nurse');
+  await firstNote.evaluate(note => {
+    const other = note.cloneNode(true); other.id = 'second-evolution';
+    note.after(other);
+  });
+  const second = page.locator('#second-evolution[data-hhr-history-inline="evolution"]');
+  await second.waitFor();
+  assert.equal(await second.evaluate(el => getComputedStyle(el).borderTopWidth),'1px');
+  for (const note of [firstNote,second]) {
+    const geometry = await note.evaluate(el => {
+      const top = sel => el.querySelector(sel).getBoundingClientRect().top;
+      return [top('.MuiCardHeader-action'),top('.MuiCardHeader-title'),top('.MuiCardHeader-subheader'),top('.MuiCardContent-root > .MuiStack-root')];
+    });
+    assert.ok(Math.max(...geometry.slice(0,3))-Math.min(...geometry.slice(0,3)) < 6);
+    assert.ok(geometry[3] > Math.max(...geometry.slice(0,3)));
+  }
   // Native filtering still controls the available dates and events.
   const toolbar=page.locator('#hhr-history-date-navigation');
   await page.locator('#native-timeline').evaluate((node,html)=>{node.innerHTML=html;},group('Hoy',event('only-procedure','Médico','Procedimientos')));
@@ -236,6 +277,7 @@ export const verifyNativeFicha = async page => {
   await page.getByRole('tab',{name:'Resumen',exact:true}).click();
   await toolbar.waitFor({state:'detached'});
   assert.equal(await page.locator('[data-hhr-history-filtered]').count(),0);
+  await verifyNursingSummary(page);
   await page.locator('main').evaluate((main,html)=>{main.innerHTML=html;main.style.removeProperty('background');},original);
   await page.setViewportSize(viewport);await page.evaluate(()=>window.scrollTo(0,0));
 };

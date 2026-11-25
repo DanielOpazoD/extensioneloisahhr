@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.177
+
+- El Resumen de enfermería reconoce «Valoración» y aplica la densidad aunque falten accesos en la barra. Diagnóstico y Fármacos reducen la altura del encabezado y de las filas.
+- Los signos vitales en tarjetas aprovechan el ancho disponible y conservan los valores, los colores, la PAM, los tiempos de medición, las observaciones y el historial. Cuando se muestran en una tabla reconocida, «Ver registros» abre el detalle original.
+- Una alerta breve deja el ancho de la fila a Evolución. Las notas consecutivas comparten un separador fino y las tablas de indicaciones reservan más espacio a la prescripción.
+
 ## 0.48.176
 
 - Diagnóstico, signos vitales, reposo y régimen ocupan menos espacio. Cuando Alertas y Evolución comparten una fila, el texto de Evolución tiene más ancho.

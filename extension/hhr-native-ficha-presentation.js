@@ -126,11 +126,77 @@
         [data-hhr-ficha-reading-pair] > :last-child,
         [data-hhr-ficha-summary-grid] > #alertEntrySection + #observationEntrySection { flex:1 1 55% !important; }
       }
+      [data-hhr-ficha-reading-pair]:has(> :first-child[data-hhr-brief-alert]) > *,
+      [data-hhr-ficha-reading-pair]:has(> :first-child [data-hhr-brief-alert]) > *,
+      [data-hhr-ficha-summary-grid] > #alertEntrySection[data-hhr-brief-alert]:has(+ #observationEntrySection),
+      [data-hhr-ficha-summary-grid] > #alertEntrySection[data-hhr-brief-alert] + #observationEntrySection {
+        flex:1 1 100% !important;
+      }
+      #alertEntrySection[data-hhr-brief-alert]:not(:has(> .MuiCard-root)),
+      #alertEntrySection[data-hhr-brief-alert] > .MuiCard-root:only-child {
+        display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px;
+        :is(.MuiCardHeader-root,.MuiCardContent-root) { margin:0 !important; padding-block:2px !important; }
+      }
+      [data-hhr-reading="orders"] table:has([data-hhr-reading="narrow"]) {
+        table-layout:auto !important; width:100%;
+        [data-hhr-reading="narrow"] { width:1% !important; }
+        th[data-hhr-reading="narrow"] { white-space:nowrap; }
+      }
+      :is([data-hhr-reading="diagnosis"],[data-hhr-reading="orders"],[data-hhr-reading="vitals"]) {
+        min-height:0 !important; height:auto !important; padding-block:3px !important;
+        :is(h2,h3,h4,h5,h6,.MuiCardHeader-title):not(:is(dialog,[role=dialog]) *) { margin-block:1px !important; }
+        :is(.MuiCardContent-root,.MuiCardHeader-root,.MuiCardActions-root):not(:is(dialog,[role=dialog]) *) {
+          min-height:0 !important; margin-block:0 !important; padding-block:3px !important;
+        }
+        :is(th,td):not(:is(dialog,[role=dialog]) *) { padding:3px 7px !important; height:auto !important; line-height:1.28 !important; }
+        tr:not(:is(dialog,[role=dialog]) *) { height:auto !important; }
+        :is(th,td) :is(p,.MuiTypography-root):not(:is(dialog,[role=dialog]) *) { margin-block:0 !important; }
+        td :is(.MuiButton-root,.MuiIconButton-root):not(:is(dialog,[role=dialog]) *) {
+          padding:2px 4px !important; min-height:24px !important; line-height:1.2 !important; }
+      }
+      [data-hhr-reading="time-symbol"] { zoom:.68; }
+      [data-hhr-reading="vital-grid"] {
+        display:grid !important; grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5rem),1fr)) !important;
+        gap:3px !important; margin:0 !important; width:100% !important; align-items:stretch;
+      }
+      :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]) {
+        box-sizing:border-box; width:auto !important; max-width:none !important; min-width:0 !important;
+        height:auto !important; min-height:0 !important; margin:0 !important; padding:3px 6px !important;
+        border-radius:4px !important; gap:1px !important;
+        :is(p,h4,h5,h6,.MuiTypography-root) { margin-block:0 !important; line-height:1.23 !important; }
+      }
+      [data-hhr-reading="vital-tile"]:has(> [data-hhr-reading="vital-inner"]) { padding:0 !important; }
+      [data-hhr-vital-detail-folded] { display:none !important; }
+      .hhr-ficha-vitals,.hhr-ficha-vitals dl { display:flex; flex-wrap:wrap; align-items:center; gap:5px 14px; }
+      .hhr-ficha-vitals dl { margin:2px 0; flex:1 1 auto; }
+      .hhr-ficha-vitals dt,.hhr-ficha-vitals small { color:#526762; font-size:12px; }
+      .hhr-ficha-vitals dd { margin:0; font-weight:600; font-variant-numeric:tabular-nums; }
+      .hhr-ficha-vitals small { display:block; font-weight:normal; }
+      .hhr-ficha-vitals button { min-height:26px; font:inherit; color:#086b63; background:transparent;
+        border:1px solid #cdded8; border-radius:6px; cursor:pointer; }
+      #observationEntrySection .MuiCard-root:has(> .MuiCardHeader-root .MuiCardHeader-subheader) {
+        > .MuiCardHeader-root:not(:has(button,a,input)) {
+          display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; margin:0 !important;
+          .MuiCardHeader-content { display:contents; }
+          .MuiCardHeader-action { order:-1; margin:0; }
+        }
+        > .MuiCardContent-root { padding-block-start:0 !important; }
+        &:has(+ .MuiCard-root > .MuiCardHeader-root .MuiCardHeader-subheader),
+        & + .MuiCard-root:has(> .MuiCardHeader-root .MuiCardHeader-subheader) {
+          margin-block:0 !important; border-radius:0; box-shadow:none;
+        }
+        & + .MuiCard-root:has(> .MuiCardHeader-root .MuiCardHeader-subheader) { border-top:1px solid #dce5e2; }
+      }
+      #evolution [data-hhr-evolution-block] + [data-hhr-evolution-block],
+      #evolution .MuiStack-root:has(> [data-hhr-evolution-block]) + .MuiStack-root:has(> [data-hhr-evolution-block]) {
+        border-top:1px solid #dce5e2; padding-block-start:4px; }
+      #evolution [data-hhr-evolution-block] > .MuiTypography-caption { display:inline; margin-inline-end:6px; }
     }
-    @media print { .hhr-ficha-empty-toggle { display:none; } }
+    @media print { .hhr-ficha-vitals,.hhr-ficha-empty-toggle { display:none; } }
     @media(max-width:600px) { [data-hhr-ficha-primary] { padding:2px 4px !important; } [data-hhr-ficha-primary] [role="tab"] { padding:4px 9px !important; font-size:12px; } }
   `;
   const create = () => {
+    const surfaces = globalThis.HhrFichaReadingSurfaces.create();
     const summaryDensity = globalThis.HhrFichaSummaryDensity.create(Object.values(SECTIONS));
     const marked = new Map();
     const links = new Map();
@@ -156,6 +222,7 @@
       unmark(element); links.delete(element);
     };
     const reset = () => {
+      surfaces.clear();
       summaryDensity.clear();
       resizeObserver?.disconnect();
       links.forEach((item, element) => removeLink(element, item));
@@ -231,7 +298,7 @@
     const refresh = encounterId => {
       if (disposed) return;
       const tab = Array.from(document.querySelectorAll('[role="tab"][aria-selected="true"]')).find(element =>
-        element.id?.startsWith('encounter-event-tab-') && element.getClientRects().length);
+        (element.id?.startsWith('encounter-event-tab-') || (normalize(element.textContent) === 'resumen' && element.closest('.MuiTabs-root'))) && element.getClientRects().length);
       if (!encounterId || !tab) { reset(); return; }
       const nextPrimary = tab.closest('.MuiTabs-root');
       if (primary && primary !== nextPrimary) reset();
@@ -241,8 +308,11 @@
       if (!style) { style = document.createElement('style'); style.textContent = css; document.head.append(style); }
       if (primary) mark(primary, 'data-hhr-ficha-primary');
       enhanceEvolution();
-      const caption = tab.id === 'encounter-event-tab-summary' ? Array.from(document.querySelectorAll('main .MuiTypography-caption'))
-        .find(element => normalize(element.textContent) === 'evolucion' && element.getClientRects().length && element.closest('.MuiGrid-container')) : null;
+      const isSummary = tab.id === 'encounter-event-tab-summary' || normalize(tab.textContent) === 'resumen';
+      const main = isSummary ? document.querySelector('main') : null;
+      surfaces.refresh(main);
+      const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
+        ['evolucion','valoracion'].includes(normalize(element.textContent)) && element.getClientRects().length);
       const nextRow = caption?.closest('.MuiGrid-container');
       if (row && row !== nextRow) {
         links.forEach((item, element) => removeLink(element, item));
@@ -251,7 +321,7 @@
         slot?.style.removeProperty('--hhr-section-height'); lastTarget = null;
       }
       row = nextRow || null; slot = row?.parentElement || null;
-      if (!row || !slot) { summaryDensity.clear(); return; }
+      if (!row || !slot) { summaryDensity.refresh(encounterId, null, isSummary); return; }
       resizeObserver?.observe(slot);
       mark(row, 'data-hhr-ficha-sections'); mark(slot, 'data-hhr-ficha-section-slot');
       [...links.entries()].filter(([element]) => !row.contains(element)).forEach(([element, item]) => removeLink(element, item));

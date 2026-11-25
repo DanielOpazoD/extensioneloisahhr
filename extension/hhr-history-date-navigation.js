@@ -28,6 +28,12 @@
       [data-hhr-history-inline] .MuiCardHeader-avatar { order:-2; margin:0; }
       [data-hhr-history-inline] .MuiCardHeader-title { order:-1; }
       [data-hhr-history-inline] > .MuiCardContent-root > :not(:first-child) { flex:1 0 100%; min-width:0; }
+      [data-hhr-history-inline="evolution"]:has(+ [data-hhr-history-inline="evolution"]),
+      [data-hhr-history-inline="evolution"] + [data-hhr-history-inline="evolution"] {
+        margin-block:0 !important; box-shadow:none !important; border-radius:0 !important; padding-block:4px !important;
+      }
+      [data-hhr-history-inline="evolution"] + [data-hhr-history-inline="evolution"] { border-top:1px solid #dce5e2; }
+      [data-hhr-history-inline="evolution"] .MuiCardHeader-subheader { margin:0; }
     }
     [data-hhr-history-rail] { display:flex; }
     [data-hhr-history-rail] > [role="tab"] { flex-shrink:0; }
@@ -272,7 +278,11 @@
         }
       }
       for (const card of inlineEvents) if (!nextInline.has(card)) card.removeAttribute('data-hhr-history-inline');
-      for (const card of nextInline) if (!inlineEvents.has(card)) card.setAttribute('data-hhr-history-inline', '');
+      for (const card of nextInline) {
+        const category = card.querySelector(':scope > .MuiCardContent-root > p:first-child').textContent.trim();
+        const style = /^evoluci[oó]n$/i.test(category) ? 'evolution' : '';
+        if (card.getAttribute('data-hhr-history-inline') !== style) card.setAttribute('data-hhr-history-inline', style);
+      }
       inlineEvents = nextInline;
       const nextBadges = new Set(groups.flatMap(({ element }) =>
         [...element.querySelectorAll(':scope > .MuiCard-root .MuiChip-root > .MuiChip-label')]
