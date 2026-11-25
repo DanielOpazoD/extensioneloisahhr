@@ -74,6 +74,19 @@
     return parent;
   }
 
+  function singleBriefAlert(section) {
+    if (!section || section.querySelector('input,textarea,select,table,br,[aria-busy="true"],[role=progressbar],.MuiSkeleton-root')) return false;
+    const entries = section.querySelectorAll('.MuiAlert-root,[role=alert],li,.MuiChip-root');
+    if (!entries.length) return shortReading(section);
+    const entry = entries[0];
+    if (![...entries].every(el => el === entry || entry.contains(el)) ||
+        entry.querySelectorAll('li,.MuiChip-root').length > 1) return false;
+    const heading = section.querySelector('h2,h3,h4,h5,h6,.MuiCardHeader-title');
+    const message = normalize(entry.textContent);
+    return !!message && message.length <= 88 &&
+      normalize(section.textContent).replace(heading ? normalize(heading.textContent) : '', '').trim() === message;
+  }
+
   function create(sectionIds) {
     let episode, expanded = false;
     let previous = new Set();
@@ -81,7 +94,9 @@
     let grids = new Set();
     let activeSections = new Set();
 
-    let pair, countTitle;
+    let pair, countTitle, alert;
+
+    const vitals = globalThis.HhrFichaVitalStrip.create();
     function updateCount(section) {
       const total = section && medicationTotal(section);
       if (countTitle && countTitle !== total?.title) countTitle.removeAttribute('data-hhr-visible-medications');
@@ -99,6 +114,11 @@
           shortReading(el) ? 'brief' : 'regular';
         if (el.getAttribute('data-hhr-ficha-summary-card') !== size) el.setAttribute('data-hhr-ficha-summary-card', size);
       }
+      const nextAlert = document.getElementById('alertEntrySection');
+      if (alert !== nextAlert) alert?.removeAttribute('data-hhr-brief-alert');
+      alert = sections.has(nextAlert) ? nextAlert : null;
+      alert?.toggleAttribute('data-hhr-brief-alert', singleBriefAlert(alert));
+      vitals.refresh([...sections].find(el => el.id === 'vitalSignsEntry'));
       const meds = document.getElementById('medicationEntrySection');
       updateCount(sections.has(meds) ? meds : null);
       activeSections = sections;
@@ -136,6 +156,8 @@
     function clear() {
       for (const el of previous) el.removeAttribute('data-hhr-ficha-folded');
       previous.clear();
+      vitals.clear();
+      alert?.removeAttribute('data-hhr-brief-alert'); alert = null;
       for (const item of navItems) item.removeAttribute('data-hhr-ficha-folded');
       navItems.clear();
       pair?.removeAttribute('data-hhr-ficha-reading-pair');
@@ -149,18 +171,18 @@
       expanded = false;
       episode = null;
     }
-    function refresh(encounter, row) {
-      if (episode !== encounter || !row) clear();
-      if (!row) return;
+    function refresh(encounter, row, isSummary = Boolean(row)) {
+      if (episode !== encounter || !isSummary) clear();
+      if (!isSummary) return;
       episode = encounter;
       updateGrids();
       const next = new Set();
       for (const section of activeSections) {
-        if (optional.has(section.id) && explicitlyEmpty(section) && !section.contains(document.activeElement)) next.add(section);
+        if (row && optional.has(section.id) && explicitlyEmpty(section) && !section.contains(document.activeElement)) next.add(section);
       }
       for (const el of previous) if (!next.has(el)) el.removeAttribute('data-hhr-ficha-folded');
       const nextNav = new Set();
-      for (const link of row.querySelectorAll('[data-hhr-ficha-link]')) {
+      for (const link of (row?.querySelectorAll('[data-hhr-ficha-link]') || [])) {
         if (!next.has(document.getElementById(link.dataset.hhrFichaLink))) continue;
         const item = link.closest('.MuiGrid-item');
         nextNav.add(item?.parentElement === row && item.querySelectorAll('[data-hhr-ficha-link],button,a,input,select').length === 1 ? item : link);

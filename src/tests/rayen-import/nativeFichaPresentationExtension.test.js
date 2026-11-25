@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../extension/hhr-history-date-navigation.js';
+import '../../../extension/hhr-ficha-reading-surfaces.js';
+import '../../../extension/hhr-ficha-vital-strip.js';
 import '../../../extension/hhr-ficha-summary-density.js';
 import '../../../extension/hhr-native-ficha-presentation.js';
 
@@ -208,4 +210,27 @@ it('recupera la etiqueta de dispositivos al recibir datos y conserva las accione
   density.refresh('1', nav);
   expect(folded()).toEqual([false,false]);
   density.clear();
+});
+
+it('conserva unidad y fecha por signo, recupera la tabla ante ambigüedad y limpia el episodio', () => {
+  document.body.innerHTML = '<section><table><thead><tr><th>Fecha y hora</th><th>PA (mmHg)</th><th>FC (lpm)</th><th>FR (rpm)</th><th>SpO2 (%)</th><th>Temperatura (°C)</th></tr></thead>' +
+    '<tbody><tr><td>25-11-2026 09:00</td><td>120/80</td><td></td><td>16</td><td>98</td><td>36,5</td></tr>' +
+    '<tr><td>24-11-2026 23:45</td><td>118/76</td><td>70</td><td></td><td></td><td></td></tr></tbody></table></section>';
+  const section = document.querySelector('section'), table = section.querySelector('table');
+  const strip = globalThis.HhrFichaVitalStrip.create();
+  strip.refresh(section);
+  expect([...section.querySelectorAll('dd')].map(el => el.textContent)).toEqual([
+    '120/80 mmHg25-11-2026 09:00','70 lpm24-11-2026 23:45','16 rpm25-11-2026 09:00',
+    '98 %25-11-2026 09:00','36,5 °C25-11-2026 09:00',
+  ]);
+  const button = section.querySelector('button');
+  button.click(); strip.refresh(section);
+  expect(section.querySelector('button')).toBe(button);
+  expect(table.hasAttribute('data-hhr-vital-detail-folded')).toBe(false);
+  table.tBodies[0].rows[1].cells[0].textContent = '23:45';
+  strip.refresh(section);
+  expect(section.querySelector('dl')).toBeNull();
+  expect(table.hasAttribute('data-hhr-vital-detail-folded')).toBe(false);
+  strip.clear();
+  expect(section.children).toHaveLength(1);
 });

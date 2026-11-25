@@ -265,6 +265,8 @@
         "hhr-prescription-content-runtime.js",
         "hhr-prescription-ui-lifecycle.js",
         "hhr-history-date-navigation.js",
+        "hhr-ficha-reading-surfaces.js",
+        "hhr-ficha-vital-strip.js",
         "hhr-ficha-summary-density.js",
         "hhr-native-ficha-presentation.js",
         "hhr-worklist-drawer.js",
