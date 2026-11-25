@@ -1,5 +1,61 @@
 import assert from 'node:assert/strict';
 
+async function verifyTemplateDialogs(page, evolution, portal) {
+  await evolution.evaluate(editor => {
+    const draft = document.createElement('textarea');
+    draft.value = 'Borrador nativo de prueba';
+    const templates = document.createElement('button');
+    templates.textContent = 'Plantillas';
+    templates.onclick = () => {
+      const picker = document.createElement('dialog');
+      picker.setAttribute('aria-label', 'Plantillas de evolución');
+      picker.innerHTML = '<button>Cerrar plantillas</button>';
+      document.body.append(picker);
+      editor.setAttribute('aria-hidden', 'true');
+      picker.showModal();
+      picker.firstChild.onclick = () => {
+        picker.close();
+        picker.remove();
+        editor.removeAttribute('aria-hidden');
+      };
+    };
+    editor.append(draft, templates);
+  });
+  await evolution.getByRole('button', { name: 'Plantillas', exact: true }).click();
+  const picker = page.getByRole('dialog', { name: 'Plantillas de evolución' });
+  await picker.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(await picker.locator('[data-hhr-checklist]').count(), 0, 'Los accesos HHR invadieron el selector nativo');
+  assert.equal(await evolution.locator('.hhr-checklist-trigger').count(), 1, 'El editor perdió su acceso bajo el selector');
+  await picker.getByRole('button', { name: 'Cerrar plantillas' }).click();
+
+  await evolution.evaluate(editor => {
+    editor.dataset.focusEscapes = '0';
+    const guard = event => {
+      if (!editor.contains(event.target)) editor.dataset.focusEscapes = String(Number(editor.dataset.focusEscapes) + 1);
+    };
+    const escape = event => { if (event.key === 'Escape') editor.close(); };
+    document.addEventListener('focusin', guard);
+    editor.addEventListener('keydown', escape);
+    editor.stopTestListeners = () => {
+      document.removeEventListener('focusin', guard);
+      editor.removeEventListener('keydown', escape);
+    };
+  });
+  await evolution.getByRole('button', { name: 'Aplicar pauta' }).click();
+  const checklist = page.getByRole('dialog', { name: 'Aplicar pauta' });
+  const topBefore = await checklist.evaluate(el => el.getBoundingClientRect().top);
+  await portal.evaluate(() => setTimeout(() => document.documentElement.setAttribute('data-hhr-checklists-ready', ''), 650));
+  await checklist.getByLabel('Observación').fill('Selección de prueba');
+  assert.equal(await evolution.getAttribute('data-focus-escapes'), '0', 'El foco salió del ámbito de la evolución');
+  const topAfter = await checklist.evaluate(el => el.getBoundingClientRect().top);
+  assert.ok(Math.abs(topAfter - topBefore) <= 1, 'La cabecera saltó al terminar la carga');
+  await checklist.getByLabel('Observación').press('Escape');
+  await checklist.waitFor({ state: 'detached' });
+  assert.equal(await evolution.evaluate(el => el.open), true);
+  assert.equal(await evolution.locator('textarea').inputValue(), 'Borrador nativo de prueba');
+  await evolution.evaluate(editor => { editor.stopTestListeners(); editor.querySelector('textarea').remove(); });
+}
+
 export async function verifyClinicalChecklists(context, original, worker) {
   const ficha = await context.newPage();
   await ficha.goto('https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse/661733');
@@ -49,9 +105,9 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await ficha.getByRole('button', { name: 'Aplicar pauta' }).waitFor();
     await native.evaluate(dialog => dialog.showModal());
     await native.getByRole('button', { name: 'Aplicar pauta' }).waitFor();
+    await verifyTemplateDialogs(ficha, native, portal);
     await native.evaluate(dialog => dialog.close());
     await ficha.locator('#observationEntrySection').getByRole('button', { name: 'Aplicar pauta' }).click();
-    await portal.evaluate(() => setTimeout(() => document.documentElement.setAttribute('data-hhr-checklists-ready', ''), 650));
     const modal = ficha.getByRole('dialog', { name: 'Aplicar pauta' });
     await modal.getByLabel('Observación').fill('Control sintético');
     assert.match(await modal.locator('.identity').innerText(), /Persona Sintética/);
