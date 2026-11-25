@@ -40,6 +40,46 @@
     return group;
   }
 
+  function leadingLabel(row, text) {
+    const label = row?.firstElementChild;
+    return label?.matches('strong,b,span,p') && !label.childElementCount &&
+      label.textContent.trim() === text && row.textContent.trim() !== text &&
+      [...row.childNodes].find(n => n.textContent.trim()) === label ? label : null;
+  }
+
+  // Keep each instruction, its free text and its own byline in the native card.
+  function careRow(section, name) {
+    const card = section.querySelector(':scope > .MuiCard-root');
+    const heading = card?.querySelector(':scope > .MuiCardHeader-root > .MuiCardHeader-content > .MuiCardHeader-title');
+    const body = card?.querySelector(':scope > .MuiCardContent-root');
+    if (heading?.textContent.trim() !== name || !body || card.children.length !== 2) return null;
+    const header = heading.parentElement.parentElement;
+    if ([...header.children].some(el => el !== heading.parentElement &&
+        (!el.matches('.MuiCardHeader-action') || el.textContent.trim() ||
+         [...el.querySelectorAll('*')].some(child => !isLayout(child) || child.hasAttribute('aria-label')))) ||
+        [...heading.parentElement.children].some(el => el !== heading && !el.matches('.MuiCardHeader-subheader'))) return null;
+
+    // Eloísa can put its two label/value lines inside an extra Stack.
+    let lines = body;
+    while (lines.children.length === 1 && lines.firstElementChild.matches('div.MuiStack-root,div.MuiBox-root') &&
+        ![...lines.childNodes].some(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim())) {
+      if (lines.firstElementChild.firstElementChild?.textContent.trim() === name + ':') break;
+      lines = lines.firstElementChild;
+    }
+    const [value, observation] = lines.children;
+    if (!value || lines.children.length > 2 ||
+        [...lines.childNodes].some(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim())) return null;
+    const label = leadingLabel(value, name + ':');
+    if (!label) return null;
+    const marks = [[card, 'care-row'], [value, 'care-value'], [label, 'care-label']];
+    if (observation?.textContent.trim()) {
+      marks.push([observation, 'care-observation']);
+      const prefix = leadingLabel(observation, 'Observación:');
+      if (prefix) marks.push([prefix, 'care-label']);
+    }
+    return marks;
+  }
+
   function layout(main) {
     const marks = new Map();
     if (!main) return marks;
@@ -66,7 +106,21 @@
       marks.set(branch.at(-1), name);
     }
     const instructions = bedsideInstructions(frame, left, right, hidden);
-    if (instructions) marks.set(instructions, 'care');
+    if (instructions) {
+      marks.set(instructions, 'care');
+      const rest = careRow(instructions.querySelector('#restEntrySection'), 'Reposo');
+      const diet = careRow(instructions.querySelector('#nutritionOrderEntrySection'), 'Régimen');
+      if (rest && diet) {
+        for (const [element, role] of [...rest, ...diet]) marks.set(element, role);
+        const stamps = instructions.querySelectorAll('.MuiCardHeader-subheader[data-hhr-update-label]');
+        if (stamps.length === 2 && stamps[0].textContent && stamps[0].textContent === stamps[1].textContent &&
+            ![...stamps].some(el => el.childElementCount)) {
+          // Compare the complete native attribution, including seconds and professional role.
+          marks.set(stamps[0], 'same-stamp');
+          marks.set(stamps[1], 'shared-stamp');
+        }
+      }
+    }
     return marks;
   }
 

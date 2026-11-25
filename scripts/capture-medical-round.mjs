@@ -52,7 +52,7 @@ try {
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
     });
     if (desktop) {
-      await captureDesktopRound(page, directory, width);
+      await captureDesktopRound(page, directory, width, revision === 'WORKTREE');
       assert.deepEqual(errors, []);
       await page.close();
       continue;

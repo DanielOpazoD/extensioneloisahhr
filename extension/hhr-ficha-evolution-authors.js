@@ -26,6 +26,24 @@
     el.textContent = label;
     return el;
   };
+  function hasNoteToolbar(card) {
+    // Only the read-only note, followed by its own row of icon buttons.
+    // Leave unfamiliar structures and in-place editors in their native layout.
+    if (!card?.matches('.MuiCard-root') || card.children.length !== 2 ||
+        !card.firstElementChild.matches('.MuiCardHeader-root') ||
+        !card.lastElementChild.matches('.MuiCardContent-root')) return false;
+    const iconButton = el => el.matches('button') && text(el).length <= 1;
+    const headButtons = card.firstElementChild.querySelectorAll('.MuiCardHeader-action button:not(.hhr-evo-entry)');
+    if (![...headButtons].every(iconButton)) return false;
+    const stack = card.lastElementChild.querySelector(':scope > div.MuiStack-root:only-child');
+    if (stack?.children.length !== 2 ||
+        !stack.firstElementChild.matches('div.MuiStack-root') ||
+        !stack.firstElementChild.querySelector(':scope > .MuiBox-root > .MuiTypography-caption') ||
+        stack.querySelector('form,input,textarea,[contenteditable],[role="textbox"]')) return false;
+    const tools = stack.lastElementChild.querySelector(':scope > div.MuiStack-root:only-child');
+    if (!stack.lastElementChild.matches('div.MuiStack-root') || !tools?.querySelector(':scope > button')) return false;
+    return [...tools.children].every(el => el.matches('.hhr-checklist-launcher') || iconButton(el));
+  }
   function readCards(timeline) {
     const cards = new Map();
     for (const card of timeline?.querySelectorAll(':scope > .MuiBox-root > .MuiCard-root') || []) {
@@ -59,6 +77,14 @@
     let selected = '';
     let previous = new Map();
     let authorButtons = new Map();
+    let toolbarCard = null;
+    function markToolbar(card) {
+      const next = hasNoteToolbar(card) ? card : null;
+      if (next === toolbarCard) return;
+      toolbarCard?.removeAttribute('data-hhr-evo-toolbar');
+      next?.setAttribute('data-hhr-evo-toolbar', '');
+      toolbarCard = next;
+    }
     function unfilter() {
       for (const el of previous.keys()) el.removeAttribute(filtered);
       previous.clear();
@@ -68,6 +94,7 @@
       authorButtons.clear();
     }
     function clear() {
+      markToolbar(null);
       entry.remove();
       unfilter();
       historyTab = null;
@@ -83,6 +110,8 @@
       historyTab = [...document.querySelectorAll('[role="tablist"] [role="tab"]')].find(el =>
         text(el) === 'Historial' && el.getClientRects().length);
       const inHistory = historyTab?.getAttribute('aria-selected') === 'true';
+      const summary = inHistory ? null : document.getElementById('evolution');
+      markToolbar(summary);
       if (wasHistory && !inHistory) {
         viewing = false;
         focusOnOpen = false;
@@ -91,8 +120,8 @@
       const timeline = document.querySelector('[data-hhr-history-timeline]');
       if (!viewing || !inHistory) {
         if (bar.isConnected || previous.size) unfilter();
-        const host = inHistory ? timeline : document.querySelector('#evolution .MuiCardHeader-action') ||
-          document.querySelector('#evolution .MuiCardHeader-content');
+        const host = inHistory ? timeline : summary?.querySelector('.MuiCardHeader-action') ||
+          summary?.querySelector('.MuiCardHeader-content');
         if (host && historyTab && !historyTab.matches(':disabled,[aria-disabled="true"]') && host.getClientRects().length) {
           if (entry.parentElement !== host) host.prepend(entry);
         } else entry.remove();

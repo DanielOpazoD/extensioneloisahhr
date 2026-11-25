@@ -28,6 +28,37 @@ beforeEach(() => {
 });
 afterEach(() => {reader.clear(); document.body.replaceChildren(); vi.restoreAllMocks();});
 
+it('reúne solo las acciones de la nota de lectura y conserva los botones al montar pautas o un editor', () => {
+  const card = document.querySelector('#evolution');
+  card.className = 'MuiCard-root';
+  card.innerHTML = '<div class="MuiCardHeader-root"><div class="MuiCardHeader-action"></div></div>' +
+    '<div class="MuiCardContent-root"><div class="MuiStack-root"><div class="MuiStack-root">' +
+    '<div class="MuiBox-root"><span class="MuiTypography-caption">Nota ficticia</span></div></div>' +
+    '<div class="MuiStack-root"><div class="MuiStack-root"><button aria-label="Editar evolución"><svg></svg></button>' +
+    '</div></div></div></div>';
+  const native = card.querySelector('[aria-label="Editar evolución"]');
+  const host = native.parentElement;
+  const edit = vi.fn();
+  native.addEventListener('click',edit);
+  native.focus();
+  reader.refresh('1');
+  expect(card.hasAttribute('data-hhr-evo-toolbar')).toBe(true);
+  host.insertAdjacentHTML('beforeend','<span class="hhr-checklist-launcher"><button>Pautas</button></span>');
+  reader.refresh('1');
+  expect(card.hasAttribute('data-hhr-evo-toolbar')).toBe(true);
+  expect(native.parentElement).toBe(host);
+  expect(document.activeElement).toBe(native);
+  native.click();
+  expect(edit).toHaveBeenCalledOnce();
+  host.insertAdjacentHTML('beforeend','<button>Firmar nota</button>');
+  reader.refresh('1');
+  expect(card.hasAttribute('data-hhr-evo-toolbar')).toBe(false);
+  host.lastChild.remove();
+  card.querySelector('.MuiTypography-caption').setAttribute('contenteditable','true');
+  reader.refresh('1');
+  expect(card.hasAttribute('data-hhr-evo-toolbar')).toBe(false);
+});
+
 it('opens native history, restricts the explicit view to notes, and filters by the person in either header order', () => {
   const amendments = vi.fn();
   document.querySelector('#amend').addEventListener('click',amendments);
