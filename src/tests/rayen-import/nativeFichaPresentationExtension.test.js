@@ -234,3 +234,21 @@ it('conserva unidad y fecha por signo, recupera la tabla ante ambigüedad y limp
   strip.clear();
   expect(section.children).toHaveLength(1);
 });
+
+it('distingue un aviso de permiso de una sección vacía y vuelve al formato nativo al desactivar', () => {
+  document.body.innerHTML = '<main><div class="MuiTabs-root"><button role="tab" aria-selected="true">Resumen</button></div>' +
+    '<section><h3>Alergias</h3><p>No tiene permiso para visualizar</p></section>' +
+    '<section><h3>Procedimientos</h3><p>No se presentan procedimientos registrados para este paciente</p></section>' +
+    '<section><h3>Prestaciones</h3><p>No se presentan prestaciones registradas</p><button>Agregar</button></section></main>';
+  presentation = globalThis.HhrNativeFichaPresentation.create();
+  presentation.refresh('1','compact');
+  expect(document.querySelectorAll('[data-hhr-reading="status-card"]')).toHaveLength(2);
+  expect(document.querySelector('[data-hhr-ficha-folded]')).toBeNull();
+  const message = document.querySelector('section:nth-of-type(2) p');
+  message.textContent = 'Procedimiento registrado';
+  presentation.refresh('1','compact');
+  expect(message.hasAttribute('data-hhr-reading')).toBe(false);
+  presentation.refresh('1','off');
+  expect(document.querySelector('[data-hhr-ficha-theme],[data-hhr-reading],[data-hhr-ficha-primary]')).toBeNull();
+  expect(document.querySelector('section p').textContent).toBe('No tiene permiso para visualizar');
+});

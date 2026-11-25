@@ -39,17 +39,17 @@
       [data-hhr-ficha-folded],.MuiGrid-item:has(> [data-hhr-ficha-folded]:only-child) { display:none !important; }
       .MuiAppBar-root:has(> [data-hhr-ficha-primary]:only-child) { height:auto !important; min-height:40px !important; }
       [data-hhr-ficha-summary-grid] { display:flex !important; flex-flow:row wrap !important; container-type:inline-size;
-        align-items:start; gap:8px !important; width:100%; margin:0 !important; box-sizing:border-box; }
+        align-items:start; gap:var(--hhr-ficha-gap,8px) !important; width:100%; margin:0 !important; box-sizing:border-box; }
       [data-hhr-ficha-summary-grid] > * { flex:1 1 100% !important; min-width:0; max-width:100% !important; box-sizing:border-box; }
       [data-hhr-ficha-summary-grid] > .MuiGrid-item { padding:0 !important; }
       @container (min-width:44rem) {
         [data-hhr-ficha-summary-grid] > :is([data-hhr-ficha-summary-card],.MuiGrid-item):where(:not([data-hhr-ficha-summary-card="wide"],:has(> [data-hhr-ficha-summary-card="wide"]))) {
-          flex-basis:calc((100% - 8px) / 2) !important;
+          flex-basis:calc((100% - var(--hhr-ficha-gap,8px)) / 2) !important;
         }
       }
       @container (min-width:65rem) {
         [data-hhr-ficha-summary-grid] > :is([data-hhr-ficha-summary-card="brief"],.MuiGrid-item:has(> [data-hhr-ficha-summary-card="brief"])) {
-          flex-basis:calc((100% - 16px) / 3) !important;
+          flex-basis:calc((100% - 2 * var(--hhr-ficha-gap,8px)) / 3) !important;
         }
       }
       [data-hhr-ficha-summary-card="brief"]:not(:has(> .MuiCard-root)),
@@ -97,7 +97,7 @@
       }
       :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#vitalSignsEntry,#restEntrySection,#nutritionOrderEntrySection)[data-hhr-ficha-summary-card] {
         :is(th,td,.MuiListItem-root):not(:is(dialog,[role=dialog]) *) {
-          height:auto !important; padding:3px 7px !important; line-height:1.3 !important;
+          height:auto !important; padding:var(--hhr-ficha-cell-y,3px) 7px !important; line-height:1.3 !important;
         }
         tr:not(:is(dialog,[role=dialog]) *) { height:auto !important; }
         :is(th,td,.MuiListItem-root) :is(p,.MuiListItemText-root):not(:is(dialog,[role=dialog]) *) {
@@ -148,7 +148,7 @@
         :is(.MuiCardContent-root,.MuiCardHeader-root,.MuiCardActions-root):not(:is(dialog,[role=dialog]) *) {
           min-height:0 !important; margin-block:0 !important; padding-block:3px !important;
         }
-        :is(th,td):not(:is(dialog,[role=dialog]) *) { padding:3px 7px !important; height:auto !important; line-height:1.28 !important; }
+        :is(th,td):not(:is(dialog,[role=dialog]) *) { padding:var(--hhr-ficha-cell-y,3px) 7px !important; height:auto !important; line-height:1.28 !important; }
         tr:not(:is(dialog,[role=dialog]) *) { height:auto !important; }
         :is(th,td) :is(p,.MuiTypography-root):not(:is(dialog,[role=dialog]) *) { margin-block:0 !important; }
         td :is(.MuiButton-root,.MuiIconButton-root):not(:is(dialog,[role=dialog]) *) {
@@ -182,7 +182,7 @@
       [data-hhr-reading="vital-tile"]:has(> [data-hhr-reading="vital-inner"]) { padding:0 !important; }
       :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-label"]) {
         display:grid !important; grid-template-columns:minmax(0,1fr) auto; align-content:start; align-items:baseline;
-        gap:2px 4px !important; padding:4px 5px !important;
+        gap:2px 4px !important; padding:var(--hhr-ficha-tile-y,4px) 5px !important;
         > * { min-width:0; max-width:100%; grid-column:1 / -1; }
         > [data-hhr-reading="vital-label"] { grid-column:1; }
         > [data-hhr-reading="vital-value"] { grid-column:2; }
@@ -194,7 +194,7 @@
         font-variant-numeric:tabular-nums; overflow-wrap:anywhere;
       }
       [data-hhr-reading="vital-grid"] [data-hhr-reading="vital-label"] { font-size:.75rem !important; }
-      [data-hhr-reading="vital-grid"] [data-hhr-reading="vital-value"] { font-size:.9375rem !important; font-weight:600; }
+      [data-hhr-reading="vital-grid"] [data-hhr-reading="vital-value"] { font-size:var(--hhr-ficha-value,.9375rem) !important; font-weight:600; }
       [data-hhr-reading="vital-grid"] :is([data-hhr-reading="vital-pam"],[data-hhr-reading="vital-time"]) { font-size:.6875rem !important; }
       [data-hhr-reading="vital-pam"] :is(b,strong) { font-size:inherit !important; }
       @media(max-width:30rem) {
@@ -265,6 +265,7 @@
       unmark(element); links.delete(element);
     };
     const reset = () => {
+      style?.remove(); style = null;
       surfaces.clear();
       summaryDensity.clear();
       resizeObserver?.disconnect();
@@ -338,11 +339,16 @@
       });
       [...marked.entries()].filter(([element, attrs]) => [...attrs].some(attr => attr.startsWith('data-hhr-evolution-')) && !next.has(element)).forEach(([element]) => unmark(element));
     };
-    const refresh = encounterId => {
+    const refresh = (encounterId, theme = 'compact') => {
       if (disposed) return;
+      if (!encounterId || theme === 'off') {
+        delete document.documentElement.dataset.hhrFichaTheme;
+        reset(); return;
+      }
+      document.documentElement.dataset.hhrFichaTheme = theme;
       const tab = Array.from(document.querySelectorAll('[role="tab"][aria-selected="true"]')).find(element =>
         (element.id?.startsWith('encounter-event-tab-') || (normalize(element.textContent) === 'resumen' && element.closest('.MuiTabs-root'))) && element.getClientRects().length);
-      if (!encounterId || !tab) { reset(); return; }
+      if (!tab) { reset(); return; }
       const nextPrimary = tab.closest('.MuiTabs-root');
       if (primary && primary !== nextPrimary) reset();
       primary = nextPrimary;
@@ -353,7 +359,7 @@
       enhanceEvolution();
       const isSummary = tab.id === 'encounter-event-tab-summary' || normalize(tab.textContent) === 'resumen';
       const main = isSummary ? document.querySelector('main') : null;
-      surfaces.refresh(main);
+      surfaces.refresh(main, theme === 'compact');
       const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
         ['evolucion','valoracion'].includes(normalize(element.textContent)) && element.getClientRects().length);
       const nextRow = caption?.closest('.MuiGrid-container');
@@ -385,7 +391,8 @@
     window.addEventListener('scroll', schedule, true);
     window.addEventListener('resize', schedule);
     return Object.freeze({ refresh, dispose: () => {
-      disposed = true; cancelAnimationFrame(frame); reset(); style?.remove();
+      disposed = true; cancelAnimationFrame(frame); reset();
+      delete document.documentElement.dataset.hhrFichaTheme;
       window.removeEventListener('scroll', schedule, true); window.removeEventListener('resize', schedule);
     } });
   };

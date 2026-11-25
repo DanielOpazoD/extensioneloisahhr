@@ -19,9 +19,12 @@
         <div class="hhr-setting-row"><label for="hhr-setting-mode">Presentación</label><select id="hhr-setting-mode" class="hhr-center-select" data-setting="mode">
           <option value="floating">Cuadro centrado</option><option value="docked">Panel lateral</option>
         </select></div>
-        <div class="hhr-setting-row"><label for="hhr-setting-density">Densidad</label><select id="hhr-setting-density" class="hhr-center-select" data-setting="density">
+        <div class="hhr-setting-row"><label for="hhr-setting-density">Densidad de Centro HHR</label><select id="hhr-setting-density" class="hhr-center-select" data-setting="density">
           <option value="normal">Normal</option><option value="compact">Compacta</option>
         </select></div>
+        <div class="hhr-setting-row"><label for="hhr-setting-ficha-theme">Vista de la ficha clínica</label>
+          <select id="hhr-setting-ficha-theme" class="hhr-center-select" disabled></select></div>
+        <small role="status" data-ficha-theme-status></small>
         <label class="hhr-setting-row"><span>Contraer barra a HHR</span><input type="checkbox" data-setting="collapsed"></label>
         <label class="hhr-setting-row"><span>Entrega de turno en Gestión de cuidados</span><input type="checkbox" data-setting="handoff" disabled></label>
         <small role="status" data-handoff-status></small>
@@ -29,6 +32,19 @@
         <small role="status" data-checklist-status></small>
       </div></div>`;
     main.querySelector('.hhr-settings-list').append(globalThis.HhrFavoriteLinks.create());
+    const theme = main.querySelector('#hhr-setting-ficha-theme');
+    const themes = globalThis.HhrFichaThemes;
+    for (const [id, title] of themes.choices()) theme.add(new Option(title, id));
+    theme.value = root.dataset.fichaTheme || 'off';
+    theme.disabled = !root.dataset.fichaTheme;
+    theme.addEventListener('change', async () => {
+      const message = main.querySelector('[data-ficha-theme-status]');
+      theme.disabled = true;
+      message.textContent = '';
+      try { await themes.save(theme.value); }
+      catch { theme.value = root.dataset.fichaTheme; message.textContent = 'No se pudo guardar la vista.'; }
+      finally { theme.disabled = false; }
+    });
     const checklist = main.querySelector('[data-checklist-enabled]');
     const checklistStatus = main.querySelector('[data-checklist-status]');
     const checklistKey = 'hhr-clinical-checklists-enabled';

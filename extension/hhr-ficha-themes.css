@@ -1,0 +1,38 @@
+/* Balanced uses the base reader. Overrides apply only inside an active clinical view. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] {
+    --hhr-ficha-gap:4px; --hhr-ficha-cell-y:1px; --hhr-ficha-tile-y:2px;
+    [data-hhr-ficha-primary], .MuiAppBar-root:has(> [data-hhr-ficha-primary]:only-child) { min-height:32px !important; }
+    [data-hhr-ficha-primary] [role="tab"] { min-height:28px !important; }
+    [data-hhr-ficha-sections] { padding-block:1px !important; }
+    :is([data-hhr-ficha-summary-card],[data-hhr-reading="diagnosis"],[data-hhr-reading="orders"],[data-hhr-reading="vitals"]) {
+      margin-block:0 4px !important; border-radius:5px !important;
+    }
+    :is([data-hhr-reading="diagnosis"],[data-hhr-reading="orders"],[data-hhr-reading="vitals"]) {
+      padding:1px 10px !important;
+      > :is(.MuiCardContent-root,.MuiCardHeader-root,.MuiCardActions-root) { padding-inline:0 !important; }
+      :is(.MuiCardContent-root,.MuiCardHeader-root,.MuiCardActions-root):not(:is(dialog,[role=dialog]) *) {
+        padding-block:1px !important;
+      }
+    }
+    [data-hhr-reading="vital-tile"] { border-radius:2px !important; }
+    [data-hhr-reading="vitals"] .MuiCardContent-root > p { margin-block:3px !important; }
+    [data-hhr-reading="status-card"] {
+      padding:4px 8px !important; min-height:0 !important; height:auto !important; margin-block:0 4px !important;
+      :is(h2,h3,h4,h5,h6,p,.MuiCardHeader-title) { margin-block:1px !important; }
+      :is(.MuiCardHeader-root,.MuiCardContent-root) { padding-block:1px !important; }
+    }
+    [data-hhr-reading="status-card"]:has(> [data-hhr-reading="status-message"]) {
+      display:flex; flex-wrap:wrap; align-items:baseline; gap:1px 10px;
+    }
+  }
+  html[data-hhr-ficha-theme="reading"] {
+    --hhr-ficha-gap:12px; --hhr-ficha-cell-y:6px; --hhr-ficha-tile-y:6px; --hhr-ficha-value:1.125rem;
+    :is([data-hhr-reading="diagnosis"],[data-hhr-reading="orders"]) :is(td,th) {
+      font-size:max(1em,.9375rem); line-height:1.5 !important;
+    }
+    [data-hhr-reading="vital-grid"] [data-hhr-reading="vital-label"] { font-size:.875rem !important; }
+    [data-hhr-reading="vital-grid"] :is([data-hhr-reading="vital-time"],[data-hhr-reading="vital-pam"]) { font-size:.8125rem !important; }
+    [data-hhr-evolution-text], [data-hhr-evolution-block] { line-height:1.55; }
+  }
+}

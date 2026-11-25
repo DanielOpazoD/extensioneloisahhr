@@ -58,6 +58,7 @@
   const historyNavigation = globalThis.HhrHistoryDateNavigation?.create({
     onNoveltyUnavailable: () => showPageNotice('No se encontró una publicación médica en el historial cargado.', { title: 'Historial' }),
   });
+  let fichaTheme = null;
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
     returnContext: message => chrome.runtime.sendMessage({ ...message, type: runtimeMessages.WORKLIST_RETURN_CONTEXT }),
@@ -585,8 +586,10 @@
         }
         imagingCenterRuntime.renderImagingCenter(root, targetEncId, selectedFlow);
       }
-      else if (activeModule === 'settings') globalThis.HhrCenterSettings.render({ root,
-        operationsBar: document.getElementById(OPERATIONS_BAR_ID) });
+      else if (activeModule === 'settings') {
+        root.dataset.fichaTheme = fichaTheme || '';
+        globalThis.HhrCenterSettings.render({ root, operationsBar: document.getElementById(OPERATIONS_BAR_ID) });
+      }
       else if (activeModule === 'home') renderHomeCenter(root, targetEncId);
       else renderConnectionCenter(root, targetEncId);
     };
@@ -777,7 +780,7 @@
       }
     }
     if (modal?.isConnected) globalThis.HhrCenterPatientContext?.refreshRoute(modal, encId);
-    nativePresentation?.refresh(encId);
+    nativePresentation?.refresh(encId, fichaTheme || 'off');
     historyNavigation?.refresh(encId);
     worklistPresentation?.refresh(window.location.pathname, resized ? undefined : []);
     resized = false;
@@ -803,6 +806,17 @@
     }, 80);
   };
 
+  const stopTheme = globalThis.HhrFichaThemes.observe(theme => {
+    fichaTheme = theme;
+    const root = document.getElementById(MODAL_ID);
+    if (root) {
+      root.dataset.fichaTheme = theme;
+      const picker = root.querySelector('#hhr-setting-ficha-theme');
+      if (picker) { picker.value = theme; picker.disabled = false; }
+    }
+    scheduleEnsureButton();
+  });
+
   // Apply density to replacement tables before the browser paints. The other
   // controls still use the debounced operations UI refresh.
   const observer = new MutationObserver(records => {
@@ -820,7 +834,7 @@
     if (records.some(record => {
       if (record.type !== 'characterData') return true;
       const label = record.target.parentElement;
-      if (label?.closest('[data-hhr-ficha-summary-card]')) return true;
+      if (label?.closest('[data-hhr-ficha-summary-card],[data-hhr-reading]')) return true;
       return label?.matches('.MuiChip-root > .MuiChip-label') &&
         (label.textContent.trim() === 'Nuevo' || label.parentElement.hasAttribute('data-hhr-history-new'));
     })) scheduleEnsureButton();
@@ -864,6 +878,7 @@
       try { chrome.runtime.onMessage?.removeListener?.(onRuntimeMessage); } catch (_error) {}
       connectionCenterRuntime.dispose();
       historyNavigation?.dispose();
+      stopTheme();
       nativePresentation?.dispose();
       worklistPresentation?.dispose();
       modal?.__hhrDocumentPreview?.dispose();

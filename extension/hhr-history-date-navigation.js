@@ -6,6 +6,7 @@
   const NOVELTY_HASH = '#hhr-ultima-publicacion';
   const medicalRole = /^m[eé]dic[oa](?:\s+(?:cirujan[oa]|especialista|tratante))?$/i;
   const railCss = `
+    @scope (html[data-hhr-ficha-theme]) {
     @media screen {
       [data-hhr-history-timeline] > .MuiBox-root > .MuiCard-root {
         margin-block-end:6px !important;
@@ -35,15 +36,16 @@
       [data-hhr-history-inline="evolution"] + [data-hhr-history-inline="evolution"] { border-top:1px solid #dce5e2; }
       [data-hhr-history-inline="evolution"] .MuiCardHeader-subheader { margin:0; }
     }
+    }
     [data-hhr-history-rail] { display:flex; }
     [data-hhr-history-rail] > [role="tab"] { flex-shrink:0; }
     [data-hhr-history-rail] > [data-hhr-history-tab] ~ [role="tab"] { order:2; }
     [data-hhr-history-scroll] { overflow-x:auto !important; scrollbar-width:none; }
-    .MuiChip-root[data-hhr-history-new] {
+    html[data-hhr-ficha-theme] .MuiChip-root[data-hhr-history-new] {
       background:#e8f3ee; color:#225a45; border-radius:4px; height:16px;
       font-size:10px; font-weight:600; vertical-align:middle;
     }
-    [data-hhr-history-new] > .MuiChip-label { padding-inline:5px; }
+    html[data-hhr-ficha-theme] [data-hhr-history-new] > .MuiChip-label { padding-inline:5px; }
     .MuiCard-root[data-hhr-history-novelty-target] { outline:2px solid #a36b23; outline-offset:-2px; }
   `;
   const dateLabel = label => {

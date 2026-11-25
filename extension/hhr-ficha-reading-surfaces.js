@@ -5,6 +5,19 @@
     ['diagnóstico','diagnosis'],['signos vitales','vitals'],['fármacos','orders'],
     ['indicaciones libres','orders'],['indicaciones (indicación libre)','orders'],
   ]);
+  // Condense only a title and a single explicit native status. Permission messages stay visible.
+  const statusTitles = new Set(['instrumentos de evaluación','producto no farmacológico','procedimientos',
+    'dispositivos invasivos','solicitud de examen','solicitud interconsulta','prestaciones','ram','alergias','eventos adversos']);
+  const statusMessage = /^(?:no tiene permiso para visualizar|no (?:se )?presentan? (?:instrumentos de evaluaci[oó]n|productos? no farmacol[oó]gicos?|procedimientos|dispositivos invasivos|solicitudes de ex[aá]menes|interconsultas|prestaciones)(?: (?:registrad[oa]s?|solicitad[oa]s?))?(?: para este paciente)?)\.?$/i;
+  function markStatus(title, next) {
+    const card = title.closest('.MuiCard-root,section,.MuiPaper-root');
+    if (!card || card.querySelector('table,button,input,a,select,textarea,svg,[role],[contenteditable],[aria-busy=true]')) return;
+    const message = [...card.querySelectorAll('p,span,div')].find(el =>
+      !el.childElementCount && statusMessage.test(el.textContent.trim()));
+    if (!message || card.textContent.replace(/\s+/g,'') !== (title.textContent + message.textContent).replace(/\s+/g,'')) return;
+    next.set(card,'status-card');
+    next.set(message,'status-message');
+  }
   const anchors = { diagnosisEntrySection:'diagnosis', vitalSignsEntry:'vitals', medicationEntrySection:'orders', freeIndicationEntrySection:'orders' };
   const label = el => el.textContent.trim().toLowerCase();
   const vitalNames = /^(?:presi[oó]n(?: arterial)?|(?:fre\.?|frec\.?|frecuencia)\s*(?:card[ií]aca|respiratoria)|saturaci[oó]n(?: (?:de ox[ií]geno|o[2₂]))?|t[°º]? axilar|temperatura|glasgow|sup\. ox[ií]geno|hemoglucotest|eva)$/i;
@@ -61,7 +74,7 @@
 
   function create() {
     let previous = new Map();
-    function refresh(main) {
+    function refresh(main, compact) {
       const next = new Map(), cards = new Map();
       if (main) {
         for (const [id,kind] of Object.entries(anchors)) {
@@ -69,8 +82,11 @@
           if (el && main.contains(el)) cards.set(el,kind);
         }
         for (const title of main.querySelectorAll('h2,h3,h4,h5,h6,.MuiCardHeader-title,.MuiTypography-h6,p.MuiTypography-root')) {
-          const kind = names.get(label(title));
-          if (!kind || title.closest('dialog,[role=dialog],table,nav')) continue;
+          if (title.closest('dialog,[role=dialog],table,nav')) continue;
+          const name = label(title);
+          if (compact && statusTitles.has(name)) markStatus(title,next);
+          const kind = names.get(name);
+          if (!kind) continue;
           const card = cardForTitle(title,kind,main);
           if (card) cards.set(card,kind);
         }
