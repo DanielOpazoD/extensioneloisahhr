@@ -72,6 +72,7 @@
     let timelineRoot = null;
     let newBadges = new Set();
     let inlineEvents = new Set();
+    let dayLabels = new Map();
     let selected = -1;
     let frame = 0;
     let novelty;
@@ -102,8 +103,13 @@
       host = null;
       rail = null;
       horizontalScroll = null;
-      inlineEvents.forEach(card => card.removeAttribute('data-hhr-history-inline'));
+      inlineEvents.forEach(card => {
+        card.removeAttribute('data-hhr-history-inline');
+        card.removeAttribute('data-hhr-history-kind');
+      });
       inlineEvents.clear();
+      dayLabels.forEach((_label, chip) => chip.removeAttribute('data-hhr-history-day'));
+      dayLabels.clear();
       timelineRoot?.style.removeProperty('--hhr-history-top');
       timelineRoot?.removeAttribute('data-hhr-history-timeline');
       timelineRoot = null;
@@ -112,7 +118,9 @@
     };
     const visibleTop = () => {
       const scrollTop = scroller === window ? 0 : scroller.getBoundingClientRect().top;
-      return Math.max(scrollTop, rail.getBoundingClientRect().bottom);
+      // The bar that holds the tabs can be taller than the list of tabs: a day must stop below all of it.
+      const bar = rail.closest('.MuiAppBar-root') || rail;
+      return Math.max(scrollTop, rail.getBoundingClientRect().bottom, bar.getBoundingClientRect().bottom);
     };
     const update = () => {
       frame = 0;
@@ -259,7 +267,7 @@
             element.firstElementChild !== divider || divider.children.length !== 1 ||
             !divider.nextElementSibling?.matches('.MuiCard-root') ||
             !chip.getClientRects().length || chip.closest('#hhr-prescription-print-modal')) return [];
-        return [{ element, label }];
+        return [{ element, label, chip }];
       });
       const timeline = candidates[0]?.element.parentElement;
       const nextGroups = candidates.filter(group => group.element.parentElement === timeline);
@@ -279,13 +287,27 @@
               !header.querySelector('button,a,input,[tabindex]') && !category.children.length) nextInline.add(card);
         }
       }
-      for (const card of inlineEvents) if (!nextInline.has(card)) card.removeAttribute('data-hhr-history-inline');
+      for (const card of inlineEvents) if (!nextInline.has(card)) {
+        card.removeAttribute('data-hhr-history-inline');
+        card.removeAttribute('data-hhr-history-kind');
+      }
       for (const card of nextInline) {
         const category = card.querySelector(':scope > .MuiCardContent-root > p:first-child').textContent.trim();
         const style = /^evoluci[oó]n$/i.test(category) ? 'evolution' : '';
         if (card.getAttribute('data-hhr-history-inline') !== style) card.setAttribute('data-hhr-history-inline', style);
+        // Medical and nursing notes read alike. Every other category is an event of the day.
+        const kind = /^evoluci[oó]n(?: de enfermer[ií]a| m[eé]dica)?$/i.test(category) ? 'note' : '';
+        if (kind) { if (card.getAttribute('data-hhr-history-kind') !== kind) card.setAttribute('data-hhr-history-kind', kind); }
+        else card.removeAttribute('data-hhr-history-kind');
       }
       inlineEvents = nextInline;
+      // The day heading shows the date that the navigation offers for the same group.
+      const nextDays = new Map(groups.map(group => [group.chip, group.label]));
+      dayLabels.forEach((_label, chip) => { if (!nextDays.has(chip)) chip.removeAttribute('data-hhr-history-day'); });
+      nextDays.forEach((label, chip) => {
+        if (chip.getAttribute('data-hhr-history-day') !== label) chip.setAttribute('data-hhr-history-day', label);
+      });
+      dayLabels = nextDays;
       const nextBadges = new Set(groups.flatMap(({ element }) =>
         [...element.querySelectorAll(':scope > .MuiCard-root .MuiChip-root > .MuiChip-label')]
           .filter(label => label.textContent.trim() === 'Nuevo').map(label => label.parentElement)));

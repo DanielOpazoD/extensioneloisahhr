@@ -286,7 +286,9 @@
         "clinical-checklist-dialog.js"
       ],
       "css": [
+        "hhr-ficha-tokens.css",
         "hhr-ficha-themes.css",
+        "hhr-ficha-history.css",
         "hhr-ficha-order-details.css",
         "hhr-ficha-reading-labels.css",
         "hhr-ficha-round-layout.css",

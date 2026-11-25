@@ -109,6 +109,37 @@ describe('Compact native history dates', () => {
     expect(document.querySelectorAll('.MuiCard-root')).toHaveLength(1);
   });
 
+  it('marks each day with its date and each note by its category, and returns both to Eloísa on leaving', () => {
+    vi.useFakeTimers({toFake:['Date']});
+    vi.setSystemTime(new Date('2026-04-15T18:00:00Z'));
+    const timed = (category, time = '09:12') => `<div class="MuiCard-root"><div class="MuiCardHeader-root">
+      <span class="MuiCardHeader-title">Autor de prueba</span><span class="MuiCardHeader-subheader">Médico</span>
+      <span class="MuiCardHeader-action">${time}</span></div>
+      <div class="MuiCardContent-root"><p class="MuiTypography-root">${category}</p><div>Texto</div></div></div>`;
+    const categories = ['Evolución', 'Evolución de enfermería', 'Evolución médica', 'Fármacos', 'Evolución de signos'];
+    document.body.innerHTML = historyTab + '<div id="timeline">' + group('Hoy', categories.map(category => timed(category)).join('')) +
+      group('Ayer', timed('Evolución', 'sin hora')) + group('13-04-2026', timed('Procedimientos')) + '</div>';
+    history = globalThis.HhrHistoryDateNavigation.create(); history.refresh('1');
+    const days = () => [...document.querySelectorAll('#timeline > .MuiBox-root > :first-child .MuiChip-label')].map(label => label.dataset.hhrHistoryDay);
+    const kinds = () => [...document.querySelectorAll('#timeline .MuiCard-root')].map(card => card.getAttribute('data-hhr-history-kind'));
+    expect(days()).toEqual(['Hoy · 15-04-2026', 'Ayer · 14-04-2026', '13-04-2026']);
+    expect(document.querySelector('#timeline .MuiChip-label').textContent).toBe('Hoy');
+    // A card without a readable time keeps its native layout, whatever its category.
+    expect(kinds()).toEqual(['note', 'note', 'note', null, null, null, null]);
+    // Identical marks are not rewritten on the next refresh.
+    const writes = new MutationObserver(() => {});
+    writes.observe(document.querySelector('#timeline'), {subtree:true, attributes:true});
+    history.refresh('1');
+    expect(writes.takeRecords()).toEqual([]);
+    writes.disconnect();
+
+    document.querySelector('#timeline .MuiCardContent-root > p').textContent = 'Fármacos';
+    history.refresh('1');
+    expect(kinds()[0]).toBeNull();
+    document.querySelector('[role="tab"]').setAttribute('aria-selected', 'false'); history.refresh('1');
+    expect(document.querySelector('[data-hhr-history-day],[data-hhr-history-kind],[data-hhr-history-inline]')).toBeNull();
+  });
+
   it('compacts Nuevo only within history cards and clears the style when the label changes', () => {
     const chip = '<div class="MuiChip-root"><span class="MuiChip-label">Nuevo</span></div>';
     document.body.innerHTML = historyTab + chip + '<div id="timeline">' +
