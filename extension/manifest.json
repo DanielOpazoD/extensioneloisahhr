@@ -269,6 +269,9 @@
         "hhr-ficha-reading-surfaces.js",
         "hhr-ficha-vital-strip.js",
         "hhr-ficha-summary-density.js",
+        "hhr-ficha-reading-labels.js",
+        "hhr-ficha-round-layout.js",
+        "hhr-ficha-evolution-authors.js",
         "hhr-native-ficha-presentation.js",
         "hhr-worklist-drawer.js",
         "worklist-return-navigation.js",
@@ -282,6 +285,9 @@
       ],
       "css": [
         "hhr-ficha-themes.css",
+        "hhr-ficha-reading-labels.css",
+        "hhr-ficha-round-layout.css",
+        "hhr-ficha-evolution-authors.css",
         "nursing-handoff-dialog.css",
         "clinical-checklist.css"
       ],

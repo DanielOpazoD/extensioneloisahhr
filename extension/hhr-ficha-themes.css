@@ -22,8 +22,13 @@
       :is(h2,h3,h4,h5,h6,p,.MuiCardHeader-title) { margin-block:1px !important; }
       :is(.MuiCardHeader-root,.MuiCardContent-root) { padding-block:1px !important; }
     }
+    [data-hhr-reading="status-card"]:has(> .MuiCardHeader-root + .MuiCardContent-root),
     [data-hhr-reading="status-card"]:has(> [data-hhr-reading="status-message"]) {
-      display:flex; flex-wrap:wrap; align-items:baseline; gap:1px 10px;
+      display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px;
+      > :is(.MuiCardHeader-root,.MuiCardContent-root) { padding:0 !important; }
+      > .MuiCardHeader-root:has(input) { gap:8px; flex-wrap:wrap; }
+      :is(.MuiCardHeader-title,h3) { font-size:.875rem; line-height:1.4; }
+      [data-hhr-reading="status-message"] { font-size:.8125rem; line-height:1.4; }
     }
   }
   html[data-hhr-ficha-theme="reading"] {
@@ -34,5 +39,33 @@
     [data-hhr-reading="vital-grid"] [data-hhr-reading="vital-label"] { font-size:.875rem !important; }
     [data-hhr-reading="vital-grid"] :is([data-hhr-reading="vital-time"],[data-hhr-reading="vital-pam"]) { font-size:.8125rem !important; }
     [data-hhr-evolution-text], [data-hhr-evolution-block] { line-height:1.55; }
+  }
+}
+
+/* The medical summary nests MUI cards inside a flex row. Treat the readings as a
+   single band; each number, its timestamp and its source alert colour stay together. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-reading="vital-grid"] {
+    gap:2px !important;
+    [data-hhr-reading="vital-tile"] {
+      border:0 !important; border-inline-start:2px solid #bfd8d1 !important; border-radius:0 !important;
+      background:#f3f7f5; box-shadow:none !important;
+    }
+    [data-hhr-reading="vital-inner"] { background:transparent; }
+    [data-hhr-reading="vital-pressure-group"] { display:contents !important; }
+    [data-hhr-reading="vital-pressure-group"] > [data-hhr-reading="vital-value"] {
+      display:flex; align-items:baseline; gap:0 !important; grid-column:2; grid-row:1;
+    }
+    [data-hhr-reading="vital-pressure-group"] > [data-hhr-reading="vital-pam"] {
+      display:flex; align-items:baseline; gap:3px !important; grid-column:1; grid-row:2;
+    }
+    [data-hhr-reading="vital-pressure-group"] + [data-hhr-reading="vital-time"] { grid-column:2; grid-row:2; }
+    :is([data-hhr-reading="vital-label"],[data-hhr-reading="vital-pam"],[data-hhr-reading="vital-value"])
+      :is(.MuiTypography-root,h5,p,span) { font-size:inherit !important; line-height:inherit !important; margin:0 !important; }
+    [data-hhr-reading="vital-value"] :is(h5,span) { font-weight:inherit; }
+    [data-hhr-vital-elapsed] {
+      font-size:0 !important;
+      &::after { content:attr(data-hhr-vital-elapsed) / ""; font-size:.6875rem; line-height:1.15; }
+    }
   }
 }

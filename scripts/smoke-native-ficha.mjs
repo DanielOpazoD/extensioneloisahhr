@@ -4,7 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const event = (id, role, category) => `<div id="${id}" class="MuiCard-root" style="background:white;border-radius:10px;margin-bottom:12px;padding:16px">
-  <div class="MuiCardHeader-root"><span class="MuiCardHeader-title">Profesional de prueba</span><span class="MuiCardHeader-subheader">${role}</span>
+  <div class="MuiCardHeader-root"><span class="MuiCardHeader-title">${id === 'nurse' ? 'Autora de prueba' : 'Profesional de prueba'}</span><span class="MuiCardHeader-subheader">${role}</span>
     <span class="MuiCardHeader-action">${id === 'medical-today' ? '09:10 hrs' : '10:07 hrs'}</span></div>
   <div class="MuiCardContent-root"><p class="MuiTypography-root">${category}</p><div class="MuiStack-root"><div class="MuiStack-root" style="display:flex;gap:8px">
     <p class="MuiTypography-root" style="flex:1;margin:0">${'Texto sintético para verificar el ancho de lectura de una evolución. '.repeat(8)}</p>
@@ -42,7 +42,7 @@ const fixture = `
       <section id="medicationEntrySection"><div class="MuiCard-root"><div class="MuiCardHeader-root"><h2 class="MuiCardHeader-title">Fármacos</h2></div>
         <div class="MuiCardContent-root"><table><tbody><tr><td>Preparación A</td><td>Registro 1</td></tr><tr><td>Preparación B</td><td>Registro 2</td></tr></tbody></table></div>
         <div class="MuiCardActions-root"><button aria-label="Imprimir fármacos" type="button">Imprimir</button></div></div></section>
-      <section id="observationEntrySection"><div id="evolution" class="MuiCard-root"><span class="MuiCardHeader-title">Evolución</span>
+      <section id="observationEntrySection"><div id="evolution" class="MuiCard-root"><span class="MuiCardHeader-title">Evolución</span><div class="MuiCardHeader-action"></div>
         <div class="MuiCardContent-root"><div class="MuiStack-root"><div class="MuiStack-root" style="width:100%;display:flex">
           <div class="MuiBox-root" style="width:350px"><span class="MuiTypography-caption">Profesional de prueba</span><div class="MuiBox-root">${'Texto sintético de evolución que debe aprovechar todo el ancho disponible. '.repeat(28)}</div></div>
         </div></div></div></div></section>
@@ -141,7 +141,19 @@ export const verifyNativeFicha = async (page, worker) => {
       await page.waitForFunction(()=>document.querySelector('[data-hhr-ficha-sections]').getBoundingClientRect().width>innerWidth*.9);
     }
     await screenshot(page,'ficha-evolucion-'+width);
-    await page.getByRole('tab',{name:'Historial',exact:true}).click();
+    if (width === 1366) {
+      await page.locator('#evolution').getByRole('button',{name:'Ver evoluciones'}).click();
+      const authors = page.getByRole('group',{name:'Evoluciones por profesional'});
+      const visibleCards = page.locator('#native-timeline .MuiCard-root:visible');
+      await authors.getByRole('button',{name:'Todos'}).waitFor();
+      assert.equal(await visibleCards.count(),3);
+      await authors.getByRole('button',{name:'Autora de prueba'}).click();
+      assert.deepEqual(await visibleCards.evaluateAll(cards => cards.map(card => card.id)),['nurse']);
+      await page.getByRole('button',{name:'Historial completo',exact:true}).click();
+      assert.equal(await visibleCards.count(),7);
+    } else {
+      await page.getByRole('tab',{name:'Historial',exact:true}).click();
+    }
     const toolbar=page.locator('#hhr-history-date-navigation');
     const date=toolbar.getByRole('combobox',{name:'Fecha del historial'});
     await date.waitFor();
@@ -166,7 +178,7 @@ export const verifyNativeFicha = async (page, worker) => {
     if(width >= 800) assert.ok(layout.inline);
     assert.equal(await date.locator('option').count(),3);
     if (width === 1366) {
-      const divider = page.locator('#native-timeline > .MuiBox-root:first-child > :first-child');
+      const divider = page.locator('#native-timeline > .MuiBox-root').first().locator(':scope > :first-child');
       await page.evaluate(() => window.scrollBy(0,180));
       await page.waitForFunction(() => {
         const divider=document.querySelector('#native-timeline > .MuiBox-root > :first-child').getBoundingClientRect();

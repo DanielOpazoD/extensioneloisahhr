@@ -59,6 +59,7 @@
     onNoveltyUnavailable: () => showPageNotice('No se encontró una publicación médica en el historial cargado.', { title: 'Historial' }),
   });
   let fichaTheme = null;
+  const evolutionAuthors = globalThis.HhrFichaEvolutionAuthors.create();
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
     returnContext: message => chrome.runtime.sendMessage({ ...message, type: runtimeMessages.WORKLIST_RETURN_CONTEXT }),
@@ -782,6 +783,7 @@
     if (modal?.isConnected) globalThis.HhrCenterPatientContext?.refreshRoute(modal, encId);
     nativePresentation?.refresh(encId, fichaTheme || 'off');
     historyNavigation?.refresh(encId);
+    evolutionAuthors.refresh(fichaTheme === 'compact' ? encId : null);
     worklistPresentation?.refresh(window.location.pathname, resized ? undefined : []);
     resized = false;
     ensureOperationsBar(encId);
@@ -834,7 +836,7 @@
     if (records.some(record => {
       if (record.type !== 'characterData') return true;
       const label = record.target.parentElement;
-      if (label?.closest('[data-hhr-ficha-summary-card],[data-hhr-reading]')) return true;
+      if (label?.closest('[data-hhr-ficha-summary-card],[data-hhr-reading],[data-hhr-update-label],[data-hhr-note-disclosure],[data-hhr-history-timeline] .MuiCardHeader-root')) return true;
       return label?.matches('.MuiChip-root > .MuiChip-label') &&
         (label.textContent.trim() === 'Nuevo' || label.parentElement.hasAttribute('data-hhr-history-new'));
     })) scheduleEnsureButton();
@@ -877,6 +879,7 @@
       document.removeEventListener('visibilitychange', onVisibilityChange);
       try { chrome.runtime.onMessage?.removeListener?.(onRuntimeMessage); } catch (_error) {}
       connectionCenterRuntime.dispose();
+      evolutionAuthors.clear();
       historyNavigation?.dispose();
       stopTheme();
       nativePresentation?.dispose();

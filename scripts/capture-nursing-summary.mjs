@@ -18,7 +18,13 @@ try {
     else if (execFileSync('git',['ls-tree','--name-only',revision,themeFile],{encoding:'utf8'}).trim()) {
       await page.addStyleTag({content:execFileSync('git',['show',revision+':'+themeFile],{encoding:'utf8'})});
     }
-    for (const name of ['hhr-ficha-reading-surfaces','hhr-ficha-vital-strip','hhr-ficha-summary-density','hhr-native-ficha-presentation']) {
+    const newer = revision === 'WORKTREE' || execFileSync('git',['ls-tree','--name-only',revision,'extension/hhr-ficha-round-layout.js'],{encoding:'utf8'}).trim();
+    if (newer) for (const file of ['hhr-ficha-round-layout','hhr-ficha-reading-labels']) {
+      const css = 'extension/'+file+'.css';
+      const content = revision === 'WORKTREE' ? await readFile(css,'utf8') : execFileSync('git',['show',revision+':'+css],{encoding:'utf8'});
+      await page.addStyleTag({content});
+    }
+    for (const name of [...(newer ? ['hhr-ficha-round-layout','hhr-ficha-reading-labels'] : []),'hhr-ficha-reading-surfaces','hhr-ficha-vital-strip','hhr-ficha-summary-density','hhr-native-ficha-presentation']) {
       const file = 'extension/'+name+'.js';
       const content = revision === 'WORKTREE' ? await readFile(file,'utf8') :
         execFileSync('git',['show',revision+':'+file],{encoding:'utf8'});

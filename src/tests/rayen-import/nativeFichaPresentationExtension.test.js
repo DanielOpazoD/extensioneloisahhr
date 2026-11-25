@@ -4,6 +4,8 @@ import '../../../extension/hhr-history-date-navigation.js';
 import '../../../extension/hhr-ficha-reading-surfaces.js';
 import '../../../extension/hhr-ficha-vital-strip.js';
 import '../../../extension/hhr-ficha-summary-density.js';
+import '../../../extension/hhr-ficha-reading-labels.js';
+import '../../../extension/hhr-ficha-round-layout.js';
 import '../../../extension/hhr-native-ficha-presentation.js';
 
 const event = (role, category, note = '') => `<div class="MuiCard-root">
