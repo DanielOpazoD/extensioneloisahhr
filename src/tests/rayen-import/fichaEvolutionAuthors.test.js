@@ -96,6 +96,14 @@ it('nombra solo las acciones nativas reconocibles y retira sus marcas sin tocar 
   expect(marks(buttons)).toEqual([null,'edit']);
   buttons = toolbar('', '<button><svg></svg></button><button><svg></svg></button><button><svg></svg></button>');
   expect(marks(buttons)).toEqual([null,null,null]);
+  // A third tool breaks the known pair, even when it has its own name.
+  buttons = toolbar('', '<button><svg></svg></button><button><svg></svg></button><button aria-label="Compartir"><svg></svg></button>');
+  expect(marks(buttons)).toEqual([null,null,null]);
+  // Only whole icon names count as the pencil.
+  buttons = toolbar('<button><svg data-testid="MoreVertIcon"></svg></button>', ['CreateNewFolderIcon','EditOffIcon','PlaylistAddCheckIcon','EditOutlinedIcon']
+    .map(icon => '<button><svg data-testid="' + icon + '"></svg></button>').join(''));
+  expect(marks(buttons)).toEqual(['more',null,null,null,'edit']);
+  expect(buttons.map(button => button.title)).toEqual(['Más opciones','','','','Editar evolución']);
   // An overflow icon among the tools is not the card menu.
   buttons = toolbar('', '<button aria-label="Opciones"><svg></svg></button>');
   expect(marks(buttons)).toEqual([null]);
@@ -108,6 +116,24 @@ it('nombra solo las acciones nativas reconocibles y retira sus marcas sin tocar 
   expect(marks(buttons)).toEqual([null,null,null]);
   expect(buttons.map(button => button.title)).toEqual(['','Editar','Nombre que Eloísa añadió después']);
   expect(card.querySelector('[data-hhr-evo-hint],[data-hhr-evo-action]')).toBeNull();
+});
+
+it('monta «Ver evoluciones» en una cabecera que cede sus hijos a la cuadrícula de la tarjeta', () => {
+  reader.clear();
+  const host = document.querySelector('#evolution .MuiCardHeader-action');
+  host.style.display = 'contents';
+  // A box-less element has no client rectangles. Its card still has them.
+  Element.prototype.getClientRects.mockImplementation(function () {
+    return getComputedStyle(this).display === 'contents' ? [] : [{width:100,height:30}];
+  });
+  reader.refresh('1');
+  expect(host.firstElementChild?.classList.contains('hhr-evo-entry')).toBe(true);
+  document.querySelector('#evolution').style.display = 'none';
+  Element.prototype.getClientRects.mockImplementation(function () {
+    return this.closest('[style*="none"]') || getComputedStyle(this).display === 'contents' ? [] : [{width:100,height:30}];
+  });
+  reader.refresh('1');
+  expect(document.querySelector('.hhr-evo-entry')).toBeNull();
 });
 
 it('opens native history, restricts the explicit view to notes, and filters by the person in either header order', () => {

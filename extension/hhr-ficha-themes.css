@@ -279,9 +279,10 @@
       [data-hhr-reading="empty-section-title"]::after { content:var(--hhr-request-label) / ''; font:600 .8125rem/1.35 system-ui,sans-serif; }
       [data-hhr-reading="status-message"]::after { content:"Sin solicitudes" / ''; font:normal .75rem/1.35 system-ui,sans-serif; color:#516963; }
     }
-    /* Side by side, each request reads as a label and its state on a single line. */
+    /* Side by side, each request reads as a label followed by its state. With larger
+       text the state moves below its own label. */
     &[data-hhr-round-half] [data-hhr-reading="status-card"], &[data-hhr-round-half][data-hhr-reading="status-card"] {
-      flex-wrap:nowrap; justify-content:flex-start; column-gap:7px; white-space:nowrap;
+      justify-content:flex-start; column-gap:7px;
     }
   }
 }

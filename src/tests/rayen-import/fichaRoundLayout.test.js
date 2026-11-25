@@ -221,6 +221,10 @@ it('pairs two empty requests on the last side line and stacks each column from i
     expect(['observationEntrySection','vitalSignsEntry'].map(offset)).toEqual(['0px','200px']);
     expect(['shiftChangeEntrySection','alertEntrySection','diagnosisTestEntrySection','operationTheaterRequestEntrySection'].map(offset))
       .toEqual(['0px','30px','150px','150px']);
+    // The taller half sets the height of the line for both.
+    const rowHeight = id => item(id).style.getPropertyValue('--hhr-round-row-height');
+    expect(['diagnosisTestEntrySection','operationTheaterRequestEntrySection'].map(rowHeight)).toEqual(['45px','45px']);
+    expect(rowHeight('alertEntrySection')).toBe('');
 
     // A request with a record leaves the pair. The remaining notice takes the whole line.
     delete exam.dataset.hhrEmptyRequest;
@@ -228,6 +232,7 @@ it('pairs two empty requests on the last side line and stacks each column from i
     expect(exam.parentElement.dataset.hhrRound).toBe('peer');
     expect(main.querySelector('[data-hhr-round-half]')).toBeNull();
     expect(offset('operationTheaterRequestEntrySection')).toBe('150px');
+    expect(rowHeight('operationTheaterRequestEntrySection')).toBe('');
     expect(offset('diagnosisTestEntrySection')).toBe('');
 
     exam.dataset.hhrEmptyRequest = 'exam';

@@ -212,7 +212,9 @@
     > * { grid-column:1 / -1; }
     > [data-hhr-reading-toggle="alert"]:has(+ [data-hhr-entry-open]) { grid-column:1; }
     > [data-hhr-entry-open] { grid-column:2; justify-self:end; align-self:center; min-height:24px; padding-block:1px; }
-    /* The rule hangs in the margin, leaving both switches on one edge. */
+    /* The rule hangs in the margin, leaving both switches on one edge.
+       Once marked, the order takes the whole line of the card. */
     > [data-hhr-resuscitation-toggle] { margin-inline-start:-6px; }
+    > [data-hhr-resuscitation-toggle]:has(input:checked) { width:auto; justify-self:stretch; }
   }
 }

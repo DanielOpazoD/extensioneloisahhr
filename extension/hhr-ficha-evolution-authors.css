@@ -94,7 +94,8 @@
   @supports (reading-flow:grid-rows) {
     @container hhr-evolution (min-width:32rem) {
       /* The buttons keep their original React parents, handlers and popover anchors.
-         Reading order: title, earlier notes, writing tools and the overflow menu. */
+         Visual order: title, earlier notes, writing tools and the overflow menu. Tab still
+         reaches the header menu before the tools: a header subtree keeps its place in the focus order. */
       html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar] {
         display:grid; grid-template-columns:minmax(0,1fr) repeat(6,auto); align-items:center;
         reading-flow:grid-rows; gap:3px 0; padding:4px 10px 6px 7px;

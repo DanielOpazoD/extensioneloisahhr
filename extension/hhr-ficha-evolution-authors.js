@@ -52,7 +52,8 @@
   // Name the native icon buttons that can be identified. An unknown button keeps its own icon.
   const plain = value => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   const noteNoun = /\b(?:evolucion(?:es)?|nota|observacion)\b/;
-  const editIcon = /^(?:EditNote|PostAdd|NoteAdd|Create|Edit|BorderColor|RateReview|PlaylistAdd)/i;
+  // Whole icon names: EditOff, CreateNewFolder or PlaylistAddCheck are different actions.
+  const editIcon = /^(?:EditNote|PostAdd|NoteAdd|Create|Edit|BorderColor|RateReview)(?:Outlined|Rounded|Sharp|TwoTone)?Icon$/;
   function toolAction(button, unnamedPair) {
     const name = plain(button.getAttribute('aria-label') || button.title);
     const icons = [...button.querySelectorAll('svg[data-testid]')].map(icon => icon.getAttribute('data-testid'));

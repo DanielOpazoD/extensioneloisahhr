@@ -22,7 +22,9 @@ En Evolución se leen, en este orden, «Ver evoluciones», «Editar», «Enmiend
 
 En el ingreso, Reposo no tiene registro y comparte la línea con Régimen. Con dos indicaciones firmadas por profesionales distintos, la línea común cabe en la ventana de 1440 px: Fármacos pasa de 531 a 497 px. [Antes](0.48.189/antes/1440-expandida.png) · [Después](0.48.189/despues/1440-expandida.png). En la de 1280 px cada indicación conserva su renglón y Fármacos queda en 530 px. Las dos solicitudes vacías ocupan 27 px en total, frente a 53.
 
-En las tablas, el nombre de cada columna y la primera celda empiezan en el margen del título de su tarjeta. Las marcas SOS y Antimic conservan su texto, su filete y su contraste.
+En las tablas, el nombre de cada columna y la primera celda empiezan en el margen del título de su tarjeta. Las marcas SOS y Antimic conservan su texto, su filete y su contraste. «No reanimación», una vez marcada, ocupa toda la línea de Alertas.
+
+Con el texto del navegador al 125 % en una ventana de 1100 px, el estado de cada solicitud vacía pasa debajo de su nombre y las dos mitades terminan en la misma línea.
 
 ### Verificación con teclado
 

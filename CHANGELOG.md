@@ -4,7 +4,7 @@
 
 - En el Resumen compacto de escritorio, las acciones de Evolución muestran su nombre junto a un icono de la misma familia: «Ver evoluciones», «Editar», «Enmiendas» y «Pautas». El menú de opciones cierra la fila. En una tarjeta estrecha quedan los iconos. Al pie de la nota se leen «Leer nota completa» y «Contraer», y el historial de Signos vitales se rotula «Historial».
 - Reposo y Régimen comparten una línea cuando caben sus valores y firmas. Un reposo sin registro se resume como «Sin registro» y una firma común cierra la línea con «Ambas». Las solicitudes de exámenes y de cirugía vacías comparten la última línea del lateral.
-- «Agregar» queda en la línea del título de Observaciones de entrega y «Agregar alerta» junto a «Gestión de Visitas». Cada alerta lleva un filete lateral. Fármacos, Indicaciones libres y Órdenes de atención alinean sus columnas con el título de la tarjeta.
+- «Agregar» queda en la línea del título de Observaciones de entrega y «Agregar alerta» junto a «Gestión de Visitas». Cada alerta lleva un filete lateral y «No reanimación», una vez marcada, ocupa toda la línea. Fármacos, Indicaciones libres y Órdenes de atención alinean sus columnas con el título de la tarjeta.
 
 ## 0.48.188
 

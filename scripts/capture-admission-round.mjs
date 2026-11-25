@@ -186,4 +186,23 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   assert.match(emptyRest, /^"Sin registro"/, 'Un reposo sin registro se resume en dos palabras');
   assert.ok(await page.getByText('No se presenta un Reposo registrado para este paciente').isVisible());
   assert.ok(await page.getByText('Preferir porciones pequeñas.').isVisible());
+
+  // Larger browser text in the narrowest desktop window: the two requests wrap inside their halves.
+  const viewport = page.viewportSize();
+  await page.setViewportSize({width:1100, height:viewport.height});
+  await page.evaluate(() => { document.documentElement.style.fontSize = '125%'; });
+  await settle();
+  await settle();
+  const halves = await page.evaluate(() => ['exam','surgery'].map(kind => {
+    const half = document.querySelector('[data-hhr-round-half] [data-hhr-empty-request="' + kind + '"]').closest('[data-hhr-round-half]');
+    const card = half.querySelector('[data-hhr-reading="status-card"]');
+    const box = half.getBoundingClientRect();
+    return {top:box.top, bottom:box.bottom, clipped:card.scrollWidth - card.clientWidth};
+  }));
+  assert.ok(halves.every(half => half.clipped <= 0), 'Con letra más grande, ninguna solicitud vacía queda recortada');
+  assert.ok(Math.abs(halves[0].top - halves[1].top) < 1 && Math.abs(halves[0].bottom - halves[1].bottom) < 1,
+    'Las dos mitades empiezan y terminan en la misma línea aunque solo una salte de renglón');
+  await page.evaluate(() => { document.documentElement.style.removeProperty('font-size'); });
+  await page.setViewportSize(viewport);
+  await settle();
 }

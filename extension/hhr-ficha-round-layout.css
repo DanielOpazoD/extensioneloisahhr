@@ -79,8 +79,12 @@
       }
       :is([data-hhr-round="note"],[data-hhr-round="vitals"],:is([data-hhr-round="care"],[data-hhr-round="care-card"])) { grid-column:1 / 9; }
       :is([data-hhr-round="handoff"],[data-hhr-round="alerts"],[data-hhr-round="empty-request"]) { grid-column:9 / -1; }
-      [data-hhr-round="empty-request"][data-hhr-round-half="start"] { grid-column:9 / 11; }
-      [data-hhr-round="empty-request"][data-hhr-round-half="end"] { grid-column:11 / -1; }
+      /* Both halves end on the same line, also when only one of them wraps. */
+      [data-hhr-round="empty-request"][data-hhr-round-half] {
+        min-height:var(--hhr-round-row-height,0px) !important; background:#fff;
+      }
+      [data-hhr-round="empty-request"][data-hhr-round-half="start"] { grid-column:9 / 11; border-end-start-radius:5px; }
+      [data-hhr-round="empty-request"][data-hhr-round-half="end"] { grid-column:11 / -1; border-end-end-radius:5px; }
       [data-hhr-round="note"] #evolution { border-radius:6px 0 0 0 !important; }
       [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root {
         border-block-start:1px solid var(--hhr-round-edge); border-radius:0 0 5px 5px !important;
@@ -140,14 +144,16 @@
         padding-block-start:0 !important;
         /* Two short instructions share a line. Either one takes its own line as soon as
            its value, observation and byline need the whole width. */
-        .MuiGrid-container {
+        .MuiGrid-container { display:block !important; }
+        .MuiGrid-container > .MuiGrid-item { width:100% !important; }
+        .MuiGrid-container:has(> .MuiGrid-item [data-hhr-round="care-row"]) {
           display:flex !important; flex-flow:row wrap; gap:0 !important; overflow:hidden;
           background:#fff; border-radius:0 0 5px 5px;
-        }
-        .MuiGrid-container > .MuiGrid-item {
-          flex:1 1 auto !important; width:auto !important; min-width:0;
-          margin-inline-start:-1px; border-inline-start:1px solid #dce5e2;
-          &:has([data-hhr-round="care-empty"]) { flex-grow:0 !important; }
+          > .MuiGrid-item {
+            flex:1 1 auto !important; width:auto !important; min-width:0;
+            margin-inline-start:-1px; border-inline-start:1px solid #dce5e2;
+            &:has([data-hhr-round="care-empty"]) { flex-grow:0 !important; }
+          }
         }
         :is(#restEntrySection,#nutritionOrderEntrySection) { padding:0 !important; }
         &[data-hhr-round="care-card"], [data-hhr-round="care-row"] {

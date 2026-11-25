@@ -230,7 +230,9 @@
         }
       }
       set(frame, '--hhr-round-line', String(leadingRows + 1));
-      const offsets = [];
+      const offsets = [], rowHeights = [];
+      // Measure each half at its own height before both take the height of their row.
+      for (const item of halves) set(item, '--hhr-round-row-height', '0px');
       // A column is a stack of rows. The two halves of a row start at the same height.
       for (const column of columns) {
         let top = 0;
@@ -240,10 +242,12 @@
             offsets.push([item, top]);
             height = Math.max(height, item.getBoundingClientRect().height);
           }
+          if (row.length > 1) for (const item of row) rowHeights.push([item, height]);
           top += height;
         }
       }
       for (const [el, top] of offsets) set(el, '--hhr-round-offset', top + 'px');
+      for (const [el, height] of rowHeights) set(el, '--hhr-round-row-height', height + 'px');
     }
     function resetColumns() {
       if (pending) cancelAnimationFrame(pending);
@@ -256,7 +260,10 @@
         frame.style.removeProperty('--hhr-round-line');
       }
       for (const item of columns.flat(2)) item.style.removeProperty('--hhr-round-offset');
-      for (const item of halves) item.removeAttribute('data-hhr-round-half');
+      for (const item of halves) {
+        item.removeAttribute('data-hhr-round-half');
+        item.style.removeProperty('--hhr-round-row-height');
+      }
       for (const [peer] of peers) peer.style.removeProperty('--hhr-round-span');
       columns = []; halves = []; peers = []; frame = null;
     }

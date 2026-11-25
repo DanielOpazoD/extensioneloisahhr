@@ -93,6 +93,18 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
           Math.abs(band.rest.left - band.signs.left) <= 1 && Math.abs(band.diet.right - band.signs.right) <= 1;
         assert.ok((stacked || sharedLine) && Math.abs(band.rest.top - band.signs.bottom) < 2,
           'Reposo y Régimen deben continuar el margen izquierdo sin crear otro hueco');
+        // The fonts of each system decide the widths. The line is shared exactly when both instructions fit.
+        const fit = await page.evaluate(() => {
+          const line = document.querySelector('#rest').closest('.MuiGrid-container');
+          const items = [...line.children], styles = items.map(item => item.getAttribute('style'));
+          for (const item of items) item.style.setProperty('flex', '0 0 max-content', 'important');
+          const needed = items.reduce((sum, item) => sum + item.getBoundingClientRect().width - 1, 0);
+          items.forEach((item, index) => styles[index] === null ? item.removeAttribute('style') : item.setAttribute('style', styles[index]));
+          return {needed, available:line.getBoundingClientRect().width};
+        });
+        if (Math.abs(fit.needed - fit.available) > 2) {
+          assert.equal(sharedLine, fit.needed < fit.available, 'Reposo y Régimen comparten línea siempre que caben, y solo entonces');
+        }
         assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 &&
           Math.abs(band.exam.left - band.alerts.left) <= 1 && Math.abs(band.surgery.right - band.alerts.right) <= 1 &&
           Math.abs(band.exam.top - band.alerts.bottom) < 2 && Math.abs(band.exam.height - band.surgery.height) < 1,
