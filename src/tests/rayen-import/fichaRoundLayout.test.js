@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import '../../../extension/hhr-ficha-round-layout.js';
 
 const slot = (id, content) => '<div class="MuiGrid-item MuiGrid-grid-xs-12"><section id="'+id+'">'+content+'</section></div>';
@@ -192,6 +192,57 @@ it('uses only isolated native branches for the two columns and returns populated
   layout.refresh(main);
   expect(exam.parentElement.dataset.hhrRound).toBe('peer');
   expect(surgery.parentElement.dataset.hhrRound).toBe('peer');
+});
+
+it('pairs two empty requests on the last side line and stacks each column from its own row heights', () => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  vi.stubGlobal('matchMedia', () => ({matches:true, addEventListener() {}, removeEventListener() {}}));
+  const heights = {observationEntrySection:200, vitalSignsEntry:90, shiftChangeEntrySection:30, alertEntrySection:120,
+    diagnosisTestEntrySection:27, operationTheaterRequestEntrySection:45};
+  vi.spyOn(Element.prototype,'getBoundingClientRect').mockImplementation(function () {
+    return {height:heights[this.firstElementChild?.id] ?? 0};
+  });
+  const desktop = globalThis.HhrFichaRoundLayout.create();
+  try {
+    document.body.innerHTML = '<main><div class="MuiGrid-container">' +
+      slot('observationEntrySection','Nota') + slot('shiftChangeEntrySection','<textarea></textarea>') +
+      slot('vitalSignsEntry','Signos') + slot('alertEntrySection','<button>Archivar</button>') +
+      slot('diagnosisTestEntrySection','Sin solicitudes') + slot('operationTheaterRequestEntrySection','Sin solicitudes') +
+      '</div></main>';
+    const main = document.querySelector('main'), original = main.innerHTML;
+    const item = id => main.querySelector('#' + id).parentElement;
+    const offset = id => item(id).style.getPropertyValue('--hhr-round-offset');
+    const exam = main.querySelector('#diagnosisTestEntrySection'), surgery = main.querySelector('#operationTheaterRequestEntrySection');
+    exam.dataset.hhrEmptyRequest = 'exam';
+    surgery.dataset.hhrEmptyRequest = 'surgery';
+    desktop.refresh(main);
+    expect(main.firstElementChild.hasAttribute('data-hhr-round-columns')).toBe(true);
+    expect([exam,surgery].map(el => el.parentElement.dataset.hhrRoundHalf)).toEqual(['start','end']);
+    expect(['observationEntrySection','vitalSignsEntry'].map(offset)).toEqual(['0px','200px']);
+    expect(['shiftChangeEntrySection','alertEntrySection','diagnosisTestEntrySection','operationTheaterRequestEntrySection'].map(offset))
+      .toEqual(['0px','30px','150px','150px']);
+
+    // A request with a record leaves the pair. The remaining notice takes the whole line.
+    delete exam.dataset.hhrEmptyRequest;
+    desktop.refresh(main);
+    expect(exam.parentElement.dataset.hhrRound).toBe('peer');
+    expect(main.querySelector('[data-hhr-round-half]')).toBeNull();
+    expect(offset('operationTheaterRequestEntrySection')).toBe('150px');
+    expect(offset('diagnosisTestEntrySection')).toBe('');
+
+    exam.dataset.hhrEmptyRequest = 'exam';
+    desktop.refresh(main);
+    expect([exam,surgery].map(el => el.parentElement.dataset.hhrRoundHalf)).toEqual(['start','end']);
+    delete exam.dataset.hhrEmptyRequest;
+    delete surgery.dataset.hhrEmptyRequest;
+    desktop.clear();
+    for (const el of main.querySelectorAll('[style=""]')) el.removeAttribute('style');
+    expect(main.innerHTML).toBe(original);
+  } finally {
+    desktop.clear();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  }
 });
 
 it('exposes nested MUI layout slots and preserves the sibling print action, draft and hidden print copy', () => {

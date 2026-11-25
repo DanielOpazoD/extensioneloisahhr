@@ -18,7 +18,7 @@
     }
     :is(#shiftChangeObservation,#evolution).MuiCard-root { border-radius:6px; box-shadow:none; }
     #shiftChangeObservation {
-      > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:4px 9px !important; margin:0 !important; }
+      > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:4px 10px !important; margin:0 !important; }
       > .MuiCardHeader-root .MuiCardHeader-title { font-size:.8125rem; font-weight:600; line-height:1.3; }
       :is(.MuiTextField-root,.MuiInputBase-root,input,textarea) { min-width:0; max-width:100%; }
     }
@@ -79,6 +79,8 @@
       }
       :is([data-hhr-round="note"],[data-hhr-round="vitals"],:is([data-hhr-round="care"],[data-hhr-round="care-card"])) { grid-column:1 / 9; }
       :is([data-hhr-round="handoff"],[data-hhr-round="alerts"],[data-hhr-round="empty-request"]) { grid-column:9 / -1; }
+      [data-hhr-round="empty-request"][data-hhr-round-half="start"] { grid-column:9 / 11; }
+      [data-hhr-round="empty-request"][data-hhr-round-half="end"] { grid-column:11 / -1; }
       [data-hhr-round="note"] #evolution { border-radius:6px 0 0 0 !important; }
       [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root {
         border-block-start:1px solid var(--hhr-round-edge); border-radius:0 0 5px 5px !important;
@@ -93,6 +95,8 @@
       [data-hhr-round="empty-request"]:not(:has(~ [data-hhr-round="empty-request"])) [data-hhr-empty-request] > .MuiCard-root {
         border-radius:0 0 5px 5px !important;
       }
+      [data-hhr-round="empty-request"][data-hhr-round-half="start"] [data-hhr-empty-request] > .MuiCard-root { border-radius:0 0 0 5px !important; }
+      [data-hhr-round="empty-request"][data-hhr-round-half="end"] [data-hhr-empty-request] > .MuiCard-root { border-radius:0 0 5px 0 !important; }
       [data-hhr-round="vitals"] section#vitalSignsEntry { container:hhr-round-signs / inline-size; }
       [data-hhr-round="vitals"] :is([data-hhr-reading="vital-value"],[data-hhr-reading="vital-pam"]) { white-space:nowrap; }
       /* Fit the standard nine measurements without splitting the pressure pair.
@@ -134,12 +138,21 @@
       &:is([data-hhr-round="care-card"],:has([data-hhr-round="care-row"])) {
         container: hhr-care-pair / inline-size;
         padding-block-start:0 !important;
-        .MuiGrid-container { display:block !important; }
-        .MuiGrid-container > .MuiGrid-item { width:100% !important; }
+        /* Two short instructions share a line. Either one takes its own line as soon as
+           its value, observation and byline need the whole width. */
+        .MuiGrid-container {
+          display:flex !important; flex-flow:row wrap; gap:0 !important; overflow:hidden;
+          background:#fff; border-radius:0 0 5px 5px;
+        }
+        .MuiGrid-container > .MuiGrid-item {
+          flex:1 1 auto !important; width:auto !important; min-width:0;
+          margin-inline-start:-1px; border-inline-start:1px solid #dce5e2;
+          &:has([data-hhr-round="care-empty"]) { flex-grow:0 !important; }
+        }
         :is(#restEntrySection,#nutritionOrderEntrySection) { padding:0 !important; }
         &[data-hhr-round="care-card"], [data-hhr-round="care-row"] {
           display:grid; grid-template-columns:4.1rem minmax(0,1fr); align-items:baseline;
-          column-gap:8px; padding:3px 9px; border-radius:0;
+          column-gap:8px; padding:3px 10px; border-radius:0;
           &:is(.MuiGrid-item:last-child > section > *) { border-end-start-radius:5px; border-end-end-radius:5px; }
           > .MuiCardHeader-root, .MuiCardHeader-content { display:contents !important; }
           .MuiCardHeader-action { display:none; }
@@ -147,9 +160,15 @@
           .MuiCardHeader-subheader { grid-area:2 / 2; min-width:0; overflow-wrap:anywhere; }
           .MuiCardHeader-subheader:empty { display:none; }
           @container hhr-care-pair (min-width:46rem) {
-            &:has(.MuiCardHeader-subheader[data-hhr-update-label]:not([data-hhr-round])) {
-              grid-template-columns:4.1rem minmax(0,1fr) fit-content(38%);
-              .MuiCardHeader-subheader { grid-area:1 / 3; justify-self:end; text-align:end; }
+            &:has(.MuiCardHeader-subheader[data-hhr-update-label]:not([data-hhr-round="same-stamp"])) {
+              /* The byline keeps its own width, so a shared line never wraps it. */
+              grid-template-columns:4.1rem minmax(0,1fr) max-content;
+              .MuiCardHeader-subheader { grid-area:1 / 3; justify-self:end; text-align:end; white-space:nowrap; }
+              /* One byline for both instructions closes the line of the second one. */
+              [data-hhr-round="shared-stamp"] {
+                margin-block-start:0;
+                &::before { content:'Ambas · ' / ''; }
+              }
             }
           }
           [data-hhr-round="same-stamp"] {
@@ -165,7 +184,11 @@
             display:inline !important; font-size:.8125rem; line-height:1.35;
           }
           [data-hhr-round="care-value"] { font-weight:650; }
-          [data-hhr-round="care-empty"] { margin:0 !important; font-size:.75rem; line-height:1.35; color:#516963; }
+          /* The native sentence stays in the page for screen readers, search and print. */
+          [data-hhr-round="care-empty"] {
+            margin:0 !important; font-size:0 !important; line-height:1 !important; color:#516963;
+            &::after { content:'Sin registro' / ''; font:normal .75rem/1.35 system-ui,sans-serif; }
+          }
           [data-hhr-round="care-value"] .MuiChip-root { max-width:100%; height:auto; }
           [data-hhr-round="care-value"] .MuiChip-label { white-space:normal; overflow-wrap:anywhere; }
           /* Typography children of a Stack are block elements, even for a single word. */
@@ -178,5 +201,12 @@
         :is([data-hhr-round="care-row"],[data-hhr-round="care-card"]) { border-block-start:1px solid #dce5e2; }
       }
     }
+  }
+}
+
+/* With room for its action on the same line, the handoff heading matches Alertas. */
+@media screen and (min-width:1240px) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round-columns] #shiftChangeObservation > .MuiCardHeader-root .MuiCardHeader-title {
+    font-size:.9375rem; font-weight:650; line-height:1.35;
   }
 }

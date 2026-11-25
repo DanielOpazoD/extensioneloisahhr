@@ -133,6 +133,8 @@
     grid-template-columns:fit-content(60%) minmax(0,1fr) auto;
     grid-template-areas:"message message action" "author time action";
     gap:1px 6px !important;
+    /* The same marginal rule that flags SOS and «No reanimación» marks each active alert. */
+    border-inline-start:2px solid #b5793f; padding-inline-start:7px !important;
     > .MuiStack-root { display:contents; }
     > :first-child > :last-child {
       grid-area:message; font-size:.8125rem; line-height:1.35; overflow-wrap:anywhere;
@@ -182,8 +184,35 @@
       width:fit-content !important; min-height:26px; padding:2px 8px; margin:0;
       border:1px solid #c4d8d1; border-radius:4px; background:transparent; color:#285f54;
       font:500 .75rem/1.35 system-ui,sans-serif; cursor:pointer;
+      &::before {
+        content:''; flex:none; inline-size:11px; block-size:11px; margin-inline-end:5px; background:currentColor;
+        mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M12 4v16M4 12h16'/%3E%3C/svg%3E") center / contain no-repeat;
+      }
+      @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
       &:hover { background:#edf4f1; }
       &:focus-visible { outline:2px solid #0b6e66; outline-offset:2px; }
     }
+  }
+  /* The handoff heading names the destination, so its action sits on the same line. */
+  html[data-hhr-ficha-theme="compact"] #shiftChangeEntrySection .MuiCard-root:has(> .MuiCardHeader-root .MuiCardHeader-title):has([data-hhr-entry-open]) {
+    position:relative;
+    > .MuiCardHeader-root { min-height:30px; padding-inline-end:6.4rem !important; box-sizing:border-box; align-items:center; }
+    > .MuiCardContent-root { padding-block:0 4px !important; }
+    /* Stay on the heading line while focused: a jump between press and release would lose the click. */
+    [data-hhr-entry-open] {
+      position:absolute; inset-block-start:3px; inset-inline-end:10px; min-height:24px; padding-block:1px;
+      font-size:0 !important;
+      &::after { content:'Agregar' / ''; font:500 .75rem/1.35 system-ui,sans-serif; }
+    }
+  }
+  /* The second switch and the alert action complete one line. «No reanimación» keeps its own. */
+  html[data-hhr-ficha-theme="compact"] #alertEntrySection .MuiCardContent-root
+    .MuiStack-root:has(> [data-hhr-reading-toggle="alert"] + [data-hhr-reading-toggle="alert"] + [data-hhr-entry-open]) {
+    grid-template-columns:minmax(0,1fr) auto; align-items:center; column-gap:8px !important;
+    > * { grid-column:1 / -1; }
+    > [data-hhr-reading-toggle="alert"]:has(+ [data-hhr-entry-open]) { grid-column:1; }
+    > [data-hhr-entry-open] { grid-column:2; justify-self:end; align-self:center; min-height:24px; padding-block:1px; }
+    /* The rule hangs in the margin, leaving both switches on one edge. */
+    > [data-hhr-resuscitation-toggle] { margin-inline-start:-6px; }
   }
 }

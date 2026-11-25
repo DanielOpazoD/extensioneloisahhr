@@ -153,14 +153,18 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   assert.ok(aligned(note,signs) && Math.abs(signs.y - bottom(note)) < 2, 'Signos sigue a la nota con ambos bordes alineados');
   assert.ok(aligned(observations,alerts) && Math.abs(alerts.y - bottom(observations)) < 2, 'Alertas sigue a Observaciones sin hueco');
   for (const request of [exam,surgery]) {
-    assert.ok(aligned(request,alerts) && request.y >= bottom(alerts) - 1 && request.height > 0 && request.height <= 36,
+    assert.ok(request.x >= alerts.x - 1 && right(request) <= right(alerts) + 1 && request.height > 0 && request.height <= 36,
       'La solicitud vacía se lee en una fila lateral');
   }
-  assert.ok(aligned(exam,surgery) && Math.abs(exam.y - bottom(alerts)) < 2 && Math.abs(surgery.y - bottom(exam)) < 2,
-    'Las dos solicitudes forman filas consecutivas debajo de Alertas');
-  assert.ok(aligned(signs,rest) && aligned(rest,diet) && Math.abs(rest.y - bottom(signs)) < 2 && Math.abs(diet.y - bottom(rest)) < 2,
-    'Reposo y Régimen se leen debajo de Signos');
+  assert.ok(Math.abs(exam.x - alerts.x) < 2 && Math.abs(right(surgery) - right(alerts)) < 2 &&
+    Math.abs(surgery.x - right(exam)) <= 2 && Math.abs(exam.y - surgery.y) < 2 && Math.abs(exam.y - bottom(alerts)) < 2 &&
+    Math.abs(exam.height - surgery.height) < 1, 'Las dos solicitudes comparten una línea debajo de Alertas');
+  // Without a rest order, both instructions fit on one line below the measurements.
+  assert.ok(Math.abs(rest.x - signs.x) < 2 && Math.abs(right(diet) - right(signs)) < 2 && Math.abs(diet.x - right(rest)) < 2 &&
+    Math.abs(rest.y - bottom(signs)) < 2 && Math.abs(diet.y - rest.y) < 2, 'Reposo y Régimen comparten la línea debajo de Signos');
   assert.ok(rest.height > 0 && rest.height <= 36 && diet.height > 0 && diet.height <= 52, 'Reposo vacío y Régimen con observación y firma son compactos');
+  const emptyRest = await page.locator('#rest [data-hhr-round="care-empty"]').evaluate(el => getComputedStyle(el,'::after').content);
+  assert.match(emptyRest, /^"Sin registro"/, 'Un reposo sin registro se resume en dos palabras');
   assert.ok(await page.getByText('No se presenta un Reposo registrado para este paciente').isVisible());
   assert.ok(await page.getByText('Preferir porciones pequeñas.').isVisible());
 }

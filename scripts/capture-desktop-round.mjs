@@ -87,9 +87,16 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
           'Signos debe quedar debajo de Evolución y compartir ambos bordes');
         assert.ok(aligned(band.handoff,band.alerts) && Math.abs(band.alerts.top - band.handoff.bottom) < 2,
           'Observaciones debe compartir ambos bordes con Alertas y aparecer primero');
-        assert.ok(aligned(band.rest,band.signs) && aligned(band.diet,band.rest) &&
-          Math.abs(band.rest.top - band.signs.bottom) < 2 && Math.abs(band.diet.top - band.rest.bottom) < 2,
+        // Two short instructions share a line. Otherwise each one uses the whole width.
+        const stacked = aligned(band.rest,band.signs) && aligned(band.diet,band.rest) && Math.abs(band.diet.top - band.rest.bottom) < 2;
+        const sharedLine = Math.abs(band.diet.top - band.rest.top) < 2 && Math.abs(band.diet.left - band.rest.right) <= 1 &&
+          Math.abs(band.rest.left - band.signs.left) <= 1 && Math.abs(band.diet.right - band.signs.right) <= 1;
+        assert.ok((stacked || sharedLine) && Math.abs(band.rest.top - band.signs.bottom) < 2,
           'Reposo y Régimen deben continuar el margen izquierdo sin crear otro hueco');
+        assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 &&
+          Math.abs(band.exam.left - band.alerts.left) <= 1 && Math.abs(band.surgery.right - band.alerts.right) <= 1 &&
+          Math.abs(band.exam.top - band.alerts.bottom) < 2 && Math.abs(band.exam.height - band.surgery.height) < 1,
+          'Las dos solicitudes vacías comparten la última línea del lateral');
         for (const side of [band.exam,band.surgery]) {
           assert.ok(side.left >= band.handoff.left - 1 && side.right <= band.handoff.right + 1 && side.height > 0,
             'Las solicitudes explícitamente vacías deben quedar visibles en el lateral');
@@ -139,6 +146,18 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     const boxes = await Promise.all(tools.map(tool => tool.boundingBox()));
     assert.ok(boxes.every(box => box && Math.abs(box.y - boxes[0].y) < 2 && box.width >= 28 && box.height >= 28),
       'Las acciones de la nota deben compartir una fila y tener al menos 28 px de área activa');
+    // Eloísa keeps its overflow menu in the card header, so Tab reaches it before the writing tools.
+    const [entryBox, moreBox, editBox, amendBox] = boxes;
+    assert.ok(entryBox.x + entryBox.width <= editBox.x + 1 && editBox.x + editBox.width <= amendBox.x + 1 &&
+      amendBox.x + amendBox.width <= moreBox.x + 1, 'La lectura va de las evoluciones a las herramientas y termina en el menú');
+    const captions = await Promise.all(tools.map(tool => tool.evaluate(el => ({
+      action:el.getAttribute('data-hhr-evo-action'),
+      icon:getComputedStyle(el,'::before').maskImage !== 'none', caption:getComputedStyle(el,'::after').content,
+    }))));
+    assert.deepEqual(captions.map(tool => tool.action), [null,'more','edit','amend']);
+    assert.ok(captions.every(tool => tool.icon), 'Cada acción de la nota usa un icono de la misma familia');
+    assert.match(captions[2].caption, /^"Editar"/, 'El lápiz se acompaña de su verbo');
+    assert.match(captions[3].caption, /^"Enmiendas"/, 'La lista de enmiendas se nombra junto a su icono');
     await tools[0].focus();
     for (const next of [...tools.slice(1),disclosure]) {
       await page.keyboard.press('Tab');

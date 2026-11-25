@@ -24,6 +24,15 @@
   .hhr-evo-entry:focus-visible,.hhr-evo-back:focus-visible,.hhr-evo-author:focus-visible { outline:2px solid #086b63; }
 }
 @media screen and (min-width:64rem) {
+  /* One family of icons for the note. Each mask takes the colour of its own button. */
+  html[data-hhr-ficha-theme="compact"] #observationEntrySection {
+    --hhr-icon-notes:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='3' width='12' height='14' rx='2'/%3E%3Cpath d='M4 8v11a2 2 0 0 0 2 2h9'/%3E%3Cpath d='M12 8h4M12 12h4'/%3E%3C/svg%3E");
+    --hhr-icon-edit:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z'/%3E%3Cpath d='m14.5 7.5 3 3'/%3E%3C/svg%3E");
+    --hhr-icon-amend:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h8l5 5v13H6z'/%3E%3Cpath d='M14 3v5h5'/%3E%3Cpath d='M9.5 13h6M9.5 17h6'/%3E%3C/svg%3E");
+    --hhr-icon-guide:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2'/%3E%3Crect x='8' y='3' width='8' height='4' rx='1.5'/%3E%3Cpath d='m8.5 13 2.3 2.3 4.7-5'/%3E%3C/svg%3E");
+    --hhr-icon-more:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5h.01M12 12h.01M12 19h.01'/%3E%3C/svg%3E");
+    --hhr-icon-expand:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7'/%3E%3C/svg%3E");
+  }
   html[data-hhr-ficha-theme="compact"] #evolution {
     [data-hhr-evolution-block] > [data-hhr-note-text] {
       display:block; max-block-size:clamp(10rem,24vh,14rem);
@@ -37,15 +46,22 @@
     [data-hhr-evolution-block]:has(> [data-hhr-note-scroll]) {
       display:grid; grid-template-columns:minmax(0,1fr) auto;
       align-items:center; reading-flow:grid-rows;
-      > [data-hhr-note-text] { grid-column:1 / -1; }
+      /* The rule marks where the visible excerpt ends and its two actions begin. */
+      > [data-hhr-note-text] { grid-column:1 / -1; border-block-end:1px solid #e1e9e6; }
       > .hhr-note-open {
-        grid-area:2 / 1; justify-self:start; margin:0; padding:2px 4px;
-        min-height:26px; border:0; border-radius:3px; background:transparent;
+        grid-area:2 / 1; justify-self:start; display:inline-flex; align-items:center; gap:5px;
+        margin:2px 0 0 -6px; padding:2px 7px 2px 6px;
+        min-height:26px; border:0; border-radius:4px; background:transparent;
         color:#0a625a; font:600 .75rem/1.4 system-ui,sans-serif; cursor:pointer;
-        &:hover { text-decoration:underline; }
+        &::before {
+          content:''; flex:none; inline-size:13px; block-size:13px; background:currentColor;
+          mask:var(--hhr-icon-expand) center / contain no-repeat;
+        }
+        &:hover { background:#edf5f2; }
         &:focus-visible { outline:2px solid #087269; }
+        @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
       }
-      > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; }
+      > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; margin-block-start:2px; }
     }
     > .MuiCardHeader-root { align-items:center; flex-wrap:wrap; gap:2px 12px; }
     > .MuiCardHeader-root > .MuiCardHeader-content:has(> [data-hhr-update-label]) {
@@ -56,19 +72,20 @@
       display:inline-flex; align-items:center; gap:6px; min-height:28px;
       padding:3px 8px; border:1px solid #c7dbd5; background:transparent; font-size:.75rem;
       &::before {
-        content:''; width:13px; height:12px; flex:none;
-        background:repeating-linear-gradient(to bottom,currentColor 0 2px,transparent 2px 5px)
-          left top / 2px 100% no-repeat,
-          repeating-linear-gradient(to bottom,currentColor 0 2px,transparent 2px 5px)
-          right top / 9px 100% no-repeat;
+        content:''; flex:none; inline-size:15px; block-size:15px; background:currentColor;
+        mask:var(--hhr-icon-notes) center / contain no-repeat;
       }
       &:hover { background:#edf5f2; border-color:#7da99e; }
+      @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
     }
     /* Leave the native disclosure in the reading flow, beside the end of its own note. */
     [data-hhr-evolution-block] > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) {
       display:inline-flex; width:auto; vertical-align:middle;
       > button { margin:0; background:transparent; }
       > button:hover { background:#e7f2ee; }
+      > button[data-hhr-note-disclosure="less"]::before {
+        content:'Contraer' / ''; font:500 .75rem/1.2 system-ui,sans-serif; text-transform:none;
+      }
     }
   }
   html[data-hhr-ficha-theme="compact"] #observationEntrySection:has(> [data-hhr-evo-toolbar]) {
@@ -76,28 +93,39 @@
   }
   @supports (reading-flow:grid-rows) {
     @container hhr-evolution (min-width:32rem) {
-      /* The buttons keep their original React parents, handlers and popover anchors. */
+      /* The buttons keep their original React parents, handlers and popover anchors.
+         Reading order: title, earlier notes, writing tools and the overflow menu. */
       html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar] {
-        display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
-        reading-flow:grid-rows; gap:3px 4px; padding:4px 9px 7px;
+        display:grid; grid-template-columns:minmax(0,1fr) repeat(6,auto); align-items:center;
+        reading-flow:grid-rows; gap:3px 0; padding:4px 10px 6px 7px;
         > .MuiCardHeader-root {
           grid-area:1 / 1; min-width:0; padding:0 !important; margin:0;
           column-gap:8px;
           > .MuiCardHeader-content { min-width:0; flex:1 1 10rem; overflow-wrap:anywhere; }
         }
+        /* A header that only has its title and actions lends them to the card grid. */
+        > .MuiCardHeader-root:not(:has(> :not(.MuiCardHeader-content,.MuiCardHeader-action))) {
+          display:contents;
+          > .MuiCardHeader-content { grid-area:1 / 1; }
+          > .MuiCardHeader-action {
+            display:contents;
+            > * { grid-row:1; order:3; }
+            > .hhr-evo-entry { order:1; }
+          }
+        }
         > .MuiCardContent-root, > .MuiCardContent-root > .MuiStack-root { display:contents; }
         > .MuiCardContent-root > .MuiStack-root {
           > :first-child { grid-column:1 / -1; min-width:0; margin:0 !important; }
           > :last-child {
-            grid-area:1 / 2; align-self:center; margin:0 !important;
+            grid-row:1; order:2; align-self:center; margin:0 0 0 2px !important;
             > .MuiStack-root { display:flex; flex-flow:row nowrap; align-items:center; gap:2px; }
           }
         }
         .MuiCardHeader-action { display:inline-flex; align-items:center; gap:2px; margin:0; }
-        .hhr-evo-entry { border-color:transparent; }
+        .hhr-evo-entry { border-color:transparent; margin-inline-start:8px; }
         .hhr-evo-entry:hover, .hhr-evo-entry:focus-visible { background:#edf5f2; }
-        :is(.MuiCardHeader-action > .MuiStack-root,
-            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button {
+        :is(.MuiCardHeader-action, .MuiCardHeader-action > .MuiStack-root, .hhr-checklist-launcher,
+            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button:not(.hhr-evo-entry) {
           display:inline-grid; place-items:center; width:28px; height:28px; min-width:28px;
           box-sizing:border-box; padding:0; margin:0; border-radius:5px;
           font-size:16px; line-height:1;
@@ -105,16 +133,35 @@
           &:enabled:not([aria-pressed="true"]) { background:transparent; }
           &:enabled:hover { background:#e8f2ef; }
           &:focus-visible { outline:2px solid #086b63; outline-offset:1px; }
+          /* Recognized actions and the guideline menu share one icon size and stroke. */
+          &:is([data-hhr-evo-action],.hhr-checklist-trigger) {
+            display:inline-flex; align-items:center; justify-content:center; gap:0;
+            border:1px solid transparent; color:#285f59; font-size:0; white-space:nowrap;
+            > :not(.MuiTouchRipple-root) { display:none; }
+            &::before {
+              content:''; flex:none; inline-size:15px; block-size:15px; border-radius:0;
+              box-shadow:none; background:currentColor; mask:var(--hhr-evo-icon) center / contain no-repeat;
+            }
+            &[aria-expanded="true"] { background:#e8f2ef; }
+            @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
+          }
         }
         .hhr-checklist-launcher { margin:0; }
-        .hhr-checklist-trigger {
-          border-radius:5px;
-          &::before {
-            width:16px; height:16px; box-shadow:none; border-radius:0; background:currentColor;
-            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2'/%3E%3Crect x='8' y='3' width='8' height='4' rx='1.5'/%3E%3Cpath d='m8.5 13 2.3 2.3 4.7-5'/%3E%3C/svg%3E") center / contain no-repeat;
-          }
-          @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
-        }
+        [data-hhr-evo-action="more"] { --hhr-evo-icon:var(--hhr-icon-more); }
+        [data-hhr-evo-action="edit"] { --hhr-evo-icon:var(--hhr-icon-edit); --hhr-evo-caption:'Editar'; }
+        [data-hhr-evo-action="write"] { --hhr-evo-icon:var(--hhr-icon-edit); --hhr-evo-caption:'Escribir'; }
+        [data-hhr-evo-action="amend"] { --hhr-evo-icon:var(--hhr-icon-amend); --hhr-evo-caption:'Enmiendas'; }
+        .hhr-checklist-trigger { --hhr-evo-icon:var(--hhr-icon-guide); --hhr-evo-caption:'Pautas'; }
+      }
+    }
+    /* A short word beside each icon while the title and its byline keep their line. */
+    @container hhr-evolution (min-width:48rem) {
+      html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar]
+        :is(.MuiCardHeader-action, .MuiCardHeader-action > .MuiStack-root, .hhr-checklist-launcher,
+            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root)
+        > button:is([data-hhr-evo-action]:not([data-hhr-evo-action="more"]),.hhr-checklist-trigger) {
+        width:auto; padding:0 8px 0 6px;
+        &::after { content:var(--hhr-evo-caption) / ''; margin-inline-start:5px; font:600 .75rem/1 system-ui,sans-serif; }
       }
     }
   }

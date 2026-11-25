@@ -59,6 +59,57 @@ it('reúne solo las acciones de la nota de lectura y conserva los botones al mon
   expect(card.hasAttribute('data-hhr-evo-toolbar')).toBe(false);
 });
 
+it('nombra solo las acciones nativas reconocibles y retira sus marcas sin tocar los nombres de Eloísa', () => {
+  const card = document.querySelector('#evolution');
+  card.className = 'MuiCard-root';
+  const toolbar = (header, tools) => {
+    card.innerHTML = '<div class="MuiCardHeader-root"><div class="MuiCardHeader-action">' + header + '</div></div>' +
+      '<div class="MuiCardContent-root"><div class="MuiStack-root"><div class="MuiStack-root">' +
+      '<div class="MuiBox-root"><span class="MuiTypography-caption">Nota ficticia</span></div></div>' +
+      '<div class="MuiStack-root"><div class="MuiStack-root">' + tools + '</div></div></div></div>';
+    reader.refresh('1');
+    return [...card.querySelectorAll('button:not(.hhr-evo-entry)')];
+  };
+  const marks = buttons => buttons.map(button => button.getAttribute('data-hhr-evo-action'));
+
+  let buttons = toolbar('<button aria-label="Más opciones"><svg data-testid="MoreVertIcon"></svg></button>',
+    '<button aria-label="Editar evolución"><svg></svg></button><button title="Enmendamientos"><svg></svg></button>' +
+    '<button aria-label="Compartir"><svg></svg></button><button aria-label="Nueva evolución"><svg></svg></button>');
+  expect(card.hasAttribute('data-hhr-evo-toolbar')).toBe(true);
+  expect(marks(buttons)).toEqual(['more','edit','amend',null,'write']);
+  // A named button may carry Eloísa's own tooltip. Only its native title remains.
+  expect(buttons.map(button => button.title)).toEqual(['','','Enmendamientos','','']);
+  // Refreshing must not treat its own hint as a native name, nor rewrite identical marks.
+  const writes = [];
+  const observer = new MutationObserver(records => writes.push(...records));
+  observer.observe(card,{subtree:true,attributes:true});
+  reader.refresh('1');
+  expect(observer.takeRecords()).toEqual([]);
+  observer.disconnect();
+  expect(marks(buttons)).toEqual(['more','edit','amend',null,'write']);
+
+  // Two unnamed icons: the first one opens the native editor, as for a guideline. The second stays as it is.
+  buttons = toolbar('', '<button><svg></svg></button><button><svg></svg></button>');
+  expect(marks(buttons)).toEqual(['edit',null]);
+  expect(buttons.map(button => button.title)).toEqual(['Editar evolución','']);
+  buttons = toolbar('', '<button><svg data-testid="HistoryIcon"></svg></button><button><svg data-testid="EditNoteIcon"></svg></button>');
+  expect(marks(buttons)).toEqual([null,'edit']);
+  buttons = toolbar('', '<button><svg></svg></button><button><svg></svg></button><button><svg></svg></button>');
+  expect(marks(buttons)).toEqual([null,null,null]);
+  // An overflow icon among the tools is not the card menu.
+  buttons = toolbar('', '<button aria-label="Opciones"><svg></svg></button>');
+  expect(marks(buttons)).toEqual([null]);
+
+  buttons = toolbar('<button aria-label="Más opciones"><svg></svg></button>',
+    '<button aria-label="Editar evolución" title="Editar"><svg></svg></button><button><svg data-testid="EditIcon"></svg></button>');
+  expect(marks(buttons)).toEqual(['more','edit','edit']);
+  buttons[2].title = 'Nombre que Eloísa añadió después';
+  reader.clear();
+  expect(marks(buttons)).toEqual([null,null,null]);
+  expect(buttons.map(button => button.title)).toEqual(['','Editar','Nombre que Eloísa añadió después']);
+  expect(card.querySelector('[data-hhr-evo-hint],[data-hhr-evo-action]')).toBeNull();
+});
+
 it('opens native history, restricts the explicit view to notes, and filters by the person in either header order', () => {
   const amendments = vi.fn();
   document.querySelector('#amend').addEventListener('click',amendments);
