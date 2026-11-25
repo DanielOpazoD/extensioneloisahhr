@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.192
+
+- En la vista Compacta, el Historial se lee como una línea de tiempo: una superficie por día, una línea por evento y la hora en una columna al margen. «Hoy» y «Ayer» muestran su fecha y el día permanece a la vista al desplazar sus eventos. Las evoluciones médicas y de enfermería llevan el mismo filete lateral que Evolución en el Resumen.
+- Cada evento muestra categoría, profesional y cargo en una línea. Las iniciales que repetían el nombre dejan de mostrarse y «Nuevo» cierra la primera línea de su evento. «Ver evoluciones» y el filtro por profesional usan los botones de las acciones de la nota.
+- Los colores, tamaños, márgenes e iconos de las vistas de la ficha se definen en un solo archivo. El Resumen no cambia de aspecto.
+
 ## 0.48.191
 
 - En el Resumen compacto de escritorio, la fecha del resumen diario e «Imprimir» pasan a la línea de los enlaces de sección cuando caben entre el último enlace y la barra flotante de Centro HHR. Ahí siguen a la vista al desplazar la ficha. Si no caben, conservan su fila.
