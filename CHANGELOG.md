@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.172
+
+- En Pautas, «Guardar» guarda en HHR e inserta el texto en Evolución. «Copiar texto» guarda en HHR y copia el texto al portapapeles. En Braden, «Copiar borrador» distingue la copia previa al guardado.
+- El selector de plantilla y el botón de actualización comparten una fila. Braden resume el avance con el número de dimensiones completas.
+
 ## 0.48.171
 
 - En la tarjeta de Evolución y en el editor que abre el lápiz de Eloísa, un botón circular reúne «Pautas» y el acceso rápido a Braden. Las planillas del catálogo de HHR se pueden rellenar e insertar como texto en la evolución o copiar.
