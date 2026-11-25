@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.189
+
+- El consentimiento informado de Imágenes se imprime en una hoja A4 con texto seleccionable y líneas nítidas. La plantilla editable en Word conserva el contenido y los espacios de firma del formulario anterior.
+
 ## 0.48.188
 
 - En el modo Compacto, las evoluciones largas tienen un área de lectura desplazable con teclado y ratón. «Leer nota completa» abre un lector más amplio para la misma evolución. Las notas breves ocupan solo su altura natural.

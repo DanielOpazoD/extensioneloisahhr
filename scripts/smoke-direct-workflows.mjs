@@ -181,6 +181,9 @@ async function verifyLocalOrders(page, worker, root, nav) {
     for (const blank of [false, true]) {
       if (blank) {
         await choose('blank');
+        if (module === 'imaging') {
+          await root.getByRole('tab', { name: 'Consentimiento Informado' }).click();
+        }
         await picker.click();
         await root.locator('.hhr-center-toolbar h3, .hhr-center-toolbar h2, .hhr-center-toolbar strong').first().click();
         assert.equal(await picker.getAttribute('aria-expanded'), 'false');
@@ -231,7 +234,16 @@ async function verifyLocalOrders(page, worker, root, nav) {
         await root.locator('.hhr-imaging-print').click();
         const order = await popup;
         const b64 = await worker.evaluate(() => self.__localOrder);
-        [printed] = await readPdfPages(Buffer.from(b64, 'base64'), blank ? null : imageAnnotation);
+        const pages = await readPdfPages(Buffer.from(b64, 'base64'), blank ? null : imageAnnotation);
+        assert.equal(pages.length, 1);
+        [printed] = pages;
+        if (blank) {
+          assert.match(printed, /CONSENTIMIENTO INFORMADO GENERAL/);
+          for (const choice of ['SI', 'NO']) {
+            assert.ok(printed.includes(choice + ', doy mi consentimiento'));
+          }
+          assert.match(printed, /Firma Paciente/);
+        }
         await order.close();
         if (!blank) {
           const undo = root.getByRole('button', { name: 'Deshacer', exact: true });

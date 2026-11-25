@@ -216,7 +216,7 @@ sin desplazar las acciones ni la tabla al iniciar una lectura.
 | `hhr-center-styles.js` | Estilos light-DOM del Centro HHR y sus avisos; reutiliza los tokens de `hhr-ui.js` |
 | `hhr-vitals.js` | Parser de formularios `VITAL_SIGNS` de Ficha Médico + umbrales de alerta (port de HHR) para el módulo de signos vitales |
 | `hhr-request-forms.js` | Formularios de solicitud (imágenes: overlays % + coordenadas PDF; laboratorio: catálogo de exámenes y HTML imprimible), port de HHR |
-| `forms/` | Plantillas oficiales: PNG de vista previa y PDF de solicitud de imagen, encuesta de contraste y consentimiento informado |
+| `forms/` | PDF de impresión y PNG de vista previa de los tres formularios de Imágenes. Para actualizar el consentimiento, editar su [original en Word](../docs/formularios/consentimiento.docx), exportarlo directamente a `forms/consentimiento.pdf` en A4 y generar `forms/consentimiento.png` desde ese PDF. Revisar las posiciones de los datos y las marcas si se mueve algún campo. |
 | `prescription-print.js` | Reglas puras para episodio y agrupación de fármacos por profesional |
 | `prescription-pdf.js` | Genera recetas con RUN del prescriptor y fecha/hora de emisión; la compacta total conserva el folio oficial |
 | `jspdf.umd.min.js` | jsPDF vendorizado para generar el PDF dentro de la extensión |
