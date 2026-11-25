@@ -11,6 +11,14 @@ const section = (id, cardId, title, body, byline = '', action = '') => {
 };
 const item = (content, size = '12') =>
   `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-${size}">${content}</div>`;
+// Eloísa leaves its icon buttons without a name and labels the svg instead. The overflow menu has none.
+const iconPaths = {
+  EditNoteRoundedIcon:'M3 10h11v2H3zm0-2h11V6H3zm0 8h7v-2H3zm15.01-3.13.71-.71c.39-.39 1.02-.39 1.41 0l.71.71c.39.39.39 1.02 0 1.41l-.71.71zm-.71.71-5.3 5.3V21h2.12l5.3-5.3z',
+  FormatListBulletedRoundedIcon:'M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5m0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5m0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5M8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1m0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1M7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1',
+  MoreVertRoundedIcon:'M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2',
+};
+const iconButton = (icon, name, size) => `<button type="button" class="MuiButtonBase-root MuiIconButton-root MuiIconButton-size${size}">` +
+  `<svg class="MuiSvgIcon-root" data-testid="${icon}"${name ? ' aria-label="' + name + '"' : ''} viewBox="0 0 24 24" focusable="false"><path d="${iconPaths[icon]}"/></svg></button>`;
 const note = `Paciente de simulación en control de ronda. Refiere descanso adecuado y tolerancia a la alimentación.
 Se sienta en el sillón con asistencia. Sin cambios respecto de la revisión previa.
 
@@ -23,7 +31,7 @@ const discharge = section('estimatedDischargeSection', 'estimatedDischarge', 'Fe
 const evolution = section('observationEntrySection','evolution','Evolución',
   `<div class="MuiStack-root"><div class="MuiStack-root"><div class="MuiBox-root">
     <span class="MuiTypography-caption">${note}</span><div class="MuiBox-root"><button class="MuiButton-root">Leer menos</button></div>
-  </div></div><div class="MuiStack-root"><div class="MuiStack-root"><button aria-label="Editar evolución">✎</button><button aria-label="Enmendamientos">☷</button></div></div></div>`, stamp, '<button aria-label="Opciones de evolución">⋮</button>');
+  </div></div><div class="MuiStack-root"><div class="MuiStack-root">${iconButton('EditNoteRoundedIcon','Enmendar','Small')}${iconButton('FormatListBulletedRoundedIcon','Ver enmendados','Small')}</div></div></div>`, stamp, iconButton('MoreVertRoundedIcon','','Medium'));
 const handoff = section('shiftChangeEntrySection','shiftChangeObservation','Observaciones de entrega de turno',
   '<div class="MuiStack-root"><form><input aria-label="Observaciones" placeholder="Observaciones"><button disabled>Agregar</button></form></div>');
 
@@ -127,6 +135,9 @@ const renderRound = (controls = false, desktopRound = false, reading = false) =>
   *{box-sizing:border-box}body{margin:0;background:#eff1f0;color:#263432;font:14px/1.45 Arial,sans-serif}
   .banner{background:#218b80;color:white;padding:15px 24px;font-size:16px;font-weight:600}.banner small{margin-left:18px;font-size:12px;font-weight:400}
   .MuiTabs-root{display:flex;gap:8px;background:white}.MuiTabs-root button{background:none;border:0;font-size:13px}.MuiChip-root{display:inline-flex;border-radius:12px;padding:3px 11px;background:#e4e9e7;color:#344841;font-size:12px}
+  .MuiSvgIcon-root{display:inline-block;flex:none;width:1em;height:1em;font-size:1.5rem;fill:currentColor}
+  .MuiIconButton-root{display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:none !important}
+  .MuiIconButton-sizeSmall{padding:5px}.MuiIconButton-sizeSmall .MuiSvgIcon-root{font-size:1.25rem}
   main{padding:12px 24px}button,input{font:inherit}button{color:#166d63;background:#e8f2ef;border:0;border-radius:4px;padding:5px 9px;cursor:pointer}
   button:disabled{color:#79807e;background:#eeefee}.MuiGrid-container{display:flex;flex-wrap:wrap;gap:12px}
   .round-grid{padding-top:80px;margin-top:-16px}.round-grid>.MuiGrid-item{padding-top:16px}

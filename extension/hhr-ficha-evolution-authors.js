@@ -49,34 +49,40 @@
     if (!stack.lastElementChild.matches('div.MuiStack-root') || !tools?.querySelector(':scope > button')) return false;
     return [...tools.children].every(el => el.matches('.hhr-checklist-launcher') || iconButton(el));
   }
-  // Name the native icon buttons that can be identified. An unknown button keeps its own icon.
+  // Eloísa names its icon buttons on the svg («Enmendar», «Ver enmendados»). A caption is always
+  // that native word: an action without a native name keeps its icon and gets no caption.
   const plain = value => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  const noteNoun = /\b(?:evolucion(?:es)?|nota|observacion)\b/;
-  // Whole icon names: EditOff, CreateNewFolder or PlaylistAddCheck are different actions.
-  const editIcon = /^(?:EditNote|PostAdd|NoteAdd|Create|Edit|BorderColor|RateReview)(?:Outlined|Rounded|Sharp|TwoTone)?Icon$/;
-  function toolAction(button, unnamedPair) {
-    const name = plain(button.getAttribute('aria-label') || button.title);
-    const icons = [...button.querySelectorAll('svg[data-testid]')].map(icon => icon.getAttribute('data-testid'));
-    if (/\b(?:opciones|menu)\b/.test(name) || icons.some(id => /^MoreVert/i.test(id))) return 'more';
-    if (/^enm(?:endamiento|ienda)s?\b/.test(name)) return 'amend';
-    if (/^editar\b/.test(name) && noteNoun.test(name)) return 'edit';
-    if (/^(?:nueva|nuevo|crear|redactar|agregar|anadir|escribir|ingresar|registrar)\b/.test(name) && noteNoun.test(name)) return 'write';
-    if (name) return null;
-    // Without a name, use the same evidence that opens the native editor for a guideline.
-    if (icons.length ? icons.every(id => editIcon.test(id)) : unnamedPair?.[0] === button) return 'edit';
-    return null;
+  const nativeName = button => (button.getAttribute('aria-label') || button.title ||
+    button.querySelector('svg[aria-label]')?.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+  // The kind only chooses the icon of the family. The list goes before its verb.
+  const toolKinds = [
+    ['amended', /^(?:ver )?(?:enmendad[oa]s|enmendamientos|enmiendas)\b/],
+    ['amend', /^enmendar\b/],
+    ['edit', /^editar\b/],
+    ['write', /^(?:nueva|nuevo|crear|redactar|agregar|anadir|escribir|ingresar|registrar)\b/],
+  ];
+  function toolAction(button, inHeader) {
+    const name = nativeName(button);
+    const icon = button.querySelector('svg[data-testid]')?.getAttribute('data-testid') || '';
+    if (inHeader) {
+      return /^MoreVert/.test(icon) || /\b(?:opciones|menu)\b/.test(plain(name)) ? {kind:'more', caption:'', name:name || 'Más opciones'} : null;
+    }
+    const kind = toolKinds.find(([, pattern]) => pattern.test(plain(name)))?.[0];
+    if (!kind) return null;
+    const words = name.replace(/^ver\s+/i, '').replace(/\s+(?:de\s+(?:la\s+)?)?(?:evoluci[oó]n|nota)$/i, '');
+    const caption = words.charAt(0).toUpperCase() + words.slice(1);
+    return {kind, caption:caption.length <= 14 ? caption : '', name};
   }
-  const toolHints = {edit:'Editar evolución', write:'Escribir evolución', amend:'Enmiendas', more:'Más opciones'};
   function toolActions(card) {
     const actions = new Map();
     if (!card) return actions;
-    const tools = [...card.querySelectorAll(':scope > .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root > button')];
-    const header = [...card.querySelectorAll(':scope > .MuiCardHeader-root > .MuiCardHeader-action button:not(.hhr-evo-entry)')];
-    const unnamed = tools.filter(el => !el.getAttribute('aria-label') && !el.title && !el.querySelector('svg[data-testid]') && el.querySelector('svg'));
-    const pair = unnamed.length === 2 && tools.length === 2 ? unnamed : null;
-    for (const button of [...header, ...tools]) {
-      const action = toolAction(button, pair);
-      if (action && (action !== 'more' || header.includes(button))) actions.set(button, action);
+    const tools = card.querySelectorAll(':scope > .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root > button');
+    const header = card.querySelectorAll(':scope > .MuiCardHeader-root > .MuiCardHeader-action button:not(.hhr-evo-entry)');
+    for (const [buttons, inHeader] of [[header, true], [tools, false]]) {
+      for (const button of buttons) {
+        const action = toolAction(button, inHeader);
+        if (action) actions.set(button, action);
+      }
     }
     return actions;
   }
@@ -117,6 +123,7 @@
     let toolMarks = new Map();
     function releaseTool(button) {
       button.removeAttribute('data-hhr-evo-action');
+      button.removeAttribute('data-hhr-evo-caption');
       // Only remove the hint this reader added, and only while it is still intact.
       const hint = button.getAttribute('data-hhr-evo-hint');
       if (hint === null) return;
@@ -127,13 +134,14 @@
       const next = hasNoteToolbar(card) ? card : null;
       const actions = toolActions(next);
       for (const button of toolMarks.keys()) if (!actions.has(button)) releaseTool(button);
-      for (const [button, action] of actions) {
-        if (button.getAttribute('data-hhr-evo-action') !== action) button.setAttribute('data-hhr-evo-action', action);
-        // A narrow card shows the icon alone. An icon without any native name gets one on hover;
-        // a named button may already show Eloísa's own tooltip.
-        if (!button.hasAttribute('aria-label') && !button.hasAttribute('title')) {
-          button.title = toolHints[action];
-          button.setAttribute('data-hhr-evo-hint', toolHints[action]);
+      for (const [button, {kind, caption, name}] of actions) {
+        if (button.getAttribute('data-hhr-evo-action') !== kind) button.setAttribute('data-hhr-evo-action', kind);
+        if (caption) { if (button.getAttribute('data-hhr-evo-caption') !== caption) button.setAttribute('data-hhr-evo-caption', caption); }
+        else button.removeAttribute('data-hhr-evo-caption');
+        // The native name lives on the icon, where a pointer shows nothing. Offer it on the button.
+        if (!button.hasAttribute('title')) {
+          button.title = name;
+          button.setAttribute('data-hhr-evo-hint', name);
         }
       }
       toolMarks = actions;

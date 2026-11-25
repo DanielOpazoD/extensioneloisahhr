@@ -153,8 +153,9 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     }
   }
   if (verifyLayout) {
-    const tools = ['Ver evoluciones','Opciones de evolución','Editar evolución','Enmendamientos'].map(name =>
-      note.getByRole('button', {name, exact:true}));
+    // The overflow menu has no name in Eloísa. The two tools take theirs from their icons.
+    const tools = [note.getByRole('button', {name:'Ver evoluciones', exact:true}), note.locator('.MuiCardHeader-action .MuiIconButton-root'),
+      note.getByRole('button', {name:'Enmendar', exact:true}), note.getByRole('button', {name:'Ver enmendados', exact:true})];
     const boxes = await Promise.all(tools.map(tool => tool.boundingBox()));
     assert.ok(boxes.every(box => box && Math.abs(box.y - boxes[0].y) < 2 && box.width >= 28 && box.height >= 28),
       'Las acciones de la nota deben compartir una fila y tener al menos 28 px de área activa');
@@ -166,10 +167,12 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
       action:el.getAttribute('data-hhr-evo-action'),
       icon:getComputedStyle(el,'::before').maskImage !== 'none', caption:getComputedStyle(el,'::after').content,
     }))));
-    assert.deepEqual(captions.map(tool => tool.action), [null,'more','edit','amend']);
+    assert.deepEqual(captions.map(tool => tool.action), [null,'more','amend','amended']);
     assert.ok(captions.every(tool => tool.icon), 'Cada acción de la nota usa un icono de la misma familia');
-    assert.match(captions[2].caption, /^"Editar"/, 'El lápiz se acompaña de su verbo');
-    assert.match(captions[3].caption, /^"Enmiendas"/, 'La lista de enmiendas se nombra junto a su icono');
+    assert.match(captions[2].caption, /^"Enmendar"/, 'El lápiz lleva el nombre que le da Eloísa');
+    assert.match(captions[3].caption, /^"Enmendados"/, 'La lista de notas enmendadas se nombra junto a su icono');
+    assert.deepEqual(await Promise.all(tools.slice(1).map(tool => tool.getAttribute('title'))), ['Más opciones','Enmendar','Ver enmendados'],
+      'Con el cursor encima, cada botón muestra el nombre que Eloísa solo da a su icono');
     await tools[0].focus();
     for (const next of [...tools.slice(1),disclosure]) {
       await page.keyboard.press('Tab');

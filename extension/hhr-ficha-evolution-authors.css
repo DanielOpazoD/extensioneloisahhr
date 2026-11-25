@@ -140,20 +140,21 @@
         }
         .hhr-checklist-launcher { margin:0; }
         [data-hhr-evo-action="more"] { --hhr-evo-icon:var(--hhr-icon-more); }
-        [data-hhr-evo-action="edit"] { --hhr-evo-icon:var(--hhr-icon-edit); --hhr-evo-caption:'Editar'; }
-        [data-hhr-evo-action="write"] { --hhr-evo-icon:var(--hhr-icon-edit); --hhr-evo-caption:'Escribir'; }
-        [data-hhr-evo-action="amend"] { --hhr-evo-icon:var(--hhr-icon-amend); --hhr-evo-caption:'Enmiendas'; }
-        .hhr-checklist-trigger { --hhr-evo-icon:var(--hhr-icon-guide); --hhr-evo-caption:'Pautas'; }
+        [data-hhr-evo-action="amend"], [data-hhr-evo-action="edit"], [data-hhr-evo-action="write"] { --hhr-evo-icon:var(--hhr-icon-edit); }
+        [data-hhr-evo-action="amended"] { --hhr-evo-icon:var(--hhr-icon-amend); }
+        .hhr-checklist-trigger { --hhr-evo-icon:var(--hhr-icon-guide); }
       }
     }
-    /* A short word beside each icon while the title and its byline keep their line. */
+    /* A short word beside each icon while the title and its byline keep their line.
+       For a native action the word is the one Eloísa gives it. */
     @container hhr-evolution (min-width:48rem) {
       html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar]
         :is(.MuiCardHeader-action, .MuiCardHeader-action > .MuiStack-root, .hhr-checklist-launcher,
-            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root)
-        > button:is([data-hhr-evo-action]:not([data-hhr-evo-action="more"]),.hhr-checklist-trigger) {
-        width:auto; padding:0 8px 0 6px;
-        &::after { content:var(--hhr-evo-caption) / ''; margin-inline-start:5px; font:600 .75rem/1 system-ui,sans-serif; }
+            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button {
+        &:is([data-hhr-evo-caption],.hhr-checklist-trigger) { width:auto; padding:0 8px 0 6px; }
+        &::after { margin-inline-start:5px; font:600 .75rem/1 system-ui,sans-serif; }
+        &[data-hhr-evo-caption]::after { content:attr(data-hhr-evo-caption) / ''; }
+        &.hhr-checklist-trigger::after { content:'Pautas' / ''; }
       }
     }
   }

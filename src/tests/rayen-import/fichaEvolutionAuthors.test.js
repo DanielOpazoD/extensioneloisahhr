@@ -59,63 +59,51 @@ it('reúne solo las acciones de la nota de lectura y conserva los botones al mon
   expect(card.hasAttribute('data-hhr-evo-toolbar')).toBe(false);
 });
 
-it('nombra solo las acciones nativas reconocibles y retira sus marcas sin tocar los nombres de Eloísa', () => {
+it('rotula cada acción con el nombre nativo de su icono y retira sus marcas sin tocar los nombres de Eloísa', () => {
   const card = document.querySelector('#evolution');
   card.className = 'MuiCard-root';
   const toolbar = (header, tools) => {
-    card.innerHTML = '<div class="MuiCardHeader-root"><div class="MuiCardHeader-action">' + header + '</div></div>' +
+    card.innerHTML = '<div class="MuiCardHeader-root"><div class="MuiCardHeader-action"><div class="MuiStack-root">' + header + '</div></div></div>' +
       '<div class="MuiCardContent-root"><div class="MuiStack-root"><div class="MuiStack-root">' +
       '<div class="MuiBox-root"><span class="MuiTypography-caption">Nota ficticia</span></div></div>' +
       '<div class="MuiStack-root"><div class="MuiStack-root">' + tools + '</div></div></div></div>';
     reader.refresh('1');
     return [...card.querySelectorAll('button:not(.hhr-evo-entry)')];
   };
-  const marks = buttons => buttons.map(button => button.getAttribute('data-hhr-evo-action'));
+  const icon = (testId, name) => '<button><svg data-testid="' + testId + '"' + (name ? ' aria-label="' + name + '"' : '') + '></svg></button>';
+  const marks = buttons => buttons.map(button => [button.getAttribute('data-hhr-evo-action'), button.getAttribute('data-hhr-evo-caption')]);
 
-  let buttons = toolbar('<button aria-label="Más opciones"><svg data-testid="MoreVertIcon"></svg></button>',
-    '<button aria-label="Editar evolución"><svg></svg></button><button title="Enmendamientos"><svg></svg></button>' +
-    '<button aria-label="Compartir"><svg></svg></button><button aria-label="Nueva evolución"><svg></svg></button>');
+  // As in Eloísa: no name on the buttons, the name on each svg, none on the overflow menu.
+  let buttons = toolbar(icon('MoreVertRoundedIcon'), icon('EditNoteRoundedIcon', 'Enmendar') + icon('FormatListBulletedRoundedIcon', 'Ver enmendados'));
   expect(card.hasAttribute('data-hhr-evo-toolbar')).toBe(true);
-  expect(marks(buttons)).toEqual(['more','edit','amend',null,'write']);
-  // A named button may carry Eloísa's own tooltip. Only its native title remains.
-  expect(buttons.map(button => button.title)).toEqual(['','','Enmendamientos','','']);
-  // Refreshing must not treat its own hint as a native name, nor rewrite identical marks.
-  const writes = [];
-  const observer = new MutationObserver(records => writes.push(...records));
-  observer.observe(card,{subtree:true,attributes:true});
+  expect(marks(buttons)).toEqual([['more', null], ['amend', 'Enmendar'], ['amended', 'Enmendados']]);
+  expect(buttons.map(button => button.title)).toEqual(['Más opciones', 'Enmendar', 'Ver enmendados']);
+  // Refreshing must not treat its own hint as a change, nor rewrite identical marks.
+  const observer = new MutationObserver(() => {});
+  observer.observe(card, {subtree:true, attributes:true});
   reader.refresh('1');
   expect(observer.takeRecords()).toEqual([]);
   observer.disconnect();
-  expect(marks(buttons)).toEqual(['more','edit','amend',null,'write']);
 
-  // Two unnamed icons: the first one opens the native editor, as for a guideline. The second stays as it is.
-  buttons = toolbar('', '<button><svg></svg></button><button><svg></svg></button>');
-  expect(marks(buttons)).toEqual(['edit',null]);
-  expect(buttons.map(button => button.title)).toEqual(['Editar evolución','']);
-  buttons = toolbar('', '<button><svg data-testid="HistoryIcon"></svg></button><button><svg data-testid="EditNoteIcon"></svg></button>');
-  expect(marks(buttons)).toEqual([null,'edit']);
-  buttons = toolbar('', '<button><svg></svg></button><button><svg></svg></button><button><svg></svg></button>');
-  expect(marks(buttons)).toEqual([null,null,null]);
-  // A third tool breaks the known pair, even when it has its own name.
-  buttons = toolbar('', '<button><svg></svg></button><button><svg></svg></button><button aria-label="Compartir"><svg></svg></button>');
-  expect(marks(buttons)).toEqual([null,null,null]);
-  // Only whole icon names count as the pencil.
-  buttons = toolbar('<button><svg data-testid="MoreVertIcon"></svg></button>', ['CreateNewFolderIcon','EditOffIcon','PlaylistAddCheckIcon','EditOutlinedIcon']
-    .map(icon => '<button><svg data-testid="' + icon + '"></svg></button>').join(''));
-  expect(marks(buttons)).toEqual(['more',null,null,null,'edit']);
-  expect(buttons.map(button => button.title)).toEqual(['Más opciones','','','','Editar evolución']);
-  // An overflow icon among the tools is not the card menu.
-  buttons = toolbar('', '<button aria-label="Opciones"><svg></svg></button>');
-  expect(marks(buttons)).toEqual([null]);
+  // A pencil without a native name is not named for it: the icon stays as Eloísa draws it.
+  buttons = toolbar('', icon('EditNoteRoundedIcon') + icon('EditIcon') + '<button><svg></svg></button><button><svg></svg></button>');
+  expect(marks(buttons)).toEqual([[null, null], [null, null], [null, null], [null, null]]);
+  expect(buttons.map(button => button.title)).toEqual(['', '', '', '']);
 
-  buttons = toolbar('<button aria-label="Más opciones"><svg></svg></button>',
-    '<button aria-label="Editar evolución" title="Editar"><svg></svg></button><button><svg data-testid="EditIcon"></svg></button>');
-  expect(marks(buttons)).toEqual(['more','edit','edit']);
-  buttons[2].title = 'Nombre que Eloísa añadió después';
+  // Names on the button itself, and other verbs of the same family.
+  buttons = toolbar('<button aria-label="Opciones de evolución"><svg></svg></button>',
+    '<button aria-label="Editar evolución"><svg></svg></button><button title="Enmendamientos"><svg></svg></button>' +
+    '<button aria-label="Compartir"><svg></svg></button><button aria-label="Nueva evolución"><svg></svg></button>' +
+    icon('NotesIcon', 'Ver el historial completo de enmendados') + '<button aria-label="Opciones"><svg data-testid="MoreVertIcon"></svg></button>');
+  expect(marks(buttons)).toEqual([['more', null], ['edit', 'Editar'], ['amended', 'Enmendamientos'], [null, null], ['write', 'Nueva'], [null, null], [null, null]]);
+  // A native title is never replaced. A button without one shows its own native name.
+  expect(buttons.map(button => button.title)).toEqual(['Opciones de evolución', 'Editar evolución', 'Enmendamientos', '', 'Nueva evolución', '', '']);
+
+  buttons[1].title = 'Nombre que Eloísa añadió después';
   reader.clear();
-  expect(marks(buttons)).toEqual([null,null,null]);
-  expect(buttons.map(button => button.title)).toEqual(['','Editar','Nombre que Eloísa añadió después']);
-  expect(card.querySelector('[data-hhr-evo-hint],[data-hhr-evo-action]')).toBeNull();
+  expect(marks(buttons)).toEqual(Array(7).fill([null, null]));
+  expect(buttons.map(button => button.title)).toEqual(['', 'Nombre que Eloísa añadió después', 'Enmendamientos', '', '', '', '']);
+  expect(card.querySelector('[data-hhr-evo-hint],[data-hhr-evo-action],[data-hhr-evo-caption]')).toBeNull();
 });
 
 it('monta «Ver evoluciones» en una cabecera que cede sus hijos a la cuadrícula de la tarjeta', () => {
