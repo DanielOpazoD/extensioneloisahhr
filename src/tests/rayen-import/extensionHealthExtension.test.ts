@@ -5,7 +5,9 @@ import '../../../extension/health-check.js';
 const health = (
   globalThis as typeof globalThis & {
     HhrExtensionHealth: {
-      orderTabs: <T extends { active?: boolean; lastAccessed?: number }>(tabs: T[]) => T[];
+      orderTabs: <T extends { active?: boolean; discarded?: boolean; lastAccessed?: number }>(
+        tabs: T[]
+      ) => T[];
       resolveTabs: <T extends { id?: number }>(
         tabsApi: { query: (query: unknown) => Promise<T[]>; get: (id: number) => Promise<T> },
         url: string,
@@ -31,6 +33,16 @@ describe('extension health helpers', () => {
     ];
     expect(health.orderTabs(tabs).map(tab => tab.id)).toEqual([2, 3, 1]);
     expect(tabs.map(tab => tab.id)).toEqual([1, 2, 3]);
+  });
+
+  it('relegates discarded tabs behind live tabs even if discarded was newer or active', () => {
+    const tabs = [
+      { id: 1, active: true, discarded: true, lastAccessed: 900 },
+      { id: 2, active: false, discarded: false, lastAccessed: 100 },
+      { id: 3, active: false, discarded: true, lastAccessed: 800 },
+      { id: 4, active: false, lastAccessed: 400 },
+    ];
+    expect(health.orderTabs(tabs).map(tab => tab.id)).toEqual([4, 2, 1, 3]);
   });
 
   it('resolves exact newly opened tab ids without depending on their redirect URL', async () => {

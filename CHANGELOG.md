@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.168
+
+- Rendimiento y estabilidad del transporte de Ficha Médico: agrupa en vuelo las consultas concurrentes de sesión (`getFetchInfo`, sin caché persistente) entregando copias congeladas aisladas, manteniendo separadas las lecturas directas de pestaña emisora.
+- Selección y permanencia de pestañas: relega las pestañas descartadas por Chrome (`discarded`) detrás de las pestañas activas/vivas y marca como no descartable (`autoDiscardable: false`) únicamente la pestaña activa de Ficha Médico que responde, liberando las demás.
+
 ## 0.48.167
 
 - Rendimiento de sincronización con Eloísa: guarda el catálogo estático de códigos CIE-10 (`diagnosisClassify`) en `chrome.storage.local` durante 12 horas (sin datos de pacientes ni sesiones), evitando volver a descargarlo tras recargar pestañas, abrir nuevas pestañas, cambiar de token o reiniciar Chrome.
