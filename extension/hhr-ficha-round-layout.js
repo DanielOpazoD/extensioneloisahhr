@@ -19,6 +19,27 @@
     return branch;
   }
 
+  // Only the two read-only care instructions may move ahead of another section.
+  // Leave native controls, independent siblings and unfamiliar column layouts in place.
+  function bedsideInstructions(frame, left, right, hidden) {
+    const rest = frame.querySelector('#restEntrySection');
+    const diet = frame.querySelector('#nutritionOrderEntrySection');
+    if (!rest || !diet) return null;
+    const pair = branchOf(rest, frame).at(-1).parentElement;
+    if (pair === frame || !pair.matches('.MuiGrid-container') || pair.children.length !== 2 ||
+        pair !== branchOf(diet, frame).at(-1).parentElement) return null;
+    const group = branchOf(pair, frame).at(-1);
+    if (group.parentElement !== frame || ![left,right,group].every(el => el.matches('.MuiGrid-item')) ||
+        group.querySelector('a,button,input,select,textarea,summary,[tabindex],[contenteditable],[onclick],[role=button],[role=link]')) return null;
+
+    const alert = frame.querySelector('#alertEntrySection');
+    const known = new Set([left, right, hidden, group, alert && branchOf(alert, frame).at(-1)]);
+    const ordinary = [...frame.children].filter(el => !known.has(el));
+    if (ordinary.some(el => !el.matches('.MuiGrid-item') || [...el.classList].some(name =>
+      /^MuiGrid-grid-(?:xs|sm|md|lg|xl)-/.test(name) && !name.endsWith('-12')))) return null;
+    return group;
+  }
+
   function layout(main) {
     const marks = new Map();
     if (!main) return marks;
@@ -44,6 +65,8 @@
       for (const wrapper of branch.slice(1, -1)) marks.set(wrapper, 'spacer');
       marks.set(branch.at(-1), name);
     }
+    const instructions = bedsideInstructions(frame, left, right, hidden);
+    if (instructions) marks.set(instructions, 'care');
     return marks;
   }
 

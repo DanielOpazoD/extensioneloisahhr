@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.183
+
+- En escritorio, Evolución comparte el espacio superior con Entrega, Reposo y Régimen. Al expandir la nota, aumenta su ancho y las indicaciones de lectura se sitúan debajo de Entrega. El control de plegado queda junto al texto.
+- Signos vitales alinea las cifras debajo de sus etiquetas y presenta cada antigüedad al pie de su celda. En una tarjeta ancha, Alertas coloca los avisos a la izquierda y los interruptores y el campo de observaciones a la derecha.
+- La navegación principal subraya la pestaña activa y «Ver evoluciones» incorpora un icono de lista. Se ajusta la separación entre la fecha, la impresión y el inicio de la ronda.
+
 ## 0.48.182
 
 - En el Resumen compacto, Evolución comparte fila con una columna estrecha para las observaciones de entrega de turno. En pantallas pequeñas la nota va primero. La fecha estimada de alta queda oculta en esta vista.

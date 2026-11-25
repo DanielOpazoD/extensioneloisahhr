@@ -326,8 +326,23 @@ export const verifyNativeFicha = async (page, worker) => {
       tiles.map(tile => Math.round(tile.getBoundingClientRect().top)));
     assert.equal(new Set(tops).size,1);
     assert.equal(await medical.locator('#estimatedDischargeSection').isVisible(),false);
-    await medical.getByRole('button',{name:/ver historial completo/i}).press('Enter');
+    const handoff = medical.locator('#shiftChangeObservation');
+    const handoffBox = await handoff.boundingBox();
+    const restBox = await medical.locator('#rest').boundingBox();
+    assert.ok(restBox.y >= handoffBox.y + handoffBox.height - 1 && Math.abs(restBox.x - handoffBox.x) < 16,
+      'Las indicaciones de lectura deben quedar bajo la entrega en escritorio');
+    const notices = await medical.locator('#alerts .alerts-list').boundingBox();
+    const alertForm = await medical.locator('#alerts form').boundingBox();
+    assert.ok(alertForm.x >= notices.x + notices.width - 1 && Math.abs(notices.y - alertForm.y) < 4,
+      'Una tarjeta ancha debe mostrar los avisos y el formulario en paralelo');
+    const draft = handoff.getByRole('textbox');
+    await draft.fill('Borrador ficticio');
+    const history = medical.getByRole('button',{name:/ver historial completo/i});
+    await history.press('Enter');
     await medical.getByRole('dialog',{name:'Historial de signos'}).waitFor();
+    await medical.keyboard.press('Escape');
+    assert.equal(await history.evaluate(el => document.activeElement === el),true);
+    assert.equal(await draft.inputValue(),'Borrador ficticio');
   } finally {
     await medical.close();
   }
