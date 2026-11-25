@@ -14,6 +14,8 @@ En Resumen, las tarjetas se ajustan a su contenido y Evolución aprovecha el anc
 
 El modo compacto se activa en los resúmenes médico y de enfermería, incluso si la barra solo ofrece «Valoración». Las tarjetas nativas de signos vitales se distribuyen según el ancho disponible y conservan colores, datos secundarios, tiempos, observaciones y acceso al historial. Una alerta breve puede compartir línea con su título encima de Evolución. Las notas consecutivas se distinguen por su autor, rol, hora y un separador fino. En las tablas de indicaciones, la hora y las acciones dejan más ancho a la prescripción. En Signos vitales, la franja muestra las mediciones reconocidas con las unidades y horas de origen. «Ver registros» abre la tabla completa. Si la fuente no permite asignar inequívocamente los valores a sus horas, queda visible la tabla original.
 
+[Comparación visual del Resumen de enfermería en escritorio y pantalla estrecha](docs/visual/compactacion/README.md)
+
 ## Pautas en Evolución
 
 En «Acciones de evolución», «Continuar pauta» recupera las respuestas al cerrar y abrir el formulario en la misma ficha y pestaña. La estrella junto al selector fija o quita la pauta favorita del profesional en ese perfil de Chrome. «Guardar» inserta la pauta confirmada por HHR y deja el cursor al final de la evolución para continuar escribiendo. La firma se realiza en Eloísa.

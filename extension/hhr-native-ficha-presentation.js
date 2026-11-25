@@ -154,6 +154,20 @@
         td :is(.MuiButton-root,.MuiIconButton-root):not(:is(dialog,[role=dialog]) *) {
           padding:2px 4px !important; min-height:24px !important; line-height:1.2 !important; }
       }
+      [data-hhr-reading="diagnosis"] .MuiCardHeader-root:not(:has(button,input,.MuiCardHeader-avatar,.MuiCardHeader-action)) {
+        display:flex; flex-flow:row wrap; align-items:baseline; gap:2px 10px;
+        > .MuiCardHeader-content { display:flex; flex-wrap:wrap; align-items:baseline; gap:inherit; }
+      }
+      [data-hhr-reading="orders"] td[data-hhr-reading="narrow"]:has(.MuiIconButton-root) {
+        white-space:nowrap;
+        .MuiIconButton-root { min-inline-size:24px; }
+      }
+      @media(max-width:48rem) {
+        [data-hhr-reading="orders"]:has(table thead th:nth-child(5)) {
+          min-inline-size:0; max-inline-size:100%; overflow-x:auto;
+          table { min-inline-size:44rem; }
+        }
+      }
       [data-hhr-reading="time-symbol"] { zoom:.68; }
       [data-hhr-reading="vital-grid"] {
         display:grid !important; grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5rem),1fr)) !important;
@@ -166,6 +180,11 @@
         :is(p,h4,h5,h6,.MuiTypography-root) { margin-block:0 !important; line-height:1.23 !important; }
       }
       [data-hhr-reading="vital-tile"]:has(> [data-hhr-reading="vital-inner"]) { padding:0 !important; }
+      @media(max-width:30rem) {
+        [data-hhr-reading="vital-grid"] {
+          grid-template-columns:repeat(auto-fit,minmax(min(100%,6.25rem),1fr)) !important;
+        }
+      }
       [data-hhr-vital-detail-folded] { display:none !important; }
       .hhr-ficha-vitals,.hhr-ficha-vitals dl { display:flex; flex-wrap:wrap; align-items:center; gap:5px 14px; }
       .hhr-ficha-vitals dl { margin:2px 0; flex:1 1 auto; }
