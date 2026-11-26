@@ -19,7 +19,7 @@
       const name = text(byline);
       if (name && !isProfession(name) && isProfession(text(role))) {
         const hideRole = !role.matches(interactive) && !role.querySelector(interactive);
-        return { name, role: hideRole ? role : null };
+        return { name, brief: globalThis.HhrFichaProfessionalName?.short(byline.textContent) || name, role: hideRole ? role : null };
       }
     }
     return { name: unknown, role: null };
@@ -240,8 +240,12 @@
       const choices = timeline ? ['', ...names] : [];
       if (choices.length !== authorButtons.size || choices.some(name => !authorButtons.has(name))) {
         const buttons = new Map();
+        // A professional reads as a first name and a first surname, unless two of them would read alike.
+        const briefs = new Map(notes.filter(note => note.name !== unknown).map(note => [note.name, note.brief || note.name]));
+        const taken = [...briefs.values()];
         for (const name of choices) {
-          const label = name === unknown ? 'Autor sin identificar' : name || 'Todos';
+          const brief = briefs.get(name);
+          const label = name === unknown ? 'Autor sin identificar' : !name ? 'Todos' : taken.filter(other => other === brief).length === 1 ? brief : name;
           buttons.set(name, authorButtons.get(name) || button(label, 'hhr-evo-author'));
         }
         const focused = document.activeElement;

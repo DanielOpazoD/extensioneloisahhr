@@ -75,7 +75,7 @@
     let horizontalScroll = null;
     let timelineRoot = null;
     let newBadges = new Set();
-    let inlineEvents = new Set();
+    let inlineEvents = new Set(), names = new Map();
     let flatStacks = new Set();
     let dayEdges = new Map();
     let dayLabels = new Map();
@@ -114,6 +114,8 @@
         card.removeAttribute('data-hhr-history-kind');
       });
       inlineEvents.clear();
+      for (const line of names.keys()) line.removeAttribute('data-hhr-author');
+      names = new Map();
       flatStacks.forEach(stack => stack.removeAttribute('data-hhr-history-flat'));
       flatStacks.clear();
       dayEdges.forEach((_edge, box) => box.removeAttribute('data-hhr-history-edge'));
@@ -290,7 +292,7 @@
       // Eloísa opens each day with a dated box and gives most later events a box of their own.
       // Every card of the timeline is an event, whichever box holds it.
       const boxes = [...timeline.children].filter(el => el.matches('.MuiBox-root'));
-      const nextInline = new Map(), nextFlat = new Set();
+      const nextInline = new Map(), nextFlat = new Set(), nextNames = new Map();
       for (const box of boxes) {
         for (const card of box.querySelectorAll(':scope > .MuiCard-root')) {
           const header = card.querySelector(':scope > .MuiCardHeader-root');
@@ -306,9 +308,22 @@
               !header.querySelector('button,a,input,[tabindex]') && !category.children.length) {
             nextInline.set(card, category.textContent.trim());
             if (flat) nextFlat.add(flat);
+            // Who signs the event reads as a first name and a first surname, as in the summary. One of
+            // the two lines of the header is the role; the other, with no element inside, is the name.
+            const naming = globalThis.HhrFichaProfessionalName;
+            const lines = [header.querySelector('.MuiCardHeader-title'), header.querySelector('.MuiCardHeader-subheader')];
+            for (const [roleLine, nameLine] of [lines, [...lines].reverse()]) {
+              if (!naming || !roleLine || !nameLine || nameLine.children.length || !naming.isProfession(roleLine.textContent) || naming.isProfession(nameLine.textContent)) continue;
+              const brief = naming.short(nameLine.textContent);
+              if (brief && brief !== nameLine.textContent.trim().replace(/\s+/g, ' ')) nextNames.set(nameLine, brief);
+              break;
+            }
           }
         }
       }
+      for (const line of names.keys()) if (!nextNames.has(line)) line.removeAttribute('data-hhr-author');
+      for (const [line, brief] of nextNames) if (line.getAttribute('data-hhr-author') !== brief) line.setAttribute('data-hhr-author', brief);
+      names = nextNames;
       for (const card of inlineEvents) if (!nextInline.has(card)) {
         card.removeAttribute('data-hhr-history-inline');
         card.removeAttribute('data-hhr-history-kind');

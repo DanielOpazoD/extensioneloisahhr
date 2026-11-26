@@ -62,6 +62,8 @@
       }
       .MuiCardHeader-title { color:var(--hhr-ficha-ink-soft); }
       .MuiCardHeader-subheader:not(:empty)::before { content:'· ' / ''; }
+      /* A name drawn short keeps the separator before it and the size of its line. */
+      [data-hhr-author]::before, [data-hhr-author]::after { font-size:var(--hhr-ficha-text-meta); line-height:1.45; }
       :is(& > .MuiCardContent-root, [data-hhr-history-flat]) > :not(:first-child) {
         font-size:var(--hhr-ficha-text-body); line-height:1.45;
         :is(p,span,.MuiTypography-root) { font-size:inherit; line-height:inherit; }

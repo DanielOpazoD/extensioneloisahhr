@@ -104,7 +104,11 @@ async function verifyTimeline(page, directory, width, measured) {
   assert.equal(await dates.count(), 3, 'Los tres días conservan su fecha: todos tienen alguna evolución');
   await page.screenshot({path:path.join(directory, width + '-evoluciones.png')});
   await authors.getByRole('button', {name:'Marta Ejemplo', exact:true}).press('Enter');
-  assert.deepEqual(await shown.locator('.MuiCardHeader-subheader').allTextContents(), ['Marta Ejemplo']);
+  // The header of each event says a first name and a first surname. Eloísa's own text, with the whole name and its
+  // spaces, stays in the page; the separator before the name keeps its size.
+  const signed = await shown.locator('.MuiCardHeader-subheader').evaluateAll(list => list.map(line => [line.textContent, line.getAttribute('data-hhr-author'),
+    getComputedStyle(line, '::after').content, getComputedStyle(line).fontSize, getComputedStyle(line, '::before').fontSize, getComputedStyle(line, '::after').fontSize]));
+  assert.deepEqual(signed, [['Marta  Ejemplo Prueba', 'Marta Ejemplo', '"Marta Ejemplo" / ""', '0px', '12px', '12px']], 'Quien firma un evento del Historial se lee con un nombre y un apellido');
   assert.equal(await dates.count(), 1, 'Solo queda la fecha del día que tiene una nota de esa profesional');
   // Eloísa gives each event a box: with hundreds of them, a line or a gap per filtered box would add up.
   const leftovers = await page.locator('.timeline > .MuiBox-root').evaluateAll(list => {
