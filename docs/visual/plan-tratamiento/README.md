@@ -17,7 +17,7 @@ La comparación usa el mismo Plan de tratamiento ficticio en Chromium, escrito c
 
 Cada tarjeta pone en una línea su título, su interruptor y sus herramientas. Las herramientas muestran el nombre que Eloísa les da en su icono, «Planificación estandar» y «Planificación única», cuando la tarjeta mide al menos 992 px; en una tarjeta más estrecha quedan los iconos y el nombre aparece al pasar el cursor. Cada indicación ocupa una fila tan alta como su texto: el nombre en negrita, la posología debajo en el tamaño pequeño, y «SOS» o «Externo» como etiquetas. El pie vacío de la tabla no ocupa una fila.
 
-La columna de la indicación mide al menos 224 px. En Eloísa la mantienen abierta los controles de página; al hacerlos más pequeños, en una ventana de menos de 1274 px la columna quedaba en 171 px, más estrecha que la original, de 209 px.
+La columna de la indicación mide al menos 224 px. En Eloísa la mantienen abierta los controles de página; al hacerlos más pequeños, la columna quedaba en 171 px hasta una ventana de unos 1200 px, y por debajo de unos 1260 px era más estrecha que la original, de 209 px.
 
 Lo que no cambia:
 

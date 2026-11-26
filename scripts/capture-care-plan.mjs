@@ -29,11 +29,14 @@ const read = page => page.evaluate(() => {
         box:box(table.tHead), indication:box(table.tHead.rows[0].cells[0]).width, hours:captions.map(caption => caption.textContent), page:box(table.querySelector('th .MuiStack-root > p')).height, controls:[...table.querySelectorAll('th:first-child button')].map(button => box(button).height)},
       foot:getComputedStyle(table.tFoot).display,
       rows:[...table.tBodies[0].rows].map(row => {
-        const texts = [...row.cells[0].querySelectorAll('p')];
+        const texts = [...row.cells[0].querySelectorAll('p')], chips = [...row.querySelectorAll('.MuiChip-root')];
+        const written = texts.reduce((sum, p) => sum + box(p).height, 0);
         return {height:box(row).height, top:box(row).top, bottom:box(row).bottom, text:texts.map(p => p.textContent),
           block:box(row.cells[0].firstElementChild).height, lines:texts.map(p => parseFloat(getComputedStyle(p).lineHeight)),
+          // What the block measures beyond its two texts, and whether a marker went to a line of its own under the name.
+          spare:box(row.cells[0].firstElementChild).height - written, markersBelow:chips.some(chip => box(chip).top >= box(texts[0]).bottom - 1),
           sizes:texts.map(p => getComputedStyle(p).fontSize), weights:texts.map(p => getComputedStyle(p).fontWeight),
-          chips:[...row.querySelectorAll('.MuiChip-root')].map(chip => box(chip).height),
+          chips:chips.map(chip => box(chip).height),
           marks:[...row.querySelectorAll('.slots > .MuiStack-root')].map((slot, index) => {
             const button = slot.querySelector('button');
             return button ? {icon:button.querySelector('svg').dataset.testid, size:box(button).height, colour:getComputedStyle(button).color,
@@ -100,6 +103,8 @@ async function verifyPlan(page, width, native) {
       assert.ok(row.lines[0] <= 19 && row.lines[1] <= 17, 'Las líneas de una indicación son las de la vista compacta: ' + row.lines);
       assert.ok(row.height <= Math.max(row.block, 28) + 8 && row.height < earlier.height,
         `La fila ${at} mide lo que su texto: ${earlier.height} → ${row.height}, texto ${row.block}`);
+      // The block is its name and its posology. Only markers that did not fit beside the name add a line of their own.
+      assert.ok(row.spare <= (row.markersBelow ? 19 : 1), `Nada separa el nombre de su posología: fila ${at}, ${row.spare}`);
       assert.ok(row.chips.every(height => height === 16), 'Las marcas SOS y Externo son etiquetas pequeñas');
       row.marks.forEach((mark, slot) => {
         const old = earlier.marks[slot];
@@ -209,6 +214,12 @@ try {
     const native = await read(page);
     await mountFicha(page, assets, {sans});
     await settle(page);
+    // Without a wider family on this machine the second pass repeats the first. Say so.
+    if (sans && await page.evaluate(() => {
+      const probe = family => { const span = document.body.appendChild(document.createElement('span')); span.style.cssText = 'position:absolute;white-space:nowrap;font:13px ' + family;
+        span.textContent = 'Preparación de prueba 500 mg'; const {width} = span.getBoundingClientRect(); span.remove(); return width; };
+      return probe(getComputedStyle(document.documentElement).getPropertyValue('--hhr-ficha-sans')) <= probe('system-ui,sans-serif');
+    })) console.info('  Aviso: este equipo no tiene una letra más ancha que la del sistema; la pasada «con letra ancha» repite la anterior.');
     const measured = await read(page);
     console.info('Plan de tratamiento sintético', assets.version, width, sans ? 'con letra ancha' : '', JSON.stringify(measured.summary), 'sin extensión', JSON.stringify(native.summary));
     if (!sans) await page.screenshot({path:path.join(directory, width + '-plan.png')});
