@@ -774,6 +774,29 @@
   };
 
   let resized = false;
+  // What Eloísa has just drawn takes this view's presentation in the same frame, before the browser
+  // paints it: a card never shows in its original form first. The controls of the bar, which do not
+  // change what the page looks like, keep their own slower pace.
+  let stale = true, presenting = 0;
+  const present = () => {
+    stale = false;
+    const encId = helper.resolveEncounterId(window.location.href);
+    // Until the saved view is known the page keeps the one it opened with.
+    if (fichaTheme !== null) nativePresentation?.refresh(encId, fichaTheme);
+    historyNavigation?.refresh(encId);
+    evolutionAuthors.refresh(fichaTheme === 'compact' ? encId : null);
+    worklistPresentation?.refresh(window.location.pathname, resized ? undefined : []);
+    resized = false;
+  };
+  const schedulePresentation = () => {
+    stale = true;
+    // A hidden tab draws no frame: the slower pass presents it.
+    if (presenting || document.hidden) return;
+    presenting = requestAnimationFrame(() => {
+      presenting = 0;
+      if (active && stale && document.body && uiLifecycle.owns()) present();
+    });
+  };
   const ensureButton = () => {
     if (!document.body) return;
     const encId = helper.resolveEncounterId(window.location.href);
@@ -808,11 +831,7 @@
       }
     }
     if (modal?.isConnected) globalThis.HhrCenterPatientContext?.refreshRoute(modal, encId);
-    nativePresentation?.refresh(encId, fichaTheme || 'off');
-    historyNavigation?.refresh(encId);
-    evolutionAuthors.refresh(fichaTheme === 'compact' ? encId : null);
-    worklistPresentation?.refresh(window.location.pathname, resized ? undefined : []);
-    resized = false;
+    if (stale) present();
     ensureOperationsBar(encId);
     ensureCorrectedDischargePrintItems();
     ensureNursingMedicalEpicrisisPrintItem(nursingContext);
@@ -826,7 +845,9 @@
 
   let scheduled = false;
   const scheduleEnsureButton = () => {
-    if (!active || scheduled || !uiLifecycle.owns()) return;
+    if (!active || !uiLifecycle.owns()) return;
+    schedulePresentation();
+    if (scheduled) return;
     scheduled = true;
     window.setTimeout(() => {
       scheduled = false;
@@ -896,6 +917,7 @@
         if (guard.pending.size || guard.dirty.size) return false;
       }
       active = false;
+      cancelAnimationFrame(presenting);
       document.removeEventListener('click', onWorklistPrint, true);
       document.removeEventListener('click', onWorklistEdit, true);
       document.removeEventListener('click', onWorklistCopyRun, true);

@@ -1,5 +1,52 @@
 # Resumen compacto en escritorio
 
+## La ficha llega en la vista, y Evolución con una sola línea de acciones, en 0.48.209
+
+El responsable grabó la carga de la ficha: se veía pasar del aspecto de Eloísa al de la vista. Pidió que la carga y la actualización fueran fluidas, «que parezca que el entorno nuevo es el original y no una maqueta», y que Evolución y Valoración fueran más minimalistas, con los botones unificados y más espacio para leer la evolución completa.
+
+Lo que se leyó en la página (26-11-2026, ficha médica, al pasar de la lista a la ficha, sin datos clínicos):
+
+| Momento | Qué dibujaba Eloísa | Qué hacía la vista (0.48.208) |
+| --- | --- | --- |
+| ~1,3 s | 24 marcadores de carga de 176 px: 4.047 px de página | nada: los marcadores no tienen `id` |
+| ~1,5 s | la nota, en su lugar de Eloísa | la presentaba 80 ms después de cada cambio: 300 ms de página con forma de Eloísa |
+| 1,6 a 2,2 s | el resto de los apartados | la página pasaba por 3.386, 3.054, 3.205, 1.888, 2.293 y 1.895 px |
+| ~5,1 s | los apartados tardíos | 140 ms con su forma de Eloísa: de 2.149 a 1.456 px |
+
+| Carga | 0.48.208 | 0.48.209 |
+| --- | --- | --- |
+| Todo en carga, 1440 × 900 | [Antes](0.48.209/antes/1440-cargando.png) | [Después](0.48.209/despues/1440-cargando.png) |
+| Con la nota, la entrega, los signos y las alertas | [Antes](0.48.209/antes/1440-cargando-parcial.png) | [Después](0.48.209/despues/1440-cargando-parcial.png) |
+
+En el «antes» las hojas de estilo y los scripts son los de la 0.48.208, presentados en el mismo instante: lo que la captura no muestra es su espera de 80 ms, que es lo que se veía en la página.
+
+| Medida | 0.48.208 | 0.48.209 |
+| --- | ---: | ---: |
+| Alto de un marcador de carga | 176 px | 50 px |
+| Página con todo en carga, en la página real | 4.047 px | 1.603 px (termina en 1.392) |
+| Página con todo en carga, ficha ficticia a 1440 | 4.288 px | 1.549 px (termina en 1.686) |
+| Espera entre lo que Eloísa dibuja y su presentación | 80 ms | ninguna: el mismo cuadro |
+| Fila del resumen diario mientras la ronda se arma | en su línea de Eloísa, y luego salta | no se dibuja; aparece en la línea de pestañas |
+| Margen de la página antes de las pestañas | 32 px de Eloísa | el de la vista |
+
+Los marcadores y sus medidas se leyeron en la página con la hoja nueva aplicada a mano. El pase de presentación en el mismo cuadro no se ha visto en la página: lo comprueban la ficha ficticia ([`capture-loading.mjs`](../../../scripts/capture-loading.mjs)) y la extensión instalada en la prueba del CI.
+
+| Evolución, nota larga, 1440 × 900 | 0.48.208 | 0.48.209 |
+| --- | --- | --- |
+| Tarjeta | [Antes](0.48.209/antes/1440-nota-larga.png) | [Después](0.48.209/despues/1440-nota-larga.png) |
+| Ventana «Nota completa» | 960 px de ancho, texto a 15 px | [1.216 px, texto a 16 px](0.48.209/despues/1440-nota-completa.png) |
+
+| Medida de Evolución, ficha ficticia | 0.48.208 | 0.48.209 |
+| --- | ---: | ---: |
+| Filas de botones | 2: encabezado y pie | 1: encabezado |
+| Líneas de una nota larga a 900 px de alto | 14 | 21 |
+| Líneas de una nota larga a 1.011 px de alto | 14 | 27 |
+| Líneas de una nota larga a 800 px de alto | 14 | 16 |
+| Máximo en una pantalla alta | 14 | 30 |
+| Líneas de una nota corta | 14 | 14 |
+
+Lo que queda igual: una nota corta mide lo mismo que antes, de modo que las tarjetas de su lado y de abajo empiezan en el mismo lugar; los Signos vitales siguen en la primera pantalla con una nota larga; «Leer más / Leer menos» es el control de Eloísa, ahora una flecha en la línea de acciones.
+
 ## Sin barra de secciones, nombres cortos y Balance Hídrico en una línea, en 0.48.207
 
 El responsable pidió quitar del todo la barra de enlaces de sección en las dos fichas, corregir el cuadro del resumen diario (el botón «Imprimir» tapaba la fecha), mostrar a cada profesional con un nombre y un apellido, quitar la hora de la firma de Diagnóstico, escribir «Indicación» donde Eloísa dice «Indication» y simplificar Balance Hídrico sin registros.

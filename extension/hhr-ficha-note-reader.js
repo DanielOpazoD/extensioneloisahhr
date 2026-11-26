@@ -3,6 +3,16 @@
   'use strict';
   function create() {
     let source = null, episode = null, openButton = null, dialog = null, content = null;
+    // The window of the whole note opens from the line of the card's heading. Without one, from under the note.
+    const host = () => source?.closest('#evolution')?.querySelector(':scope > .MuiCardHeader-root > .MuiCardHeader-action') || null;
+    function place(button) {
+      const bar = host();
+      if (!bar) { if (button.parentElement !== source.parentElement) source.parentElement.append(button); return; }
+      if (button.parentElement === bar) return;
+      // After «Ver evoluciones», before whatever Eloísa keeps in the heading.
+      const lead = bar.querySelector(':scope > .hhr-evo-entry');
+      bar.insertBefore(button, lead ? lead.nextSibling : bar.firstChild);
+    }
     const attributes = {role:'region', tabindex:'0', 'aria-label':'Texto de la evolución, desplazable'};
     const owned = new Set();
     const dismiss = () => {
@@ -55,6 +65,9 @@
       dismiss();
       openButton?.remove();
       openButton = null;
+      clearScroll();
+    }
+    function clearScroll() {
       for (const name of owned) {
         if (source?.getAttribute(name) === attributes[name]) source.removeAttribute(name);
       }
@@ -69,14 +82,16 @@
       for (const [name, value] of Object.entries(attributes)) {
         if (!source.hasAttribute(name)) { source.setAttribute(name,value); owned.add(name); }
       }
-      if (!openButton?.isConnected) {
+      if (!openButton) {
         openButton = document.createElement('button');
         openButton.type = 'button'; openButton.className = 'hhr-note-open';
-        openButton.textContent = 'Leer nota completa';
+        // The words on the button are part of its name, for whoever asks for it by voice.
+        openButton.textContent = 'Nota completa';
+        openButton.setAttribute('aria-label','Leer nota completa');
         openButton.setAttribute('aria-haspopup','dialog');
         openButton.addEventListener('click', openReader);
-        source.parentElement.append(openButton);
       }
+      place(openButton);
     }
     const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
     function refresh(next, encounter) {

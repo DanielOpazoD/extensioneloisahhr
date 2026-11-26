@@ -23,6 +23,8 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 18. **Un profesional es un nombre y un apellido.** En firmas, alertas, «Solicitante», el lector de evoluciones y los eventos del Historial se lee el primer nombre y el primer apellido (`hhr-ficha-professional-name.js`). Eloísa escribe la mayoría de los nombres como cuatro campos unidos por un espacio (primer nombre, segundo nombre, primer apellido, segundo apellido) y deja el espacio de un campo vacío: ese espacio dice cuál falta. El nombre completo queda en la página.
 19. **La ronda no lleva barra de secciones.** Con la ronda reconocida, la línea de enlaces de Eloísa no se muestra y «Ver vacías» va con el rótulo «Sin datos». Sin ronda, la línea se conserva: lo que no se reconoce no se toca.
 17. **Lo que está detrás de una ventana conserva su forma.** Eloísa marca la página entera `aria-hidden` mientras su menú o una de sus ventanas está abierta. Eso no es contenido oculto del resumen: la vista solo descarta lo que está oculto o inerte *dentro* de `main` (`main [aria-hidden=true]`, `main [inert]`).
+20. **La vista llega con la página, no después.** Lo que Eloísa dibuja se presenta en el cuadro que lo pinta: el pase de presentación corre en `requestAnimationFrame`, no tras una espera, y lo que ese pase coloca (la fecha del resumen diario, las columnas de la ronda) se coloca en el mismo pase. Lo que se puede decir sin leer la página se dice en CSS, que está desde el primer cuadro: [`hhr-ficha-loading.css`](../extension/hhr-ficha-loading.css) da a cada marcador de carga de Eloísa el alto de una línea. Una espera se escribe para que termine sola (una animación con duración), nunca pendiente de que un script la levante.
+21. **Las acciones de una tarjeta van en una línea, en su encabezado.** Las que abren una lectura llevan su palabra («Ver evoluciones», «Nota completa»); las herramientas de Eloísa son iconos de una familia con su nombre nativo para el puntero y el lector de pantalla. Un control de Eloísa se lleva a esa línea con la cuadrícula de la tarjeta, sin moverlo de su árbol.
 
 ## Dónde vive cada cosa
 
@@ -30,6 +32,7 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 | --- | --- |
 | [`hhr-ficha-tokens.css`](../extension/hhr-ficha-tokens.css) | Colores por función, tamaños, pesos, márgenes e iconos. Es el único lugar donde se definen. |
 | [`hhr-ficha-themes.css`](../extension/hhr-ficha-themes.css) | Densidad por vista y reglas comunes del Resumen. |
+| [`hhr-ficha-loading.css`](../extension/hhr-ficha-loading.css) | La ficha mientras carga: los marcadores de Eloísa en una línea y la espera de la fila del resumen diario. Solo estilos. |
 | [`hhr-ficha-round-layout.css`](../extension/hhr-ficha-round-layout.css) y [`.js`](../extension/hhr-ficha-round-layout.js) | Las dos columnas de la ronda de escritorio. |
 | [`hhr-ficha-evolution-authors.css`](../extension/hhr-ficha-evolution-authors.css) y [`.js`](../extension/hhr-ficha-evolution-authors.js) | Acciones de Evolución y filtro de evoluciones por profesional. |
 | [`hhr-ficha-reading-labels.css`](../extension/hhr-ficha-reading-labels.css) y [`.js`](../extension/hhr-ficha-reading-labels.js) | Firmas, campos de entrega y alerta, interruptores. |

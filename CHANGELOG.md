@@ -1,5 +1,17 @@
 # Cambios
 
+## 0.48.209
+
+- La ficha ya no se ve pasar del aspecto de Eloísa al de la vista Compacta al abrirse, al recargarse o al actualizarse una tarjeta. Lo que Eloísa dibuja toma la presentación de la vista en el mismo cuadro en que se pinta; antes la tomaba 80 ms después, y cada tarjeta se alcanzaba a ver en su forma original.
+- Mientras la ficha carga, cada apartado es una línea con su título (50 px) en lugar de la tarjeta de 176 px de Eloísa. En la ficha leída el 26-11-2026 la página en carga mide 1.659 px en vez de 4.047, cerca de los 1.419 con que termina: llega a su tamaño en lugar de encogerse.
+- La fecha del resumen diario e «Imprimir» no se dibujan en su línea de Eloísa mientras la ronda se arma: aparecen en la línea de pestañas. La espera termina sola a los 1,2 s si la ronda no llega a formarse, y la fila queda donde Eloísa la pone, con sus controles.
+- Al recargar la página, la vista guardada se nombra antes de que Eloísa dibuje su primera tarjeta.
+- Evolución (Valoración en la ficha de Gestión de cuidados) reúne sus acciones en una sola línea, en el encabezado: «Ver evoluciones», «Nota completa», las herramientas de Eloísa como iconos de una familia (Enmendar, Ver enmendados, Pautas), la flecha que contrae o despliega la nota y el menú. Ya no hay una fila de botones bajo el texto.
+- «Nota completa» reemplaza a «Leer nota completa» y aparece cuando la nota no cabe en la tarjeta. La flecha es el «Leer más / Leer menos» de Eloísa, en su mismo lugar del árbol.
+- La nota tiene más espacio: nunca menos de catorce líneas, y una nota larga crece hasta lo que la ventana deja antes de Signos vitales, que siguen en la primera pantalla (16 líneas a 800 px de alto, 21 a 900, 27 a 1.011 y hasta 30 en una pantalla más alta).
+- Las ventanas de lectura son más grandes: «Nota completa» y «Ver evoluciones» abren a 1.216 px de ancho (antes 960) y con el texto a 16 px.
+- Vale igual para la ficha abierta desde la lista de trabajo médico y desde Gestión de cuidados.
+
 ## 0.48.208
 
 - En el Historial de la vista Compacta, quien firma cada evento se lee con su primer nombre y su primer apellido, como en el Resumen: «Daniel Opazo Damiani» se lee «Daniel Opazo». El nombre completo sigue en la página.

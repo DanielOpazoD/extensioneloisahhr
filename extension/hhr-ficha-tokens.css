@@ -45,8 +45,9 @@ html[data-hhr-ficha-theme] {
   --hhr-ficha-page-margin:clamp(32px, 4vw - 16px, 56px);
   --hhr-ficha-page-max:1440px;
   --hhr-ficha-control:28px;
-  /* The lines of the note that the desktop round shows at once, for every patient. */
+  /* The lines of the note that the desktop round always gives it, and the most it grows to on a tall window. */
   --hhr-ficha-note-lines:14;
+  --hhr-ficha-note-most:30;
   /* One family of icons. Each mask takes the colour of its own button. */
   --hhr-icon-notes:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='3' width='12' height='14' rx='2'/%3E%3Cpath d='M4 8v11a2 2 0 0 0 2 2h9'/%3E%3Cpath d='M12 8h4M12 12h4'/%3E%3C/svg%3E");
   --hhr-icon-edit:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z'/%3E%3Cpath d='m14.5 7.5 3 3'/%3E%3C/svg%3E");

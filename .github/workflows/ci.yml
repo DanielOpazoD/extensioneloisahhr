@@ -48,6 +48,8 @@ jobs:
         run: node scripts/capture-medical-worklist.mjs WORKTREE "$RUNNER_TEMP/lista-medica"
       - name: Verify the reader of evolutions on the summary
         run: node scripts/capture-evolution-reader.mjs WORKTREE "$RUNNER_TEMP/lector-evoluciones"
+      - name: Verify the summary arrives in the compact view while it loads
+        run: node scripts/capture-loading.mjs WORKTREE "$RUNNER_TEMP/ficha-carga"
       - run: npm run test:dau
       - run: npm run build
       - uses: actions/upload-artifact@v7

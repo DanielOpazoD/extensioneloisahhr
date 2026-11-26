@@ -175,12 +175,13 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
       amendBox.x + amendBox.width <= moreBox.x + 1, 'La lectura va de las evoluciones a las herramientas y termina en el menú');
     const captions = await Promise.all(tools.map(tool => tool.evaluate(el => ({
       action:el.getAttribute('data-hhr-evo-action'),
-      icon:getComputedStyle(el,'::before').maskImage !== 'none', caption:getComputedStyle(el,'::after').content,
+      icon:getComputedStyle(el,'::before').maskImage !== 'none', caption:getComputedStyle(el,'::after').content, hint:el.title,
     }))));
     assert.deepEqual(captions.map(tool => tool.action), [null,'more','amend','amended']);
     assert.ok(captions.every(tool => tool.icon), 'Cada acción de la nota usa un icono de la misma familia');
-    assert.match(captions[2].caption, /^"Enmendar"/, 'El lápiz lleva el nombre que le da Eloísa');
-    assert.match(captions[3].caption, /^"Enmendados"/, 'La lista de notas enmendadas se nombra junto a su icono');
+    // Only the actions that open something to read carry a word. A writing tool is its icon, with Eloísa's name for the pointer.
+    assert.deepEqual(captions.slice(2).map(tool => [tool.caption, tool.hint]), [['none', 'Enmendar'], ['none', 'Ver enmendados']],
+      'El lápiz y la lista de enmendadas son un icono cada uno, con el nombre que les da Eloísa');
     assert.deepEqual(await Promise.all(tools.slice(1).map(tool => tool.getAttribute('title'))), ['Más opciones','Enmendar','Ver enmendados'],
       'Con el cursor encima, cada botón muestra el nombre que Eloísa solo da a su icono');
     await tools[0].focus();

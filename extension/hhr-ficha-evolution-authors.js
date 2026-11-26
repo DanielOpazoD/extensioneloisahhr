@@ -38,7 +38,7 @@
         !card.firstElementChild.matches('.MuiCardHeader-root') ||
         !card.lastElementChild.matches('.MuiCardContent-root')) return false;
     const iconButton = el => el.matches('button') && text(el).length <= 1;
-    const headButtons = card.firstElementChild.querySelectorAll('.MuiCardHeader-action button:not(.hhr-evo-entry)');
+    const headButtons = card.firstElementChild.querySelectorAll('.MuiCardHeader-action button:not(.hhr-evo-entry,.hhr-note-open)');
     if (![...headButtons].every(iconButton)) return false;
     // In the ficha opened from Gestión de cuidados a paragraph, «Evolución:», names the note before it.
     const [label, ...rest] = card.lastElementChild.children;
@@ -82,7 +82,7 @@
     const actions = new Map();
     if (!card) return actions;
     const tools = card.querySelectorAll(':scope > .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root > button');
-    const header = card.querySelectorAll(':scope > .MuiCardHeader-root > .MuiCardHeader-action button:not(.hhr-evo-entry)');
+    const header = card.querySelectorAll(':scope > .MuiCardHeader-root > .MuiCardHeader-action button:not(.hhr-evo-entry,.hhr-note-open)');
     for (const [buttons, inHeader] of [[header, true], [tools, false]]) {
       for (const button of buttons) {
         const action = toolAction(button, inHeader);

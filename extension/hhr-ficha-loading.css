@@ -1,0 +1,40 @@
+/* The ficha while Eloísa loads it, in the compact view. Styles only: they hold from the first card
+   Eloísa draws, before any script of this view has read the page.
+
+   Eloísa opens a ficha with one placeholder per section: a card with the section's title, a grey bar
+   for its byline and two more for its content, 176 px each and close to 4.000 px of page (read on
+   26-11-2026). Each is replaced by its section as its data arrives, some of them seconds later. */
+@media screen {
+  /* A placeholder takes the room of a line, as the section that replaces it does: the page arrives at
+     its size instead of shrinking to it, and the title is already written as the view writes it. */
+  html[data-hhr-ficha-theme="compact"] main .MuiCard-root:has(> .MuiCardContent-root > .MuiSkeleton-root:first-child):not(:has(> .MuiCardContent-root > :not(.MuiSkeleton-root)), :is(dialog,[role=dialog]) *) {
+    /* The view may already know the card by its title and give it the insets of its section: a placeholder keeps its own. */
+    padding:0 !important; min-block-size:0 !important; border-radius:var(--hhr-ficha-radius); box-shadow:none;
+    > .MuiCardHeader-root { padding:var(--hhr-ficha-card-pad) var(--hhr-ficha-inset) 0 !important; min-block-size:0 !important; }
+    > .MuiCardHeader-root .MuiCardHeader-title {
+      color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans);
+    }
+    > .MuiCardHeader-root .MuiCardHeader-subheader { display:none; }
+    > .MuiCardContent-root { padding:6px var(--hhr-ficha-inset) var(--hhr-ficha-card-pad) !important; }
+    > .MuiCardContent-root > .MuiSkeleton-root {
+      block-size:8px; max-inline-size:min(100%,22rem); border-radius:var(--hhr-ficha-radius-small); transform:none;
+    }
+    > .MuiCardContent-root > .MuiSkeleton-root ~ .MuiSkeleton-root { display:none; }
+  }
+
+  /* Two lines of Eloísa have no place in the round: the date of the daily summary with its «Imprimir»,
+     which rides on the line of tabs, and the line of section links, which the round does not show.
+     Until the round is recognized, and the row has its byline, neither is drawn where Eloísa puts it,
+     from where it would be seen to jump or to vanish. The wait ends by itself: if the round never
+     forms, both are drawn where Eloísa put them, with every one of their controls. */
+  html[data-hhr-ficha-theme="compact"] main .MuiGrid-container > .MuiGrid-item:first-child:has(> .MuiStack-root > form):is(
+      :has(> .MuiSkeleton-root),
+      .MuiGrid-container:not([data-hhr-round]) > :has(~ .MuiGrid-item .MuiCard-root > .MuiCardContent-root > .MuiSkeleton-root:first-child)),
+  html[data-hhr-ficha-theme="compact"] main .MuiGrid-item:has(> .MuiGrid-container .MuiTypography-caption):has(
+      + .MuiGrid-container:not([data-hhr-round]) > .MuiGrid-item .MuiCard-root > .MuiCardContent-root > .MuiSkeleton-root:first-child) {
+    animation:hhr-ficha-arrival 1.2s step-end;
+  }
+}
+/* Out of the page while it lasts, so that nothing moves when the round takes over. Where a browser does
+   not animate `display`, the two lines are simply drawn from the start. */
+@keyframes hhr-ficha-arrival { from, to { display:none; } }

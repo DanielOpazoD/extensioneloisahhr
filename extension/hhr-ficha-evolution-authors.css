@@ -69,6 +69,17 @@
       &:hover { background:#edf5f2; border-color:#7da99e; }
       @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
     }
+    /* The window of the whole note opens from the card's heading, in one line with Eloísa's own actions
+       and drawn like them. */
+    > .MuiCardHeader-root > .MuiCardHeader-action > .hhr-note-open {
+      display:inline-flex; flex:none; align-items:center; justify-content:center; gap:6px; box-sizing:border-box;
+      min-height:28px; margin:0; padding:3px 8px; border:1px solid transparent; border-radius:5px; background:transparent;
+      color:var(--hhr-ficha-action); font:600 .75rem/1.35 var(--hhr-ficha-sans); white-space:nowrap; cursor:pointer;
+      &::before { content:''; flex:none; inline-size:15px; block-size:15px; background:currentColor; mask:var(--hhr-icon-expand) center / contain no-repeat; }
+      &:hover { background:var(--hhr-ficha-action-hover); }
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+      @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
+    }
     /* Leave the native disclosure in the reading flow, beside the end of its own note. */
     [data-hhr-evolution-block] > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) {
       display:inline-flex; width:auto; vertical-align:middle;
@@ -104,8 +115,8 @@
           > .MuiCardHeader-content { grid-area:1 / 1; }
           > .MuiCardHeader-action {
             display:contents;
-            > * { grid-row:1; order:3; }
-            > .hhr-evo-entry { order:1; }
+            > * { grid-row:1; order:4; }
+            > :is(.hhr-evo-entry,.hhr-note-open) { order:1; }
           }
         }
         > .MuiCardContent-root, > .MuiCardContent-root > .MuiStack-root { display:contents; }
@@ -116,6 +127,28 @@
         }
         > .MuiCardContent-root > .MuiStack-root {
           > :first-child { grid-column:1 / -1; min-width:0; margin:0 !important; }
+          /* One note with Eloísa's «Leer más / Leer menos»: the text takes the lines under the heading and
+             that control rides with the other actions, after the writing tools. Nothing is drawn under the
+             text. The control keeps its place in Eloísa's tree, and its handler. */
+          > :first-child:has(> [data-hhr-evolution-block]:only-child > [data-hhr-note-text]):has(> [data-hhr-evolution-block] > .MuiBox-root > button[data-hhr-note-disclosure]:only-child) {
+            display:contents;
+            > [data-hhr-evolution-block] {
+              display:contents !important;
+              > [data-hhr-note-text] { grid-column:1 / -1; min-width:0; margin:0; border-block-end:0 !important; }
+              > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) {
+                grid-area:auto; grid-row:1; order:3; display:inline-flex; align-self:center; margin:0;
+                > button[data-hhr-note-disclosure] {
+                  inline-size:28px; min-inline-size:28px !important; min-height:28px !important; margin:0; padding:0 !important; border-radius:5px; background:transparent;
+                  /* The arrow alone, as on any block that folds. The button keeps Eloísa's words as its name. */
+                  &::before { content:none !important; }
+                  &::after { width:7px; height:7px; margin-block-start:3px; }
+                  &[data-hhr-note-disclosure="more"]::after { margin-block:0 3px; }
+                  &:hover { background:var(--hhr-ficha-action-hover); }
+                }
+              }
+              > .hhr-note-open { grid-row:1; order:1; }
+            }
+          }
           > :last-child {
             grid-row:1; order:2; align-self:center; margin:0 0 0 2px !important;
             > .MuiStack-root { display:flex; flex-flow:row nowrap; align-items:center; gap:2px; }
@@ -125,7 +158,7 @@
         .hhr-evo-entry { border-color:transparent; margin-inline-start:4px; }
         .hhr-evo-entry:hover, .hhr-evo-entry:focus-visible { background:#edf5f2; }
         :is(.MuiCardHeader-action, .MuiCardHeader-action > .MuiStack-root, .hhr-checklist-launcher,
-            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button:not(.hhr-evo-entry) {
+            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button:not(.hhr-evo-entry,.hhr-note-open) {
           display:inline-grid; place-items:center; width:28px; height:28px; min-width:28px;
           box-sizing:border-box; padding:0; margin:0; border-radius:5px;
           font-size:16px; line-height:1;
@@ -153,25 +186,16 @@
         .hhr-checklist-trigger { --hhr-evo-icon:var(--hhr-icon-guide); }
       }
     }
-    /* A short word beside each icon while the title and its byline keep their line.
-       For a native action the word is the one Eloísa gives it. */
-    @container hhr-evolution (min-width:48rem) {
-      html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar]
-        :is(.MuiCardHeader-action, .MuiCardHeader-action > .MuiStack-root, .hhr-checklist-launcher,
-            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button {
-        &:is([data-hhr-evo-caption],.hhr-checklist-trigger) { width:auto; padding:0 6px 0 5px; }
-        &::after { margin-inline-start:5px; font:600 .75rem/1 var(--hhr-ficha-sans); }
-        &[data-hhr-evo-caption]::after { content:attr(data-hhr-evo-caption) / ''; }
-        &.hhr-checklist-trigger::after { content:'Pautas' / ''; }
-      }
-    }
+    /* Eloísa's writing tools and the guideline menu are icons of one family, each with its native name
+       for the pointer and for a screen reader. Only the two actions that open something to read carry
+       a word: with every action named the heading lost its line on a laptop. */
   }
 }
 @media screen {
   /* The whole note in a window for reading: most of the screen, one white surface, and nothing
      drawn but the text, who signed it and how to leave. */
   dialog.hhr-note-dialog {
-    box-sizing:border-box; width:min(60rem,calc(100vw - 4rem)); max-height:92dvh;
+    box-sizing:border-box; width:min(76rem,calc(100vw - 3rem)); max-height:94dvh;
     margin:auto; padding:0; border:0; border-radius:12px; overflow:hidden;
     background:var(--hhr-ficha-surface); color:var(--hhr-ficha-ink); box-shadow:0 24px 64px rgb(17 38 34 / 30%);
     font:inherit;
@@ -186,7 +210,7 @@
       font:600 var(--hhr-ficha-text-body)/1 var(--hhr-ficha-sans); cursor:pointer;
       &:hover { background:var(--hhr-ficha-action-hover); } }
     .hhr-note-content { padding:24px 32px 28px; overflow:auto; white-space:pre-wrap; scrollbar-width:thin;
-      overflow-wrap:anywhere; font:normal var(--hhr-ficha-text-title)/1.6 var(--hhr-ficha-sans); }
+      overflow-wrap:anywhere; font:normal var(--hhr-ficha-text-lead)/1.65 var(--hhr-ficha-sans); }
     .hhr-note-position { flex:none; padding:8px 32px 12px; border-block-start:1px solid var(--hhr-ficha-line-soft);
       color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans); text-align:end; }
     :focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:-2px; }
@@ -196,7 +220,7 @@
   /* The evolutions of every profession in one window, the latest first: who wrote, when, and the
      whole text. It reads like the window of a single note, with a line of professions to choose from. */
   dialog.hhr-evo-reader {
-    box-sizing:border-box; width:min(60rem,calc(100vw - 4rem)); height:92dvh; max-height:56rem;
+    box-sizing:border-box; width:min(76rem,calc(100vw - 3rem)); height:94dvh; max-height:64rem;
     margin:auto; padding:0; border:0; border-radius:12px; overflow:hidden;
     background:var(--hhr-ficha-surface); color:var(--hhr-ficha-ink); box-shadow:0 24px 64px rgb(17 38 34 / 30%);
     font:inherit;
@@ -230,7 +254,7 @@
         font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); font-variant-numeric:tabular-nums; }
       mark { padding:0 6px; border-radius:var(--hhr-ficha-radius-small); background:#fff0d8; color:#775119;
         font:600 .6875rem/1.6 var(--hhr-ficha-sans); }
-      p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font:400 var(--hhr-ficha-text-title)/1.55 var(--hhr-ficha-sans); }
+      p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font:400 var(--hhr-ficha-text-lead)/1.6 var(--hhr-ficha-sans); }
       /* A note its author crossed out, or archived, is still listed: it says so and steps back. */
       &[data-state="void"] p { color:var(--hhr-ficha-muted); } }
     > footer { display:flex; align-items:center; gap:10px; flex:none; min-block-size:32px; padding:8px 32px 12px;

@@ -523,7 +523,10 @@
         element.addEventListener('click', item.click); element.addEventListener('keydown', item.keydown); links.set(element, item);
       });
       summaryDensity.refresh(encounterId, row);
-      schedule();
+      // Placed now, in the frame that draws what Eloísa has just rendered: a frame later the date
+      // would be seen on its own line first.
+      cancelAnimationFrame(frame);
+      update();
     };
     window.addEventListener('scroll', schedule, true);
     window.addEventListener('resize', schedule);
