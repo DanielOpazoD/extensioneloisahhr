@@ -34,6 +34,10 @@ afterEach(() => {
   }
 });
 
+// Three cases check the whole package, some four seconds each on a quiet machine. On a busy one they
+// outlast the common limit without being wrong, so they get the time of a slow run.
+const wholePackage = 90_000;
+
 describe('Rayen extension release dependency graph', () => {
   it('rejects a parallel package that drops the published Exalab integration', () => {
     const root = createPackageFixture();
@@ -58,7 +62,7 @@ describe('Rayen extension release dependency graph', () => {
 
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain('dependencias verificadas');
-  });
+  }, wholePackage);
 
   it('reports structural failures before inspecting script syntax', () => {
     const root = createPackageFixture();
@@ -86,7 +90,7 @@ describe('Rayen extension release dependency graph', () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('Sintaxis inválida en extension/print-pdf.js');
     expect(result.stderr).toContain('Sintaxis inválida en extension/background.js');
-  });
+  }, wholePackage);
 
   it('accepts inline scripts and commented references without executing packaged scripts', () => {
     const root = createPackageFixture();
@@ -108,7 +112,7 @@ describe('Rayen extension release dependency graph', () => {
 
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain('paquete válido');
-  });
+  }, wholePackage);
 
   it('rejects a Chrome minimum below the supported PDF.js legacy baseline', () => {
     const root = createPackageFixture();
