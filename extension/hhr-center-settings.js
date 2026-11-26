@@ -15,10 +15,15 @@
     try { installed = chrome.runtime.getManifest().version; } catch (_error) { return; }
     line.textContent = 'Versión instalada: ' + installed + '.';
     const type = globalThis.HhrRayenMessageContract?.types?.EXTENSION_RELEASE_STATUS;
-    if (!type) return;
-    Promise.resolve(chrome.runtime.sendMessage({ type })).then(status => {
+    let request;
+    // After the extension is reloaded the page keeps this script without a context to ask.
+    try { request = type && chrome.runtime.sendMessage({ type }); } catch (_error) { return; }
+    if (!request) return;
+    Promise.resolve(request).then(status => {
       if (!line.isConnected || !status?.published) return;
-      if (!status.available) { line.textContent = 'Versión instalada: ' + installed + '. Es la última publicada.'; return; }
+      // The bar and this line compare version numbers. The icon menu also checks the package.
+      if (status.ahead) { line.textContent = 'Versión instalada: ' + installed + ', posterior a la última publicada (' + status.published + ').'; return; }
+      if (!status.available) { line.textContent = 'Versión instalada: ' + installed + ', la misma que la última publicada.'; return; }
       line.dataset.state = 'available';
       line.textContent = 'Tienes la versión ' + installed + ' y está publicada la ' + status.published + '. Descarga el ZIP y reemplaza la carpeta de la extensión. ';
       const link = Object.assign(document.createElement('a'), { href: guide, target: '_blank', rel: 'noopener noreferrer', textContent: 'Cómo actualizar' });

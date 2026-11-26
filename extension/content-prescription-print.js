@@ -662,7 +662,7 @@
   const refreshReleaseNotice = bar => {
     if (Date.now() - (bar.__hhrReleaseAskedAt || 0) < 60 * 60_000) return;
     bar.__hhrReleaseAskedAt = Date.now();
-    Promise.resolve(chrome.runtime.sendMessage({ type: runtimeMessages.EXTENSION_RELEASE_STATUS })).then(status => {
+    sendMessage({ type: runtimeMessages.EXTENSION_RELEASE_STATUS }).then(status => {
       const button = barPart(bar, '.hhr-ops-update');
       if (!button) return;
       const available = status?.available === true;

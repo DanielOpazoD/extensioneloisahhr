@@ -21,7 +21,7 @@
 
   function create({ storage, request, installed, now = Date.now }) {
     let inFlight;
-    const answer = published => ({ installed, published, available: newer(published, installed) });
+    const answer = published => ({ installed, published, available: newer(published, installed), ahead: newer(installed, published) });
     async function check(known) {
       let published = null;
       try {

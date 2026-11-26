@@ -11,9 +11,9 @@ La extensión se carga desde una carpeta y Chrome no la actualiza. Cuando hay un
 
 Las imágenes salen de la prueba de ejecución, con la extensión cargada en Chromium sobre una ficha ficticia. La versión «99.0.0» es la que esa prueba hace pasar por publicada.
 
-- **Con la versión al día** la barra es la de siempre y Ajustes dice «Es la última publicada».
+- **Con la versión al día** la barra es la de siempre y Ajustes dice que la instalada es la misma que la última publicada. Con una versión local posterior, lo dice también.
 - **Con la barra contraída** el aviso es un punto ámbar sobre el logo.
-- **Sin respuesta de GitHub** no se muestra ningún aviso.
+- **Sin respuesta de GitHub** se conserva la última respuesta; sin ninguna previa, no se muestra aviso.
 
 ```sh
 HHR_VISUAL_ARTIFACT_DIR=/tmp/aviso npm run test:runtime

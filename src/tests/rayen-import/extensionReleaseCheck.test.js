@@ -30,7 +30,7 @@ it('answers only the top frame of the ficha and asks GitHub without credentials 
     expect(await check.status({}, sender)).toEqual({ error: 'Versión publicada no disponible.' });
   }
   expect(request).not.toHaveBeenCalled();
-  expect(await check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.194', available: true });
+  expect(await check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.194', available: true, ahead: false });
   expect(request).toHaveBeenCalledTimes(1);
   const [url, options] = request.mock.calls[0];
   expect(url).toBe('https://api.github.com/repos/DanielOpazoD/extensioneloisahhr/releases/latest');
@@ -46,7 +46,7 @@ it('keeps one answer for six hours and shares one request among simultaneous que
   const both = [check.status({}, ficha), check.status({}, ficha)];
   await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(1));
   finish();
-  expect(await Promise.all(both)).toEqual(Array(2).fill({ installed: '0.48.187', published: '0.48.194', available: true }));
+  expect(await Promise.all(both)).toEqual(Array(2).fill({ installed: '0.48.187', published: '0.48.194', available: true, ahead: false }));
   state.clock += 6 * hour - 1;
   await check.status({}, ficha);
   expect(request).toHaveBeenCalledTimes(1);
@@ -55,9 +55,9 @@ it('keeps one answer for six hours and shares one request among simultaneous que
   expect(request).toHaveBeenCalledTimes(2);
 });
 
-it('says nothing is available for the installed or a later local version', async () => {
-  expect(await setup({ installed: '0.48.194' }).check.status({}, ficha)).toEqual({ installed: '0.48.194', published: '0.48.194', available: false });
-  expect(await setup({ installed: '0.48.200' }).check.status({}, ficha)).toEqual({ installed: '0.48.200', published: '0.48.194', available: false });
+it('tells the installed version, a later local one and a later published one apart', async () => {
+  expect(await setup({ installed: '0.48.194' }).check.status({}, ficha)).toEqual({ installed: '0.48.194', published: '0.48.194', available: false, ahead: false });
+  expect(await setup({ installed: '0.48.200' }).check.status({}, ficha)).toEqual({ installed: '0.48.200', published: '0.48.194', available: false, ahead: true });
 });
 
 it('keeps the last known version through a failure and waits an hour before asking again', async () => {
@@ -66,7 +66,7 @@ it('keeps the last known version through a failure and waits an hour before aski
     async () => ({ ok: true, json: async () => ({ tag_name: 'nightly' }) }), async () => ({ ok: true, json: async () => { throw new Error('no es JSON'); } })];
   for (const reply of failures) {
     const first = setup({ reply });
-    expect(await first.check.status({}, ficha)).toEqual({ installed: '0.48.187', published: null, available: false });
+    expect(await first.check.status({}, ficha)).toEqual({ installed: '0.48.187', published: null, available: false, ahead: false });
     expect(first.state.record).toEqual({ failedAt: first.state.clock });
     first.state.clock += hour - 1;
     await first.check.status({}, ficha);
@@ -76,9 +76,9 @@ it('keeps the last known version through a failure and waits an hour before aski
     expect(first.request).toHaveBeenCalledTimes(2);
   }
   const stale = setup({ stored: { published: '0.48.190', checkedAt: 1_000_000_000 - 7 * hour }, reply: failures[0] });
-  expect(await stale.check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.190', available: true });
+  expect(await stale.check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.190', available: true, ahead: false });
   expect(stale.state.record).toEqual({ published: '0.48.190', checkedAt: 1_000_000_000 - 7 * hour, failedAt: stale.state.clock });
-  expect(await stale.check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.190', available: true });
+  expect(await stale.check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.190', available: true, ahead: false });
   expect(stale.request).toHaveBeenCalledTimes(1);
 });
 
@@ -86,12 +86,12 @@ it('asks again when the stored answer is not one it wrote or comes from the futu
   for (const stored of [undefined, null, 'x', { published: '0.48', checkedAt: 1_000_000_000 }, { published: '0.48.190' }, { published: '0.48.190', checkedAt: 1_000_000_000 + hour },
     { failedAt: 1_000_000_000 + hour }]) {
     const { check, request } = setup({ stored });
-    expect(await check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.194', available: true });
+    expect(await check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.194', available: true, ahead: false });
     expect(request).toHaveBeenCalledTimes(1);
   }
   // Storage that fails to read or to write does not stop the answer.
   const broken = setup();
   broken.storage.get.mockRejectedValue(new Error('sin almacenamiento'));
   broken.storage.set.mockRejectedValue(new Error('sin almacenamiento'));
-  expect(await broken.check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.194', available: true });
+  expect(await broken.check.status({}, ficha)).toEqual({ installed: '0.48.187', published: '0.48.194', available: true, ahead: false });
 });

@@ -174,7 +174,7 @@
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
       if (root.host?.classList.contains('is-collapsed') || !root.querySelector('.exams-menu')?.hidden) return;
       const items = Array.from(
-        root.querySelectorAll('.brand, .modules > button:not(:disabled):not(.is-disabled), .session, .collapse')
+        root.querySelectorAll('.brand, .modules > button:not(:disabled):not(.is-disabled), .session, .update, .collapse')
       ).filter(item => window.getComputedStyle(item).display !== 'none');
       const index = items.indexOf(root.activeElement);
       if (index === -1 || items.length < 2) return;
