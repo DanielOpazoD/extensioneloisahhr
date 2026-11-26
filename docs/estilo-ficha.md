@@ -33,7 +33,7 @@ Una regla nueva toma sus valores de los tokens. Una regla anterior, escrita con 
 
 1. **Ficha ficticia.** Cada vista tiene la suya en `scripts/*-visual-fixture.mjs`, con datos inventados y la estructura descrita en [`estructura-eloisa.md`](estructura-eloisa.md). Una ficha ficticia hecha de memoria ya ocultó tres fallos: se escribe a partir de la estructura observada.
 2. **Captura con el arnés común.** [`scripts/ficha-capture-harness.mjs`](../scripts/ficha-capture-harness.mjs) monta la ficha con los estilos y lectores que declara el manifiesto de una revisión o del árbol de trabajo. Así el «antes» y el «después» usan la misma página.
-3. **Comprobaciones como invariantes.** Lo que promete el diseño se mide en la página: alineaciones, orden de lectura, foco de teclado, que nada tape un control. Un fallo se explica con una frase, no con una diferencia de píxeles.
+3. **Comprobaciones como invariantes.** Lo que promete el diseño se mide en la página: alineaciones, orden de lectura, foco de teclado, que nada tape un control. Un fallo se explica con una frase, no con una diferencia de píxeles. Cuántas líneas ocupa un texto depende de la letra de cada sistema: una medida que cambia con eso se comprueba también con `wideSans`, la familia ancha del arnés, como hace `capture-care-plan.mjs`.
 4. **Prueba unitaria de marcas y limpieza.** Cada atributo que el lector pone debe retirarse al cambiar de vista, de episodio o de pestaña, y no reescribirse en un refresco idéntico.
 5. **Mutaciones de control.** Romper a propósito la regla nueva y comprobar que alguna prueba falla.
 6. **Antes y después.** Capturas a 1280 × 800 y 1440 × 900 en `docs/visual/`, con las medidas que cambian.

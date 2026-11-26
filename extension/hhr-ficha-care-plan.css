@@ -76,6 +76,9 @@
       /* «3 / 5» is one figure: it does not break between its arrows. */
       .MuiStack-root > p { white-space:nowrap; }
     }
+    /* Eloísa's page controls held the first column open. Smaller, they no longer do: the
+       indication keeps that width in a narrow window, where the hours would take the rest. */
+    table th:first-child { min-inline-size:14rem; }
     /* An indication is what is read; its posology explains it. */
     table td:first-child {
       > .MuiStack-root { gap:0; }

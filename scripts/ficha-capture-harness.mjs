@@ -24,9 +24,11 @@ export async function fichaAssets(revision) {
  * Injects the revision's presentation into a page that already holds a synthetic ficha and
  * starts its three readers. The page then answers two events, as the content script would
  * after a host update or a change of view: `fixture-refresh` and `fixture-theme` (detail: view id).
+ * `sans` replaces the family of the views, to measure them with the text of another platform.
  */
-export async function mountFicha(page, assets, {encounter = '1', theme = 'compact'} = {}) {
+export async function mountFicha(page, assets, {encounter = '1', theme = 'compact', sans = ''} = {}) {
   for (const name of assets.styles) await page.addStyleTag({content:await assets.source(name)});
+  if (sans) await page.addStyleTag({content:`html[data-hhr-ficha-theme]{--hhr-ficha-sans:${sans}}`});
   for (const name of assets.scripts) await page.addScriptTag({content:await assets.source(name)});
   await page.evaluate(({encounter, theme}) => {
     const summary = window.HhrNativeFichaPresentation.create();
@@ -45,6 +47,9 @@ export async function mountFicha(page, assets, {encounter = '1', theme = 'compac
   }, {encounter, theme});
   await settle(page);
 }
+
+/** A wide family present on macOS (Verdana) or on Linux (DejaVu Sans): what a threshold tuned with one system font misses. */
+export const wideSans = 'Verdana,"DejaVu Sans",sans-serif';
 
 /** Waits for fonts and for two frames, the time the readers take to measure and repack. */
 export const settle = page => page.evaluate(async () => {

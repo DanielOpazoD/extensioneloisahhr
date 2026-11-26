@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { fichaAssets, mountFicha, settle } from './ficha-capture-harness.mjs';
+import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
 import { carePlanPage, planCards, planDays } from './care-plan-visual-fixture.mjs';
 
 const hours = planDays.flatMap(([, list]) => list);
@@ -26,11 +26,12 @@ const read = page => page.evaluate(() => {
         name:button.querySelector('svg').getAttribute('aria-label'), label:button.getAttribute('aria-label'), title:button.getAttribute('title'),
         caption:getComputedStyle(button, '::after').content, box:box(button), icon:box(button.querySelector('svg')).width})),
       heading:{sticky:getComputedStyle(table.querySelector('th')).position, size:getComputedStyle(table.querySelector('th p')).fontSize,
-        box:box(table.tHead), hours:captions.map(caption => caption.textContent), page:box(table.querySelector('th .MuiStack-root > p')).height, controls:[...table.querySelectorAll('th:first-child button')].map(button => box(button).height)},
+        box:box(table.tHead), indication:box(table.tHead.rows[0].cells[0]).width, hours:captions.map(caption => caption.textContent), page:box(table.querySelector('th .MuiStack-root > p')).height, controls:[...table.querySelectorAll('th:first-child button')].map(button => box(button).height)},
       foot:getComputedStyle(table.tFoot).display,
       rows:[...table.tBodies[0].rows].map(row => {
         const texts = [...row.cells[0].querySelectorAll('p')];
         return {height:box(row).height, top:box(row).top, bottom:box(row).bottom, text:texts.map(p => p.textContent),
+          block:box(row.cells[0].firstElementChild).height, lines:texts.map(p => parseFloat(getComputedStyle(p).lineHeight)),
           sizes:texts.map(p => getComputedStyle(p).fontSize), weights:texts.map(p => getComputedStyle(p).fontWeight),
           chips:[...row.querySelectorAll('.MuiChip-root')].map(chip => box(chip).height),
           marks:[...row.querySelectorAll('.slots > .MuiStack-root')].map((slot, index) => {
@@ -56,7 +57,8 @@ async function verifyPlan(page, width, native) {
   assert.deepEqual(shown.cards.map(card => [card.mark, card.tools, card.empty]), planCards.map(card => ['card', 'tools', !card.rows.length]), 'Las cuatro tarjetas se reconocen');
   assert.deepEqual(shown.cards.map(card => card.title.text), planCards.map(card => card.title));
   assert.ok(shown.summary.end < native.summary.end * .62, `El plan ocupa bastante menos alto: ${native.summary.end} → ${shown.summary.end}`);
-  assert.ok(shown.summary.visibleRows >= (width < 1200 ? 4 : width < 1400 ? 6 : 9), 'La primera pantalla muestra la mayoría de las indicaciones: ' + shown.summary.visibleRows);
+  // One row under what this machine measures (6 and 9 or 10): a wider font of another platform wraps one name more.
+  assert.ok(shown.summary.visibleRows >= (width < 1400 ? 5 : 8), 'La primera pantalla muestra la mayoría de las indicaciones: ' + shown.summary.visibleRows);
 
   shown.cards.forEach((card, index) => {
     const before = native.cards[index];
@@ -83,6 +85,8 @@ async function verifyPlan(page, width, native) {
     assert.ok(card.heading.controls.every(height => height >= 22), 'Los controles de página conservan un tamaño pulsable');
     assert.ok(card.heading.page <= 18, 'El número de página no se parte entre sus flechas: ' + card.heading.page);
     assert.equal(card.foot, 'none', 'El pie vacío no ocupa una fila');
+    // The page controls no longer hold the first column open: the indication keeps its width in a narrow window.
+    assert.ok(card.heading.indication >= 224, 'La indicación conserva su ancho: ' + card.heading.indication);
     card.rows.forEach((row, at) => {
       const earlier = before.rows[at];
       assert.deepEqual(row.text, earlier.text, 'El texto de la indicación no cambia');
@@ -91,7 +95,11 @@ async function verifyPlan(page, width, native) {
         return;
       }
       assert.deepEqual([row.sizes, row.weights], [['13px', '12px'], ['600', '400']], 'La indicación manda y la posología la explica');
-      assert.ok(row.height <= earlier.height * .62, `La fila ${at} es más baja: ${earlier.height} → ${row.height}`);
+      // A row is as tall as its text, in lines of the compact view. How many lines the text takes depends on
+      // the font of each platform, so the row is not compared with a share of the native one.
+      assert.ok(row.lines[0] <= 19 && row.lines[1] <= 17, 'Las líneas de una indicación son las de la vista compacta: ' + row.lines);
+      assert.ok(row.height <= Math.max(row.block, 28) + 8 && row.height < earlier.height,
+        `La fila ${at} mide lo que su texto: ${earlier.height} → ${row.height}, texto ${row.block}`);
       assert.ok(row.chips.every(height => height === 16), 'Las marcas SOS y Externo son etiquetas pequeñas');
       row.marks.forEach((mark, slot) => {
         const old = earlier.marks[slot];
@@ -191,18 +199,19 @@ await mkdir(directory, {recursive:true});
 const browser = await chromium.launch();
 try {
   // 1000 px is narrower than the hours of a card: the table scrolls inside it and the tools lose their captions.
-  for (const [width, height] of [[1000,800],[1280,800],[1440,900],[1920,1080]]) {
+  // Each width is checked twice: with the text of this machine and with a wider family, as on another platform.
+  for (const [width, height] of [[1000,800],[1280,800],[1440,900],[1920,1080]]) for (const sans of ['', wideSans]) {
     const page = await browser.newPage({viewport:{width,height}, deviceScaleFactor:1, locale:'es-CL', timezoneId:'Pacific/Easter'});
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.setContent(carePlanPage());
     await settle(page);
     const native = await read(page);
-    await mountFicha(page, assets);
+    await mountFicha(page, assets, {sans});
     await settle(page);
     const measured = await read(page);
-    console.info('Plan de tratamiento sintético', assets.version, width, JSON.stringify(measured.summary), 'sin extensión', JSON.stringify(native.summary));
-    await page.screenshot({path:path.join(directory, width + '-plan.png')});
+    console.info('Plan de tratamiento sintético', assets.version, width, sans ? 'con letra ancha' : '', JSON.stringify(measured.summary), 'sin extensión', JSON.stringify(native.summary));
+    if (!sans) await page.screenshot({path:path.join(directory, width + '-plan.png')});
     if (revision === 'WORKTREE') await verifyPlan(page, width, native);
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
