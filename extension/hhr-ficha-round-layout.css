@@ -178,7 +178,8 @@
       [data-hhr-round="alerts"] {
         block-size:var(--hhr-round-fill,auto) !important; min-block-size:9rem !important;
         #alertEntrySection { block-size:100%; }
-        #alertEntrySection > .MuiCard-root { box-sizing:border-box; block-size:100% !important; display:flex; flex-direction:column; }
+        /* Should Eloísa draw the list in another shape, the card scrolls as a whole: nothing spills over the signs. */
+        #alertEntrySection > .MuiCard-root { box-sizing:border-box; block-size:100% !important; display:flex; flex-direction:column; overflow-y:auto; scrollbar-width:thin; }
         #alertEntrySection > .MuiCard-root > .MuiCardContent-root { flex:1 1 auto; min-block-size:0; display:flex; flex-direction:column; }
         #alertEntrySection > .MuiCard-root > .MuiCardContent-root > .MuiBox-root:first-child {
           flex:1 1 auto; min-block-size:0; max-block-size:none !important; overflow-y:auto;
