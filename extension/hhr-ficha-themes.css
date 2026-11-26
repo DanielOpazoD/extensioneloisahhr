@@ -28,7 +28,6 @@
       > :is(.MuiCardHeader-root,.MuiCardContent-root) { padding:0 !important; }
       > .MuiCardHeader-root:has(input) { gap:8px; flex-wrap:wrap; }
       /* MUI pulls the action area 8 px into the title. Empty, it only takes that space from the message. */
-      > .MuiCardHeader-root > .MuiCardHeader-action { margin:0 !important; }
       > .MuiCardHeader-root > .MuiCardHeader-action:not(:has(button,input,label,a,select)) { display:none; }
       :is(.MuiCardHeader-title,h3) { color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans); }
       [data-hhr-reading="status-message"] { color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
@@ -178,7 +177,7 @@
       > .MuiCard-root {
         margin-block:0 !important; padding-inline:0 !important; border-radius:var(--hhr-ficha-radius) !important;
         > :is(.MuiCardHeader-root,.MuiCardContent-root) { padding-inline:var(--hhr-round-inset) !important; }
-        > .MuiCardHeader-root .MuiCardHeader-title { font-size:var(--hhr-round-heading); line-height:1.35; font-weight:600; }
+        > .MuiCardHeader-root .MuiCardHeader-title { color:var(--hhr-ficha-ink); font-size:var(--hhr-round-heading); line-height:1.35; font-weight:600; }
         > .MuiCardHeader-root > .MuiCardHeader-content:has(> [data-hhr-update-label]) {
           display:flex; align-items:baseline; flex-wrap:wrap; gap:1px 8px; min-width:0;
         }
@@ -248,6 +247,8 @@
 @media screen {
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     [data-hhr-reading-toggle] .MuiSwitch-root { zoom:.75; }
+    /* MUI leaves 16 px after a switch's label. Closing a heading, the label ends on the reading edge like any other action. */
+    .MuiCardHeader-action .MuiFormControlLabel-root:last-child { margin-inline-end:0 !important; }
     :is(#medicationEntrySection,#noPharmaEntrySection,#freeIndicationEntrySection) > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-action .MuiButton-root,
     > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root {
       /* A block, so that its first letter can be a capital: Eloísa writes «validar tratamiento» and shows it in capitals. */

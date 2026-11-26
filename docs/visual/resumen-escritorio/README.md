@@ -21,17 +21,20 @@ Un repaso con reglas mínimas de buena composición, medidas en la página. Ante
 - **Una tipografía.** La vista escribía sus textos con la letra del sistema y dejaba los de Eloísa en Inter: una misma tarjeta mezclaba dos. Ahora todo es Inter.
 - **Dos pesos y cuatro tamaños.** Había 400, 500, 600, 650 y 750, y tamaños de 12 a 17 px. Quedan 400 y 600; 12, 13, 15 y 16 px. Cada tarjeta se titula a 15 px, Evolución incluida, y cada tabla nombra sus columnas a 12 px.
 - **Grises neutros.** Los textos secundarios tenían un tinte verde que los acercaba al verde de las acciones: el nombre de quien indica parecía un enlace. Ahora usan los grises de Eloísa; el verde queda para lo que se puede pulsar.
-- **Una superficie y una separación.** Las tarjetas bajo la ronda tenían esquinas de 4, 5, 6 o 12 px, unas con sombra y otras no, y se separaban 6 o 10 px. Ahora todas son la superficie blanca de Eloísa con esquinas de 6 px, a 8 px una de otra.
+- **Una superficie y una separación.** Las tarjetas bajo la ronda tenían esquinas de 4, 5, 6 o 12 px y se separaban 6 o 10 px. Ahora todas son la superficie blanca y sin sombra de Eloísa, con las esquinas de la vista, a 8 px una de otra. Eloísa usa esquinas de 12 px; la vista Compacta mantiene sus 6 px, más propios de una página densa, en todas sus tarjetas.
 - **Tablas.** El texto empezaba 7 px más adentro que su título: Eloísa envuelve la tabla en un `Paper` que la regla no contemplaba. Ahora título, encabezados y primera celda comparten borde.
-- **Secciones vacías.** Producto no Farmacológico, RAM y Alergias se leen como las solicitudes vacías: nombre a 13 px, mensaje en gris, filtro al final de la línea. MUI resta 8 px a su zona de acciones y pegaba el mensaje al nombre.
+- **Secciones vacías.** Producto no Farmacológico, RAM y Alergias se leen como las solicitudes vacías: nombre a 13 px, mensaje en gris, filtro al final de la línea. MUI resta 8 px a su zona de acciones y pegaba el mensaje al nombre, y deja 16 px tras la etiqueta de un interruptor, que lo apartaba del borde: un interruptor que cierra una cabecera termina ahora en el borde de lectura.
 - **Detalles.** Signos vitales vuelve a una fila con el margen nuevo. En Diagnóstico la fecha y el estado no se parten, el título queda arriba y el selector de estado no ocupa más de lo que dice. En Fármacos, la etiqueta SOS o Antimic. sigue al nombre en su línea en vez de quitarle una columna.
 
-`capture-summary.mjs` comprueba estas reglas a 1280 y 1440 px, y la fecha de Diagnóstico también a 1100 px: márgenes, separación, tipografía, pesos, tamaños, títulos, superficies, bordes de tabla y secciones vacías. Quince mutaciones de control, una por regla, hacen fallar la captura.
+`capture-summary.mjs` comprueba estas reglas a 1280 y 1440 px, y la fecha de Diagnóstico también a 1100 px: márgenes, separación, tipografía, pesos, tamaños, tintas, títulos, superficies, bordes de tabla, secciones vacías y su filtro, el título de Diagnóstico y la etiqueta junto al nombre.
+
+Cada una de estas mutaciones hace fallar la captura: márgenes asimétricos; separación de 6 px; márgenes propios de las tarjetas; un peso 650; la letra del sistema; la tabla sin su `Paper`; la zona de acciones con su margen; la superficie nativa; un valor vital de 17 px; fechas partidas a 1100 px; Evolución a 16 px; una sección vacía a 14 px; la etiqueta en su columna o en bloque; Signos con el umbral anterior; encabezados de tabla a 14 px; tintas verdes; el filtro al principio de la línea; una sección vacía con 14 px de sangrado; Diagnóstico centrado; la etiqueta de un interruptor con el margen de MUI; títulos sin la tinta de la vista.
 
 Límites:
 
 - **Nada de esto se ha visto aplicado sobre Eloísa.** La página real tiene Inter cargada; la ficha ficticia, sin ella en este equipo, dibuja la letra de reserva en las dos partes. La comprobación de una sola tipografía mide la familia declarada.
 - **Historial y Plan** ya tenían márgenes simétricos. Sus fichas ficticias siguen con el fondo y el margen de 24 px anteriores a esta medida.
+- **Por debajo de 1100 px**, sin las dos columnas, Diagnóstico queda a 40 px de cada borde y los demás bloques a 32 px, como antes. No hay comprobación de márgenes en esa franja.
 - **Bordes y fondos** escritos a mano quedan en algunas reglas; pasan a tokens cuando se vuelvan a editar.
 
 ## Los días de tratamiento en 0.48.194

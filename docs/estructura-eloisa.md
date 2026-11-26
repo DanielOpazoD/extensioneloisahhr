@@ -5,6 +5,7 @@ Lo que sigue se observó el 25-11-2026 en la ficha médica real (`/dashboard/enc
 ## Marco común
 
 - `main` deja 32 px a cada lado. El fondo de la página es `#f1f1f1`; las tarjetas son blancas, sin sombra, con esquinas de 12 px. Toda la página usa Inter («Inter, "Inter Fallback"»). Medido el 26-11-2026 en una ventana de 1990 px.
+- Cada tabla del Resumen va dentro de un `Paper`: `.MuiCardContent-root > div.MuiPaper-root > div.MuiTableContainer-root > table` en Fármacos, Indicaciones Libres, Procedimientos, Diagnóstico, Solicitud interconsulta, Órdenes de atención y Solicitud de examen (en esta última el `TableContainer` tiene un hermano).
 
 - Cabecera fija `header.MuiAppBar-root#menu-app-bar-element` con los datos del paciente.
 - Dentro de `main`, otra `header.MuiAppBar-root` fija con `.MuiTabs-root` y cinco pestañas `button[role=tab]`: `encounter-event-tab-summary`, `-antecedents`, `-care-plan`, `-history`, `-discharge`.

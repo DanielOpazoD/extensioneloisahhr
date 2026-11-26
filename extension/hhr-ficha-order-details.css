@@ -18,7 +18,6 @@
        beside the name it took the room of the name and broke a long one into one more line. */
     td > .MuiStack-root:has(> .MuiTypography-root:first-child + .MuiStack-root:last-child > .MuiChip-root[data-hhr-reading^="order-marker-"]) {
       display:block !important;
-      > .MuiTypography-root { display:inline; }
       > .MuiStack-root { display:inline-flex !important; flex-wrap:wrap; vertical-align:baseline; gap:4px; }
     }
     [data-hhr-reading="order-marker-sos"] { --hhr-marker-ink:#704200; --hhr-marker-surface:#fff4dd; }

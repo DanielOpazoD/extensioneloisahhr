@@ -84,6 +84,30 @@ const read = page => page.evaluate(() => {
           .map(card => { const title = getComputedStyle(card.querySelector('.MuiCardHeader-title')); return title.fontSize + ' ' + title.fontWeight; }))],
         surfaces:[...new Set(peers.map(card => { const look = getComputedStyle(card); return look.borderTopLeftRadius + ' ' + look.boxShadow; }))],
         tables, empty,
+        // Eloísa's neutral inks: what is read, what names a column, what only explains.
+        inks:[getComputedStyle(one('#medicationEntry .MuiCardHeader-title')).color, getComputedStyle(one('#medicationEntry thead th')).color,
+          getComputedStyle(one('#ramEntry [data-hhr-reading="status-message"]')).color],
+        // An empty section: its name on the reading edge, its filter closing the line on the other.
+        emptyEdges:['ramEntry', 'allergyEntry', 'noPharmaEntry'].map(id => {
+          const card = document.getElementById(id).getBoundingClientRect(), title = document.querySelector('#' + id + ' .MuiCardHeader-title').getBoundingClientRect();
+          return Math.round(title.left - card.left);
+        }),
+        filter:(() => {
+          const card = one('#noPharmaEntry').getBoundingClientRect(), label = one('#noPharmaEntry .MuiCardHeader-action label').getBoundingClientRect();
+          const free = one('#freeIndicationEntry').getBoundingClientRect(), freeLabel = one('#freeIndicationEntry .MuiCardHeader-action label').getBoundingClientRect();
+          const message = one('#noPharmaEntry [data-hhr-reading="status-message"]').getBoundingClientRect();
+          return {end:Math.round(card.right - label.right), freeEnd:Math.round(free.right - freeLabel.right), afterMessage:label.left > message.right,
+            oneLine:Math.abs((label.top + label.bottom) / 2 - (message.top + message.bottom) / 2) < 6};
+        })(),
+        // The name of the diagnosis card starts at the top, beside the headings of its table.
+        diagnosisTop:Math.round(one('#diagnosisEntry .MuiCardHeader-title').getBoundingClientRect().top - one('#diagnosisEntry').getBoundingClientRect().top),
+        // A marker follows the last word of a name that takes two lines.
+        marker:(() => {
+          const cell = [...document.querySelectorAll('#medicationEntrySection tbody tr')][2].cells[1];
+          const name = document.createRange(); name.selectNodeContents(cell.querySelector('.MuiTypography-root'));
+          const lines = [...name.getClientRects()], last = lines.at(-1), chip = cell.querySelector('.MuiChip-root').getBoundingClientRect();
+          return {lines:new Set(lines.map(rect => Math.round(rect.top))).size, gap:Math.round(chip.left - last.right), onLast:chip.top < last.bottom && chip.bottom > last.top};
+        })(),
       };
     })(),
     marks:document.querySelectorAll('[data-hhr-round],[data-hhr-reading]').length,
@@ -113,6 +137,12 @@ async function verifySummary(page, width, native, off, sans) {
   assert.deepEqual(look.surfaces, ['6px none'], 'Las tarjetas bajo la ronda tienen la misma superficie');
   assert.ok(look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(look.tables));
   assert.ok(look.empty.every(gap => gap >= 8 && gap <= 12), 'Una sección vacía separa su nombre de su mensaje: ' + look.empty);
+  assert.deepEqual(look.inks, ['rgb(33, 33, 33)', 'rgb(74, 74, 74)', 'rgb(102, 102, 102)'], 'El texto usa las tintas neutras de Eloísa');
+  assert.ok(look.emptyEdges.every(edge => edge === 10), 'Una sección vacía empieza en el borde de lectura: ' + look.emptyEdges);
+  assert.ok(look.filter.end === 10 && look.filter.afterMessage && look.filter.oneLine, 'El filtro de una sección vacía cierra su línea: ' + JSON.stringify(look.filter));
+  assert.equal(look.filter.freeEnd, 10, 'Un filtro que cierra la cabecera termina en el borde de lectura');
+  assert.ok(look.diagnosisTop <= 10, 'El nombre de Diagnóstico queda arriba: ' + look.diagnosisTop);
+  assert.ok(look.marker.lines === 2 && look.marker.onLast && look.marker.gap >= 4 && look.marker.gap <= 10, 'La etiqueta sigue a la última palabra del nombre: ' + JSON.stringify(look.marker));
 
   // The round: note, signs and care on the left; handoff and alerts on the right, on shared edges.
   assert.ok(near(shown.note.left, shown.signs.left) && near(shown.note.right, shown.signs.right) && near(shown.signs.top, shown.note.bottom), 'Signos sigue a la nota con sus bordes');

@@ -61,7 +61,7 @@
       [data-hhr-ficha-summary-card="brief"] :is(h2,h3,h4,.MuiCardHeader-root,.MuiCardContent-root) { margin-block:0 !important; }
       [data-hhr-ficha-summary-card="brief"] > :is(p,div:not(.MuiCard-root)),[data-hhr-ficha-summary-card="brief"] > .MuiCard-root > .MuiCardContent-root {
         min-width:0; overflow-wrap:anywhere; }
-      [data-hhr-ficha-summary-card] > .MuiCard-root:has(> .MuiCardHeader-root):has(> .MuiCardActions-root > button:only-child:is([aria-label*="imprimir" i],[title*="imprimir" i],:has([data-testid^="Print"]))) {
+      [data-hhr-ficha-summary-card] > .MuiCard-root:has(> .MuiCardHeader-root):is(:has(> .MuiCardActions-root > button:only-child:is([aria-label*="imprimir" i],[title*="imprimir" i])),:has(> .MuiCardActions-root > button:only-child [data-testid^="Print"])) {
         display:grid; grid-template-columns:minmax(0,1fr) auto;
         > .MuiCardHeader-root { grid-column:1; grid-row:1; }
         > .MuiCardActions-root { grid-column:2; grid-row:1; align-self:center; }
