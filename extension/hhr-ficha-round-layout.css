@@ -214,6 +214,12 @@
           &:has(label) { grid-column:span 6; }
         }
         [data-hhr-round="empty-request"] { display:block !important; }
+        /* In half the line the nine measurements read as five and four, never with one left alone on a third row. */
+        @container hhr-round-signs (min-width:36rem) {
+          [data-hhr-round="vitals"] #vitalSignsEntry [data-hhr-reading="vital-grid"]:has(> [data-hhr-reading="vital-tile"]:nth-child(9)) {
+            grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+          }
+        }
         /* A request without records reads on the line of its neighbours. */
         [data-hhr-round="empty-request"] [data-hhr-reading="status-card"] { padding-block:2px !important; background:transparent !important; }
       }

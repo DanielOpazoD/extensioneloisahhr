@@ -40,6 +40,8 @@ Títulos de las tarjetas, en ese orden: Fecha estimada de alta, Observaciones de
 
 No hay `input[type=date]`. La fila tiene cuatro controles.
 
+Leída de nuevo el 26-11-2026 con la vista Compacta activa (0.48.199), a 1303 × 970 px: la fila es el primer hijo de la rejilla de la ronda, que sigue al hueco de la línea de secciones, y medía 30 px **en su propia línea**. No había subido a la línea de secciones: la barra flotante de Centro HHR tapa su final y la fila no cabía entre el último enlace y esa barra. Desde la 0.48.201 va en la línea de pestañas.
+
 ### Evolución
 
 - Cabecera: `.MuiCardHeader-content` con título y `.MuiCardHeader-subheader` «Última actualización: dd-mm-aaaa, hh:mm:ss, Médico Nombre»; `.MuiCardHeader-action` con un `div.MuiStack-root > button.MuiIconButton-sizeMedium > svg[data-testid=MoreVertRoundedIcon]`.
@@ -94,6 +96,15 @@ La ficha ficticia las dibuja con la tabla que Eloísa usa en las demás seccione
 - `.MuiCardContent-root > div.MuiPaper-root > div.MuiTableContainer-root > table` con siete columnas: una sin rótulo, Diagnóstico, Estado, Fecha, GES, Eno, Acciones.
 - Fila: `svg[data-testid=StarRoundedIcon]` en el diagnóstico principal; un `div.MuiStack-root` con una etiqueta de dos palabras (`div.MuiBox-root > span.MuiTypography-caption`) y el texto «código: descripción» en otro `span.MuiTypography-caption`; el estado en un selector de MUI (`div[role=combobox]#select-diagnosis-status`, 196 × 40 px, habilitado); la fecha; GES y Eno vacíos; y dos botones pequeños, `SpeakerNotesIcon` («Ver notas», deshabilitado) y `NoteAddIcon` («Agregar notas»).
 
+Sin registros (segunda lectura del 26-11-2026), las cuatro son `section#…EntrySection > div.MuiCard-root#…Entry` con `.MuiCardContent-root > p.MuiTypography-body2`:
+
+- `#procedureEntry`: conserva en su cabecera el interruptor «Mostrar suspendidos» (`label.MuiFormControlLabel-root` dentro de `.MuiCardHeader-action > .MuiStack-root`) y dice «No se presentan procedimientos registrados para este paciente».
+- `#referralRequestEntry`: «No se presentan interconsultas … para este paciente».
+- `#diagnosisTestEntry`: «No presenta solicitudes de examenes registradas», sin tilde.
+- `#operationTheaterRequestEntry`: los tres nodos de texto ya descritos.
+
+Esa lectura fue de un paciente sin procedimientos: la forma de Procedimientos **con registros** sigue sin exportarse.
+
 Sin diagnósticos (26-11-2026), la tarjeta no tiene tabla ni firma: `.MuiCardContent-root > p.MuiTypography-body2` «No se presentan diagnosticos registrados para este paciente», sin tilde.
 
 ### Secciones vacías o sin permiso
@@ -119,7 +130,7 @@ Las filas de Indicaciones Libres llevan las mismas tres acciones que las de Fár
 
 ### Línea de secciones
 
-Doce enlaces `div.MuiGrid-item > span.MuiBadge-root > span.MuiTypography-caption`, en este orden: Alertas, Diagnóstico, Solicitud de examen, Indicaciones (Indicación Libre), Indicaciones (Medicamento), Indicaciones (Régimen), Evolución, Solicitudes de intervención quirúrgica, Procedimientos, Órdenes de atención, Solicitud interconsulta, Signos vitales. **No es el orden de la página.**
+Doce enlaces `div.MuiGrid-item > span.MuiBadge-root > span.MuiTypography-caption`, en este orden: Alertas, Diagnóstico, Solicitud de examen, Indicaciones (Indicación Libre), Indicaciones (Medicamento), Indicaciones (Régimen), Evolución, Solicitudes de intervención quirúrgica, Procedimientos, Órdenes de atención, Solicitud interconsulta, Signos vitales. **No es el orden de la página.** Eloísa muestra solo los de las secciones que el paciente tiene: en la segunda lectura del 26-11-2026 eran siete (Alertas, Indicaciones (Indicación Libre), Indicaciones (Medicamento), Indicaciones (Régimen), Evolución, uno más y Signos vitales).
 
 ## Plan de tratamiento
 

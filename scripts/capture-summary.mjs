@@ -113,8 +113,20 @@ const read = page => page.evaluate(() => {
         rights:[...new Set(cards.map(card => Math.round(innerWidth - card.getBoundingClientRect().right)))].sort((a, b) => a - b),
         gaps:peers.slice(1).map((card, at) => Math.round(box(card).top - box(peers[at]).bottom)),
         edges:[...new Set(peers.map(card => Math.round(card.getBoundingClientRect().left) + '/' + Math.round(innerWidth - card.getBoundingClientRect().right)))],
-        // The daily row docked on the section links takes the colour of that line.
-        dock:one('[data-hhr-ficha-dock]') && [getComputedStyle(one('[data-hhr-ficha-dock]')).backgroundColor, getComputedStyle(one('[data-hhr-ficha-sections]')).backgroundColor],
+        // The daily row has no line of its own: where it rides, what a pointer finds on it and what it leaves to the links.
+        dock:(row => row && (() => {
+          const place = row.getBoundingClientRect(), head = one('[role="tablist"]').closest('.MuiAppBar-root').getBoundingClientRect(), links = one('[data-hhr-ficha-sections]');
+          const bar = document.getElementById('hhr-clinical-operations-bar')?.getBoundingClientRect(), field = row.querySelector('form input').getBoundingClientRect();
+          const last = [...links.children].filter(el => el.offsetWidth).at(-1).getBoundingClientRect();
+          return {line:row.getAttribute('data-hhr-ficha-dock-line'), short:row.getAttribute('data-hhr-ficha-dock') === 'short', position:getComputedStyle(row).position,
+            onTabs:place.top >= head.top - 1 && place.bottom <= head.bottom + 1, onLinks:place.top >= links.getBoundingClientRect().top - 1 && place.bottom <= links.getBoundingClientRect().bottom + 1,
+            afterTabs:Math.round(place.left - Math.max(...[...document.querySelectorAll('[role="tab"]')].map(tab => tab.getBoundingClientRect().right))), beforeBar:bar ? Math.round(bar.left - place.right) : null,
+            afterLastLink:Math.round(place.left - last.right), reachable:row.contains(document.elementFromPoint(field.left + field.width / 2, field.top + field.height / 2)),
+            reserved:links.hasAttribute('data-hhr-ficha-docked'), scrolls:links.scrollWidth > links.clientWidth + 1,
+            // The line the round starts on: the second while the row keeps the first.
+            lead:frame.style.getPropertyValue('--hhr-round-line'),
+            surfaces:[getComputedStyle(row).backgroundColor, getComputedStyle(links).backgroundColor]};
+        })())(one('.frame > .daily')),
         statusTitle:(title => getComputedStyle(title).fontSize + ' ' + getComputedStyle(title).fontWeight)(one('#ramEntry .MuiCardHeader-title')),
         families:[...new Set(texts.map(el => getComputedStyle(el).fontFamily.split(',')[0].trim()))],
         weights:[...new Set(texts.map(el => getComputedStyle(el).fontWeight))].sort(),
@@ -229,10 +241,15 @@ async function verifySummary(page, width, native, off, sans) {
     // In half of half the line a long name with a wide letter may take two lines.
     assert.ok(line.mark === 'status-card' && line.height <= 44 && line.title === look.statusTitle, `Una sección sin permiso es una línea breve, como RAM: ${id} ${JSON.stringify(line)}`);
   }
-  if (look.dock) assert.equal(look.dock[0], look.dock[1], 'La fila diaria sobre la línea de secciones tiene su mismo fondo');
-  const {daily, group} = look;
+  // The owner asked for the daily row to stop being a line of the summary. The floating bar covers the end of the
+  // section links, so the row rides on the line of tabs, between them and that bar, and the links keep their line.
+  const {daily, group, dock} = look;
+  assert.ok(dock.line === 'tabs' && dock.position === 'fixed' && dock.onTabs && dock.afterTabs >= 12 && dock.beforeBar >= 8 && dock.reachable && !dock.reserved,
+    'La fila diaria va en la línea de pestañas, entre ellas y la barra flotante: ' + JSON.stringify(dock));
+  assert.equal(dock.lead, '1', 'y el resumen empieza en la línea que la fila ocupaba');
   assert.ok(daily.byline.width <= 1 && daily.byline.height <= 1, 'La fila diaria no muestra quién actualizó el resumen');
-  assert.ok(!daily.clipped && daily.name.width > 100 && daily.name.right <= daily.field.left && Math.abs((daily.name.top + daily.name.bottom) / 2 - (daily.field.top + daily.field.bottom) / 2) <= 2,
+  if (dock.short) assert.ok(daily.name.width <= 1, 'Sin sitio para su nombre, el campo lo conserva solo para el lector de pantalla');
+  else assert.ok(!daily.clipped && daily.name.width > 100 && daily.name.right <= daily.field.left && Math.abs((daily.name.top + daily.name.bottom) / 2 - (daily.field.top + daily.field.bottom) / 2) <= 2,
     'El nombre del campo del resumen diario se lee entero, antes del campo: ' + JSON.stringify(daily));
   // What has no records, or cannot be seen, closes the summary together: a heading and a short line for each section.
   assert.ok(group.count === 5 && group.inside && group.rows <= 4 && group.heights.every(height => height <= 44) && group.top >= shown.careLine.bottom && group.left >= shown.signs.right - 1 &&
@@ -479,14 +496,56 @@ async function verifyShapes(browser, assets) {
   shown = await read(page);
   assert.equal(shown.look.tables.length, 7, 'Las cuatro secciones dibujan su tabla: ' + shown.look.tables.length);
   assert.ok(shown.look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(shown.look.tables));
-  // A text Eloísa cuts keeps «Leer más» on a line of its own in these sections: three lines at most.
-  assert.ok(shown.look.rhythm.every(([heading, band, cell, row]) => heading === '12px' && band === shown.look.rhythm[0][1] && cell === shown.look.rhythm[0][2] && row <= 56),
-    'Las tablas comparten el tamaño de sus cabeceras y de sus celdas, su banda y filas de tres líneas a lo más: ' + JSON.stringify(shown.look.rhythm));
+  assert.ok(shown.look.rhythm.every(([heading, band, cell]) => heading === '12px' && band === shown.look.rhythm[0][1] && cell === shown.look.rhythm[0][2]),
+    'Las tablas comparten el tamaño de sus cabeceras y de sus celdas y su banda: ' + JSON.stringify(shown.look.rhythm));
+  // The owner asked for Procedimientos as dense as the rest: these sections read at the rhythm of Fármacos. A row is one
+  // line high, also with the selector of its state and with a text Eloísa cuts, whose «Ver más» ends its own line.
+  const dense = await page.evaluate(() => {
+    const rows = id => [...document.querySelectorAll('#' + id + ' tbody tr')].map(row => Math.round(row.getBoundingClientRect().height));
+    const cut = document.querySelector('#procedureEntrySection td button[data-hhr-note-disclosure="more"]'), text = cut.closest('td').querySelector('.MuiTypography-root');
+    const select = document.querySelector('#procedureEntrySection td .MuiInputBase-root').getBoundingClientRect();
+    return {orders:rows('medicationEntrySection').filter(height => height <= 30)[0], rows:['procedureEntrySection', 'referralRequestEntrySection', 'procedureOrderEntrySection', 'diagnosisTestEntrySection', 'operationTheaterRequestEntrySection'].map(rows),
+      sameLine:Math.abs((cut.getBoundingClientRect().top + cut.getBoundingClientRect().bottom) / 2 - (text.getBoundingClientRect().top + text.getBoundingClientRect().bottom) / 2) <= 3 && cut.getBoundingClientRect().left >= text.getBoundingClientRect().right,
+      select:[Math.round(select.width), Math.round(select.height)], tool:(button => [Math.round(button.getBoundingClientRect().width), Math.round(button.getBoundingClientRect().height)])(document.querySelector('#procedureEntrySection td .MuiIconButton-root'))};
+  });
+  assert.ok(dense.rows.flat().every(height => height <= dense.orders + 5) && dense.sameLine && dense.select[0] <= 140 && dense.select[1] <= 28 && dense.tool[0] >= 24 && dense.tool[1] >= 24,
+    'Procedimientos y las demás secciones con registros se leen al ritmo de Fármacos, una línea por fila: ' + JSON.stringify(dense));
+  // Open, the whole text is read and its disclosure closes it.
+  await page.locator('#procedureEntrySection td button[data-hhr-note-disclosure="more"]').first().click();
+  await refresh(page);
+  const opened = await page.evaluate(() => { const cell = document.querySelector('#procedureEntrySection tbody tr td:nth-child(6)'), text = cell.querySelector('.MuiTypography-root');
+    return {whole:text.scrollWidth <= text.clientWidth + 1 && getComputedStyle(text).whiteSpace !== 'nowrap', less:Boolean(cell.querySelector('button[data-hhr-note-disclosure="less"]')), inside:cell.scrollWidth <= cell.clientWidth + 1}; });
+  assert.deepEqual(opened, {whole:true, less:true, inside:true}, 'Al abrir un fundamento se lee entero dentro de su celda, con «Ver menos»: ' + JSON.stringify(opened));
   assert.deepEqual([shown.look.titles, shown.look.surfaces, shown.look.edges], [['15px 600'], ['8px none'], [shown.look.rail.join('/')]], 'Sus tarjetas se titulan y terminan como las demás');
   assert.ok(shown.look.gaps.length >= 7 && shown.look.gaps.every(gap => gap === 12), 'y se separan como las demás: ' + shown.look.gaps);
   const printTests = await page.evaluate(() => { const button = document.getElementById('fixture-print-tests'), look = getComputedStyle(button);
     return [Math.round(button.getBoundingClientRect().height), look.textTransform, look.fontSize, Math.round(button.closest('.MuiCard-root').getBoundingClientRect().right - button.getBoundingClientRect().right)]; });
   assert.deepEqual(printTests, [26, 'none', '12px', 16], 'El botón de una sección se lee como «Validar tratamiento», en el borde de lectura');
+  await page.close();
+  // In a narrower window the row keeps the line of tabs and gives up the name of its field.
+  page = await open();
+  await page.setViewportSize({width:1150, height:800});
+  await page.evaluate(() => { window.dispatchEvent(new Event('resize')); });
+  await refresh(page);
+  let {dock} = (await read(page)).look;
+  assert.ok(dock.line === 'tabs' && dock.short && dock.onTabs && dock.afterTabs >= 12 && dock.beforeBar >= 8 && dock.reachable && dock.lead === '1',
+    'A 1150 px la fila sigue en la línea de pestañas, sin el nombre de su campo: ' + JSON.stringify(dock));
+  await page.close();
+  // Should Eloísa paint its line of tabs over the content, the date would be under it: the row rides on the
+  // section links instead. They scroll under it, and the last of them stops clear of it.
+  page = await browser.newPage({viewport:{width:1440, height:900}, deviceScaleFactor:1, locale:'es-CL', timezoneId:'Pacific/Easter'});
+  await page.setContent(summaryPage());
+  await page.addStyleTag({content:'main > .MuiStack-root { position:relative; z-index:1; }'});
+  await settle(page);
+  await mountFicha(page, assets, {theme:'compact'});
+  await refresh(page);
+  ({dock} = (await read(page)).look);
+  assert.ok(dock.line === 'sections' && dock.onLinks && dock.beforeBar >= 8 && dock.reachable && dock.reserved && dock.lead === '1' && dock.surfaces[0] === dock.surfaces[1],
+    'Bajo una línea de pestañas que la taparía, la fila va en la línea de secciones, con su mismo fondo: ' + JSON.stringify(dock));
+  await page.evaluate(() => { const links = document.querySelector('[data-hhr-ficha-sections]'); links.scrollLeft = links.scrollWidth; });
+  await settle(page);
+  ({dock} = (await read(page)).look);
+  assert.ok(dock.line === 'sections' && dock.reachable && dock.afterLastLink >= 8, 'y el último enlace, al final de su recorrido, queda a la vista: ' + JSON.stringify(dock));
   await page.close();
   // The older shape of Fármacos, its card straight in its section, without the line of its validator.
   page = await open({nested:false});

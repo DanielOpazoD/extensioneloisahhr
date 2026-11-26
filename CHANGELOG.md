@@ -3,8 +3,11 @@
 ## 0.48.201
 
 - En el Resumen de la vista Compacta, en escritorio, Signos vitales ocupa la primera mitad de su línea y deja la otra mitad a Reposo y Régimen y, debajo, al grupo «Sin datos»: las secciones sin registros o sin permiso, dos por fila, con las solicitudes de examen y de cirugía sin registros entre ellas. Antes Signos vitales ocupaba todo el ancho, Reposo y Régimen una línea aparte y el grupo «Sin datos» el final de la ficha.
-- Con eso la ficha es más corta y «sin alergias registradas» o «sin RAM» se leen en la primera parte del Resumen, sin llegar al final. Fármacos empieza 46 px más abajo.
-- Las mediciones de Signos vitales se reparten en dos o tres filas dentro de su mitad. Sin Reposo, Régimen ni secciones sin datos, Signos vitales conserva todo el ancho.
+- Con eso «sin alergias registradas» o «sin RAM» se leen en la primera parte del Resumen, sin llegar al final. Fármacos empieza donde empezaba.
+- Las nueve mediciones de Signos vitales se leen en dos filas dentro de su mitad, cinco y cuatro. Sin Reposo, Régimen ni secciones sin datos, Signos vitales conserva todo el ancho.
+- La fecha del resumen diario, «Imprimir» y el icono de impresión dejan de ocupar una franja propia sobre la ficha. Van al final de la línea de pestañas (Resumen, Antecedentes, Plan de tratamiento…), a la izquierda de la barra de Centro HHR, y siguen a la vista al desplazar la ficha. Hasta ahora solo subían a la línea de enlaces de sección cuando cabían, y con la barra de Centro HHR desplegada casi nunca cabían: en la ficha del responsable la franja seguía ahí. El resumen empieza 42 px más arriba.
+- Si Eloísa cambiara su línea de pestañas (que deje de estar fija o que tape la fila), la fecha e «Imprimir» van al final de la línea de enlaces de sección; los enlaces que no caben se desplazan bajo ellas y el último queda siempre a la vista.
+- Procedimientos se lee tan denso como Fármacos: una línea por fila (de 28 a 31 px en lugar de 51), el selector de «Estado» a la altura de la línea y al ancho de su texto, y «Ver más» al final de la línea del fundamento en lugar de debajo. Solicitud interconsulta, Órdenes de atención, Solicitud de examen y Solicitudes de intervención quirúrgica toman el mismo ritmo. A 1440 × 900 la ficha completa mide 106 px menos que en la 0.48.200, y 253 px menos con registros en todas las secciones.
 - Una sección plegada tras «Ver vacías» ya no deja un hueco entre las demás.
 
 ## 0.48.200
