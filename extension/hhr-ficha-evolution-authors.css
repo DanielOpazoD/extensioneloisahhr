@@ -163,23 +163,28 @@
   }
 }
 @media screen {
+  /* The whole note in a window for reading: most of the screen, one white surface, and nothing
+     drawn but the text, who signed it and how to leave. */
   dialog.hhr-note-dialog {
-    box-sizing:border-box; width:min(46rem,calc(100vw - 2rem)); max-height:80dvh;
-    margin:auto; padding:0; border:1px solid #b8ccc5; border-radius:9px;
-    background:white; color:var(--hhr-ficha-ink); box-shadow:0 12px 46px #193b342b;
+    box-sizing:border-box; width:min(60rem,calc(100vw - 4rem)); max-height:92dvh;
+    margin:auto; padding:0; border:0; border-radius:12px; overflow:hidden;
+    background:var(--hhr-ficha-surface); color:var(--hhr-ficha-ink); box-shadow:0 24px 64px rgb(17 38 34 / 30%);
     font:inherit;
     &[open] { display:flex; flex-direction:column; }
-    &::backdrop { background:rgb(17 38 34 / 44%); }
+    &::backdrop { background:rgb(17 38 34 / 52%); }
     header { display:grid; grid-template-columns:1fr auto; align-items:center; gap:2px 1rem;
-      flex:none; border-bottom:1px solid #d8e5e0; padding:12px 20px; background:#f4f8f6; }
-    h2 { grid-area:1 / 1; margin:0; font:600 1rem/1.4 var(--hhr-ficha-sans); }
-    small { color:var(--hhr-ficha-ink-soft); font:.8125rem/1.35 var(--hhr-ficha-sans); }
-    button { grid-area:1 / 2 / span 2; min-height:28px; border:1px solid #b8ccc5;
-      border-radius:4px; background:white; padding:2px 10px; color:var(--hhr-ficha-action); font:inherit; cursor:pointer; }
-    .hhr-note-content { padding:16px 20px; overflow:auto; white-space:pre-wrap;
-      overflow-wrap:anywhere; font:normal .9375rem/1.55 var(--hhr-ficha-sans); }
-    .hhr-note-position { padding:4px 20px; background:#f4f8f6; border-top:1px solid #d8e5e0; text-align:end; }
-    :focus-visible { outline:2px solid #087269; outline-offset:-2px; }
+      flex:none; padding:20px 32px 14px; border-block-end:1px solid var(--hhr-ficha-line-soft); }
+    h2 { grid-area:1 / 1; margin:0; font:600 var(--hhr-ficha-text-lead)/1.4 var(--hhr-ficha-sans); }
+    small { color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans); }
+    button { grid-area:1 / 2 / span 2; min-height:32px; padding:4px 14px; border:1px solid var(--hhr-ficha-line);
+      border-radius:var(--hhr-ficha-radius); background:transparent; color:var(--hhr-ficha-action);
+      font:600 var(--hhr-ficha-text-body)/1 var(--hhr-ficha-sans); cursor:pointer;
+      &:hover { background:var(--hhr-ficha-action-hover); } }
+    .hhr-note-content { padding:24px 32px 28px; overflow:auto; white-space:pre-wrap; scrollbar-width:thin;
+      overflow-wrap:anywhere; font:normal var(--hhr-ficha-text-title)/1.6 var(--hhr-ficha-sans); }
+    .hhr-note-position { flex:none; padding:8px 32px 12px; border-block-start:1px solid var(--hhr-ficha-line-soft);
+      color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans); text-align:end; }
+    :focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:-2px; }
   }
 }
 @media print { .hhr-evo-entry,.hhr-evo-filters,.hhr-note-open,dialog.hhr-note-dialog { display:none !important; } }

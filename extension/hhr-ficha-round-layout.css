@@ -79,6 +79,45 @@
       [data-hhr-round="peer"] .MuiCard-root:not([data-hhr-reading="status-card"]) > .MuiCardHeader-root .MuiCardHeader-title {
         color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans);
       }
+      /* An instruction that waits to be confirmed keeps Eloísa's card, its tint and its tools: it is not
+         a line to read yet. It takes the reading edge, the type and the rhythm of the cards around it,
+         so that confirming it changes its shape and not its look. */
+      [data-hhr-round="peer"] > :is(#restEntrySection,#nutritionOrderEntrySection) { margin:0 !important; padding:0 !important; }
+      [data-hhr-round="peer"] > :is(#restEntrySection,#nutritionOrderEntrySection) > .MuiCard-root,
+      [data-hhr-round="peer"] > :is(#rest,#nutritionOrder).MuiCard-root {
+        margin:0 !important;
+        > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { min-block-size:0 !important; padding:6px var(--hhr-ficha-inset) !important; }
+        > .MuiCardHeader-root > .MuiCardHeader-content { display:flex; flex-wrap:wrap; align-items:baseline; gap:1px 8px; min-inline-size:0; }
+        > .MuiCardContent-root {
+          padding-block-start:0 !important;
+          .MuiStack-root { gap:2px 8px !important; }
+          :is(p,span,.MuiTypography-root):not(.MuiChip-label) { margin:0 !important; font-size:var(--hhr-ficha-text-body); line-height:1.4; }
+          .MuiChip-root { block-size:auto; min-block-size:20px; }
+          .MuiChip-label { font-size:var(--hhr-ficha-text-body); line-height:1.4; }
+        }
+        .MuiIconButton-root:not(:is(dialog,[role=dialog]) *) { inline-size:28px; block-size:28px; padding:4px !important; }
+        .MuiIconButton-root svg { inline-size:18px; block-size:18px; }
+      }
+      /* What has no records, or cannot be seen, closes the summary together: under one heading, three to
+         a row, each section its name and its state in two words. Eloísa's own sentence stays in the page
+         for a screen reader, search and print, and a filter of the section stays beside its name. */
+      &:has(> [data-hhr-round="peer"] [data-hhr-reading="status-card"]:not([data-hhr-ficha-folded]))::before {
+        content:'Sin datos'; order:1; grid-column:1 / -1; margin-block-start:4px; padding-inline-start:var(--hhr-ficha-inset);
+        color:var(--hhr-ficha-muted); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans);
+      }
+      > [data-hhr-round="peer"]:has(> section > [data-hhr-reading="status-card"]:only-child, > [data-hhr-reading="status-card"]:only-child) {
+        order:1; grid-column:span 4; margin-block-start:calc(4px - var(--hhr-round-row-gap));
+        /* With a filter of its own, such as «Mostrar Suspendidos», a section takes half the row: its name, its state and its filter keep one line. */
+        &:has(label) { grid-column:span 6; }
+        /* A legend on the page, not one more card: without a surface the group weighs less than what has records. */
+        [data-hhr-reading="status-card"] { margin-block:0 !important; padding-block:1px !important; background:transparent !important; box-shadow:none !important; }
+        :is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]) {
+          margin:0 !important; font-size:0 !important; line-height:1 !important;
+          &::after { color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
+        }
+        [data-hhr-reading="status-message"]::after { content:'Sin registros' / ''; }
+        [data-hhr-reading="status-denied"]::after { content:'Sin permiso' / ''; }
+      }
       :is([data-hhr-round="bridge"],[data-hhr-round="inner"]) { display:contents !important; }
       :is([data-hhr-round="before"],[data-hhr-round="peer"]) {
         grid-column:span var(--hhr-round-span,12);

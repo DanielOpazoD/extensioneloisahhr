@@ -1,5 +1,29 @@
 # Resumen compacto en escritorio
 
+## Lo vacío junto, las tablas con un ritmo y el Resumen desde arriba, en 0.48.199
+
+El responsable revisó la 0.48.198 en su pantalla y pidió: agrupar con más elegancia las secciones sin datos; dar el estilo de la vista a Procedimientos, Solicitud interconsulta, Solicitud de examen y Solicitudes de intervención quirúrgica cuando tienen registros; que un Régimen en edición no se vea de otro programa; quitar el nombre del funcionario de la línea de secciones y dejar entero «Resumen diario paciente»; un lector de la evolución más grande y más limpio; más margen general; y que la ficha no quede a mitad de documento al recargar.
+
+| Pantalla | 0.48.198 | 0.48.199 | Página completa |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.199/antes/1280-resumen.png) | [Después](0.48.199/despues/1280-resumen.png) | [Antes](0.48.199/antes/1280-resumen-completo.png) · [Después](0.48.199/despues/1280-resumen-completo.png) |
+| 1440 × 900 | [Antes](0.48.199/antes/1440-resumen.png) | [Después](0.48.199/despues/1440-resumen.png) | [Antes](0.48.199/antes/1440-resumen-completo.png) · [Después](0.48.199/despues/1440-resumen-completo.png) |
+| 1990 × 1086, la ventana del responsable, con registros en las cuatro secciones | | | [Antes](0.48.199/antes/1990-con-registros-completo.png) · [Después](0.48.199/despues/1990-con-registros-completo.png) |
+
+Las capturas de la primera pantalla ya no se desplazan a mano al inicio. El «antes» muestra lo que se veía al cargar: la página a mitad de documento, donde Eloísa había puesto el foco.
+
+| Medida, 0.48.198 → 0.48.199 | |
+| --- | ---: |
+| Posición de la página al abrir el Resumen | donde Eloísa puso el foco, a mitad de documento → al inicio (0 px) |
+| Secciones sin datos, a 1440 × 900 | 5 tarjetas de una línea → un grupo de 2 filas |
+| Alto de la página, a 1440 × 900 | 2042 → 1923 px |
+| Alto de la página con registros en las cuatro secciones, a 1990 × 1086 | 3051 → 2486 px |
+| Ancho del contenido y margen a cada lado, a 1990 px | 1600 y 195 → 1440 y 275 px |
+| Lector de la evolución, a 1990 × 1086 | hasta 736 × 869 → hasta 960 × 999 px |
+| Firma en la fila del resumen diario | a la vista → solo para el lector de pantalla |
+
+La forma de las cuatro secciones con registros se leyó en capturas de pantalla, no con el exportador ([`estructura-eloisa.md`](../../estructura-eloisa.md)). La vista les da solo lo común, por el id de su sección: falta confirmarla en la página.
+
 ## Cada bloque en su lugar y más aire, en 0.48.198
 
 El responsable pidió un orden de lectura: Diagnóstico primero, Evolución de tamaño fijo con Observaciones de entrega y Alertas al lado, y después el resto. También más margen general y dentro de los cuadros. En la 0.48.197 nada tenía un lugar fijo: Diagnóstico empezaba entre los 526 y los 628 px, y Fármacos entre los 616 y los 718, según el largo de la nota, el número de alertas y el alto de la ventana.

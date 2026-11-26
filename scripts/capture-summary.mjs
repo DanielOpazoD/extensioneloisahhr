@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
-import { summaryDiagnoses, summaryFree, summaryMedications, summaryPage } from './summary-visual-fixture.mjs';
+import { summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
 
 const refresh = async page => {
   // The readers materialize each cut text with Eloísa's own disclosure: one refresh per commit of the host.
@@ -85,13 +85,18 @@ const read = page => page.evaluate(() => {
     look:!one('[data-hhr-ficha-sections] [data-hhr-ficha-link]') || !one('[data-hhr-round="frame"]') ? null : (() => {
       const rail = one('[data-hhr-ficha-sections]').getBoundingClientRect();
       const cards = [...document.querySelectorAll('.frame section[id] > .MuiCard-root, .frame #rest.MuiCard-root')].filter(shown);
-      const peers = [...document.querySelectorAll('.frame > [data-hhr-round="peer"]')].filter(shown)
+      const items = [...document.querySelectorAll('.frame > [data-hhr-round="peer"]')].filter(shown);
+      // What has no records, or cannot be seen, is not one more card: it closes the summary as a group of short lines.
+      const tiles = items.map(item => item.querySelector(':scope > section > [data-hhr-reading="status-card"]:only-child, :scope > [data-hhr-reading="status-card"]:only-child')).filter(Boolean);
+      const peers = items
         // Eloísa can wrap a card in a second section, as it does with Fármacos.
-        .map(item => item.querySelector(':scope > section > .MuiCard-root, :scope > section > section:only-child > .MuiCard-root')).filter(Boolean).sort((a, b) => box(a).top - box(b).top);
+        .map(item => item.querySelector(':scope > section > .MuiCard-root, :scope > section > section:only-child > .MuiCard-root')).filter(card => card && !tiles.includes(card)).sort((a, b) => box(a).top - box(b).top);
       const texts = [...document.querySelectorAll('.frame *, [data-hhr-ficha-sections] *')].filter(el => shown(el) &&
         [...el.childNodes].some(node => node.nodeType === 3 && node.textContent.trim()) && getComputedStyle(el).fontSize !== '0px');
       const firstText = el => { const range = document.createRange(); range.selectNodeContents(el); return range.getClientRects()[0]?.left; };
-      const tables = ['medicationEntrySection', 'freeIndicationEntrySection', 'procedureOrderEntrySection'].map(id => document.getElementById(id)).filter(section => section.querySelector('thead')).map(section => {
+      const tabled = ['medicationEntrySection', 'freeIndicationEntrySection', 'procedureOrderEntrySection', 'procedureEntrySection', 'referralRequestEntrySection', 'diagnosisTestEntrySection',
+        'operationTheaterRequestEntrySection'].map(id => document.getElementById(id)).filter(section => section.querySelector('thead'));
+      const tables = tabled.map(section => {
         // The reading edge of a cell is where its content box starts: «Tiempo» aligns its days to the right on purpose.
         const edge = cell => cell.getBoundingClientRect().left + parseFloat(getComputedStyle(cell).paddingLeft);
         return [firstText(section.querySelector('.MuiCardHeader-title')), edge(section.querySelector('thead th')), edge(section.querySelector('tbody td'))].map(Math.round);
@@ -119,6 +124,21 @@ const read = page => page.evaluate(() => {
           .map(card => { const title = getComputedStyle(card.querySelector('.MuiCardHeader-title')); return title.fontSize + ' ' + title.fontWeight; }))],
         surfaces:[...new Set(peers.concat([one('#diagnosisEntry')]).map(card => { const look = getComputedStyle(card); return look.borderTopLeftRadius + ' ' + look.boxShadow; }))],
         tables, empty,
+        // The rhythm of each table: the size of its headings and of its cells, the band of its headings and its tallest row.
+        rhythm:tabled.map(section => {
+          // The size a cell is read at is the one of the element that holds its text.
+          const words = [...section.querySelectorAll('tbody td *')].find(el => [...el.childNodes].some(node => node.nodeType === 3 && node.textContent.trim()) && parseFloat(getComputedStyle(el).fontSize));
+          return [getComputedStyle(section.querySelector('thead th')).fontSize, getComputedStyle(section.querySelector('thead th')).backgroundColor, getComputedStyle(words).fontSize,
+            Math.round(Math.max(...[...section.querySelectorAll('tbody tr')].map(row => row.getBoundingClientRect().height)))];
+        }),
+        group:{count:tiles.length, heading:getComputedStyle(one('.frame'), '::before').content, headingSize:getComputedStyle(one('.frame'), '::before').fontSize,
+          afterCards:tiles.every(tile => box(tile).top >= Math.max(...peers.map(card => box(card).bottom))), rows:new Set(tiles.map(tile => Math.round(box(tile).top))).size,
+          inside:tiles.every(tile => tile.getBoundingClientRect().left >= rail.left - 1 && tile.getBoundingClientRect().right <= rail.right + 1), heights:tiles.map(tile => Math.round(box(tile).height)),
+          surfaces:[...new Set(tiles.map(tile => getComputedStyle(tile).backgroundColor))],
+          says:tiles.map(tile => (message => message && getComputedStyle(message, '::after').content)(tile.querySelector('[data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]')))},
+        // The daily row: the name of its field before it, whole, and the byline out of sight.
+        daily:(row => row && (name => ({name:box(name), field:box(row.querySelector('.MuiInputBase-root')), byline:box(row.querySelector('[data-hhr-update-label]')),
+          clipped:name.scrollWidth > name.clientWidth + 1}))(row.querySelector('.MuiInputLabel-root')))(one('.frame > .daily')),
         // Eloísa's neutral inks: what is read, what names a column, what only explains.
         inks:[getComputedStyle(one('#medicationEntry .MuiCardHeader-title')).color, getComputedStyle(one('#medicationEntry thead th')).color,
           getComputedStyle(one('#ramEntry [data-hhr-reading="status-message"]')).color],
@@ -147,6 +167,7 @@ const read = page => page.evaluate(() => {
       };
     })(),
     marks:document.querySelectorAll('[data-hhr-round],[data-hhr-reading]').length,
+    scroll:Math.round(scrollY),
   };
 });
 
@@ -155,6 +176,8 @@ async function verifySummary(page, width, native, off, sans) {
   const shown = await read(page);
   const near = (a, b, slack = 2) => Math.abs(a - b) <= slack;
   assert.equal(shown.pageWidth, width, 'El resumen cabe en la ventana');
+  // Eloísa focuses the empty alert field while the page loads, and the page follows it far down its own layout.
+  assert.equal(shown.scroll, 0, 'El resumen se abre arriba aunque Eloísa dé el foco al campo de alertas');
   assert.ok(shown.columns, 'La ronda ocupa sus dos columnas');
   assert.deepEqual(shown.roles, {estimatedDischargeSection:'note', shiftChangeEntrySection:'handoff', vitalSignsEntry:'vitals', rest:'care', alertEntrySection:'alerts',
     diagnosisEntrySection:'diagnosis', medicationEntrySection:'peer', 'fixture-print':'print'});
@@ -168,7 +191,7 @@ async function verifySummary(page, width, native, off, sans) {
   assert.equal(look.tabEdge, 0, 'Las pestañas empiezan donde empiezan los títulos de las tarjetas');
   assert.ok(look.lefts[0] === look.rail[0] && look.rights[0] === look.rail[1], `Las tarjetas empiezan y terminan en los bordes de la línea de secciones: ${look.lefts[0]}/${look.rights[0]} frente a ${look.rail}`);
   // One gap between blocks, one typeface, two weights, four sizes, one title, one surface.
-  assert.ok(look.gaps.length >= 6 && look.gaps.every(gap => gap === gap0), `Los bloques bajo la ronda se separan siempre ${gap0} px: ` + look.gaps);
+  assert.ok(look.gaps.length >= 3 && look.gaps.every(gap => gap === gap0), `Los bloques bajo la ronda se separan siempre ${gap0} px: ` + look.gaps);
   assert.deepEqual(look.edges, [look.rail.join('/')], 'Cada tarjeta bajo la ronda, Fármacos en su segunda sección incluida, termina en los bordes de la línea de secciones: ' + look.edges);
   // The wide pass swaps only the view's family, to measure another platform: there two are expected.
   if (!sans) assert.equal(look.families.length, 1, 'Una sola tipografía en toda la ficha: ' + look.families);
@@ -202,10 +225,20 @@ async function verifySummary(page, width, native, off, sans) {
     `Balance Hídrico filtra en una línea, con sus campos, su calendario y «Filtrar»: ${native.balance.height} → ${balance.height}, ${balance.controls}`);
   for (const id of ['adverseEventEntry', 'obstetricGynecologicalExaminationEntry']) {
     const line = lines[id];
-    assert.ok(line.mark === 'status-card' && line.height <= 30 && line.oneLine && line.left === look.rail[0] && line.right === look.rail[1] && line.title === look.statusTitle,
+    assert.ok(line.mark === 'status-card' && line.height <= 30 && line.oneLine && line.title === look.statusTitle,
       `Una sección sin permiso es una línea, como RAM: ${id} ${JSON.stringify(line)}`);
   }
   if (look.dock) assert.equal(look.dock[0], look.dock[1], 'La fila diaria sobre la línea de secciones tiene su mismo fondo');
+  const {daily, group} = look;
+  assert.ok(daily.byline.width <= 1 && daily.byline.height <= 1, 'La fila diaria no muestra quién actualizó el resumen');
+  assert.ok(!daily.clipped && daily.name.width > 100 && daily.name.right <= daily.field.left && Math.abs((daily.name.top + daily.name.bottom) / 2 - (daily.field.top + daily.field.bottom) / 2) <= 2,
+    'El nombre del campo del resumen diario se lee entero, antes del campo: ' + JSON.stringify(daily));
+  // What has no records, or cannot be seen, closes the summary together: a heading and a short line for each section.
+  assert.ok(group.count === 5 && group.afterCards && group.inside && group.rows === 2 && group.heights.every(height => height <= 32),
+    'Las secciones sin datos cierran el resumen en un grupo de dos filas: ' + JSON.stringify(group));
+  assert.deepEqual([group.heading, group.headingSize, group.surfaces], ['"Sin datos"', '12px', ['rgba(0, 0, 0, 0)']], 'El grupo tiene su rótulo y no dibuja una tarjeta por sección');
+  assert.deepEqual(group.says, ['"Sin registros" / ""', '"Sin registros" / ""', '"Sin registros" / ""', '"Sin permiso" / ""', '"Sin permiso" / ""'],
+    'Cada sección dice su estado en dos palabras, y sin permiso no es lo mismo que sin registros');
   // Its sentence is three text nodes. Read whole, it is an empty request like Exámenes, beside it on the last line of the round.
   assert.deepEqual([lines.operationTheaterRequestEntry.mark, lines.operationTheaterRequestEntry.round], ['status-card', 'empty-request'], 'Cirugía sin solicitudes acompaña a Exámenes');
 
@@ -316,8 +349,8 @@ async function verifySummary(page, width, native, off, sans) {
   await page.setViewportSize({width:1990, height:viewport.height});
   await refresh(page);
   const wide = (await read(page)).look;
-  assert.ok(wide.rail[0] === wide.rail[1] && Math.abs(1990 - wide.rail[0] * 2 - 1600) <= 1 && wide.tabEdge === 0,
-    'En una pantalla ancha el contenido mide 1600 px y queda centrado: ' + wide.rail);
+  assert.ok(wide.rail[0] === wide.rail[1] && Math.abs(1990 - wide.rail[0] * 2 - 1440) <= 1 && wide.tabEdge === 0,
+    'En una pantalla ancha el contenido mide 1440 px y queda centrado: ' + wide.rail);
   await page.setViewportSize(viewport);
   await refresh(page);
 
@@ -426,12 +459,26 @@ async function verifyShapes(browser, assets) {
   let shown = await read(page);
   for (const id of ['diagnosisEntry', 'procedureOrderEntry']) {
     const line = shown.lines[id];
-    assert.ok(line.mark === 'status-card' && line.round === 'peer' && line.height <= 30 && line.oneLine && line.left === shown.look.rail[0] && line.right === shown.look.rail[1] &&
-      line.title === shown.look.statusTitle,
+    assert.ok(line.mark === 'status-card' && line.round === 'peer' && line.height <= 30 && line.oneLine && line.title === shown.look.statusTitle,
       `Una sección vacía con tabla se lee como las demás vacías: ${id} ${JSON.stringify(line)}`);
   }
   assert.ok(shown.look.gaps.every(gap => gap === 12) && shown.look.edges.length === 1, 'Los bloques conservan su separación y sus bordes: ' + shown.look.gaps + ' ' + shown.look.edges);
   assert.equal(await page.locator('[data-hhr-ficha-folded] #diagnosisEntry, [data-hhr-ficha-folded]#diagnosisEntry').count(), 0, 'Un diagnóstico ausente no se pliega con las secciones vacías');
+  await page.close();
+  // Procedimientos, Solicitud interconsulta, Solicitud de examen and Solicitudes de intervención quirúrgica with records
+  // read like the other tables: the title, the headings and the first cell on one edge, and the same rhythm.
+  page = await open({procedureList:summaryProcedures, referralList:summaryReferrals, testList:summaryTests, surgeryList:summarySurgeries});
+  shown = await read(page);
+  assert.equal(shown.look.tables.length, 7, 'Las cuatro secciones dibujan su tabla: ' + shown.look.tables.length);
+  assert.ok(shown.look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(shown.look.tables));
+  // A text Eloísa cuts keeps «Leer más» on a line of its own in these sections: three lines at most.
+  assert.ok(shown.look.rhythm.every(([heading, band, cell, row]) => heading === '12px' && band === shown.look.rhythm[0][1] && cell === shown.look.rhythm[0][2] && row <= 56),
+    'Las tablas comparten el tamaño de sus cabeceras y de sus celdas, su banda y filas de tres líneas a lo más: ' + JSON.stringify(shown.look.rhythm));
+  assert.deepEqual([shown.look.titles, shown.look.surfaces, shown.look.edges], [['15px 600'], ['8px none'], [shown.look.rail.join('/')]], 'Sus tarjetas se titulan y terminan como las demás');
+  assert.ok(shown.look.gaps.length >= 7 && shown.look.gaps.every(gap => gap === 12), 'y se separan como las demás: ' + shown.look.gaps);
+  const printTests = await page.evaluate(() => { const button = document.getElementById('fixture-print-tests'), look = getComputedStyle(button);
+    return [Math.round(button.getBoundingClientRect().height), look.textTransform, look.fontSize, Math.round(button.closest('.MuiCard-root').getBoundingClientRect().right - button.getBoundingClientRect().right)]; });
+  assert.deepEqual(printTests, [26, 'none', '12px', 16], 'El botón de una sección se lee como «Validar tratamiento», en el borde de lectura');
   await page.close();
   // The older shape of Fármacos, its card straight in its section, without the line of its validator.
   page = await open({nested:false});
@@ -473,9 +520,6 @@ try {
       filasDeUnaLinea:measured.medication.rows.filter(row => row.height <= 30).length, finDeFarmacos:Math.round(measured.medication.card.bottom)}),
       'sin extensión', JSON.stringify({diagnostico:Math.round(native.diagnosis.card.top), farmacos:Math.round(native.medication.card.top)}));
     if (!sans) {
-      // The fixture, like Eloísa, focuses the alert field while the page loads and leaves it scrolled. The first screen is the one at the top.
-      await page.evaluate(() => { scrollTo(0, 0); });
-      await settle(page);
       await page.screenshot({path:path.join(directory, width + '-resumen.png')});
       await page.screenshot({path:path.join(directory, width + '-resumen-completo.png'), fullPage:true});
     }

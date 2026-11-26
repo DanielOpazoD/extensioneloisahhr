@@ -65,6 +65,17 @@ Al abrir el Resumen, **Eloísa da el foco al campo vacío de la nueva alerta**, 
 
 `div#alertEntries`: `.MuiCardContent-root` con `div.MuiBox-root` (alto máximo de 250 px con desplazamiento propio; una `div.MuiStack-root` por alerta: una pila con `p` «Cargo Nombre» y `div > span` mensaje; otra con `span.MuiTypography-caption` antigüedad y `div.MuiStack-root > button[aria-label="Archivar"] > svg[data-testid=ArchiveRoundedIcon]`) y un `form.MuiStack-root` con los interruptores «No reanimación» y «Gestión de Visitas» y el campo «Observaciones» con «Agregar». Una ficha tenía quince alertas.
 
+### Secciones con registros que aún no se han exportado
+
+Procedimientos, Solicitud interconsulta, Solicitud de examen y Solicitudes de intervención quirúrgica **con registros** se leyeron el 26-11-2026 en capturas de pantalla, no con el exportador. Se conocen sus columnas y controles, no sus nodos:
+
+- Procedimientos: Indicación, Estado (selector mientras está «Solicitada», texto cuando está «Realizada»), Fecha solicitud, Para, Nº de sesiones, Fundamentos (texto cortado con «Ver más»), Solicitante, Acciones. Interruptor «Mostrar suspendidos» en la cabecera.
+- Solicitud interconsulta: Especialidad, Destino, Estado, Fecha solicitud, Interconsultor, Motivo, Acciones. Lleva firma.
+- Solicitud de examen: botón «Imprimir selección (n órdenes)» sobre la tabla; Grupo de exámenes, Nro. Orden, Estado Orden (selector), Fecha solicitud, Examen(es), Observaciones, Estado, Acciones.
+- Solicitudes de intervención quirúrgica: Tipo de solicitud, Estado, Diagnóstico, Intervención, Fecha solicitud, Fecha estimada, Acciones.
+
+La ficha ficticia las dibuja con la tabla que Eloísa usa en las demás secciones. La vista les da solo lo común (regla 10 de [`estilo-ficha.md`](estilo-ficha.md)), por el id de su sección y cualquier `table` dentro. **Falta exportar su estructura** para confirmar esa forma. Lo mismo vale para una tarjeta de Reposo o Régimen que espera confirmación: Eloísa la tiñe y le añade sus herramientas (editar, eliminar) al pie.
+
 ### Fármacos
 
 - Cabecera con título «Fármacos» y subtítulo vacío: la tarjeta no lleva firma. Acciones en un `div.MuiStack-root`: `button.MuiButton-contained.MuiButton-containedSecondary` «validar tratamiento» (el texto está en minúsculas y se muestra en mayúsculas; 195 × 38 px), interruptor «Mostrar Suspendidos», botón de icono `LocalPrintshopRoundedIcon` con nombre en su `svg`.

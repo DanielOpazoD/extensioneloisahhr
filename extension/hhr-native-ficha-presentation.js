@@ -335,13 +335,20 @@
         if (!items.length || !parts.length) return null;
         const linksEnd = items.at(-1).getBoundingClientRect().right;
         const width = parts.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) + 8 * (parts.length - 1);
+        // The name of the field is read before it while the line has room. Short of it, the row docks
+        // without the name rather than give up the line: the field keeps it for a screen reader.
+        const name = dailyRow.querySelector('form .MuiInputLabel-root');
+        const named = name && dailyRow.getAttribute('data-hhr-ficha-dock') !== 'short';
+        const nameWidth = name ? (named ? name.getBoundingClientRect().width : name.scrollWidth) + 6 : 0;
+        const whole = named || !name ? width : width + nameWidth;
         const rail = row.getBoundingClientRect();
         // The floating Centro HHR bar hangs over the end of this line. Stop short of it at every
         // scroll position: the choice uses horizontal measures only, so scrolling never moves the round.
         const bar = document.getElementById('hhr-clinical-operations-bar');
         const cover = bar?.getClientRects().length ? bar.getBoundingClientRect() : null;
         const limit = cover && cover.left < rail.right && cover.right > rail.left ? Math.min(rail.right, cover.left - 10) : rail.right;
-        return items[0].getBoundingClientRect().left >= rail.left - 1 && linksEnd + 28 + width <= limit ? {rail, width, limit} : null;
+        const room = needed => items[0].getBoundingClientRect().left >= rail.left - 1 && linksEnd + 28 + needed <= limit;
+        return room(whole) ? {rail, width:whole, limit, short:false} : name && room(whole - nameWidth) ? {rail, width:whole - nameWidth, limit, short:true} : null;
       };
       const room = fits();
       if (!room) {
@@ -355,9 +362,13 @@
       });
       const reserved = Math.ceil(room.rail.right - room.limit + room.width + 12) + 'px';
       if (row.style.getPropertyValue('--hhr-dock-width') !== reserved) row.style.setProperty('--hhr-dock-width', reserved);
-      if (docked) return;
+      const mode = room.short ? 'short' : '';
+      if (docked) {
+        if (dailyRow.getAttribute('data-hhr-ficha-dock') !== mode) dailyRow.setAttribute('data-hhr-ficha-dock', mode);
+        return;
+      }
       docked = true;
-      dailyRow.setAttribute('data-hhr-ficha-dock', '');
+      dailyRow.setAttribute('data-hhr-ficha-dock', mode);
       row.setAttribute('data-hhr-ficha-docked', '');
       // The round no longer has a leading line of its own.
       round.repack();
