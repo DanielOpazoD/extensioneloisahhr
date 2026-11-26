@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.204
+
+- La vista ya no pierde su forma al abrir el menú lateral de Eloísa ni ninguna de sus ventanas. Mientras el menú estaba abierto, el Resumen detrás volvía al orden de Eloísa: desaparecían la ronda en columnas, la fila diaria acoplada, los editores plegados y la tarjeta de fecha de alta reaparecía. Eloísa marca toda la página como oculta para los lectores de pantalla mientras tiene algo abierto encima, y la extensión lo tomaba por contenido oculto del resumen. Ahora solo cuenta lo que está oculto dentro del resumen. Lo mismo valía para el Plan de tratamiento, el detalle de las indicaciones y la franja de signos.
+- En la fila diaria acoplada, el campo de la fecha mide lo que una fecha. En la página se encogía hasta su calendario y la fecha no se leía.
+
 ## 0.48.203
 
 - En el Resumen de la vista Compacta, «Ver evoluciones» abre las evoluciones del episodio de todas las profesiones sin salir del Resumen: médicas, de enfermería, de kinesiología y las demás, de la más reciente a la más antigua. Cada una dice su profesión, su autor, su día y su hora, y si fue enmendada, tachada o archivada. Hasta ahora el botón llevaba al Historial.

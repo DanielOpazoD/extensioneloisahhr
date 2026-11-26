@@ -323,7 +323,7 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiDivider-vertical{align-self:stretch;width:0;height:auto;margin:0;border:0;border-left:1px solid rgba(0,0,0,.12)}
   .MuiChip-root{display:inline-flex;align-items:center;height:32px;border-radius:16px;background:rgba(0,0,0,.08);font-size:13px}.MuiChip-sizeSmall{height:24px}.MuiChip-label{padding:0 12px}.MuiChip-sizeSmall .MuiChip-label{padding:0 8px}
   .daily{display:flex;align-items:center;justify-content:space-between;gap:8px}.daily>.MuiStack-root,.daily form{flex-direction:row;align-items:center;gap:8px}.daily .MuiInputLabel-root{background:#eff1f0}
-  .daily .MuiOutlinedInput-input{width:130px;padding-right:0}.print{display:flex;justify-content:flex-end}
+  .daily .MuiOutlinedInput-input{padding-right:0}.print{display:flex;justify-content:flex-end}
   #estimatedDischarge section.MuiStack-root,#estimatedDischarge form{flex-direction:row;align-items:center;gap:16px}
   #evolution .MuiBox-root>.MuiTypography-caption{white-space:pre-line;font-size:14px}#evolution .MuiCardContent-root>.MuiStack-root>.MuiStack-root+.MuiStack-root>.MuiStack-root{flex-direction:row;justify-content:flex-end}
   #shiftChangeObservation form,#alertEntries form>.MuiStack-root{flex-direction:row;align-items:center;gap:8px}#shiftChangeObservation .MuiTextField-root,#alertEntries form .MuiBox-root{flex:1}#alertEntries .MuiTextField-root{width:100%}

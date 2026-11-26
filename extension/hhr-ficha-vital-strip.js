@@ -61,7 +61,7 @@
       if (row.cells.length !== keys.length) return [];
       const timestamp = row.cells[time];
       const parts = date < 0 ? [timestamp] : [row.cells[date],timestamp];
-      if ([...row.cells].some(cell => cell.closest('[hidden],[aria-hidden=true]') ||
+      if ([...row.cells].some(cell => cell.closest('[hidden],main [aria-hidden=true]') ||
           !cell.checkVisibility?.({checkVisibilityCSS:true,checkOpacity:true}))) continue;
       if (parts.some(cell => cell.childElementCount)) return [];
       const value = dateKey(parts.map(cell => clean(cell.textContent)).join(' '));

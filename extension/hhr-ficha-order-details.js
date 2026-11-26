@@ -4,7 +4,8 @@
   const normalize = value => value.replace(/\s+/g, ' ').trim();
   const trimDots = value => value.replace(/(?:…|\.{3})$/, '').trimEnd();
   const controls = 'button,[role=button],a,input,select,textarea,[contenteditable],summary';
-  const unavailable = 'dialog,[role=dialog],[hidden],[inert],[aria-hidden=true],[aria-busy=true],.MuiCollapse-hidden';
+  // Hidden or inert inside the summary: a menu of Eloísa that hides the whole page while open does not count.
+  const unavailable = 'dialog,[role=dialog],[hidden],main [inert],main [aria-hidden=true],[aria-busy=true],.MuiCollapse-hidden';
   // Eloísa heads the column of each free indication «Indication», in English.
   const textColumns = /^(?:posología|indicaci[oó]n(?: libre| específica)?|indication|indicaciones(?: libres| específicas)?|observaci[oó]n|observaciones)$/i;
   const more = /^(?:ver|leer) m[aá]s$/i;
