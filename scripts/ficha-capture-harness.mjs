@@ -25,26 +25,33 @@ export async function fichaAssets(revision) {
  * starts its three readers. The page then answers two events, as the content script would
  * after a host update or a change of view: `fixture-refresh` and `fixture-theme` (detail: view id).
  * `sans` replaces the family of the views, to measure them with the text of another platform.
+ * `notes` gives the reader of evolutions what the worker would answer, by window of days.
  */
-export async function mountFicha(page, assets, {encounter = '1', theme = 'compact', sans = ''} = {}) {
+export async function mountFicha(page, assets, {encounter = '1', theme = 'compact', sans = '', notes = null} = {}) {
   for (const name of assets.styles) await page.addStyleTag({content:await assets.source(name)});
   if (sans) await page.addStyleTag({content:`html[data-hhr-ficha-theme]{--hhr-ficha-sans:${sans}}`});
   for (const name of assets.scripts) await page.addScriptTag({content:await assets.source(name)});
-  await page.evaluate(({encounter, theme}) => {
+  await page.evaluate(({encounter, theme, notes}) => {
     const summary = window.HhrNativeFichaPresentation.create();
     const dates = window.HhrHistoryDateNavigation.create();
-    const authors = window.HhrFichaEvolutionAuthors?.create();
+    // `notes` stands for the worker: what it would answer for each window of days, or an error.
+    window.fichaNoteRequests = [];
+    const authors = window.HhrFichaEvolutionAuthors?.create(notes ? {readNotes:async (encId, days = 14) => {
+      window.fichaNoteRequests.push([encId, days]);
+      const answer = (window.fichaNotes || notes)[days];
+      return typeof answer === 'string' ? {error:answer} : {ok:true, encId, days, older:{14:60, 60:365}[days] || null, notes:answer || []};
+    }} : undefined);
     let view = theme;
     const refresh = () => {
       summary.refresh(encounter, view);
       dates.refresh(encounter);
       authors?.refresh(encounter);
     };
-    window.fichaFixture = {refresh};
+    window.fichaFixture = {refresh, authors};
     document.addEventListener('fixture-refresh', refresh);
     document.addEventListener('fixture-theme', event => { view = event.detail; refresh(); });
     refresh();
-  }, {encounter, theme});
+  }, {encounter, theme, notes});
   await settle(page);
 }
 

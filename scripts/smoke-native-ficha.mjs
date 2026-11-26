@@ -165,6 +165,8 @@ export const verifyNativeFicha = async (page, worker) => {
     await screenshot(page,'ficha-evolucion-'+width);
     if (width === 1366) {
       await page.locator('#evolution').getByRole('button',{name:'Ver evoluciones'}).click();
+      // On the Resumen the button opens the reader of evolutions. Historial stays one step away.
+      await page.getByRole('dialog',{name:'Evoluciones del episodio'}).getByRole('button',{name:'Ver en Historial',exact:true}).click();
       const authors = page.getByRole('group',{name:'Evoluciones por profesional'});
       const visibleCards = page.locator('#native-timeline .MuiCard-root:visible');
       await authors.getByRole('button',{name:'Todos'}).waitFor();

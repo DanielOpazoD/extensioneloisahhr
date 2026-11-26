@@ -21,7 +21,7 @@ importScripts(
   'health-report-cache-runtime.js', 'health-request-runtime.js', 'health-push-ordering-runtime.js', 'health-heartbeat-runtime.js', 'health-tab-events-runtime.js', 'health-relay-self-repair.js',
   'relay-reinjection-manifest.js', 'relay-reinjection-health.js', 'relay-reinjection-operations.js', 'relay-reinjection-session.js', 'relay-reinjection-tab-events.js', 'relay-reinjection-runtime.js',
   'clinical-panel-fetch.js',
-  'clinical-panel-history.js', 'clinical-panel-runtime.js',
+  'clinical-panel-history.js', 'clinical-panel-runtime.js', 'ficha-evolution-notes.js',
   'clinical-antecedents-attachment.js', 'clinical-antecedents-fields.js', 'clinical-antecedents-cache.js', 'clinical-antecedents-detail.js', 'clinical-antecedents-window.js',
   'clinical-antecedents-transport.js', 'clinical-antecedents-sources.js', 'clinical-antecedents-runtime.js', 'urgency-dau-page.js', 'urgency-dau-source.js', 'urgency-session-page.js', 'urgency-dau-runtime.js', 'urgency-api.js', 'urgency-auth-model.js', 'urgency-auth-state.js', 'urgency-dau-api.js', 'urgency-auth-runtime.js',
   'clinical-write-recovery-policy.js', 'clinical-write-runtime.js',
@@ -1175,7 +1175,11 @@ const nursingHandoffPilot = self.HhrNursingHandoffPilot.create({
 });
 const clinicalChecklists = self.HhrClinicalChecklistBroker.create({ chrome, resolveSession: resolveFichaClinicalSession,
   getContext: getClinicalReportContext, encounterFromUrl: self.HhrPrescriptionPrint.resolveEncounterId });
+// The reader on the Evolución card: the evolutions of the episode its own tab has open, read only.
+const evolutionNotes = self.HhrFichaEvolutionNotes.create({ resolveSession: resolveFichaClinicalSession, readJson: fichaMedicoClinicalClient.readJson, encounterOf: self.HhrPrescriptionPrint.resolveEncounterId,
+  authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); } });
 const runtimeMessageRoutes = Object.freeze({
+  [RUNTIME_MESSAGES.EVOLUTION_NOTES_REQUEST]: runtimeRoute(evolutionNotes.handle, 'No se pudieron leer las evoluciones.'),
   [RUNTIME_MESSAGES.CLINICAL_CHECKLIST]: runtimeRoute(clinicalChecklists.handle, 'No se pudo conectar la pauta con HHR.'),
   [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),
   [RUNTIME_MESSAGES.DAILY_BIRTHS]: runtimeRoute(() => self.HhrDailyBirths.read(), 'Nacimientos no disponibles.'),

@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.203
+
+- En el Resumen de la vista Compacta, «Ver evoluciones» abre las evoluciones del episodio de todas las profesiones sin salir del Resumen: médicas, de enfermería, de kinesiología y las demás, de la más reciente a la más antigua. Cada una dice su profesión, su autor, su día y su hora, y si fue enmendada, tachada o archivada. Hasta ahora el botón llevaba al Historial.
+- Una línea de profesiones, con el número de notas de cada una, deja ver solo las de una profesión. Se leen los últimos 14 días; «Ver más antiguas» amplía a 60 días y después a un año.
+- Las horas se muestran en hora de Rapa Nui. El historial de Eloísa las guarda en hora de Chile continental y la extensión las convierte, como exige el contrato de HHR.
+- La lectura es nueva y es solo lectura: la extensión pide el historial a Eloísa con la sesión del profesional, para el episodio que su propia pestaña tiene abierto, y no guarda ni envía nada. Si la lectura falla, el lector lo dice y ofrece reintentar: nunca muestra «sin evoluciones» por un fallo.
+- «Ver en Historial», dentro del lector, lleva a las notas del Historial con su filtro por profesional, como hacía el botón. En la pestaña Historial el botón sigue filtrando lo que hay en pantalla.
+
 ## 0.48.202
 
 - La lista de trabajo médico se lee como la de Gestión de cuidados. La columna Paciente toma el ancho de un nombre completo (de 264 a 328 px, según la ventana) y el nombre va en una línea, con su RUN debajo; si no cabe, se parte entre palabras. Hasta ahora esa columna medía unos 110 px y un nombre se partía dentro de sus palabras, en hasta ocho líneas.

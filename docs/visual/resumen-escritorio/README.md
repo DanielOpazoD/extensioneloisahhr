@@ -1,5 +1,25 @@
 # Resumen compacto en escritorio
 
+## Las evoluciones de todas las profesiones, sin salir del Resumen, en 0.48.203
+
+El responsable pidió ver en la sección Evolución las evoluciones de otros profesionales (enfermería para quien es médico, médicas para quien es de enfermería, y las demás) sin ir a Historial, con libertad para una interfaz simple.
+
+«Ver evoluciones», en la cabecera de la tarjeta, abre un lector sobre el Resumen.
+
+| Pantalla, 1440 × 900 | 0.48.203 |
+| --- | --- |
+| Todas las profesiones | [Lector](0.48.203/1440-evoluciones-todas.png) |
+| Solo enfermería | [Lector](0.48.203/1440-evoluciones-enfermeria.png) |
+
+| Medida | |
+| --- | ---: |
+| Pasos para leer una evolución de otra profesión | ir a Historial, esperar su carga y filtrar → un clic |
+| Tamaño del lector | 960 × 828 px, el de la ventana de la nota completa |
+| Letra de cada nota | 15 px, con sus saltos de línea |
+| Ventana leída | 14 días; a pedido, 60 días y un año |
+
+Las notas, los autores y las fechas de las capturas son inventados. La hora de cada nota es la de Rapa Nui: el historial de Eloísa la guarda en hora continental (15-04-2026 11:12 en el historial se lee 09:12). **Falta confirmar en la página** que esa hora coincide con la que Eloísa muestra en la tarjeta para la misma nota.
+
 ## Signos vitales en media línea, la fila diaria fuera de la ficha y tablas a una línea, en 0.48.201
 
 El responsable revisó la 0.48.199 en su pantalla y pidió tres cosas. Estrechar el cuadro de Signos vitales y usar el espacio que sobra a su derecha para Reposo, Régimen y las secciones sin datos. Quitar la franja de la fecha del resumen diario e «Imprimir», conservando la impresión. Y que Procedimientos se lea tan compacto como el resto.
