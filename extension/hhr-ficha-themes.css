@@ -323,7 +323,8 @@
       > .MuiTypography-root { margin:0; color:inherit; font:inherit; }
       > .MuiTypography-root:first-child { font-size:0; &::after { content:'Médico validador:' / ''; font-size:var(--hhr-ficha-text-meta); } }
       > .MuiTypography-root + .MuiTypography-root { margin-inline-start:4px; color:var(--hhr-ficha-ink-soft); }
-      &:has(> .MuiTypography-root:last-child:empty) > .MuiTypography-root:first-child::after { content:'Tratamiento sin validar' / ''; }
+      /* A screen reader hears Eloísa's label and then this state, as it is seen. */
+      &:has(> .MuiTypography-root:last-child:empty) > .MuiTypography-root:first-child::after { content:'Tratamiento sin validar' / 'Tratamiento sin validar'; }
     }
     /* The state of a diagnosis is a native select. It keeps its arrow and its menu. */
     #diagnosisEntrySection td .MuiInputBase-root:has([role="combobox"]) {

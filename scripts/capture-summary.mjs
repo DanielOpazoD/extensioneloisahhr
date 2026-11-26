@@ -186,7 +186,8 @@ async function verifySummary(page, width, native, off, sans) {
   const {validator, alertForm, free, balance, lines} = shown;
   assert.ok(validator?.mark === 'order-validator' && validator.edge === look.tables[0][0] && validator.afterTitle >= 0 && validator.afterTitle <= 8 &&
     validator.beforeTable >= 0 && validator.beforeTable <= 6, 'Quién valida el tratamiento se lee bajo el título de Fármacos, en su borde y junto a su tabla: ' + JSON.stringify(validator));
-  assert.deepEqual([validator.says, validator.size, validator.colour], ['"Tratamiento sin validar" / ""', '12px', 'rgb(102, 102, 102)'], 'Sin validar, la línea lo dice en el gris de lo que explica');
+  assert.deepEqual([validator.says, validator.size, validator.colour], ['"Tratamiento sin validar" / "Tratamiento sin validar"', '12px', 'rgb(102, 102, 102)'],
+    'Sin validar, la línea lo dice en el gris de lo que explica, y también al lector de pantalla');
   // Eloísa gives the empty alert field the focus when the summary opens. The form still folds, and the next key does not go into an alert.
   assert.deepEqual(alertForm, {folded:true, shown:false, focused:false, opener:true}, 'El formulario de alertas se pliega aunque Eloísa le dé el foco: ' + JSON.stringify(alertForm));
   assert.ok(free.disclosures === 0 && free.last.startsWith(summaryFree.at(-1)[0]) && free.widths[0] === Math.max(...free.widths),

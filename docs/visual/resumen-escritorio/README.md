@@ -1,5 +1,65 @@
 # Resumen compacto en escritorio
 
+## Las formas que Eloísa dibuja hoy, en 0.48.197
+
+El responsable vio en su pantalla un Resumen todavía flojo. Se midió su ficha el 26-11-2026, en un paciente de estadía corta, y aparecieron formas que la vista no reconocía (detalle en [`estructura-eloisa.md`](../../estructura-eloisa.md)):
+- Fármacos dentro de una segunda sección, con una línea «Medico Validador:».
+- El campo de nueva alerta enfocado por Eloísa al cargar.
+- La frase de Cirugía partida en tres nodos de texto.
+- Diagnóstico y Órdenes de atención sin tabla.
+- Balance Hídrico con su filtro.
+- Eventos Adversos y Gíneco sin permiso.
+
+La ficha ficticia dibuja ahora esas formas. Con ellas, la 0.48.196 reproduce lo que se veía en la pantalla real. Las páginas completas se capturan con una ventana tan alta como la página, para que la cabecera fija no aparezca a media página.
+
+| Pantalla | 0.48.196 | 0.48.197 | Página completa |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.197/antes/1280-resumen.png) | [Después](0.48.197/despues/1280-resumen.png) | [Antes](0.48.197/antes/1280-resumen-completo.png) · [Después](0.48.197/despues/1280-resumen-completo.png) |
+| 1440 × 900 | [Antes](0.48.197/antes/1440-resumen.png) | [Después](0.48.197/despues/1440-resumen.png) | [Antes](0.48.197/antes/1440-resumen-completo.png) · [Después](0.48.197/despues/1440-resumen-completo.png) |
+| 1990 × 1086, la ventana del responsable | [Antes](0.48.197/antes/1990-resumen.png) | [Después](0.48.197/despues/1990-resumen.png) | [Antes](0.48.197/antes/1990-resumen-completo.png) · [Después](0.48.197/despues/1990-resumen-completo.png) |
+| 1440, sin diagnósticos ni órdenes de atención | | | [Antes](0.48.197/antes/1440-sin-registros-completo.png) · [Después](0.48.197/despues/1440-sin-registros-completo.png) |
+
+| Medida a 1440 × 900, 0.48.196 → 0.48.197 | |
+| --- | ---: |
+| Borde izquierdo de Fármacos (el de las demás tarjetas: 42) | 52 → 42 px |
+| Huecos sobre Fármacos | 57 y 13 → 8 y 8 px |
+| Inicio de Fármacos | 703 → 621 px |
+| Tamaños de título bajo la ronda | 15 y 20 → 15 px |
+| Formulario de alertas | abierto, con el foco → plegado, sin foco |
+| Alertas | 298 → 237 px |
+| Solicitudes de intervención quirúrgica | tarjeta de 76 px → línea de 27 px en la ronda, junto a Exámenes |
+| Examen Gíneco Obstétrico, sin permiso | 108 → 29 px |
+| Balance Hídrico | 166 → 115 px |
+| Diagnóstico y Órdenes de atención vacíos | 54 y 48 → 29 y 29 px |
+| Alto de la página | 2132 → 1795 px (sin diagnósticos ni órdenes: 2033 → 1651) |
+
+- **Fármacos en una segunda sección.** La vista no reconocía `section#dilutionEntrySection`. La tarjeta quedaba 10 px más adentro, con el título a 20 px y «VALIDAR TRATAMIENTO» en mayúsculas. «Imprimir indicaciones» volvía a su línea propia. La vista reconoce ahora ambas formas.
+- **El validador.** «Medico Validador:» va bajo el título, en gris y pegado a la tabla. Sin valor dice «Tratamiento sin validar».
+- **El foco de Eloísa.** Al cargar, Eloísa enfoca el campo vacío de nueva alerta, y ese foco mantenía abierto el formulario plegable. Un foco que no pasó por el botón o por el campo visible ya no lo abre, y la vista lo suelta.
+- **Lo vacío es una línea.** Diagnóstico y Órdenes de atención sin registros, la frase de Cirugía en tres nodos y el permiso denegado de cualquier sección se leen como RAM. Diagnóstico vacío no se pliega con las demás secciones vacías.
+- **Balance Hídrico** filtra a la altura de una línea. **Indicaciones libres** se leen enteras: Eloísa titula su columna «Indication» y la vista no abría su «Leer más». **Un título** para toda tarjeta bajo la ronda.
+
+`capture-summary.mjs` comprueba cada forma:
+- en la página: bordes, validador, formulario de alertas, indicación libre, Balance y secciones sin permiso;
+- en tres páginas propias a 1440 px: sin diagnósticos ni órdenes, con Fármacos en su forma anterior y con un validador.
+
+Veintisiete mutaciones de control, una por regla. Fallan las veinticinco que tienen efecto en la página. Las otras dos no lo tenían, y se retiraron:
+- el `:not()` de una regla de Órdenes ya cubierta por otra;
+- un fondo opaco para la fila diaria acoplada, que la ficha ficticia nunca acopla.
+
+Una revisión independiente no encontró bloqueantes. Encontró un fallo y tres detalles:
+- **El fallo.** El primer plegado soltaba también el foco de quien ya escribía antes de que el formulario se plegara, al volver de una ventana estrecha, o al borrar un borrador escrito antes. Ahora solo se suelta el foco con que el campo aparece por primera vez en el resumen de un paciente.
+- **Dos casos sin prueba:** una tabla que contiene una sección vacía, y la línea del validador con texto suelto.
+- **El lector de pantalla** no oía «Tratamiento sin validar».
+
+Está corregido. Cinco mutaciones más comprueban cada arreglo.
+
+Límites:
+
+- **La fila diaria que tapaba el contenido.** En la página real no tapaba nada a ninguna altura de desplazamiento. Una captura de página completa reproduce el efecto, con los elementos fijos a media página: era casi seguro una captura de ese tipo.
+- **Formas aún no leídas:** Balance Hídrico con registros, Gíneco y Eventos Adversos con permiso, y Cirugía con solicitudes. Toman el título común y conservan el resto de su forma.
+- Con la línea del validador, Fármacos baja 20 px en su tarjeta: a 1440 se ven completas 6 indicaciones en la primera pantalla.
+
 ## Márgenes, tipografía y ritmo en 0.48.196
 
 Un repaso con reglas mínimas de buena composición, medidas en la página. Antes se midió Eloísa el 26-11-2026: deja 32 px a cada lado, su fondo es `#f1f1f1`, sus tarjetas son blancas sin sombra con esquinas de 12 px y toda la página usa Inter. La ficha ficticia sigue desde esta versión esas medidas y las longitudes de los catorce nombres de fármacos leídos (24 a 113 caracteres).

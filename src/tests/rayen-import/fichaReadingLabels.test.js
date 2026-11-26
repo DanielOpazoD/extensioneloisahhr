@@ -313,6 +313,32 @@ describe('acción breve de los formularios de escritorio', () => {
     expect(row.hasAttribute(folded)).toBe(false);
   });
 
+  it('respeta el foco de quien ya escribía al volver de una ventana estrecha y lo suelta al cambiar de paciente', () => {
+    labels.refresh(main, 'a');
+    section.querySelector(selector).click();
+    vi.stubGlobal('matchMedia', () => ({matches:false}));
+    labels.refresh(main, 'a');
+    expect(document.activeElement).toBe(field);
+    // The editor comes back in the same summary with the person's focus inside: it stays open.
+    vi.stubGlobal('matchMedia', () => ({matches:true}));
+    labels.refresh(main, 'a');
+    expect([row.hasAttribute(folded), document.activeElement]).toEqual([false, field]);
+    // The summary of another patient opens with the field focused, as Eloísa does: that focus is let go.
+    labels.refresh(main, 'b');
+    expect(row.hasAttribute(folded)).toBe(true);
+    expect(document.activeElement).not.toBe(field);
+  });
+
+  it('no suelta el foco de quien borra un borrador que ya escribía antes de plegarse el campo', () => {
+    field.value = 'Borrador';
+    field.focus();
+    labels.refresh(main, 'a');
+    expect([row.hasAttribute(folded), document.activeElement]).toEqual([false, field]);
+    field.value = '';
+    field.dispatchEvent(new Event('input', {bubbles:true}));
+    expect([row.hasAttribute(folded), document.activeElement]).toEqual([false, field]);
+  });
+
   it('conserva borrador y foco al cambiar tamaño, modo o paciente y limpia los controles anteriores', () => {
     labels.refresh(main, 'a');
     const opener = section.querySelector(selector);

@@ -69,17 +69,19 @@
     return true;
   }
 
-  function createEntry(row, field, action, entry) {
+  function createEntry(row, field, action, entry, arriving) {
     const opener = document.createElement('button');
     opener.type = 'button';
     opener.setAttribute('data-hhr-entry-open', '');
     opener.textContent = entry.open;
     const generatedId = 'hhr-' + entry.id + '-editor';
     let createdId = false;
-    // Focus opens the editor only when it came through the editor: the opener, or a field the
-    // person could already see. Eloísa focuses the empty alert field by itself when the summary
-    // opens (measured 26-11-2026); that focus would hold the editor open and take the next keys.
-    let wanted = false;
+    // Focus opens the editor only when it came through the editor: the opener, a field the person
+    // could already see, or typing. Eloísa focuses the empty alert field by itself when the summary
+    // of a patient opens (measured 26-11-2026); that focus would hold the editor open and take the
+    // next keys. A focus that was already there when the editor came back, after a narrow window
+    // or a change of view, is the person's.
+    let wanted = !arriving && row.contains(document.activeElement);
     const update = () => {
       const inside = row.contains(document.activeElement);
       if (!inside) wanted = false;
@@ -96,6 +98,11 @@
       if (!row.hasAttribute('data-hhr-entry-folded')) wanted = true;
       update();
     };
+    // Eloísa sets a value without an input event: an input event is someone typing.
+    const typed = () => {
+      if (row.contains(document.activeElement)) wanted = true;
+      update();
+    };
     function open(event) {
       event.preventDefault();
       event.stopPropagation();
@@ -107,7 +114,7 @@
     opener.addEventListener('click', open);
     row.addEventListener('focusin', enter);
     row.addEventListener('focusout', afterBlur);
-    row.addEventListener('input', update);
+    row.addEventListener('input', typed);
     function refresh() {
       if (!row.id && !document.getElementById(generatedId)) {
         row.id = generatedId;
@@ -121,7 +128,7 @@
       opener.removeEventListener('click', open);
       row.removeEventListener('focusin', enter);
       row.removeEventListener('focusout', afterBlur);
-      row.removeEventListener('input', update);
+      row.removeEventListener('input', typed);
       row.removeAttribute('data-hhr-entry-folded');
       if (createdId && row.id === generatedId) row.removeAttribute('id');
       if (restoreFocus && opener === document.activeElement && field.isConnected) field.focus();
@@ -172,7 +179,8 @@
   }
 
   function create() {
-    let previous = new Map(), editors = new Map(), episode, watchedMain;
+    // The forms already seen in this patient's summary: only their first appearance can carry Eloísa's own focus.
+    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set();
     const observer = new MutationObserver(() => refresh(watchedMain, episode));
     const refresh = (main, encounter) => {
       observer.disconnect();
@@ -256,8 +264,12 @@
         editor.clear(!main || episode === encounter);
         editors.delete(row);
       }
+      if (episode !== encounter) arrived = new Set();
       for (const [row, {field, action, entry}] of nextEditors) {
-        if (!editors.has(row)) editors.set(row, createEntry(row, field, action, entry));
+        if (!editors.has(row)) {
+          editors.set(row, createEntry(row, field, action, entry, !arrived.has(entry.id)));
+          arrived.add(entry.id);
+        }
         editors.get(row).refresh();
       }
       episode = encounter;

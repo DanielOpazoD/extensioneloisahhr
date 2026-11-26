@@ -189,7 +189,7 @@ it('marca quién validó el tratamiento de Fármacos solo con su forma exacta', 
   expect(validator().dataset.hhrReading).toBe('order-validator');
   // Another label, a control or a third piece is not that line.
   for (const change of [el => { el.firstElementChild.textContent = 'Observación:'; }, el => el.append(document.createElement('button')),
-    el => el.lastElementChild.append(document.createElement('b'))]) {
+    el => el.lastElementChild.append(document.createElement('b')), el => el.append('texto suelto')]) {
     validator().outerHTML = line('');
     change(validator());
     reader.refresh(main,true);
@@ -200,5 +200,16 @@ it('marca quién validó el tratamiento de Fármacos solo con su forma exacta', 
   // Outside the compact view the line is Eloísa's again.
   reader.refresh(main,false);
   expect(validator().hasAttribute('data-hhr-reading')).toBe(false);
+  reader.clear();
+});
+
+it('una tarjeta con su tabla conserva su tipo aunque contenga una sección vacía', () => {
+  // A nursing screen can draw a table and an empty section inside one Box, without a card of its own.
+  document.body.innerHTML = '<main><div class="MuiGrid-item" id="nurse"><p class="MuiTypography-root">Indicaciones libres</p>' +
+    '<table><thead><tr><th>Indicación</th><th>Acciones</th></tr></thead><tbody><tr><td>Curación de prueba</td><td><button>Ver</button></td></tr></tbody></table>' +
+    makeCard('ram','RAM','No presenta RAM registradas') + '</div></main>';
+  const main = document.querySelector('main'), reader = globalThis.HhrFichaReadingSurfaces.create();
+  reader.refresh(main,true);
+  expect([document.getElementById('nurse').dataset.hhrReading, document.getElementById('ram').dataset.hhrReading]).toEqual(['orders','status-card']);
   reader.clear();
 });
