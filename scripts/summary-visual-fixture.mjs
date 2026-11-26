@@ -5,7 +5,9 @@
 // (here its declared fallback, Arial scaled to Inter's width, so macOS and Linux draw the same widths),
 // 32 px of padding on main at each side and a fixed tab bar across the whole width with 24 px of padding.
 // MUI names the family on every Typography, as here: a text takes the family of the view only where a rule gives it.
-// Not modelled: Balance Hídrico, Eventos Adversos and Examen Gíneco Obstétrico, whose content was not read.
+// Also measured on 26-11-2026, in a patient without diagnoses: Fármacos inside a second section with the line of its
+// validator, Eloísa focusing the empty alert field when the summary opens, the sentence of Cirugía in three text
+// nodes, Balance Hídrico with its filter, and Eventos Adversos and Examen Gíneco Obstétrico without permission.
 const paths = {
   MoreVertRoundedIcon:'M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4m0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4',
   MoreVertIcon:'M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4m0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4',
@@ -97,9 +99,11 @@ const diagnosisRow = ([kind, text, status, date], index) => [
   caption(date), caption('') + caption(''), caption(''),
   `<div class="MuiStack-root"><div class="MuiStack-root">${iconButton('SpeakerNotesIcon', 'Ver notas', 'Small', ' disabled').replace('MuiButtonBase-root ', 'MuiButtonBase-root Mui-disabled ')}${iconButton('NoteAddIcon', 'Agregar notas')}</div></div>`,
 ];
+// The text of a free indication is cut like a posology: the last one reaches the page with «Leer más».
 export const summaryFree = [
   ['Control de signos vitales de prueba', 'Cada 6 hora(s) por 30 día(s)'], ['Curación simple de la simulación', 'Cada 24 hora(s) por 10 día(s)'],
   ['Aseo y confort del caso ficticio', 'Cada 12 hora(s) por 30 día(s)'],
+  ['Movilización asistida de prueba al sillón dos veces al día, con registro de la tolerancia', 'Cada 12 hora(s) por 7 día(s)'],
 ];
 
 const note = `Paciente de simulación en control de ronda. Refiere descanso adecuado y tolerancia a la alimentación.
@@ -159,28 +163,56 @@ const diet = section('nutritionOrderEntrySection', 'nutritionOrder', 'Régimen',
   <div class="MuiStack-root"><p class="MuiTypography-root MuiTypography-body1">Observación:</p><div class="MuiBox-root">${caption('Preferir porciones pequeñas.', true)}</div></div></div>`,
   signature('Médico', requester, '10:45:20'));
 
-const medication = section('medicationEntrySection', 'medicationEntry', 'Fármacos',
-  table(['Tiempo', 'Indication', 'Posología', 'Indicaciones específicas', 'Solicitante', 'Acciones'], summaryMedications.map(medicationRow)), '',
-  `<button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedSecondary">validar tratamiento</button>${toggle('Mostrar Suspendidos')}` +
-  iconButton('LocalPrintshopRoundedIcon', 'Imprimir fármacos', 'Medium'));
+// The card of Fármacos sits in a second section, and its content opens with who validated the treatment:
+// two captions, the second empty while nobody has. The older shape, without both, is `nested:false`.
+const medication = ({nested = true, validator = ''} = {}) => {
+  const body = (nested ? `<div class="MuiBox-root">${caption('Medico Validador:')}${caption(validator)}</div>` : '') +
+    table(['Tiempo', 'Indication', 'Posología', 'Indicaciones específicas', 'Solicitante', 'Acciones'], summaryMedications.map(medicationRow));
+  const content = card('medicationEntry', 'Fármacos', body, '',
+    `<button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedSecondary">validar tratamiento</button>${toggle('Mostrar Suspendidos')}` +
+    iconButton('LocalPrintshopRoundedIcon', 'Imprimir fármacos', 'Medium'));
+  return `<section class="MuiBox-root" id="medicationEntrySection">${nested ? `<section class="MuiBox-root" id="dilutionEntrySection">${content}</section>` : content}</section>`;
+};
 const noPharma = section('noPharmaEntrySection', 'noPharmaEntry', 'Producto no Farmacológico', message('No presenta productos no farmacológicos registrados'), '', toggle('Mostrar Suspendidos'));
 const free = section('freeIndicationEntrySection', 'freeIndicationEntry', 'Indicaciones Libres', table(['Indication', 'Programación', 'Solicitante', 'Acciones'],
-  summaryFree.map(([name, schedule]) => [`<div class="MuiStack-root"><div class="MuiBox-root">${caption(name, true)}</div></div>`, caption(schedule), caption(requester), rowActions()])),
+  summaryFree.map(([name, schedule]) => [`<div class="MuiStack-root">${readable(name)}</div>`, caption(schedule), caption(requester), rowActions()])),
   '', toggle('Mostrar Suspendidos'));
 const procedures = section('procedureEntrySection', 'procedureEntry', 'Procedimientos', message('No presenta procedimientos registrados'));
-const diagnosis = list => section('diagnosisEntrySection', 'diagnosisEntry', 'Diagnóstico',
-  table(['', 'Diagnóstico', 'Estado', 'Fecha', 'GES', 'Eno', 'Acciones'], list.map(diagnosisRow)), signature('Médico', requester, '09:05:10'));
+// Without records Eloísa writes a sentence in place of the table, «diagnosticos» without its accent.
+const diagnosis = list => section('diagnosisEntrySection', 'diagnosisEntry', 'Diagnóstico', list.length ?
+  table(['', 'Diagnóstico', 'Estado', 'Fecha', 'GES', 'Eno', 'Acciones'], list.map(diagnosisRow)) : message('No se presentan diagnosticos registrados para este paciente'),
+  list.length ? signature('Médico', requester, '09:05:10') : '');
 const referral = section('referralRequestEntrySection', 'referralRequestEntry', 'Solicitud interconsulta', message('No presenta interconsultas solicitadas'));
-const orders = section('procedureOrderEntrySection', 'procedureOrderEntry', 'Órdenes de atención',
-  table(['Profesional', 'Estado', 'Fecha solicitud', 'Asignado', 'Motivo', 'Indicaciones', 'Acciones'], [
-    ['Kinesiólogo(a)', 'Solicitada', '15-04-2026', 'Pendiente asignar', 'Tratamiento', 'Evaluar la marcha con apoyo antes del próximo turno.'],
-    ['Terapeuta ocupacional', 'Realizada', '14-04-2026', 'Pendiente asignar', 'Tratamiento', 'Revisar el uso de cubiertos adaptados durante el almuerzo.'],
-  ].map(cells => [...cells.map(text => caption(text)), iconButton('LocalPrintshopRoundedIcon', 'Imprimir orden')])), signature('Médico', requester));
+export const summaryCareOrders = [
+  ['Kinesiólogo(a)', 'Solicitada', '15-04-2026', 'Pendiente asignar', 'Tratamiento', 'Evaluar la marcha con apoyo antes del próximo turno.'],
+  ['Terapeuta ocupacional', 'Realizada', '14-04-2026', 'Pendiente asignar', 'Tratamiento', 'Revisar el uso de cubiertos adaptados durante el almuerzo.'],
+];
+const orders = list => section('procedureOrderEntrySection', 'procedureOrderEntry', 'Órdenes de atención', list.length ?
+  table(['Profesional', 'Estado', 'Fecha solicitud', 'Asignado', 'Motivo', 'Indicaciones', 'Acciones'],
+    list.map(cells => [...cells.map(text => caption(text)), iconButton('LocalPrintshopRoundedIcon', 'Imprimir orden')])) :
+  message('No se presenta orden de atención solicitada para este paciente'), list.length ? signature('Médico', requester) : '');
 const tests = section('diagnosisTestEntrySection', 'diagnosisTestEntry', 'Solicitud de examen', message('No presenta solicitudes de exámenes registradas'));
 const reactions = section('ramEntrySection', 'ramEntry', 'RAM', message('No presenta RAM registradas'));
 const allergies = section('allergyEntrySection', 'allergyEntry', 'Alergias', message('No presenta alergias registradas'));
+// React writes this sentence in three text nodes, around the name of the section. The script below splits it.
 const surgery = section('operationTheaterRequestEntrySection', 'operationTheaterRequestEntry', 'Solicitudes de intervención quirúrgica',
-  message('No se presentan Solicitudes de intervención quirúrgica registradas para este paciente'));
+  `<p class="MuiTypography-root MuiTypography-body2" data-fixture-split>No se presentan |Solicitudes de intervención quirúrgica| registradas para este paciente</p>`);
+// Balance Hídrico: a switch and a disabled print icon in its heading; four small fields and «Filtrar» in a row; a sentence below.
+const select = (id, label, value, disabled = false) => `<div class="MuiBox-root"><div class="MuiFormControl-root MuiFormControl-fullWidth select">
+  <label class="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-shrink" id="${id}-label">${label}</label>
+  <div class="MuiInputBase-root MuiOutlinedInput-root${disabled ? ' Mui-disabled' : ''}"><div class="MuiSelect-select MuiSelect-outlined MuiInputBase-input MuiOutlinedInput-input${disabled ? ' Mui-disabled' : ''}" role="combobox" ${disabled ? 'aria-disabled="true"' : 'tabindex="0"'} aria-expanded="false" aria-haspopup="listbox" aria-labelledby="${id}-label" id="mui-component-select-${id}">${value}</div>` +
+  `<input aria-hidden="true" tabindex="-1" class="MuiSelect-nativeInput" value="1">${icon('ArrowDropDownIcon')}</div></div></div>`;
+const when = (id, value, day) => `<div class="MuiBox-root"><div class="MuiFormControl-root MuiTextField-root"><div class="MuiInputBase-root MuiOutlinedInput-root">` +
+  `<input class="MuiInputBase-input MuiOutlinedInput-input" id="${id}" type="text" placeholder="DD/MM/YYYY hh:mm" value="${value}">` +
+  `<div class="MuiInputAdornment-root">${iconButton('CalendarIcon', '', 'Medium', ` aria-label="Choose date, selected date is ${day}"`)}</div></div></div></div>`;
+const balance = section('inputOutputHydricBalanceEntrySection', 'inputOutputHydricBalanceEntry', 'Balance Hídrico',
+  `<div class="MuiStack-root balance">${select('type', 'Tipo de Registro', 'Todos')}${select('item', 'Item', '<em>Seleccione un tipo</em>', true)}` +
+  `${when('fixture-balance-from', '14/04/2026 08:00', '14 abr 2026')}${when('fixture-balance-to', '15/04/2026 08:00', '15 abr 2026')}` +
+  `<div class="MuiBox-root"><button type="submit" class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary">Filtrar</button></div></div>` +
+  message('No se encontraron registros de prueba para el período'), '',
+  toggle('Balance Hídrico Indicado') + iconButton('LocalPrintshopRoundedIcon', 'Imprimir ingresos y egresos', 'Medium', ' disabled').replace('MuiButtonBase-root ', 'MuiButtonBase-root Mui-disabled '));
+const adverse = section('adverseEventEntrySection', 'adverseEventEntry', 'Eventos Adversos', message('No tiene permiso para visualizar'));
+const gyneco = section('obstetricGynecologicalExaminationEntrySection', 'obstetricGynecologicalExaminationEntry', 'Examen Gíneco Obstétrico', message('No tiene permiso para visualizar'));
 
 const daily = `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 daily"><p class="MuiTypography-root MuiTypography-body2">Última actualización: 15-04-2026, 09:12 - ${requester}</p>
   <div class="MuiStack-root"><form class="MuiStack-root" onsubmit="return false">${textField('Resumen diario paciente', 'fixture-daily', ' placeholder="dd/mm/aaaa" value="15/04/2026"',
@@ -190,7 +222,7 @@ const daily = `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 daily"><
 // «Imprimir indicaciones» is an icon button alone on its line, at the end.
 const printOrders = `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 print">${iconButton('LocalPrintshopRoundedIcon', 'Imprimir indicaciones', 'Medium', ' id="fixture-print"')}</div>`;
 const grid = 'MuiGrid-root MuiGrid-container MuiGrid-spacing-xs-2';
-const frame = ({alertList = summaryAlerts, diagnoses = summaryDiagnoses} = {}) => `<div class="${grid} frame">${daily}
+const frame = ({alertList = summaryAlerts, diagnoses = summaryDiagnoses, careOrders = summaryCareOrders, ...shape} = {}) => `<div class="${grid} frame">${daily}
   ${item(`<div class="${grid}">${item(discharge)}${item(evolution)}</div>`, 'xs-6')}
   ${item(handoff, 'xs-12 md-6')}
   ${item(card('encounterFormEntry', 'Instrumentos de evaluación', message('No presentan instrumentos de evaluación registrados')))}
@@ -198,7 +230,8 @@ const frame = ({alertList = summaryAlerts, diagnoses = summaryDiagnoses} = {}) =
   ${item(vitals)}${printOrders}
   ${item(`<div class="MuiGrid-root MuiGrid-container">${item(rest)}${item(diet)}</div>`, 'xs-6')}
   ${item(alerts(alertList), 'xs-12 md-6')}
-  ${[medication, noPharma, free, procedures, diagnosis(diagnoses), referral, orders, tests, reactions, allergies, surgery].map(content => item(content)).join('')}</div>`;
+  ${[medication(shape), noPharma, free, procedures, diagnosis(diagnoses), referral, orders(careOrders), tests, reactions, allergies, surgery, balance, adverse, gyneco]
+    .map(content => item(content)).join('')}</div>`;
 
 // The section links in the order Eloísa gives them, which is not the order of the page.
 export const summaryLinks = ['Alertas', 'Diagnóstico', 'Solicitud de examen', 'Indicaciones (Indicación Libre)', 'Indicaciones (Medicamento)', 'Indicaciones (Régimen)',
@@ -234,7 +267,7 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiTypography-root{font-family:Inter,"Inter Fallback",system-ui,sans-serif}.MuiTypography-caption{font-size:12px;line-height:1.66}.MuiTypography-body2{margin:0;font-size:14px;line-height:1.43}.MuiTypography-body1{margin:0;font-size:16px;line-height:1.5}
   .MuiTypography-h6{font-size:20px;font-weight:500;line-height:1.6}.MuiTypography-h5{margin:0;font-size:24px;font-weight:400;line-height:1.334}
   .MuiStack-root{display:flex;flex-direction:column}.MuiCard-root{border-radius:12px;background:white;box-shadow:none;height:100%}section.MuiBox-root{height:100%}
-  .MuiCardHeader-root{display:flex;align-items:center;padding:16px}.MuiCardHeader-content{flex:1 1 auto;min-width:0}.MuiCardHeader-title,.MuiCardHeader-subheader{display:block}
+  .MuiCardHeader-root{display:flex;align-items:center;padding:16px 16px 0}.MuiCardHeader-content{flex:1 1 auto;min-width:0}.MuiCardHeader-title,.MuiCardHeader-subheader{display:block}
   .MuiCardHeader-subheader{color:rgba(0,0,0,.6)}.MuiCardHeader-action{flex:none;align-self:flex-start;margin:-4px -8px -4px 0}.MuiCardHeader-action>.MuiStack-root{flex-direction:row;align-items:center;gap:8px}
   .MuiCardContent-root{padding:16px}.MuiCardContent-root:last-child{padding-bottom:24px}
   .MuiSvgIcon-root{display:inline-block;flex:none;width:1em;height:1em;font-size:1.5rem;fill:currentColor}
@@ -271,6 +304,10 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   td>.MuiStack-root:has(>.markers){flex-direction:row;align-items:center;gap:8px}.markers{flex-direction:row;gap:4px}
   #diagnosisEntry [role=combobox]{min-width:196px;padding:8.5px 32px 8.5px 14px;cursor:pointer}#diagnosisEntry .MuiOutlinedInput-root{position:relative}
   #diagnosisEntry .MuiOutlinedInput-root>input{position:absolute;bottom:0;left:0;width:100%;opacity:0;pointer-events:none}#diagnosisEntry .MuiOutlinedInput-root>svg{position:absolute;right:7px;pointer-events:none}
+  .balance{flex-direction:row;align-items:center;gap:8px;margin-bottom:16px}.balance>.MuiBox-root{width:200px}.balance>.MuiBox-root:last-child{width:auto}
+  .select{position:relative;display:flex}.select .MuiOutlinedInput-root{position:relative;width:100%}.select [role=combobox]{width:100%;height:40px;padding:8.5px 32px 8.5px 14px;font-size:16px;line-height:23px;cursor:pointer}
+  .select .Mui-disabled{color:rgba(0,0,0,.38);cursor:default}.select .MuiOutlinedInput-root>input{position:absolute;bottom:0;left:0;width:100%;opacity:0;pointer-events:none}.select .MuiOutlinedInput-root>svg{position:absolute;right:7px;pointer-events:none}
+  .balance .MuiTextField-root{width:100%}.balance .MuiOutlinedInput-root{width:100%}.balance .MuiButton-root{height:40px}
 </style><header class="MuiPaper-root MuiAppBar-root banner" id="menu-app-bar-element">Ficha de hospitalizados <small>Resumen médico · Episodio ficticio</small></header>
 <main class="MuiBox-root"><header class="MuiPaper-root MuiAppBar-root"><div class="MuiBox-root"><div class="MuiTabs-root"><div><div role="tablist" aria-label="Pestañas de prueba">${tabs.map(([id, label]) =>
   `<button type="button" class="MuiButtonBase-root MuiTab-root" role="tab" id="encounter-event-tab-${id}" aria-selected="${id === 'summary'}">${label}</button>`).join('')}</div></div></div></div></header>
@@ -303,4 +340,10 @@ ${frame(options)}</div></main>${floatingBar}<script>
     queueMicrotask(() => document.dispatchEvent(new Event('fixture-refresh')));
   });
   document.getElementById('fixture-print').addEventListener('click', event => { event.currentTarget.dataset.fixturePrint = 'clicked'; });
+  for (const sentence of document.querySelectorAll('[data-fixture-split]')) {
+    sentence.removeAttribute('data-fixture-split');
+    sentence.replaceChildren(...sentence.textContent.split('|'));
+  }
+  // Eloísa focuses the empty alert field when the summary opens.
+  document.getElementById('fixture-alert').focus();
 </script></html>`;

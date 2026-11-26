@@ -126,7 +126,9 @@
     // A folded empty section is not drawn. Anything else between the line and the card is.
     const next = items.slice(at + 1).find(item => !marks.has(item) && getComputedStyle(item).display !== 'none');
     // The button takes the room after the title. A byline there, which Eloísa does not write today, keeps it.
-    const heading = next?.querySelector(':scope > #medicationEntrySection > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-content');
+    // Eloísa can wrap the card in a second section of its own, #dilutionEntrySection.
+    const heading = next?.querySelector(':scope > #medicationEntrySection > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-content,' +
+      ':scope > #medicationEntrySection > #dilutionEntrySection:only-child > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-content');
     return heading?.querySelector(':scope > .MuiCardHeader-title') && !heading.querySelector(':scope > .MuiCardHeader-subheader')?.textContent.trim() ? items[at] : null;
   }
 

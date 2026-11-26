@@ -5,7 +5,8 @@
   const trimDots = value => value.replace(/(?:…|\.{3})$/, '').trimEnd();
   const controls = 'button,[role=button],a,input,select,textarea,[contenteditable],summary';
   const unavailable = 'dialog,[role=dialog],[hidden],[inert],[aria-hidden=true],[aria-busy=true],.MuiCollapse-hidden';
-  const textColumns = /^(?:posología|indicaci[oó]n(?: libre| específica)?|indicaciones(?: libres| específicas)?|observaci[oó]n|observaciones)$/i;
+  // Eloísa heads the column of each free indication «Indication», in English.
+  const textColumns = /^(?:posología|indicaci[oó]n(?: libre| específica)?|indication|indicaciones(?: libres| específicas)?|observaci[oó]n|observaciones)$/i;
   const more = /^(?:ver|leer) m[aá]s$/i;
   const less = /^(?:ver|leer) menos$/i;
   const textTags = 'div,p,span,strong,b,i,em,small,sub,sup,br';

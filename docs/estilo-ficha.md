@@ -14,6 +14,8 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 8. **Una separación y una superficie.** Entre dos bloques, 8 px (`--hhr-ficha-block-gap`). Cada tarjeta es la superficie blanca de Eloísa, sin sombra, con las esquinas de la vista (`--hhr-ficha-radius`).
 9. **Una acción es un icono y su nombre, y el nombre es el de Eloísa.** Se lee del botón o de su icono; la extensión no inventa uno. Sin sitio para el nombre queda el icono, con el nombre al pasar el cursor. Un icono cuyo significado no consta, como los estados del Plan de tratamiento, conserva su dibujo y su color.
 10. **Lo que no se reconoce no se toca.** Una tarjeta, fila o botón con una forma distinta de la prevista conserva el aspecto de Eloísa.
+11. **Lo vacío es una línea.** Una sección sin registros o sin permiso dice su nombre y la frase de Eloísa en una línea, la misma para todas, tenga tabla o no cuando está llena. Una sección vacía que vale la pena leer, como Diagnóstico, no se pliega con las demás.
+12. **El foco que nadie pidió no abre nada.** Eloísa da el foco a algunos campos al cargar. Un editor plegado se abre por su botón o por un borrador, nunca por ese foco, y lo suelta para que la siguiente tecla no escriba donde nadie mira.
 
 ## Dónde vive cada cosa
 
@@ -37,7 +39,7 @@ Un detalle de CSS que ya costó una regla entera: `:has()` no admite otro `:has(
 
 ## Cómo cambiar o añadir una vista
 
-1. **Ficha ficticia.** Cada vista tiene la suya en `scripts/*-visual-fixture.mjs`, con datos inventados y la estructura descrita en [`estructura-eloisa.md`](estructura-eloisa.md). Una ficha ficticia hecha de memoria ya ocultó tres fallos: se escribe a partir de la estructura observada.
+1. **Ficha ficticia.** Cada vista tiene la suya en `scripts/*-visual-fixture.mjs`, con datos inventados y la estructura descrita en [`estructura-eloisa.md`](estructura-eloisa.md). Una ficha ficticia hecha de memoria ya ocultó tres fallos: se escribe a partir de la estructura observada. Y una sola ficha real no basta: Eloísa dibuja otra forma según el paciente (Fármacos en una segunda sección, Diagnóstico sin tabla). Antes de dar un cambio por bueno conviene leer un paciente distinto del último. Primero se reproduce con la versión publicada lo que se ve mal en la pantalla real, y solo después se corrige.
 2. **Captura con el arnés común.** [`scripts/ficha-capture-harness.mjs`](../scripts/ficha-capture-harness.mjs) monta la ficha con los estilos y lectores que declara el manifiesto de una revisión o del árbol de trabajo. Así el «antes» y el «después» usan la misma página.
 3. **Comprobaciones como invariantes.** Lo que promete el diseño se mide en la página: alineaciones, orden de lectura, foco de teclado, que nada tape un control. Un fallo se explica con una frase, no con una diferencia de píxeles. Cuántas líneas ocupa un texto depende de la letra de cada sistema: una medida que cambia con eso se comprueba también con `wideSans`, la familia ancha del arnés, como hace `capture-care-plan.mjs`.
 4. **Prueba unitaria de marcas y limpieza.** Cada atributo que el lector pone debe retirarse al cambiar de vista, de episodio o de pestaña, y no reescribirse en un refresco idéntico.

@@ -26,13 +26,16 @@
     ['solicitudes de intervención quirúrgica', ['operationTheaterRequestEntrySection', 'surgery']],
     ['solicitud de intervención quirúrgica', ['operationTheaterRequestEntrySection', 'surgery']],
   ]);
+  // Kept in view when empty: an empty one is worth reading. Eloísa writes «diagnosticos» without its accent.
   const retainedStates = new Map([
     ['ram','ram registradas'], ['alergias','alergias registradas'], ['eventos adversos','eventos adversos registrados'],
+    ['diagnóstico','diagnósticos registrados'], ['órdenes de atención','orden de atención solicitada'],
   ]);
+  const plain = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const statusGuard = 'button,input,label,select,textarea,a,svg,img,canvas,table,iframe,details,[role],[tabindex],[contenteditable],[title],[aria-label],[aria-labelledby],[aria-live],[aria-busy=true],.MuiSkeleton-root,.MuiAlert-root,.MuiCircularProgress-root,.MuiLinearProgress-root';
   function markStatus(title, name, next, requests) {
     const expected = optionalStates.get(name) || retainedStates.get(name);
-    if (!expected || title.closest('dialog,[role=dialog],[role=alert],[aria-busy=true],nav')) return;
+    if (title.closest('dialog,[role=dialog],[role=alert],[aria-busy=true],nav')) return;
     const card = title.closest('section,.MuiPaper-root,.MuiCard-root') || title.closest('.MuiGrid-item');
     if (!card || card.matches(statusGuard)) return;
     const labels = card.querySelectorAll('label');
@@ -40,20 +43,24 @@
       labels[0].querySelector('input[type="checkbox"]') ? labels[0] : null;
     if ([...card.querySelectorAll(statusGuard)].some(el => !filter?.contains(el))) return;
     const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
-    let message;
+    // React writes a sentence that quotes a value as several text nodes of one element:
+    // «No se presentan», «Solicitudes de intervención quirúrgica», «registradas para este paciente».
+    const parts = [];
     while (walker.nextNode()) {
       const node = walker.currentNode;
       if (!node.textContent.trim() || title.contains(node) || filter?.contains(node)) continue;
-      if (message) return;
-      message = node;
+      if (parts.length && node.parentElement !== parts[0].parentElement) return;
+      parts.push(node);
     }
-    if (!message) return;
-    const text = message.textContent.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\.$/,'');
+    if (!parts.length) return;
+    const message = parts[0];
+    const text = parts.map(node => node.textContent).join(' ').trim().toLowerCase().replace(/\s+/g, ' ').replace(/\.$/,'');
     const denied = text === 'no tiene permiso para visualizar';
+    // Without permission a section says only that, whatever its name: one line, never folded.
+    if (!expected && !denied) return;
     const record = /^no (?:se )?presentan? (.*?)(?: para este paciente)?$/.exec(text);
     const request = requestAnchors.get(name);
-    const messageKind = request ? record?.[1].normalize('NFD').replace(/[\u0300-\u036f]/g, '') : record?.[1];
-    if (!denied && messageKind !== expected) return;
+    if (!denied && (!record || plain(record[1]) !== plain(expected))) return;
     next.set(card,'status-card');
     if (message.parentElement !== card) next.set(message.parentElement,'status-message');
     if (denied || filter || !optionalStates.has(name)) return;
@@ -227,7 +234,10 @@
           const card = cardForTitle(title,kind,main,compact);
           if (card) cards.set(card,kind);
         }
+        // An empty Diagnóstico or Órdenes de atención reads like every other empty section, not like its table.
+        const statusCards = [...next].filter(([, mark]) => mark === 'status-card').map(([el]) => el);
         for (const [card,kind] of cards) {
+          if (statusCards.some(el => el === card || (card.contains(el) && !card.querySelector('table')))) continue;
           next.set(card,kind);
           if (kind === 'vitals') {
             markTiles(card,next,compact,elapsed,older,sources,labelsToShorten,shared);
@@ -236,6 +246,11 @@
             }
           }
           if (kind !== 'orders' && kind !== 'care-orders') continue;
+          // Fármacos opens with who validated the treatment: «Medico Validador:» and its value, two captions.
+          const validator = compact && kind === 'orders' ? card.querySelector(':scope > .MuiCardContent-root > .MuiBox-root:first-child:not(:only-child)') : null;
+          if (validator?.children.length === 2 && [...validator.children].every(el => el.matches('span.MuiTypography-caption') && !el.childElementCount) &&
+              /^m[eé]dico validador:?$/i.test(validator.firstElementChild.textContent.trim()) &&
+              ![...validator.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) next.set(validator,'order-validator');
           for (const table of card.querySelectorAll('table')) {
             if (table.tHead?.rows.length !== 1) continue;
             const head = [...table.tHead.rows[0].cells], rows = [...table.rows];
