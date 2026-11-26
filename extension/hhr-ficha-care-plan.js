@@ -39,7 +39,7 @@
     };
     function refresh(main) {
       const next = new Map(), named = new Set();
-      const cards = main ? [...main.querySelectorAll('.MuiCard-root')].filter(card => !card.closest('dialog,[role="dialog"],[hidden],[aria-hidden="true"]')) : [];
+      const cards = main ? [...main.querySelectorAll('.MuiCard-root')].filter(card => !card.closest('dialog,[role="dialog"],[hidden],main [aria-hidden="true"]')) : [];
       const found = cards.map(card => [card, schedule(card)]).filter(([, plan]) => plan);
       // The view is the stack that holds the scheduling cards and, at most, the switch above them.
       // With anything else in it, each card is still compacted and the stack keeps Eloísa's spacing.

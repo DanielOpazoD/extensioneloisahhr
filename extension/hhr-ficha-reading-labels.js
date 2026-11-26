@@ -11,7 +11,9 @@
     return parts[1] + ' · ' + parts[2].padStart(5, '0') + ' · ' + author;
   }
 
-  const outsideSummary = 'dialog,[role=dialog],#hhr-prescription-print-modal,[aria-hidden=true],[hidden]';
+  // Hidden inside the summary. A menu or a window of Eloísa hides the whole page from a screen reader
+  // while it is open: that is not a reason to give the summary behind it another shape.
+  const outsideSummary = 'dialog,[role=dialog],#hhr-prescription-print-modal,main [aria-hidden=true],[hidden]';
   const entrySections = [
     { id:'shiftChangeEntrySection', field:'Observación de entrega', placeholder:'Escribir entrega…', action:'Agregar a entrega', suffix:'a entrega', open:'Agregar observación' },
     { id:'alertEntrySection', field:'Nueva alerta', placeholder:'Escribir alerta…', action:'Agregar alerta', suffix:'alerta', open:'Agregar alerta' },
@@ -41,7 +43,7 @@
     if (!nativeRow || row.matches('[role],[aria-label],[tabindex],[contenteditable]') ||
         row.children.length !== 2 || !row.firstElementChild.contains(field) ||
         !row.lastElementChild.contains(action) || field.matches(':disabled,[readonly],[aria-disabled=true],[aria-describedby]') ||
-        row.closest('[inert],[hidden],[aria-hidden=true],[aria-busy=true]')) return false;
+        row.closest('main [inert],[hidden],main [aria-hidden=true],[aria-busy=true]')) return false;
     for (const control of form?.elements || []) {
       if (row.contains(control) || control.matches('[data-hhr-entry-open]')) continue;
       if (entry.id === 'alertEntrySection' && control.matches('input[type=checkbox]') &&
@@ -244,7 +246,7 @@
         // Say a byline once. The daily row repeats the note's own, and the three
         // prescription cards often carry the byline of the card just above.
         // «Above» means painted above: a copy hidden by its own styles is not a card the reader can see.
-        const shown = el => Boolean(el) && !el.closest('[data-hhr-ficha-folded],[hidden],[aria-hidden=true],dialog,[role=dialog]') &&
+        const shown = el => Boolean(el) && !el.closest('[data-hhr-ficha-folded],[hidden],main [aria-hidden=true],dialog,[role=dialog]') &&
           (typeof el.checkVisibility === 'function' ? el.checkVisibility({visibilityProperty:true}) : el.getClientRects().length > 0);
         const daily = [...candidates].find(el => !el.matches('.MuiCardHeader-subheader') && next.get(el)?.has('data-hhr-update-label') &&
           el.parentElement.querySelector('form input'));

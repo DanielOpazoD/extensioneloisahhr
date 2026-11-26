@@ -502,7 +502,7 @@
       labels.refresh(compact, encounterId);
       const disclosure = compact?.querySelector('#evolution [data-hhr-evolution-block] > .MuiBox-root > button[data-hhr-note-disclosure]:only-child');
       const readableDisclosure = disclosure?.getClientRects().length &&
-        !disclosure.closest('form,dialog,[role=dialog],[inert],[hidden],[aria-hidden=true]') &&
+        !disclosure.closest('form,dialog,[role=dialog],main [inert],[hidden],main [aria-hidden=true]') &&
         !disclosure.matches(':disabled,[aria-disabled=true]') ? disclosure : null;
       setNoteDisclosure(readableDisclosure, encounterId);
       const paragraph = readableDisclosure?.parentElement.previousElementSibling;

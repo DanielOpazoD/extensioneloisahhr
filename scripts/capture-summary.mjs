@@ -125,7 +125,9 @@ const read = page => page.evaluate(() => {
             reserved:links.hasAttribute('data-hhr-ficha-docked'), scrolls:links.scrollWidth > links.clientWidth + 1,
             // The line the round starts on: the second while the row keeps the first.
             lead:frame.style.getPropertyValue('--hhr-round-line'),
-            surfaces:[getComputedStyle(row).backgroundColor, getComputedStyle(links).backgroundColor]};
+            surfaces:[getComputedStyle(row).backgroundColor, getComputedStyle(links).backgroundColor],
+            // The date is read whole in its field.
+            date:[Math.round(field.width), row.querySelector('form input').scrollWidth <= row.querySelector('form input').clientWidth]};
         })())(one('.frame > .daily')),
         statusTitle:(title => getComputedStyle(title).fontSize + ' ' + getComputedStyle(title).fontWeight)(one('#ramEntry .MuiCardHeader-title')),
         families:[...new Set(texts.map(el => getComputedStyle(el).fontFamily.split(',')[0].trim()))],
@@ -247,6 +249,7 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(dock.line === 'tabs' && dock.position === 'fixed' && dock.onTabs && dock.afterTabs >= 12 && dock.beforeBar >= 8 && dock.reachable && !dock.reserved,
     'La fila diaria va en la línea de pestañas, entre ellas y la barra flotante: ' + JSON.stringify(dock));
   assert.equal(dock.lead, '1', 'y el resumen empieza en la línea que la fila ocupaba');
+  assert.ok(dock.date[0] >= 100 && dock.date[0] <= 120 && dock.date[1], 'El campo de la fila diaria mide lo que una fecha y la muestra entera: ' + dock.date);
   assert.ok(daily.byline.width <= 1 && daily.byline.height <= 1, 'La fila diaria no muestra quién actualizó el resumen');
   if (dock.short) assert.ok(daily.name.width <= 1, 'Sin sitio para su nombre, el campo lo conserva solo para el lector de pantalla');
   else assert.ok(!daily.clipped && daily.name.width > 100 && daily.name.right <= daily.field.left && Math.abs((daily.name.top + daily.name.bottom) / 2 - (daily.field.top + daily.field.bottom) / 2) <= 2,
@@ -467,6 +470,15 @@ async function verifySummary(page, width, native, off, sans) {
   await theme(page, 'compact');
   const again = await read(page);
   assert.deepEqual([again.roles, Math.round(again.medication.card.top)], [shown.roles, Math.round(shown.medication.card.top)], 'Al volver a la vista compacta el resumen queda igual');
+  // Eloísa's menu, like every window it opens, hides the whole page from a screen reader while it is open
+  // (`aria-hidden` on what lies behind). The owner saw the summary lose its shape under it: it must stay as it is.
+  await page.evaluate(() => { document.querySelector('main').setAttribute('aria-hidden', 'true'); document.body.setAttribute('aria-hidden', 'true'); });
+  await refresh(page);
+  const veiled = await read(page);
+  assert.deepEqual([veiled.columns, veiled.roles, veiled.marks, veiled.look.dock.line, veiled.look.dock.lead, Math.round(veiled.medication.card.top), veiled.pageWidth],
+    [true, shown.roles, again.marks, 'tabs', '1', Math.round(shown.medication.card.top), width], 'Con el menú de Eloísa abierto el resumen conserva su forma, sus marcas y su fila diaria');
+  await page.evaluate(() => { document.querySelector('main').removeAttribute('aria-hidden'); document.body.removeAttribute('aria-hidden'); });
+  await refresh(page);
 }
 
 // The other shapes Eloísa draws, each in a page of its own at 1440 px.

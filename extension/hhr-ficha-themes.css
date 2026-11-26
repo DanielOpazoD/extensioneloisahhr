@@ -498,7 +498,10 @@
     :is(form,.MuiStack-root) { align-items:center; gap:6px; }
     form { margin:0; }
     .MuiInputBase-root { block-size:28px; min-height:0; font-size:var(--hhr-ficha-text-body); }
-    .MuiInputBase-input { box-sizing:border-box; block-size:28px; padding-block:2px; font-size:inherit; }
+    /* The field is as wide as a date. Left to the width of its line, on the page it shrank to its calendar
+       and the date was not read (seen 26-11-2026). */
+    .MuiInputBase-root { flex:none; }
+    .MuiInputBase-input { box-sizing:border-box; flex:none; inline-size:6.75rem !important; min-inline-size:6.75rem; block-size:28px; padding-block:2px; font-size:inherit; }
     input:not(.MuiInputBase-input) { box-sizing:border-box; min-height:26px; padding-block:1px; }
     button { min-height:26px; padding-block:2px; }
     .MuiIconButton-root { inline-size:28px; block-size:28px; padding:4px; }

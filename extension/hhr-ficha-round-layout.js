@@ -5,8 +5,11 @@
   const isLayout = node => node.matches(':is(div,section):not(.MuiCard-root,.MuiPaper-root,[role],[tabindex],[contenteditable],[hidden],[aria-hidden],[aria-label],[aria-labelledby])');
   const hasOwnText = node => [...node.childNodes].some(child => child.nodeType === Node.TEXT_NODE && child.textContent.trim());
   const controls = 'a,button,input,select,textarea,summary,[tabindex],[contenteditable],[onclick],[role=button],[role=link]';
+  // A hidden part of the summary is not a section of the round. The whole page hidden from a screen reader is
+  // another matter: Eloísa's menu, or any of its windows, marks everything behind it `aria-hidden` while
+  // it is open, and the round behind stays as it was. Only what is hidden inside `main` counts.
   function surface(main, selector) {
-    const matches = [...main.querySelectorAll(selector)].filter(el => !el.closest('dialog,[role=dialog],[hidden],[inert],[aria-hidden=true]'));
+    const matches = [...main.querySelectorAll(selector)].filter(el => !el.closest('dialog,[role=dialog],[hidden],main [inert],main [aria-hidden=true]'));
     const painted = matches.find(el => el.getClientRects().length);
     if (painted) return painted;
     // A duplicate for printing or a hidden panel must not become visible when
