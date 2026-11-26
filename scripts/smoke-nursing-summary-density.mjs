@@ -21,7 +21,8 @@ export async function verifyNursingSummary(page, worker) {
   assert.match(await pressure.ariaSnapshot(),/Presión/);
   const pressureSizes = () => pressure.evaluate(el => ['vital-value','vital-pam','vital-time'].map(kind =>
     parseFloat(getComputedStyle(el.querySelector('[data-hhr-reading="'+kind+'"]'), kind === 'vital-time' ? '::after' : null).fontSize)));
-  assert.deepEqual(await pressureSizes(),[17,12,12]);
+  // A measurement is read at the highlighted size of the ficha (16 px); its PAM and its age at the meta size.
+  assert.deepEqual(await pressureSizes(),[16,12,12]);
   const alignedReadings = () => tiles.evaluateAll(nodes => {
     const bounds = (tile, kind) => tile.querySelector(`[data-hhr-reading="vital-${kind}"]`).getBoundingClientRect();
     const firstTop = bounds(nodes[0],'value').top;
