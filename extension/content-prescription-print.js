@@ -657,6 +657,24 @@
     },
   ];
 
+  // The extension is loaded unpacked: Chrome never updates it. When a later version is published the
+  // bar says so where the work happens. The service worker answers from its last check of the day.
+  const refreshReleaseNotice = bar => {
+    if (Date.now() - (bar.__hhrReleaseAskedAt || 0) < 60 * 60_000) return;
+    bar.__hhrReleaseAskedAt = Date.now();
+    sendMessage({ type: runtimeMessages.EXTENSION_RELEASE_STATUS }).then(status => {
+      const button = barPart(bar, '.hhr-ops-update');
+      if (!button) return;
+      const available = status?.available === true;
+      button.hidden = !available;
+      if (available) {
+        bar.dataset.update = status.published;
+        button.dataset.tipNote = 'Tienes la ' + status.installed + ' y está publicada la ' + status.published + '. Abre Ajustes para descargarla.';
+      } else delete bar.dataset.update;
+      updateOperationsBarPosition(bar);
+    }).catch(() => {});
+  };
+
   const ensureOperationsBar = encId => {
     let bar = uiLifecycle.takeBar(OPERATIONS_BAR_ID);
     if (!bar) {
@@ -706,6 +724,8 @@
             <span class="session-name">Conexiones</span>
           </span>
         </button>
+        <button class="update hhr-ops-update" type="button" hidden aria-label="Hay una versión nueva de la extensión"
+          data-tip="Versión nueva" data-tip-note="">Actualizar</button>
         <div class="tip" role="tooltip"><strong></strong><span></span></div>
       `;
       try {
@@ -721,6 +741,10 @@
       sessionButton.addEventListener('click', () =>
         centerShellRuntime.openCenterModule('connection', bar.dataset.encounterId, sessionButton)
       );
+      const updateButton = shadow.querySelector('.hhr-ops-update');
+      updateButton.addEventListener('click', () =>
+        centerShellRuntime.openCenterModule('settings', bar.dataset.encounterId, updateButton)
+      );
       ui.enableBarTooltips(shadow, bar);
       ui.enableRovingFocus(shadow);
       bar.__hhrUi = ui.createOperationsBarController({
@@ -735,6 +759,7 @@
       labButton.setAttribute('aria-disabled', String(labDisabled));
       labButton.title = labDisabled ? 'Recarga la extensión para activar laboratorio' : '';
     });
+    refreshReleaseNotice(bar);
     updateOperationsBarPosition(bar);
     void refreshOperationsConnectionBadge(
       bar,

@@ -72,14 +72,15 @@ async function verifyImagingSheet(root) {
   await editor.press('Enter');
   await edit.waitFor();
 
+  // The sheet draws its marks again whenever it changes: one found a moment earlier may have left the page
+  // by the time it is measured. Read the mark, its sheet and its stage together, from the canvas that stays.
   const dimensions = async () => {
-    const annotation = canvas.getByText(imageAnnotation.text, { exact: true });
-    await annotation.waitFor({ state: 'visible' });
-    const { sheet, area, mark } = await annotation.evaluate(node => ({
-      sheet: node.closest('.hhr-imaging-canvas').getBoundingClientRect().toJSON(),
-      area: node.closest('.hhr-imaging-stage').getBoundingClientRect().toJSON(),
-      mark: node.getBoundingClientRect().toJSON(),
-    }));
+    const reading = await root.page().waitForFunction(({ sheet, text }) => {
+      const mark = [...sheet.querySelectorAll('.hhr-imaging-mark.is-text')].find(node => node.textContent === text && node.getClientRects().length);
+      const stage = sheet.closest('.hhr-imaging-stage');
+      return mark && stage ? { sheet: sheet.getBoundingClientRect().toJSON(), area: stage.getBoundingClientRect().toJSON(), mark: mark.getBoundingClientRect().toJSON() } : null;
+    }, { sheet: await canvas.elementHandle(), text: imageAnnotation.text });
+    const { sheet, area, mark } = await reading.jsonValue();
     assert.ok(Math.abs((mark.x - sheet.x) / sheet.width - imageAnnotation.x) < 0.012);
     assert.ok(Math.abs((mark.y + mark.height / 2 - sheet.y) / sheet.height - imageAnnotation.y) < 0.012);
     return { sheet, area };

@@ -6,7 +6,7 @@ import path from "node:path";
 import { chromium } from "playwright";
 import { unzipSync } from "fflate";
 import { packageRayenExtension } from "./package-extension.mjs";
-import { verifyCompactOperationsBar, verifyDockedPanel, verifyLabWorkspace } from "./smoke-center-workspace.mjs";
+import { verifyCompactOperationsBar, verifyDockedPanel, verifyLabWorkspace, verifyReleaseNotice } from "./smoke-center-workspace.mjs";
 import { verifyHistoryNavigation, verifyLabActionLayout, verifyPrescriptionFormats } from "./smoke-extension-visual.mjs";
 import { verifyNativeFicha } from "./smoke-native-ficha.mjs";
 import { verifyClinicalChecklists } from "./smoke-clinical-checklists.mjs";
@@ -575,6 +575,8 @@ try {
     () =>
       document.documentElement.dataset.hhrPrescriptionPrintState === "ready",
   );
+  // Leaves the installed version as the published one: the rest of the smoke runs without the notice.
+  await verifyReleaseNotice(page, serviceWorker, manifest.version);
 
   const initialRuntime = await page.evaluate(() => {
     const bar = document.querySelector("#hhr-clinical-operations-bar");

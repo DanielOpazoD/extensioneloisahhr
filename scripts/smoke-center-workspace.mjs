@@ -52,6 +52,95 @@ export const verifyCompactOperationsBar = async page => {
   await page.locator('#hhr-prescription-print-modal .hhr-rx-close').click();
 };
 
+// The service worker answers from its last check, so the smoke decides what «published» is and nothing leaves the machine.
+const publish = (serviceWorker, published) => serviceWorker.evaluate(published =>
+  chrome.storage.local.set({ 'hhr-release-check-v1': { published, checkedAt: Date.now() } }), published);
+const ready = page => page.waitForFunction(() => document.documentElement.dataset.hhrPrescriptionPrintState === 'ready');
+
+/** With a later version published the bar says so and Ajustes explains it. With the installed one, the bar is the usual one. */
+export const verifyReleaseNotice = async (page, serviceWorker, installed) => {
+  const bar = page.locator('#hhr-clinical-operations-bar'), update = bar.locator('.hhr-ops-update');
+  await publish(serviceWorker, '99.0.0');
+  await page.reload();
+  await ready(page);
+  await update.waitFor();
+  assert.deepEqual([await update.textContent(), await update.getAttribute('aria-label'), await bar.getAttribute('data-update')],
+    ['Actualizar', 'Hay una versión nueva de la extensión', '99.0.0']);
+  assert.match(await update.getAttribute('data-tip-note'), new RegExp('^Tienes la ' + installed.replaceAll('.', '\\.') + ' y está publicada la 99\\.0\\.0\\.'));
+  // With the notice the bar may grow by the pill, never past 336 px nor out of the window, at any width.
+  const viewport = page.viewportSize();
+  for (const width of [1680, 840, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const frame = await bar.boundingBox(), pill = await update.boundingBox();
+    assert.ok(frame.width <= 336 && frame.height <= 40 && frame.x >= 0 && frame.x + frame.width <= width &&
+      pill.x >= frame.x && pill.x + pill.width <= frame.x + frame.width && pill.height >= 24, `Con el aviso, la barra cabe a ${width} px: ${Math.round(frame.width)}`);
+  }
+  await page.setViewportSize(viewport);
+  const box = await bar.boundingBox();
+  // The arrow keys move through the bar and reach the notice, after Conexiones and before Centro HHR.
+  const focused = () => bar.evaluate(host => host.shadowRoot.activeElement?.className.split(' ')[0] ?? null);
+  await bar.locator('.hhr-ops-session').focus();
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await focused(), 'update', 'La flecha derecha lleva de Conexiones al aviso');
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await focused(), 'brand', 'y del aviso vuelve a Centro HHR');
+  await page.keyboard.press('ArrowLeft');
+  assert.equal(await focused(), 'update');
+  if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+    await mkdir(process.env.HHR_VISUAL_ARTIFACT_DIR, { recursive: true });
+    await update.hover();
+    await bar.locator('.tip.is-visible').waitFor();
+    await page.screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'aviso-version-barra.png'), animations: 'disabled',
+      clip: { x: Math.max(0, box.x - 260), y: 0, width: Math.min(page.viewportSize().width - Math.max(0, box.x - 260), box.width + 280), height: 240 } });
+  }
+  await update.focus();
+  await page.keyboard.press('Enter');
+  const settings = page.locator('#hhr-prescription-print-modal[data-active-module="settings"]');
+  const line = settings.locator('[data-release-status]');
+  await line.getByRole('link', { name: 'Cómo actualizar', exact: true }).waitFor();
+  assert.equal(await line.getAttribute('data-state'), 'available');
+  assert.match(await line.textContent(), new RegExp('^Tienes la versión ' + installed.replaceAll('.', '\\.') + ' y está publicada la 99\\.0\\.0\\. Descarga el ZIP'));
+  assert.match(await line.getByRole('link').getAttribute('href'), /^https:\/\/github\.com\/DanielOpazoD\/extensioneloisahhr\/blob\/main\/docs\/instalacion\/README\.md#/);
+  assert.deepEqual([await line.getByRole('link').getAttribute('target'), await line.getByRole('link').getAttribute('rel')], ['_blank', 'noopener noreferrer'],
+    'La guía se abre aparte, sin acceso a la ficha');
+  if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+    await mkdir(process.env.HHR_VISUAL_ARTIFACT_DIR, { recursive: true });
+    await page.screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'aviso-version-ajustes.png'), animations: 'disabled' });
+  }
+  // Contracted, the bar keeps the notice as an amber dot on its logo. Opening it shows the button again.
+  await settings.locator('[data-setting="collapsed"]').check();
+  await page.locator('#hhr-prescription-print-modal .hhr-rx-close').click();
+  const collapsed = await bar.evaluate(host => {
+    const brand = host.shadowRoot.querySelector('.brand'), dot = getComputedStyle(brand, '::after');
+    return [host.classList.contains('is-collapsed'), getComputedStyle(host.shadowRoot.querySelector('.hhr-ops-update')).display, dot.content, dot.backgroundColor];
+  });
+  assert.deepEqual(collapsed, [true, 'none', '""', 'rgb(216, 167, 46)'], 'Contraída, la barra avisa con un punto ámbar: ' + collapsed);
+  await bar.getByRole('button', { name: 'Expandir barra HHR', exact: true }).click();
+  await update.waitFor();
+
+  // A local version later than the published one is said as such, not as the latest.
+  await publish(serviceWorker, '0.0.1');
+  await page.reload();
+  await ready(page);
+  await bar.locator('.hhr-ops-session').waitFor();
+  assert.equal(await update.isVisible(), false, 'Con una versión local posterior la barra no avisa');
+  await bar.locator('.brand').click();
+  await page.locator('#hhr-prescription-print-modal [data-module="settings"]').click();
+  await settings.locator('[data-release-status]').getByText('Versión instalada: ' + installed + ', posterior a la última publicada (0.0.1).', { exact: true }).waitFor();
+  await page.locator('#hhr-prescription-print-modal .hhr-rx-close').click();
+
+  await publish(serviceWorker, installed);
+  await page.reload();
+  await ready(page);
+  await bar.locator('.hhr-ops-session').waitFor();
+  assert.deepEqual([await update.isVisible(), await bar.getAttribute('data-update')], [false, null], 'Con la versión al día la barra no avisa');
+  await bar.locator('.brand').click();
+  await page.locator('#hhr-prescription-print-modal [data-module="settings"]').click();
+  await settings.locator('[data-release-status]').getByText('Versión instalada: ' + installed + ', la misma que la última publicada.', { exact: true }).waitFor();
+  assert.equal(await settings.locator('[data-release-status]').getAttribute('data-state'), null);
+  await page.locator('#hhr-prescription-print-modal .hhr-rx-close').click();
+};
+
 export const verifyDockedPanel = async page => {
   const root = page.locator('#hhr-prescription-print-modal');
   assert.equal(await root.getAttribute('data-panel-mode'), 'floating');
