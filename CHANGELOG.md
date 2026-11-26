@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.205
+
+- La ficha abierta desde Gestión de cuidados muestra su nota como la ficha médica. Su tarjeta se titula «Valoración» y trae un párrafo «Evolución:» antes del texto: por esa diferencia la vista no la reconocía, y la nota quedaba plegada en una caja de 350 px, sin sus catorce líneas ni sus herramientas con nombre. Ahora ocupa el mismo ancho y alto, se abre entera, se desplaza dentro de su cuadro y lleva «Ver evoluciones» y la herramienta que Eloísa le da. La tarjeta conserva su título, «Valoración».
+- Con eso lo que sigue a la nota (Signos vitales, Reposo, Régimen, Fármacos) empieza en la misma línea en las dos fichas.
+- Dispositivos invasivos se lee como Fármacos: una línea por fila y por encabezado, la fecha de instalación con su hora en una línea, el título con su firma al lado y la tabla dentro de su tarjeta. En la página la tarjeta medía 207 px con un dispositivo y ahora mide 73; la tabla se salía 105 px de su tarjeta.
+
 ## 0.48.204
 
 - La vista ya no pierde su forma al abrir el menú lateral de Eloísa ni ninguna de sus ventanas. Mientras el menú estaba abierto, el Resumen detrás volvía al orden de Eloísa: desaparecían la ronda en columnas, la fila diaria acoplada, los editores plegados y la tarjeta de fecha de alta reaparecía. Eloísa marca toda la página como oculta para los lectores de pantalla mientras tiene algo abierto encima, y la extensión lo tomaba por contenido oculto del resumen. Ahora solo cuenta lo que está oculto dentro del resumen. Lo mismo valía para el Plan de tratamiento, el detalle de las indicaciones y la franja de signos.

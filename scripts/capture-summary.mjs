@@ -559,6 +559,54 @@ async function verifyShapes(browser, assets) {
   ({dock} = (await read(page)).look);
   assert.ok(dock.line === 'sections' && dock.reachable && dock.afterLastLink >= 8, 'y el último enlace, al final de su recorrido, queda a la vista: ' + JSON.stringify(dock));
   await page.close();
+  // The ficha opened from Gestión de cuidados, as read on the page on 26-11-2026: the note card is titled «Valoración»,
+  // a paragraph «Evolución:» names the note before it, it has one tool, and Dispositivos invasivos has its own table.
+  // The owner asked for the same note card as the medical ficha, and for a clean, compact table of devices.
+  const noteLook = () => page.evaluate(() => { const card = document.querySelector('#evolution'), box = el => el.getBoundingClientRect(), text = card.querySelector('[data-hhr-note-text]');
+    return {toolbar:card.hasAttribute('data-hhr-evo-toolbar'), width:Math.round(box(card).width), height:Math.round(box(card).height), text:text && Math.round(box(text).height), lines:text && Math.round(box(text).height / parseFloat(getComputedStyle(text).lineHeight)),
+      entry:Boolean(card.querySelector('.hhr-evo-entry')), captions:[...card.querySelectorAll('[data-hhr-evo-caption]')].map(tool => tool.getAttribute('data-hhr-evo-caption')),
+      beside:[document.querySelector('#shiftChangeObservation'), document.querySelector('#alertEntries')].map(el => Math.round(box(el).left - box(card).right)), ends:Math.round(box(document.querySelector('#alertEntries')).bottom - box(card).bottom)}; });
+  page = await open();
+  const medicalNote = await noteLook();
+  await page.close();
+  page = await browser.newPage({viewport:{width:1440, height:900}, deviceScaleFactor:1, locale:'es-CL', timezoneId:'Pacific/Easter'});
+  await page.setContent(summaryPage());
+  await page.evaluate(() => {
+    const card = document.querySelector('#evolution'), content = card.querySelector('.MuiCardContent-root');
+    card.querySelector('.MuiCardHeader-title').textContent = 'Valoración';
+    content.insertAdjacentHTML('afterbegin', '<p class="MuiTypography-root MuiTypography-body2">Evolución:</p>');
+    content.querySelector('.MuiStack-root > .MuiStack-root + .MuiStack-root button').remove();
+    // Dispositivos invasivos: the table Eloísa draws, with dates in columns as wide as a day.
+    const item = document.querySelector('#procedureOrderEntrySection').closest('.MuiGrid-item').cloneNode(true);
+    item.querySelector('section').id = 'invasiveDeviceEntrySection';
+    item.querySelector('.MuiCard-root').id = 'invasiveDeviceEntry';
+    item.querySelector('.MuiCardHeader-title').textContent = 'Dispositivos invasivos';
+    const names = ['Dispositivo', 'Nº', 'Fecha instalación', 'Fecha de caducidad', 'Localización', 'Procedencia', 'Observación'];
+    item.querySelectorAll('thead th').forEach((heading, at) => { heading.querySelector('p').textContent = names[at] || 'Acciones'; });
+    item.querySelectorAll('tbody tr').forEach(row => { ['Vía venosa de prueba', '20', '12-04-2026 20:00', '16-04-2026', 'Sitio ficticio', 'Interna'].forEach((value, at) => {
+      row.cells[at].innerHTML = '<span class="MuiTypography-root MuiTypography-caption">' + value + '</span>'; });
+      for (const at of [2, 3]) { row.cells[at].style.width = '103px'; row.cells[at].style.maxWidth = '103px'; } });
+    document.querySelector('#procedureOrderEntrySection').closest('.MuiGrid-item').after(item);
+  });
+  await settle(page);
+  await mountFicha(page, assets, {theme:'compact'});
+  await refresh(page);
+  const careNote = await noteLook();
+  assert.deepEqual({...careNote, captions:null}, {...medicalNote, captions:null}, 'La nota de la ficha de Gestión de cuidados mide y se ordena como la de la ficha médica: ' + JSON.stringify([careNote, medicalNote]));
+  assert.ok(careNote.toolbar && careNote.lines === 14 && careNote.entry && careNote.captions.length === 1 && medicalNote.captions.length === 2, 'con sus catorce líneas, «Ver evoluciones» y la herramienta que Eloísa le da: ' + JSON.stringify(careNote));
+  const naming = await page.evaluate(() => { const label = document.querySelector('#evolution .MuiCardContent-root > p'), box = label.getBoundingClientRect();
+    return [Math.round(box.width), Math.round(box.height), label.textContent, document.querySelector('#evolution .MuiCardHeader-title').textContent]; });
+  assert.deepEqual(naming, [1, 1, 'Evolución:', 'Valoración'], 'El párrafo que repite el nombre de la nota queda solo para el lector de pantalla y la tarjeta conserva su título');
+  const devices = await page.evaluate(() => { const section = document.querySelector('#invasiveDeviceEntrySection'), box = el => el.getBoundingClientRect(), table = section.querySelector('table');
+    const lines = el => { const range = new Range(); range.selectNodeContents(el); return new Set([...range.getClientRects()].map(r => Math.round(r.top))).size; };
+    return {rows:[...section.querySelectorAll('tbody tr')].map(row => Math.round(box(row).height)), orders:Math.round(box(document.querySelector('#medicationEntrySection tbody tr')).height), head:Math.round(box(section.querySelector('thead tr')).height),
+      headings:[...section.querySelectorAll('thead th p')].map(lines), date:lines(section.querySelector('tbody td:nth-child(3) span')), fits:table.scrollWidth <= section.querySelector('.MuiTableContainer-root').clientWidth + 1,
+      size:[getComputedStyle(section.querySelector('thead th')).fontSize, getComputedStyle(section.querySelector('tbody td span')).fontSize === getComputedStyle(document.querySelector('#procedureOrderEntrySection tbody td span')).fontSize], edge:Math.round(box(section.querySelector('thead th p')).left - box(section.querySelector('.MuiCardHeader-title')).left)}; });
+  assert.ok(devices.rows.every(height => height <= devices.orders + 2) && devices.head <= 22 && devices.headings.every(count => count === 1) && devices.date === 1 && devices.fits && devices.edge === 0,
+    'Dispositivos invasivos se lee como Fármacos: una línea por fila y por encabezado, la fecha con su hora en una línea y la tabla dentro de su tarjeta: ' + JSON.stringify(devices));
+  assert.deepEqual(devices.size, ['12px', true], 'con la letra de las demás tablas');
+  await page.screenshot({path:path.join(directory, '1440-ficha-de-cuidados.png')});
+  await page.close();
   // The older shape of Fármacos, its card straight in its section, without the line of its validator.
   page = await open({nested:false});
   shown = await read(page);

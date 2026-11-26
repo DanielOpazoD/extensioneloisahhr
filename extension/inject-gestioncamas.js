@@ -18,7 +18,7 @@
  */
 (() => {
   'use strict';
-  const INJECT_VERSION = '0.48.204';
+  const INJECT_VERSION = '0.48.205';
   if (globalThis.HhrConnectionRelayRecovery.reactivateMain(window, '__gcInjected')) return;
   const BACKEND_HINT = 'hospbackend.rayensalud.cl';
   const BRIDGE_REQUEST_TYPES = new Set(['RAYEN_GC_BRIDGE_STATUS_REQUEST', 'RAYEN_GC_CONNECTION_ATTEMPT', 'RAYEN_GC_LOOKUP_REQUEST', 'RAYEN_GC_FETCHINFO_REQUEST']);

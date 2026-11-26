@@ -169,13 +169,13 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     --hhr-round-inset:var(--hhr-ficha-inset);
     --hhr-round-heading:.9375rem;
-    > .MuiGrid-item:has(> :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#inputOutputHydricBalanceEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection):only-child) {
+    > .MuiGrid-item:has(> :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#inputOutputHydricBalanceEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection):only-child) {
       padding-block-start:0 !important;
     }
     /* Eloísa can wrap the card of Fármacos in a second section (measured 26-11-2026). The outer one then only holds it. */
     #medicationEntrySection:has(> #dilutionEntrySection:only-child > .MuiCard-root:only-child) { padding:0 !important; margin-block:0 !important; }
     /* An empty section is a line like the other empty ones: its card keeps the status style. */
-    :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#dilutionEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#inputOutputHydricBalanceEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection):has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) {
+    :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#dilutionEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#inputOutputHydricBalanceEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection):has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) {
       padding:0 !important; margin-block:0 !important;
       > .MuiCard-root {
         margin-block:0 !important; padding-inline:0 !important; border-radius:var(--hhr-ficha-radius) !important;
@@ -204,7 +204,7 @@
     /* Procedimientos, Solicitud interconsulta, Solicitud de examen and Solicitudes de intervención quirúrgica
        with records: the table runs from edge to edge of its card and its first and last cells keep the
        reading edge. What Eloísa puts beside the table, such as a button, keeps that edge too. */
-    :is(#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection):has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) > .MuiCard-root > .MuiCardContent-root:has(table) {
+    :is(#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection):has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) > .MuiCard-root > .MuiCardContent-root:has(table) {
       padding-inline:0 !important;
       > :not(table,.MuiTableContainer-root,:has(table)) { box-sizing:border-box; padding-inline:var(--hhr-round-inset); }
       :is(th,td):first-child:not(:is(dialog,[role=dialog],td) *) { padding-inline:var(--hhr-round-inset) 1px !important; }
@@ -230,7 +230,7 @@
       > .MuiCardContent-root > p { margin-block:6px 0 !important; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans); }
     }
     /* Care orders keep the vertical rhythm of the prescription tables above them. */
-    :is(#procedureOrderEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection):has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) > .MuiCard-root > :is(.MuiCardHeader-root,.MuiCardContent-root) {
+    :is(#procedureOrderEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection):has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) > .MuiCard-root > :is(.MuiCardHeader-root,.MuiCardContent-root) {
       min-height:0 !important; padding-block:2px !important;
     }
     /* Empty, Diagnóstico and Órdenes de atención are a status line like RAM: no inset of their own. */
@@ -248,10 +248,10 @@
       &::after { content:'Historial' / ''; margin-inline-start:5px; font:600 .75rem/1 var(--hhr-ficha-sans); }
       &:hover { border-color:transparent; }
     }
-    :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection) thead th :is(p,.MuiTypography-root) {
+    :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection) thead th :is(p,.MuiTypography-root) {
       margin:0; color:inherit; font:inherit;
     }
-    :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection) thead th {
+    :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection) thead th {
       background-color:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft); font-size:.75rem; font-weight:600;
     }
   }
@@ -261,7 +261,7 @@
   /* Órdenes de atención, Procedimientos, Solicitud interconsulta, Solicitud de examen and Solicitudes de
      intervención quirúrgica with records take the rhythm of Fármacos: any table of theirs, whatever Eloísa
      wraps it in, reads at one line a row, with the tools of a row at the size they have there. */
-  html[data-hhr-ficha-theme="compact"] :is(#procedureOrderEntrySection,[data-hhr-reading="care-orders"],#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection) {
+  html[data-hhr-ficha-theme="compact"] :is(#procedureOrderEntrySection,[data-hhr-reading="care-orders"],#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection) {
     table:not(:is(dialog,[role=dialog],table) *) {
       width:100%; table-layout:auto;
       :is(th,td) {
@@ -281,11 +281,20 @@
   }
 }
 
+/* Dispositivos invasivos, in the ficha opened from Gestión de cuidados (read 26-11-2026): Eloísa gives its
+   dates a column as wide as a day, so the hour and the name of the column fell to a second line. A date
+   and the name of a column read on one line, and the row is as high as the rows of Fármacos. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] #invasiveDeviceEntrySection table:not(:is(dialog,[role=dialog],table) *) :is(th, td:has(> .MuiTypography-caption:only-child)) {
+    white-space:nowrap;
+  }
+}
+
 /* Inside a card that keeps its own inset, the first and the last cell of these tables start and end on
    it. A table that fills its card takes the reading edge from the rule of the desktop round instead.
    Their own button reads like «Validar tratamiento»: a line high, written as a phrase. */
 @media screen {
-  html[data-hhr-ficha-theme="compact"] :is(#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection) {
+  html[data-hhr-ficha-theme="compact"] :is(#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection) {
     table:not(:is(dialog,[role=dialog],table) *) {
       :is(th,td):first-child { padding-inline-start:0 !important; }
       :is(th,td):last-child { padding-inline-end:0 !important; }

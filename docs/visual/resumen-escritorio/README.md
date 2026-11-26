@@ -1,5 +1,19 @@
 # Resumen compacto en escritorio
 
+## La ficha de Gestión de cuidados como la médica, en 0.48.205
+
+El responsable pidió que la tarjeta de Evolución de la ficha abierta desde Gestión de cuidados sea la de la ficha médica, y que Dispositivos invasivos sea más limpio y compacto. Las medidas son de la página, leída el 26-11-2026 a 1728 × 966 px.
+
+| Medida en la página, 0.48.204 → 0.48.205 | |
+| --- | ---: |
+| Nota de la ficha de cuidados | 960 × 190 px, plegada, texto en una caja de 350 px → 960 × 339 px, entera, como la médica |
+| Inicio de Signos vitales en la ficha de cuidados | 437 → 586 px, el de la ficha médica |
+| Tarjeta de Dispositivos invasivos, con un dispositivo | 207 → 73 px |
+| Fila y encabezado de Dispositivos invasivos | 75 y 72 → 27 y 18 px |
+| Ancho de su tabla en una tarjeta de 1440 px | 1517 (se salía) → 1440 px |
+
+[Ficha de cuidados ficticia, 1440 × 900](0.48.205/1440-ficha-de-cuidados.png). Los 73, 27 y 18 px de Dispositivos invasivos se midieron en la página con las reglas aplicadas a mano; la nota se comprobó en la ficha ficticia, que sigue la forma leída.
+
 ## Las evoluciones de todas las profesiones, sin salir del Resumen, en 0.48.203
 
 El responsable pidió ver en la sección Evolución las evoluciones de otros profesionales (enfermería para quien es médico, médicas para quien es de enfermería, y las demás) sin ir a Historial, con libertad para una interfaz simple.
