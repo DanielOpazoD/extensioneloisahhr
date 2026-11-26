@@ -89,7 +89,10 @@
          reaches the header menu before the tools: a header subtree keeps its place in the focus order. */
       html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar] {
         display:grid; grid-template-columns:minmax(0,1fr) repeat(6,auto); align-items:center;
-        reading-flow:grid-rows; gap:3px 0; padding:var(--hhr-ficha-card-pad) var(--hhr-ficha-inset) var(--hhr-ficha-card-pad) calc(var(--hhr-ficha-inset) - 3px);
+        /* The card's own rule takes 3 px of the reading edge at the start. At the end the last tool is an
+           icon inside a 28 px box: its drawing, not its box, ends on the reading edge. */
+        reading-flow:grid-rows; gap:3px 0;
+        padding:var(--hhr-ficha-card-pad) calc(var(--hhr-ficha-inset) - 6px) var(--hhr-ficha-card-pad) calc(var(--hhr-ficha-inset) - 3px);
         > .MuiCardHeader-root {
           grid-area:1 / 1; min-width:0; padding:0 !important; margin:0;
           column-gap:8px;
@@ -114,7 +117,7 @@
           }
         }
         .MuiCardHeader-action { display:inline-flex; align-items:center; gap:2px; margin:0; }
-        .hhr-evo-entry { border-color:transparent; margin-inline-start:8px; }
+        .hhr-evo-entry { border-color:transparent; margin-inline-start:4px; }
         .hhr-evo-entry:hover, .hhr-evo-entry:focus-visible { background:#edf5f2; }
         :is(.MuiCardHeader-action, .MuiCardHeader-action > .MuiStack-root, .hhr-checklist-launcher,
             .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button:not(.hhr-evo-entry) {
@@ -151,7 +154,7 @@
       html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar]
         :is(.MuiCardHeader-action, .MuiCardHeader-action > .MuiStack-root, .hhr-checklist-launcher,
             .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button {
-        &:is([data-hhr-evo-caption],.hhr-checklist-trigger) { width:auto; padding:0 8px 0 6px; }
+        &:is([data-hhr-evo-caption],.hhr-checklist-trigger) { width:auto; padding:0 6px 0 5px; }
         &::after { margin-inline-start:5px; font:600 .75rem/1 var(--hhr-ficha-sans); }
         &[data-hhr-evo-caption]::after { content:attr(data-hhr-evo-caption) / ''; }
         &.hhr-checklist-trigger::after { content:'Pautas' / ''; }
