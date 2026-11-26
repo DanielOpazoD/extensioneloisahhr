@@ -15,8 +15,9 @@ Un repaso con reglas mínimas de buena composición, medidas en la página. Ante
 | Margen izquierdo y derecho de las tarjetas | 16 y 32 → 35 y 35 px | 16 y 32 → 42 y 42 px |
 | Separación entre bloques bajo la ronda | 6 o 10 → 8 px | 6 o 10 → 8 px |
 | Tipografías / pesos / tamaños de letra | 2 / 5 / 6 → 1 / 2 / 4 | 2 / 5 / 6 → 1 / 2 / 4 |
-| Inicio de Fármacos | 649 → 619 px | 622 → 623 px |
+| Inicio de Fármacos | 647 → 616 px | 620 → 621 px |
 | Indicaciones de Fármacos completas en la primera pantalla, de 14 | 2 → 3 | 7 → 7 |
+| Indicaciones de Fármacos en una sola línea, de 14 | 5 → 7 | 8 → 8 |
 
 En una ventana de 1990 px el contenido ocupaba 1926 px de borde a borde; ahora se detiene en 1600 px, centrado, con 195 px a cada lado.
 
@@ -35,7 +36,7 @@ Cada una de estas mutaciones hace fallar la captura: márgenes asimétricos; sep
 
 Límites:
 
-- **Nada de esto se ha visto aplicado sobre Eloísa.** La página real tiene Inter cargada; la ficha ficticia, sin ella en este equipo, dibuja la letra de reserva en las dos partes. La comprobación de una sola tipografía mide la familia declarada.
+- **Nada de esto se ha visto aplicado sobre Eloísa.** La página real carga Inter. Donde corren las capturas no está instalada, y la ficha ficticia declara la reserva que Eloísa misma declara: Arial ajustada al ancho de Inter (Liberation Sans en Linux, con las mismas medidas). Las cifras son así iguales en macOS y en CI, y cercanas a la página. La comprobación de una sola tipografía mide la familia declarada.
 - **Historial y Plan** ya tenían márgenes simétricos. Sus fichas ficticias siguen con el fondo y el margen de 24 px anteriores a esta medida.
 - **Por debajo de 1100 px**, sin las dos columnas, Diagnóstico queda 8 px más adentro que los demás bloques, como antes. No hay comprobación de márgenes en esa franja.
 - **A 1990 px la fila de fecha diaria ya no cabe junto a la línea de secciones**, que ahora termina antes y queda bajo la barra flotante de Centro HHR: ocupa su propia línea, unos 40 px.

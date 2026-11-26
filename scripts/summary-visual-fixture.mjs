@@ -1,7 +1,8 @@
 // A fictional Resumen with the structure of the real one (docs/estructura-eloisa.md): the frame
 // and its items in Eloísa's order, the twelve section links in theirs, and each card with the
 // elements and classes that were observed. Every name, drug and figure is invented.
-// Measured in Eloísa on 26-11-2026: page #f1f1f1, white cards without shadow and with 12 px corners, Inter on every text,
+// Measured in Eloísa on 26-11-2026: page #f1f1f1, white cards without shadow and with 12 px corners, Inter on every text
+// (here its declared fallback, Arial scaled to Inter's width, so macOS and Linux draw the same widths),
 // 32 px of padding on main at each side and a fixed tab bar across the whole width with 24 px of padding.
 // MUI names the family on every Typography, as here: a text takes the family of the view only where a rule gives it.
 // Not modelled: Balance Hídrico, Eventos Adversos and Examen Gíneco Obstétrico, whose content was not read.
@@ -214,6 +215,11 @@ const floatingBar = `<div id="hhr-clinical-operations-bar" aria-hidden="true"><s
 
 /** The page. `alertList` and `diagnoses` replace the default lists (an empty array is an empty card). */
 export const summaryPage = options => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
+  /* Inter is not installed where the captures run. Eloísa's own fallback, as next/font writes it, is Arial
+     scaled to Inter's width; Liberation Sans and Arimo have Arial's metrics on Linux. Both platforms then draw
+     the same widths, close to the page. */
+  @font-face{font-family:"Inter Fallback";src:local("Arial"),local("ArialMT"),local("Liberation Sans"),local("LiberationSans"),local("Arimo");
+    ascent-override:90.49%;descent-override:22.56%;line-gap-override:0%;size-adjust:107.06%}
   *{box-sizing:border-box}body{margin:0;background:#f1f1f1;color:rgba(0,0,0,.87);font:16px/1.5 Inter,"Inter Fallback",system-ui,sans-serif}
   .banner{position:sticky;top:0;z-index:30;background:#218b80;color:white;padding:15px 24px;font-size:16px;font-weight:600}.banner small{margin-left:18px;font-size:12px;font-weight:400}
   main{padding:64px 32px 16px}main>.MuiAppBar-root{position:fixed;top:54px;left:0;right:0;z-index:20;padding:0 24px;background:white}.MuiTabs-root [role=tablist]{display:flex}
