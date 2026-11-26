@@ -25,7 +25,7 @@
     #evolution.MuiCard-root {
       border-inline-start:3px solid #31877c;
       > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:4px 10px !important; }
-      > .MuiCardHeader-root .MuiCardHeader-title { font-size:1rem; line-height:1.35; font-weight:600; }
+      > .MuiCardHeader-root .MuiCardHeader-title { color:var(--hhr-ficha-ink); font-size:var(--hhr-ficha-text-title); line-height:1.35; font-weight:600; }
       [data-hhr-evolution-block] > .MuiTypography-caption { font-size:.8125rem; line-height:1.45 !important; overflow-wrap:anywhere; }
     }
   }
@@ -41,7 +41,7 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"]:is(:has(> :is([data-hhr-round="care"],[data-hhr-round="care-card"])),[data-hhr-round-columns]) {
     display:grid !important;
     grid-template-columns:minmax(0,2fr) minmax(0,1fr);
-    --hhr-round-row-gap:6px;
+    --hhr-round-row-gap:var(--hhr-ficha-block-gap);
     align-items:start; column-gap:12px !important; row-gap:var(--hhr-round-row-gap) !important;
     reading-flow:grid-rows;
     > .MuiGrid-item {
@@ -63,9 +63,18 @@
     &[data-hhr-round-columns] {
       grid-template-columns:repeat(12,minmax(0,1fr));
       column-gap:1px !important;
-      /* Eloísa hangs this grid one gutter to the start and gives each item that gutter back. The round
-         takes the whole width, so the cards under it give the gutter up too and start on its edge. */
-      [data-hhr-round="peer"] { padding-block-start:0 !important; padding-inline-start:0 !important; }
+      /* Eloísa hangs this grid one gutter to the start and gives each item that gutter back, so its
+         content keeps the 32 px of the page on both sides. As a grid the gutter is not given back: the
+         grid itself stays on the page edges, and so do the round, the cards under it and the section
+         links above, with the same margin left and right. */
+      inline-size:100% !important; margin-inline:0 !important;
+      :is([data-hhr-round="before"],[data-hhr-round="peer"]) { padding-block-start:0 !important; padding-inline-start:0 !important; }
+      /* One card style under the round: Eloísa's white surface without shadow, the corners of the view
+         (6 px, denser than Eloísa's 12) and the same gap. */
+      [data-hhr-round="peer"] > :is(section, .MuiCard-root),
+      [data-hhr-round="peer"] > section > .MuiCard-root { margin-block:0 !important; }
+      [data-hhr-round="peer"] > section > .MuiCard-root,
+      [data-hhr-round="peer"] > .MuiCard-root { border-radius:var(--hhr-ficha-radius) !important; }
       :is([data-hhr-round="bridge"],[data-hhr-round="inner"]) { display:contents !important; }
       :is([data-hhr-round="before"],[data-hhr-round="peer"]) {
         grid-column:span var(--hhr-round-span,12);
@@ -108,7 +117,7 @@
       [data-hhr-round="vitals"] :is([data-hhr-reading="vital-value"],[data-hhr-reading="vital-pam"]) { white-space:nowrap; }
       /* Fit the standard nine measurements without splitting the pressure pair.
          Use the native wrapping band for other arrangements and narrower columns. */
-      @container hhr-round-signs (min-width:51rem) {
+      @container hhr-round-signs (min-width:48rem) {
         [data-hhr-round="vitals"] #vitalSignsEntry [data-hhr-reading="vital-grid"]:has(
           > [data-hhr-reading="vital-tile"]:first-child [data-hhr-reading="vital-pam"]
         ):has(> [data-hhr-reading="vital-tile"]:nth-child(9):last-child) {
@@ -126,9 +135,13 @@
         /* It changes place only where the Tab key follows what is seen. Elsewhere it keeps its own. */
         @supports (reading-flow:grid-rows) { order:-1; }
         #diagnosisEntrySection > .MuiCard-root {
-          display:grid; grid-template-columns:fit-content(18rem) minmax(0,1fr);
+          display:grid; grid-template-columns:fit-content(18rem) minmax(0,1fr); align-items:start;
           > .MuiCardHeader-root > .MuiCardHeader-content { flex-direction:column; align-items:start; gap:0; }
           > .MuiCardContent-root { padding:0 !important; }
+          /* The diagnosis takes the room; its star, state, date, GES, Eno and notes take what they need, on one line. */
+          td:not(:nth-child(2)) { inline-size:1%; white-space:nowrap; }
+          td .MuiFormControl-root, td .MuiInputBase-root { min-inline-size:0 !important; }
+          td [role="combobox"] { min-inline-size:7.5rem !important; box-sizing:border-box; }
           /* The card is named beside its table: the column of the same name does not repeat it. */
           thead th:nth-child(2) > * { font-size:0; }
           td > .MuiStack-root:has(> .MuiBox-root + .MuiTypography-root) { flex-flow:row wrap; align-items:baseline; gap:0 8px; }
@@ -213,7 +226,7 @@
           &:is(.MuiGrid-item:last-child > section > *) { border-end-start-radius:5px; border-end-end-radius:5px; }
           > .MuiCardHeader-root, .MuiCardHeader-content { display:contents !important; }
           .MuiCardHeader-action { display:none; }
-          .MuiCardHeader-title { grid-area:1 / 1; color:#405a54; font-size:.75rem; font-weight:500; }
+          .MuiCardHeader-title { grid-area:1 / 1; color:var(--hhr-ficha-ink-soft); font-size:.75rem; font-weight:400; }
           .MuiCardHeader-subheader { grid-area:2 / 2; min-width:0; overflow-wrap:anywhere; }
           .MuiCardHeader-subheader:empty { display:none; }
           @container hhr-care-pair (min-width:46rem) {
@@ -233,18 +246,18 @@
           }
           [data-hhr-round="shared-stamp"] {
             grid-column:1 / -1; margin-block-start:3px;
-            &::before { content:'Ambas indicaciones · ' / ''; color:#516963; font:500 .75rem/1.35 system-ui,sans-serif; }
+            &::before { content:'Ambas indicaciones · ' / ''; color:var(--hhr-ficha-muted); font:400 .75rem/1.35 var(--hhr-ficha-sans); }
           }
           > .MuiCardContent-root { grid-area:1 / 2; min-width:0; padding:0 !important; overflow-wrap:anywhere; }
           .MuiCardContent-root :is(.MuiStack-root,.MuiBox-root):has(> [data-hhr-round="care-value"]) { display:block; }
           :is([data-hhr-round="care-value"],[data-hhr-round="care-observation"]) {
             display:inline !important; font-size:.8125rem; line-height:1.35;
           }
-          [data-hhr-round="care-value"] { font-weight:650; }
+          [data-hhr-round="care-value"] { font-weight:600; }
           /* The native sentence stays in the page for screen readers, search and print. */
           [data-hhr-round="care-empty"] {
-            margin:0 !important; font-size:0 !important; line-height:1 !important; color:#516963;
-            &::after { content:'Sin registro' / ''; font:normal .75rem/1.35 system-ui,sans-serif; }
+            margin:0 !important; font-size:0 !important; line-height:1 !important; color:var(--hhr-ficha-muted);
+            &::after { content:'Sin registro' / ''; font:normal .75rem/1.35 var(--hhr-ficha-sans); }
           }
           [data-hhr-round="care-value"] .MuiChip-root { max-width:100%; height:auto; }
           [data-hhr-round="care-value"] .MuiChip-label { white-space:normal; overflow-wrap:anywhere; }
@@ -258,7 +271,7 @@
             > .MuiTypography-root { display:inline !important; margin:0 !important; padding:0; font:inherit; }
           }
           :is([data-hhr-round="care-label"],[data-hhr-round="care-placeholder"]) { display:none !important; }
-          [data-hhr-round="care-observation"]::before { content:' · ' / ''; color:#687c76; }
+          [data-hhr-round="care-observation"]::before { content:' · ' / ''; color:var(--hhr-ficha-muted); }
         }
         :is([data-hhr-round="care-row"],[data-hhr-round="care-card"]) { border-block-start:1px solid #dce5e2; }
       }
@@ -269,6 +282,6 @@
 /* With room for its action on the same line, the handoff heading matches Alertas. */
 @media screen and (min-width:1240px) {
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round-columns] #shiftChangeObservation > .MuiCardHeader-root .MuiCardHeader-title {
-    font-size:.9375rem; font-weight:650; line-height:1.35;
+    color:var(--hhr-ficha-ink); font-size:var(--hhr-ficha-text-title); font-weight:600; line-height:1.35;
   }
 }

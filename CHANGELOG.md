@@ -1,5 +1,14 @@
 # Cambios
 
+## 0.48.196
+
+- En la vista Compacta, la ficha deja el mismo margen a cada lado, y algo más amplio: 35 px a 1280, 42 a 1440, 56 desde 1800. En una pantalla ancha el contenido se detiene en 1600 px y queda centrado. Las tarjetas del Resumen empezaban 16 px más a la izquierda que la línea de secciones. Pestañas, línea de secciones y tarjetas comparten ahora un borde.
+- Las vistas de la ficha escriben con la tipografía de Eloísa, Inter, en lugar de la del sistema: una tarjeta ya no mezcla dos letras. Usan dos pesos y cuatro tamaños, y cada tarjeta se titula a 15 px, Evolución incluida.
+- El texto usa los grises neutros de Eloísa. El nombre de quien indica un fármaco ya no se confunde con un enlace.
+- Entre dos bloques del Resumen hay siempre 8 px, y todas las tarjetas tienen la misma superficie. Cada tabla empieza en el borde de su título, y sus encabezados tienen un solo tamaño.
+- Las secciones vacías (Producto no Farmacológico, RAM, Alergias) se leen como las solicitudes vacías: su nombre, un mensaje discreto y, si lo tienen, su filtro al final de la línea.
+- En Diagnóstico, la fecha y el estado no se parten, y el título queda arriba. En Fármacos, la etiqueta SOS o Antimic. sigue al nombre en su misma línea.
+
 ## 0.48.195
 
 - Cuando hay una versión publicada posterior a la instalada, la barra de Centro HHR muestra «Actualizar» sobre la ficha, y Ajustes dice cuál tienes, cuál está publicada y cómo cambiarla. Chrome no actualiza sola una extensión cargada desde una carpeta, y hasta ahora el aviso solo aparecía al pulsar el icono naranjo.

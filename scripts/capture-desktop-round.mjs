@@ -553,7 +553,8 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
     });
     assert.match(ages.heading, /medidos hace 2 h/, 'La antigüedad común de las mediciones se lee una vez, junto al título de Signos vitales');
     assert.deepEqual(ages.shown.map(([label]) => label.split('"')[1]), ['4h'], 'Solo la medición anterior conserva su propia antigüedad');
-    assert.ok(Number(ages.shown[0][1]) >= 700 && ages.inHeading);
+    // The view has two weights. The older age takes the strong one.
+    assert.ok(Number(ages.shown[0][1]) >= 600 && ages.inHeading, 'La medición anterior se lee en negrita: ' + ages.shown[0][1]);
     assert.deepEqual(ages.native, ['2 horas','2 horas','2 horas','2 horas','2 horas','2 horas','2 horas','4 horas','2 horas'],
       'El texto nativo de cada antigüedad sigue en la página');
     // The care orders are signed like the prescription card above them.

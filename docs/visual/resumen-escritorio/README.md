@@ -1,5 +1,47 @@
 # Resumen compacto en escritorio
 
+## Márgenes, tipografía y ritmo en 0.48.196
+
+Un repaso con reglas mínimas de buena composición, medidas en la página. Antes se midió Eloísa el 26-11-2026: deja 32 px a cada lado, su fondo es `#f1f1f1`, sus tarjetas son blancas sin sombra con esquinas de 12 px y toda la página usa Inter. La ficha ficticia sigue desde esta versión esas medidas y las longitudes de los catorce nombres de fármacos leídos (24 a 113 caracteres).
+
+| Pantalla | 0.48.195 | 0.48.196 | Página completa |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.196/antes/1280-resumen.png) | [Después](0.48.196/despues/1280-resumen.png) | [Antes](0.48.196/antes/1280-resumen-completo.png) · [Después](0.48.196/despues/1280-resumen-completo.png) |
+| 1440 × 900 | [Antes](0.48.196/antes/1440-resumen.png) | [Después](0.48.196/despues/1440-resumen.png) | [Antes](0.48.196/antes/1440-resumen-completo.png) · [Después](0.48.196/despues/1440-resumen-completo.png) |
+| 1990 × 1086, la ventana del responsable | [Antes](0.48.196/antes/1990-resumen.png) | [Después](0.48.196/despues/1990-resumen.png) | |
+
+| Medida, 0.48.195 → 0.48.196 | 1280 × 800 | 1440 × 900 |
+| --- | ---: | ---: |
+| Margen izquierdo y derecho de las tarjetas | 16 y 32 → 35 y 35 px | 16 y 32 → 42 y 42 px |
+| Separación entre bloques bajo la ronda | 6 o 10 → 8 px | 6 o 10 → 8 px |
+| Tipografías / pesos / tamaños de letra | 2 / 5 / 6 → 1 / 2 / 4 | 2 / 5 / 6 → 1 / 2 / 4 |
+| Inicio de Fármacos | 647 → 616 px | 620 → 621 px |
+| Indicaciones de Fármacos completas en la primera pantalla, de 14 | 2 → 3 | 7 → 7 |
+| Indicaciones de Fármacos en una sola línea, de 14 | 5 → 7 | 8 → 8 |
+
+En una ventana de 1990 px el contenido ocupaba 1926 px de borde a borde; ahora se detiene en 1600 px, centrado, con 195 px a cada lado.
+
+- **Márgenes.** La ronda de dos columnas tomaba el canal de 16 px que Eloísa cuelga a la izquierda de su rejilla y no lo devolvía. Ahora la ronda, las tarjetas bajo ella, la fila diaria, la línea de secciones y las pestañas comparten un borde, con el mismo margen a cada lado. Ese margen nunca es menor que los 32 px de Eloísa y crece con la ventana: 35 px a 1280, 42 a 1440, 56 desde 1800. En una pantalla ancha el contenido se detiene en 1600 px y queda centrado. En un portátil crece poco, para no quitar ancho al texto clínico.
+- **Una tipografía.** La vista escribía sus textos con la letra del sistema y dejaba los de Eloísa en Inter: una misma tarjeta mezclaba dos. Ahora todo es Inter.
+- **Dos pesos y cuatro tamaños.** Había 400, 500, 600, 650 y 750, y tamaños de 12 a 17 px. Quedan 400 y 600; 12, 13, 15 y 16 px. Cada tarjeta se titula a 15 px, Evolución incluida, y cada tabla nombra sus columnas a 12 px.
+- **Grises neutros.** Los textos secundarios tenían un tinte verde que los acercaba al verde de las acciones: el nombre de quien indica parecía un enlace. Ahora usan los grises de Eloísa; el verde queda para lo que se puede pulsar.
+- **Una superficie y una separación.** Las tarjetas bajo la ronda tenían esquinas de 4, 5, 6 o 12 px y se separaban 6 o 10 px. Ahora todas son la superficie blanca y sin sombra de Eloísa, con las esquinas de la vista, a 8 px una de otra. Eloísa usa esquinas de 12 px; la vista Compacta mantiene sus 6 px, más propios de una página densa, en todas sus tarjetas.
+- **Tablas.** El texto empezaba 7 px más adentro que su título: Eloísa envuelve la tabla en un `Paper` que la regla no contemplaba. Ahora título, encabezados y primera celda comparten borde.
+- **Secciones vacías.** Producto no Farmacológico, RAM y Alergias se leen como las solicitudes vacías: nombre a 13 px, mensaje en gris, filtro al final de la línea. MUI resta 8 px a su zona de acciones y pegaba el mensaje al nombre, y deja 16 px tras la etiqueta de un interruptor, que lo apartaba del borde: un interruptor que cierra una cabecera termina ahora en el borde de lectura.
+- **Detalles.** Signos vitales vuelve a una fila con el margen nuevo. En Diagnóstico la fecha y el estado no se parten, el título queda arriba y el selector de estado no ocupa más de lo que dice. En Fármacos, la etiqueta SOS o Antimic. sigue al nombre en su línea en vez de quitarle una columna.
+
+`capture-summary.mjs` comprueba estas reglas a 1280 y 1440 px, y la fecha de Diagnóstico también a 1100 px: márgenes, separación, tipografía, pesos, tamaños, tintas, títulos, superficies, bordes de tabla, secciones vacías y su filtro, el título de Diagnóstico y la etiqueta junto al nombre.
+
+Cada una de estas mutaciones hace fallar la captura: márgenes asimétricos; separación de 6 px; márgenes propios de las tarjetas; un peso 650; la letra del sistema; la tabla sin su `Paper`; la zona de acciones con su margen; la superficie nativa; un valor vital de 17 px; fechas partidas a 1100 px; Evolución a 16 px; una sección vacía a 14 px; la etiqueta en su columna o en bloque; Signos con el umbral anterior; encabezados de tabla a 14 px; tintas verdes; el filtro al principio de la línea; una sección vacía con 14 px de sangrado; Diagnóstico centrado; la etiqueta de un interruptor con el margen de MUI; títulos sin la tinta de la vista.
+
+Límites:
+
+- **Nada de esto se ha visto aplicado sobre Eloísa.** La página real carga Inter. Donde corren las capturas no está instalada, y la ficha ficticia declara la reserva que Eloísa misma declara: Arial ajustada al ancho de Inter (Liberation Sans en Linux, con las mismas medidas). Las cifras son así iguales en macOS y en CI, y cercanas a la página. La comprobación de una sola tipografía mide la familia declarada.
+- **Historial y Plan** ya tenían márgenes simétricos. Sus fichas ficticias siguen con el fondo y el margen de 24 px anteriores a esta medida.
+- **Por debajo de 1100 px**, sin las dos columnas, Diagnóstico queda 8 px más adentro que los demás bloques, como antes. No hay comprobación de márgenes en esa franja.
+- **A 1990 px la fila de fecha diaria ya no cabe junto a la línea de secciones**, que ahora termina antes y queda bajo la barra flotante de Centro HHR: ocupa su propia línea, unos 40 px.
+- **Bordes y fondos** escritos a mano quedan en algunas reglas; pasan a tokens cuando se vuelvan a editar.
+
 ## Los días de tratamiento en 0.48.194
 
 En Fármacos, la columna «Tiempo» de Eloísa es un triángulo con un número. El número cuenta días de tratamiento, según confirmó el responsable clínico. La vista Compacta lo dice: «12 d», con las unidades alineadas en el borde de la columna. Un lector de pantalla lee «12 días», y «1 día» en singular. El triángulo, que no nombraba nada, deja su sitio a la unidad; la columna no cambia de ancho ni las filas de alto.

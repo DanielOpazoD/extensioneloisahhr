@@ -2,10 +2,12 @@
    and takes its value from here, so a change of palette, scale or spacing is made once.
    New rules use these tokens; an older rule moves to them when it is next edited. */
 html[data-hhr-ficha-theme] {
-  /* Ink: what is read, what explains it, what only situates it. */
-  --hhr-ficha-ink:#20342f;
-  --hhr-ficha-ink-soft:#3f5952;
-  --hhr-ficha-muted:#516963;
+  /* Ink: what is read, what explains it, what only situates it. Eloísa's own neutral inks
+     (black at 87, 71 and 60 %), so a text the view restyles reads like the one it leaves. Colour
+     is kept for what can be pressed and for flags: a grey name never looks like a link. */
+  --hhr-ficha-ink:#212121;
+  --hhr-ficha-ink-soft:#4a4a4a;
+  --hhr-ficha-muted:#666;
   /* Surfaces and the lines that divide them. */
   --hhr-ficha-surface:#fff;
   --hhr-ficha-band:#f2f6f4;
@@ -25,10 +27,19 @@ html[data-hhr-ficha-theme] {
   --hhr-ficha-text-title:.9375rem;
   --hhr-ficha-text-lead:1rem;
   --hhr-ficha-weight-strong:600;
-  --hhr-ficha-sans:system-ui,sans-serif;
+  /* The typeface Eloísa draws with, so a card never mixes two. */
+  --hhr-ficha-sans:Inter,"Inter Fallback",system-ui,sans-serif;
   /* Space in steps of two and four pixels; one inset for every reading edge. */
   --hhr-ficha-inset:10px;
   --hhr-ficha-radius:6px;
+  --hhr-ficha-radius-small:4px;
+  /* The space between two blocks of the ficha, everywhere. */
+  --hhr-ficha-block-gap:8px;
+  /* The page: never less than Eloísa's 32 px at each side, a little more as the window grows (35 px at
+     1280, 42 at 1440, 56 from 1800), and on a wide screen the content stops at a readable width and
+     stays at the centre. A laptop keeps its width for the clinical text. */
+  --hhr-ficha-page-margin:clamp(32px, 4vw - 16px, 56px);
+  --hhr-ficha-page-max:1600px;
   --hhr-ficha-control:28px;
   /* One family of icons. Each mask takes the colour of its own button. */
   --hhr-icon-notes:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='3' width='12' height='14' rx='2'/%3E%3Cpath d='M4 8v11a2 2 0 0 0 2 2h9'/%3E%3Cpath d='M12 8h4M12 12h4'/%3E%3C/svg%3E");

@@ -46,7 +46,7 @@
     [data-hhr-history-rail] > [data-hhr-history-tab] ~ [role="tab"] { order:2; }
     [data-hhr-history-scroll] { overflow-x:auto !important; scrollbar-width:none; }
     html[data-hhr-ficha-theme] .MuiChip-root[data-hhr-history-new] {
-      background:#e8f3ee; color:#225a45; border-radius:4px; height:16px;
+      background:#e8f3ee; color:var(--hhr-ficha-action, #225a45); border-radius:4px; height:16px;
       font-size:10px; font-weight:600; vertical-align:middle;
     }
     html[data-hhr-ficha-theme] [data-hhr-history-new] > .MuiChip-label { padding-inline:5px; }
@@ -209,8 +209,8 @@
       shadow.innerHTML = `
         <style>
           :host { color-scheme: light; }
-          nav { display:flex;align-items:center;gap:3px;white-space:nowrap;font:12px/1.4 system-ui,sans-serif;color:#22333a; }
-          button,select { box-sizing:border-box;height:26px;border:1px solid #d7e1df;border-radius:6px;background:#fff;color:#0b6e66;font:inherit; }
+          nav { display:flex;align-items:center;gap:3px;white-space:nowrap;font:12px/1.4 var(--hhr-ficha-sans, system-ui, sans-serif);color:var(--hhr-ficha-ink, #22333a); }
+          button,select { box-sizing:border-box;height:26px;border:1px solid #d7e1df;border-radius:6px;background:#fff;color:var(--hhr-ficha-focus, #0b6e66);font:inherit; }
           button { width:24px;flex:none;cursor:pointer;font-size:18px; }
           select { width:136px;padding:0 5px;cursor:pointer; }
           button:hover:not(:disabled),select:hover { background:#edf7f4; }

@@ -16,9 +16,9 @@
       }
     }
     [data-hhr-reading="vital-tile"] { border-radius:2px !important; }
-    [data-hhr-reading="vitals"] .MuiCardContent-root > p { margin-block:3px !important; }
+    [data-hhr-reading="vitals"] .MuiCardContent-root > p { margin-block:3px !important; font-size:var(--hhr-ficha-text-body); line-height:1.4; }
     [data-hhr-reading="status-card"] {
-      padding:4px 8px !important; min-height:0 !important; height:auto !important; margin-block:0 4px !important;
+      padding:4px 10px !important; min-height:0 !important; height:auto !important; margin-block:0 4px !important;
       :is(h2,h3,h4,h5,h6,p,.MuiCardHeader-title) { margin-block:1px !important; }
       :is(.MuiCardHeader-root,.MuiCardContent-root) { padding-block:1px !important; }
     }
@@ -27,8 +27,17 @@
       display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px;
       > :is(.MuiCardHeader-root,.MuiCardContent-root) { padding:0 !important; }
       > .MuiCardHeader-root:has(input) { gap:8px; flex-wrap:wrap; }
-      :is(.MuiCardHeader-title,h3) { font-size:.875rem; line-height:1.4; }
-      [data-hhr-reading="status-message"] { font-size:.8125rem; line-height:1.4; }
+      /* MUI pulls the action area 8 px into the title. Empty, it only takes that space from the message. */
+      > .MuiCardHeader-root > .MuiCardHeader-action:not(:has(button,input,label,a,select)) { display:none; }
+      :is(.MuiCardHeader-title,h3) { color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans); }
+      [data-hhr-reading="status-message"] { color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
+      /* A filter of the section, such as «Mostrar Suspendidos», closes the line instead of splitting it. */
+      &:has(> .MuiCardHeader-root > .MuiCardHeader-action label) {
+        > .MuiCardHeader-root { display:contents; }
+        > .MuiCardHeader-root > .MuiCardHeader-content { order:1; flex:none; }
+        > .MuiCardContent-root { order:2; }
+        > .MuiCardHeader-root > .MuiCardHeader-action { order:3; margin:0 0 0 auto !important; align-self:center; }
+      }
     }
   }
   html[data-hhr-ficha-theme="reading"] {
@@ -46,7 +55,7 @@
    single band; each number, its timestamp and its source alert colour stay together. */
 @media screen {
   html[data-hhr-ficha-theme="compact"] :is([data-hhr-reading="vitals"],.hhr-ficha-vitals) [data-hhr-vital-older] {
-    font-weight:750; font-variant-numeric:tabular-nums;
+    font-weight:600; font-variant-numeric:tabular-nums;
   }
   html[data-hhr-ficha-theme="compact"] [data-hhr-reading="vitals"] {
     --hhr-ficha-tile-y:1px;
@@ -57,7 +66,7 @@
       display:inline-flex; align-items:center; justify-content:center; flex:none;
       box-sizing:border-box; inline-size:26px; min-width:26px !important; block-size:26px; min-height:26px;
       padding:0 !important; margin:0; font-size:0 !important; line-height:1;
-      color:#23685e; background:transparent; border:1px solid #c9dcd5; border-radius:5px;
+      color:var(--hhr-ficha-action); background:transparent; border:1px solid #c9dcd5; border-radius:5px;
       > :not(.MuiTouchRipple-root) { font-size:0 !important; }
       &::before {
         content:''; box-sizing:border-box; inline-size:14px; block-size:14px;
@@ -135,7 +144,7 @@
         padding:3px 8px !important; gap:1px 4px !important; align-items:baseline; align-content:stretch;
         [data-hhr-reading="vital-label"] { grid-area:1 / 1 / 2 / -1; }
         &:has([data-hhr-reading="vital-pam"]) > [data-hhr-reading="vital-label"] { grid-column-end:2; }
-        [data-hhr-reading="vital-value"] { grid-area:2 / 1; font-size:1.0625rem !important; font-weight:650; }
+        [data-hhr-reading="vital-value"] { grid-area:2 / 1; font-size:var(--hhr-ficha-text-lead) !important; font-weight:600; }
         [data-hhr-reading="vital-pam"] { grid-area:1 / 2; justify-self:end; }
         [data-hhr-reading="vital-time"] { grid-area:2 / 2; justify-self:end; }
       }
@@ -166,9 +175,9 @@
     :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection):has(> .MuiCard-root:only-child) {
       padding:0 !important; margin-block:0 !important;
       > .MuiCard-root {
-        margin-block:0 !important; padding-inline:0 !important; border-radius:6px !important;
+        margin-block:0 !important; padding-inline:0 !important; border-radius:var(--hhr-ficha-radius) !important;
         > :is(.MuiCardHeader-root,.MuiCardContent-root) { padding-inline:var(--hhr-round-inset) !important; }
-        > .MuiCardHeader-root .MuiCardHeader-title { font-size:var(--hhr-round-heading); line-height:1.35; font-weight:650; }
+        > .MuiCardHeader-root .MuiCardHeader-title { color:var(--hhr-ficha-ink); font-size:var(--hhr-round-heading); line-height:1.35; font-weight:600; }
         > .MuiCardHeader-root > .MuiCardHeader-content:has(> [data-hhr-update-label]) {
           display:flex; align-items:baseline; flex-wrap:wrap; gap:1px 8px; min-width:0;
         }
@@ -177,7 +186,8 @@
     /* A table that fills its card shares the card's reading edges: the heading,
        the column names and every first cell start on the same line. */
     :is(#medicationEntrySection,#freeIndicationEntrySection,#procedureOrderEntrySection):has(> .MuiCard-root:only-child)
-      > .MuiCard-root > .MuiCardContent-root:has(> :is(table,.MuiTableContainer-root):only-child) {
+      /* Eloísa wraps the table in a Paper. :has() cannot hold another :has(), so the chain is spelt out. */
+      > .MuiCard-root > .MuiCardContent-root:is(:has(> :is(table,.MuiTableContainer-root):only-child), :has(> .MuiPaper-root:only-child > .MuiTableContainer-root:only-child > table)) {
       padding-inline:0 !important;
       :is(th,td):first-child:not(:is(dialog,[role=dialog],td) *) { padding-inline-start:var(--hhr-round-inset) !important; }
       :is(th,td):last-child:not(:is(dialog,[role=dialog],td) *) { padding-inline-end:var(--hhr-round-inset) !important; }
@@ -191,13 +201,16 @@
       padding-inline-end:calc(var(--hhr-round-inset) + 86px) !important;
     }
     #vitalSignsEntry > .MuiCard-root:has(> .MuiCardHeader-root) [data-hhr-reading="vital-history"] {
-      border-color:transparent; color:#285f59;
+      border-color:transparent; color:var(--hhr-ficha-action);
       inline-size:auto; padding:0 7px 0 5px !important; inset-inline-end:calc(var(--hhr-round-inset) - 7px);
-      &::after { content:'Historial' / ''; margin-inline-start:5px; font:600 .75rem/1 system-ui,sans-serif; }
+      &::after { content:'Historial' / ''; margin-inline-start:5px; font:600 .75rem/1 var(--hhr-ficha-sans); }
       &:hover { border-color:transparent; }
     }
+    :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection) thead th :is(p,.MuiTypography-root) {
+      margin:0; color:inherit; font:inherit;
+    }
     :is(#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection) thead th {
-      background-color:#f2f6f4; color:#3f5952; font-size:.75rem; font-weight:600;
+      background-color:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft); font-size:.75rem; font-weight:600;
     }
   }
 }
@@ -223,6 +236,19 @@
   }
 }
 
+/* The margins of the page. Eloísa pads main with 32 px and hangs the tab bar, fixed, across the whole
+   window. Both take the same inset, so the tabs, the section links and every card share one edge.
+   Percentages resolve against the window without its scroll bar, so both sides stay equal. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] main:has([role="tab"][id^="encounter-event-tab-"]) {
+    padding-inline:max(var(--hhr-ficha-page-margin), calc((100% - var(--hhr-ficha-page-max)) / 2)) !important;
+    > header.MuiAppBar-root:has([role="tab"][id^="encounter-event-tab-"]) {
+      /* The tab text starts on the reading edge of the cards, 10 px inside them; the tabs keep 24 px of their own. */
+      padding-inline:max(calc(var(--hhr-ficha-page-margin) - 14px), calc((100% - var(--hhr-ficha-page-max)) / 2 - 14px)) !important;
+    }
+  }
+}
+
 /* The sections of the ficha and «Historial» are named as they are written, not in capitals. */
 @media screen {
   html[data-hhr-ficha-theme="compact"] :is([data-hhr-ficha-primary] [role="tab"], [data-hhr-reading="vital-history"]) { text-transform:none; }
@@ -234,6 +260,8 @@
 @media screen {
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     [data-hhr-reading-toggle] .MuiSwitch-root { zoom:.75; }
+    /* MUI leaves 16 px after a switch's label. Closing a heading, the label ends on the reading edge like any other action. */
+    .MuiCardHeader-action .MuiFormControlLabel-root:last-child { margin-inline-end:0 !important; }
     :is(#medicationEntrySection,#noPharmaEntrySection,#freeIndicationEntrySection) > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-action .MuiButton-root,
     > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root {
       /* A block, so that its first letter can be a capital: Eloísa writes «validar tratamiento» and shows it in capitals. */
@@ -270,14 +298,14 @@
     align-items:center; column-gap:2px; background:#f7f9f8;
     [data-hhr-ficha-link] {
       box-sizing:border-box; padding-block:2px; border-radius:6px; line-height:20px !important;
-      &[aria-current="location"] { border-color:#a8cfc5; background:#e5f2ee; color:#095e54 !important; }
+      &[aria-current="location"] { border-color:#a8cfc5; background:#e5f2ee; color:var(--hhr-ficha-focus) !important; }
     }
     /* Keep this utility with the links, clear of the floating extension toolbar. */
     .hhr-ficha-empty-toggle {
       display:inline-flex; align-items:center; gap:6px;
       position:relative; margin-inline-start:9px; padding:2px 7px;
       min-height:24px; background:transparent; border:1px solid transparent;
-      border-radius:5px; color:#47645d; line-height:18px;
+      border-radius:5px; color:var(--hhr-ficha-ink-soft); line-height:18px;
       &::before {
         content:''; position:absolute; inset-inline-start:-7px;
         inset-block:4px; border-inline-start:1px solid #b6c8c2;
@@ -287,7 +315,7 @@
         border:solid currentColor; border-width:0 1.5px 1.5px 0; transform:rotate(45deg);
       }
       &[aria-expanded="true"]::after { transform:rotate(225deg); margin-block-start:3px; }
-      &:hover { background:#e7efec; color:#234f46; }
+      &:hover { background:#e7efec; color:var(--hhr-ficha-action); }
       &:focus-visible { outline:2px solid #176f63; outline-offset:-2px; }
     }
   }
@@ -320,8 +348,8 @@
       :is([data-hhr-reading="empty-section-title"],[data-hhr-reading="status-message"]) {
         font-size:0 !important; line-height:1 !important; margin:0 !important;
       }
-      [data-hhr-reading="empty-section-title"]::after { content:var(--hhr-request-label) / ''; font:600 .8125rem/1.35 system-ui,sans-serif; }
-      [data-hhr-reading="status-message"]::after { content:"Sin solicitudes" / ''; font:normal .75rem/1.35 system-ui,sans-serif; color:#516963; }
+      [data-hhr-reading="empty-section-title"]::after { content:var(--hhr-request-label) / ''; font:600 .8125rem/1.35 var(--hhr-ficha-sans); }
+      [data-hhr-reading="status-message"]::after { content:"Sin solicitudes" / ''; font:normal .75rem/1.35 var(--hhr-ficha-sans); color:var(--hhr-ficha-muted); }
     }
     /* Side by side, each request reads as a label followed by its state. With larger
        text the state moves below its own label. */
@@ -378,7 +406,7 @@
     [data-hhr-update-repeat="above"]::after { content:'↑ misma firma' / ''; }
     /* One age for the measurements taken together. An older one keeps its own. */
     #vitalSignsEntry [data-hhr-vital-shared]:not([data-hhr-vital-shared=""])::after {
-      content:'· medidos hace ' attr(data-hhr-vital-shared) / ''; color:var(--hhr-ficha-muted); font:normal .75rem/1.35 system-ui,sans-serif;
+      content:'· medidos hace ' attr(data-hhr-vital-shared) / ''; color:var(--hhr-ficha-muted); font:normal .75rem/1.35 var(--hhr-ficha-sans);
     }
     #vitalSignsEntry [data-hhr-reading="vital-time"][data-hhr-vital-shared=""] {
       position:absolute !important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);

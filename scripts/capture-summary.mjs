@@ -23,6 +23,9 @@ const read = page => page.evaluate(() => {
   const rows = [...medication.querySelectorAll('tbody tr')].map(row => ({
     ...box(row), requester:box(row.cells[4].firstElementChild).height, posology:row.cells[2].querySelector('.MuiTypography-caption').textContent.trim(),
     disclosures:[...row.querySelectorAll('.MuiButton-text')].filter(shown).length,
+    // A marker that did not fit after the last word starts a line of its own, as a word does.
+    markerBelow:(chip => { if (!chip) return false; const name = document.createRange(); name.selectNodeContents(row.cells[1].querySelector('.MuiTypography-root'));
+      return chip.getBoundingClientRect().top >= [...name.getClientRects()].at(-1).bottom - 2; })(row.cells[1].querySelector('.MuiChip-root')),
     days:(marker => ({text:marker.textContent.trim(), unit:getComputedStyle(marker, '::after').content, triangle:getComputedStyle(marker.querySelector('svg')).display,
       size:getComputedStyle(marker.querySelector('span')).fontSize, family:getComputedStyle(marker.querySelector('span')).fontFamily, zoom:getComputedStyle(marker).zoom,
       width:box(row.cells[0]).width, end:box(row.cells[0]).right - box(marker.querySelector('span')).right}))(row.cells[0].firstElementChild),
@@ -52,18 +55,105 @@ const read = page => page.evaluate(() => {
     switches:[...document.querySelectorAll('#alertEntries .MuiSwitch-root')].map(el => Math.round(box(el).height)),
     archive:[...document.querySelectorAll('#alertEntries .alert-row button')].map(button => [Math.round(box(button.querySelector('svg')).width), Math.round(box(button).height), button.getAttribute('aria-label')]),
     tabs:getComputedStyle(one('[role="tab"]')).textTransform,
+    // What good order asks of the whole page: its edges, its gaps, its type and its surfaces. Only in the compact view.
+    look:!one('[data-hhr-ficha-sections] [data-hhr-ficha-link]') || !one('[data-hhr-round="frame"]') ? null : (() => {
+      const rail = one('[data-hhr-ficha-sections]').getBoundingClientRect();
+      const cards = [...document.querySelectorAll('.frame section[id] > .MuiCard-root, .frame #rest.MuiCard-root')].filter(shown);
+      const peers = [...document.querySelectorAll('.frame > [data-hhr-round="peer"], .frame > [data-hhr-round="diagnosis"]')].filter(shown)
+        .map(item => item.querySelector(':scope > section > .MuiCard-root')).filter(Boolean).sort((a, b) => box(a).top - box(b).top);
+      const texts = [...document.querySelectorAll('.frame *, [data-hhr-ficha-sections] *')].filter(el => shown(el) &&
+        [...el.childNodes].some(node => node.nodeType === 3 && node.textContent.trim()) && getComputedStyle(el).fontSize !== '0px');
+      const firstText = el => { const range = document.createRange(); range.selectNodeContents(el); return range.getClientRects()[0]?.left; };
+      const tables = ['medicationEntrySection', 'freeIndicationEntrySection', 'procedureOrderEntrySection'].map(id => {
+        const section = document.getElementById(id);
+        // The reading edge of a cell is where its content box starts: «Tiempo» aligns its days to the right on purpose.
+        const edge = cell => cell.getBoundingClientRect().left + parseFloat(getComputedStyle(cell).paddingLeft);
+        return [firstText(section.querySelector('.MuiCardHeader-title')), edge(section.querySelector('thead th')), edge(section.querySelector('tbody td'))].map(Math.round);
+      });
+      const empty = ['ramEntry', 'allergyEntry', 'noPharmaEntry'].map(id => {
+        const card = document.getElementById(id);
+        return Math.round(card.querySelector('[data-hhr-reading="status-message"]').getBoundingClientRect().left - card.querySelector('.MuiCardHeader-title').getBoundingClientRect().right);
+      });
+      const tab = document.createRange(); tab.selectNodeContents(one('[role="tab"][aria-selected="true"]'));
+      return {
+        tabEdge:Math.round(tab.getClientRects()[0].left - firstText(one('#evolution .MuiCardHeader-title'))),
+        rail:[Math.round(rail.left), Math.round(innerWidth - rail.right)],
+        lefts:[...new Set(cards.map(card => Math.round(card.getBoundingClientRect().left)))].sort((a, b) => a - b),
+        rights:[...new Set(cards.map(card => Math.round(innerWidth - card.getBoundingClientRect().right)))].sort((a, b) => a - b),
+        gaps:peers.slice(1).map((card, at) => Math.round(box(card).top - box(peers[at]).bottom)),
+        families:[...new Set(texts.map(el => getComputedStyle(el).fontFamily.split(',')[0].trim()))],
+        weights:[...new Set(texts.map(el => getComputedStyle(el).fontWeight))].sort(),
+        sizes:[...new Set(texts.map(el => parseFloat(getComputedStyle(el).fontSize)))].sort((a, b) => a - b),
+        titles:[...new Set(peers.concat([one('#evolution'), one('#shiftChangeObservation'), one('section#vitalSignsEntry > .MuiCard-root'), one('#alertEntries')])
+          .filter(card => !card.matches('[data-hhr-reading="status-card"]'))
+          .map(card => { const title = getComputedStyle(card.querySelector('.MuiCardHeader-title')); return title.fontSize + ' ' + title.fontWeight; }))],
+        surfaces:[...new Set(peers.map(card => { const look = getComputedStyle(card); return look.borderTopLeftRadius + ' ' + look.boxShadow; }))],
+        tables, empty,
+        // Eloísa's neutral inks: what is read, what names a column, what only explains.
+        inks:[getComputedStyle(one('#medicationEntry .MuiCardHeader-title')).color, getComputedStyle(one('#medicationEntry thead th')).color,
+          getComputedStyle(one('#ramEntry [data-hhr-reading="status-message"]')).color],
+        // An empty section: its name on the reading edge, its filter closing the line on the other.
+        emptyEdges:['ramEntry', 'allergyEntry', 'noPharmaEntry'].map(id => {
+          const card = document.getElementById(id).getBoundingClientRect(), title = document.querySelector('#' + id + ' .MuiCardHeader-title').getBoundingClientRect();
+          return Math.round(title.left - card.left);
+        }),
+        filter:(() => {
+          const card = one('#noPharmaEntry').getBoundingClientRect(), label = one('#noPharmaEntry .MuiCardHeader-action label').getBoundingClientRect();
+          const free = one('#freeIndicationEntry').getBoundingClientRect(), freeLabel = one('#freeIndicationEntry .MuiCardHeader-action label').getBoundingClientRect();
+          const message = one('#noPharmaEntry [data-hhr-reading="status-message"]').getBoundingClientRect();
+          return {end:Math.round(card.right - label.right), freeEnd:Math.round(free.right - freeLabel.right), afterMessage:label.left > message.right,
+            oneLine:Math.abs((label.top + label.bottom) / 2 - (message.top + message.bottom) / 2) < 6};
+        })(),
+        // The name of the diagnosis card starts at the top, beside the headings of its table.
+        diagnosisTop:Math.round(one('#diagnosisEntry .MuiCardHeader-title').getBoundingClientRect().top - one('#diagnosisEntry').getBoundingClientRect().top),
+        // A marker follows the last word of a name that takes two lines.
+        marker:(() => {
+          const cell = [...document.querySelectorAll('#medicationEntrySection tbody tr')][2].cells[1];
+          const name = document.createRange(); name.selectNodeContents(cell.querySelector('.MuiTypography-root'));
+          const lines = [...name.getClientRects()], last = lines.at(-1), chip = cell.querySelector('.MuiChip-root').getBoundingClientRect();
+          return {lines:new Set(lines.map(rect => Math.round(rect.top))).size, gap:Math.round(chip.left - last.right), onLast:chip.top < last.bottom && chip.bottom > last.top,
+            below:chip.top >= last.bottom - 2, start:Math.round(chip.left - lines[0].left)};
+        })(),
+      };
+    })(),
     marks:document.querySelectorAll('[data-hhr-round],[data-hhr-reading]').length,
   };
 });
 
 // What the compact summary promises on the shapes Eloísa draws, checked on the page itself.
-async function verifySummary(page, width, native, off) {
+async function verifySummary(page, width, native, off, sans) {
   const shown = await read(page);
   const near = (a, b, slack = 2) => Math.abs(a - b) <= slack;
   assert.equal(shown.pageWidth, width, 'El resumen cabe en la ventana');
   assert.ok(shown.columns, 'La ronda ocupa sus dos columnas');
   assert.deepEqual(shown.roles, {estimatedDischargeSection:'note', shiftChangeEntrySection:'handoff', vitalSignsEntry:'vitals', rest:'care', alertEntrySection:'alerts',
     diagnosisEntrySection:'diagnosis', medicationEntrySection:'peer', 'fixture-print':'print'});
+
+  // The edges of the page: the round, every card and the section links keep the same margin on both sides.
+  const {look} = shown;
+  assert.equal(look.rail[0], look.rail[1], 'La línea de secciones deja el mismo margen a cada lado: ' + look.rail);
+  assert.ok(look.rail[0] >= 32, 'El margen nunca es menor que el de Eloísa: ' + look.rail[0]);
+  assert.equal(look.tabEdge, 0, 'Las pestañas empiezan donde empiezan los títulos de las tarjetas');
+  assert.ok(look.lefts[0] === look.rail[0] && look.rights[0] === look.rail[1], `Las tarjetas empiezan y terminan en los bordes de la línea de secciones: ${look.lefts[0]}/${look.rights[0]} frente a ${look.rail}`);
+  // One gap between blocks, one typeface, two weights, four sizes, one title, one surface.
+  assert.ok(look.gaps.length >= 6 && look.gaps.every(gap => gap === 8), 'Los bloques bajo la ronda se separan siempre 8 px: ' + look.gaps);
+  // The wide pass swaps only the view's family, to measure another platform: there two are expected.
+  if (!sans) assert.equal(look.families.length, 1, 'Una sola tipografía en toda la ficha: ' + look.families);
+  assert.deepEqual(look.weights, ['400', '600'], 'Dos pesos de letra');
+  assert.ok(look.sizes.every(size => [12, 13, 15, 16].includes(size)), 'Cuatro tamaños de letra: ' + look.sizes);
+  assert.deepEqual(look.titles, ['15px 600'], 'Cada tarjeta se titula igual');
+  assert.deepEqual(look.surfaces, ['6px none'], 'Las tarjetas bajo la ronda tienen la misma superficie');
+  assert.ok(look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(look.tables));
+  assert.ok(look.empty.every(gap => gap >= 8 && gap <= 12), 'Una sección vacía separa su nombre de su mensaje: ' + look.empty);
+  assert.deepEqual(look.inks, ['rgb(33, 33, 33)', 'rgb(74, 74, 74)', 'rgb(102, 102, 102)'], 'El texto usa las tintas neutras de Eloísa');
+  assert.ok(look.emptyEdges.every(edge => edge === 10), 'Una sección vacía empieza en el borde de lectura: ' + look.emptyEdges);
+  assert.ok(look.filter.end === 10 && look.filter.afterMessage && look.filter.oneLine, 'El filtro de una sección vacía cierra su línea: ' + JSON.stringify(look.filter));
+  assert.equal(look.filter.freeEnd, 10, 'Un filtro que cierra la cabecera termina en el borde de lectura');
+  assert.ok(look.diagnosisTop <= 10, 'El nombre de Diagnóstico queda arriba: ' + look.diagnosisTop);
+  // Like a word: after the last word of the name, or, when that line is full, at the start of the next one. Never in a column of its own.
+  const {marker} = look;
+  assert.ok(marker.lines === 2 && ((marker.onLast && marker.gap >= 4 && marker.gap <= 10) || (marker.below && marker.start >= 0 && marker.start <= 10)),
+    'La etiqueta sigue al nombre como una palabra: ' + JSON.stringify(marker));
 
   // The round: note, signs and care on the left; handoff and alerts on the right, on shared edges.
   assert.ok(near(shown.note.left, shown.signs.left) && near(shown.note.right, shown.signs.right) && near(shown.signs.top, shown.note.bottom), 'Signos sigue a la nota con sus bordes');
@@ -109,7 +199,7 @@ async function verifySummary(page, width, native, off) {
   // The capital is drawn only on a block: the same rule on a flex button would leave the phrase in lower case.
   assert.deepEqual([medication.validate.text, medication.validate.transform, medication.validate.initial, medication.validate.display], ['validar tratamiento', 'none', 'uppercase', 'block'],
     '«Validar tratamiento» se escribe como una frase');
-  assert.equal(medication.requester, 'rgb(81, 105, 99)', 'El solicitante se lee en la tinta de lo que explica');
+  assert.equal(medication.requester, 'rgb(102, 102, 102)', 'El solicitante se lee en el gris de lo que explica, el de Eloísa, no en un color que parezca un enlace');
   assert.ok(medication.validate.height <= 28 && medication.filter <= 30 && medication.head.height <= 36, 'La cabecera de Fármacos es una línea: ' + medication.head.height);
   assert.ok(shown.switches.every(height => height <= 30) && shown.switches.every((height, at) => height < native.switches[at]), 'Los interruptores miden lo que una línea');
   assert.equal(shown.tabs, 'none', 'Las pestañas se escriben como su nombre');
@@ -122,17 +212,42 @@ async function verifySummary(page, width, native, off) {
     const [count] = summaryMedications[at];
     assert.deepEqual([row.days.text, row.days.triangle, row.days.size, row.days.zoom], [String(count), 'none', '12px', '1'], `Los días de la fila ${at} se leen como un número`);
     assert.match(row.days.unit, count === 1 ? /^"\s?d" \/ " día"$/ : /^"\s?d" \/ " días"$/, `El número dice su unidad: ${row.days.unit}`);
-    assert.ok(row.days.width <= 64 && !/^Arial/.test(row.days.family), 'La columna de días no pide más ancho que antes y usa la letra de la vista: ' + row.days.width);
+    // Compared with Eloísa's own column in the same run: a fixed number of pixels depends on the font of each platform.
+    assert.ok(row.days.width <= native.medication.rows[at].days.width + 1 && !/^Arial/.test(row.days.family),
+      `La columna de días no pide más ancho que la de Eloísa: ${native.medication.rows[at].days.width} → ${row.days.width}`);
     assert.ok(row.requester <= 20, `El solicitante de la fila ${at} ocupa una línea: ${row.requester}`);
     assert.equal(row.posology, summaryMedications[at][3], 'La posología se lee entera');
     assert.equal(row.disclosures, 0, 'Con el texto entero, «Leer menos» no ocupa una línea');
     assert.deepEqual(row.actions.map(([name, , named]) => [name, named]), [['Suspender', false], ['Ver notas', false], [null, false]], 'Las acciones conservan el nombre de su icono');
-    assert.ok(row.actions.every(([, height]) => height >= 24) && row.height <= 46 && row.height < native.medication.rows[at].height, `La fila ${at} es más baja: ${native.medication.rows[at].height} → ${row.height}`);
+    // Two lines at most, or three when a marker that did not fit after the last word took a line of its own.
+    assert.ok(row.actions.every(([, height]) => height >= 24) && row.height <= (row.markerBelow ? 66 : 46) && row.height < native.medication.rows[at].height,
+      `La fila ${at} es más baja: ${native.medication.rows[at].height} → ${row.height}`);
   });
   assert.equal(new Set(medication.rows.map(row => Math.round(row.days.end))).size, 1, 'Las unidades de los días caen en una línea: ' + medication.rows.map(row => Math.round(row.days.end)));
   const single = medication.rows.filter(row => row.height <= 30).length, visible = medication.rows.filter(row => row.bottom <= shown.viewport).length;
   assert.ok(single >= 6, `La mayoría de las indicaciones cabe en una línea: ${single} de ${medication.rows.length}`);
-  assert.ok(visible >= (width < 1400 ? 3 : 6), 'La primera pantalla llega a los fármacos: ' + visible);
+  // How many rows fit depends on the metrics of the font. With Eloísa's fallback both platforms measure alike; the
+  // wide pass, which is DejaVu on Linux and Verdana on macOS, keeps one row less of margin.
+  assert.ok(visible >= (width < 1400 ? 3 : 6) - (sans ? 1 : 0), 'La primera pantalla llega a los fármacos: ' + visible);
+
+  // At the narrowest width of the two columns a diagnosis may wrap its text, never its state or its date.
+  const viewport = page.viewportSize();
+  await page.setViewportSize({width:1100, height:viewport.height});
+  await refresh(page);
+  const narrow = await page.evaluate(() => [...document.querySelectorAll('#diagnosisEntrySection tbody tr')].map(row =>
+    [row.querySelector('[role="combobox"]'), row.cells[3]].map(cell => { const range = document.createRange(); range.selectNodeContents(cell); return new Set([...range.getClientRects()].map(rect => Math.round(rect.top))).size; })));
+  assert.ok(narrow.every(lines => lines.every(count => count === 1)), 'A 1100 px el estado y la fecha de un diagnóstico ocupan una línea: ' + JSON.stringify(narrow));
+  await page.setViewportSize(viewport);
+  await refresh(page);
+
+  // On a wide screen the content stops at 1600 px and stays at the centre, tabs included.
+  await page.setViewportSize({width:1990, height:viewport.height});
+  await refresh(page);
+  const wide = (await read(page)).look;
+  assert.ok(wide.rail[0] === wide.rail[1] && Math.abs(1990 - wide.rail[0] * 2 - 1600) <= 1 && wide.tabEdge === 0,
+    'En una pantalla ancha el contenido mide 1600 px y queda centrado: ' + wide.rail);
+  await page.setViewportSize(viewport);
+  await refresh(page);
 
   // Keyboard: the diagnosis, then «Imprimir indicaciones», then the tools of Fármacos, as they are seen.
   await page.locator('#diagnosisEntrySection tbody tr').last().locator('button:enabled').last().focus();
@@ -235,7 +350,7 @@ try {
       await page.screenshot({path:path.join(directory, width + '-resumen.png')});
       await page.screenshot({path:path.join(directory, width + '-resumen-completo.png'), fullPage:true});
     }
-    if (revision === 'WORKTREE') await verifySummary(page, width, native, off);
+    if (revision === 'WORKTREE') await verifySummary(page, width, native, off, sans);
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
   }
