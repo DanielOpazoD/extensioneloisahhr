@@ -20,8 +20,8 @@ El cuerpo es `main > div.MuiStack-root`: primero la fila de enlaces de sección 
 | 4 | `xs-12` | `div#encounterFormEntry` (Instrumentos de evaluación), sin `section`. |
 | 5 | `xs-12` | `section#physicalExaminationEntry > div#physicalExaminationEntry`. |
 | 6 | `xs-12` | `section#vitalSignsEntry > div#vitalSignsEntry` (el mismo id en ambos). |
-| 7 | `xs-12` | Un solo botón «Imprimir indicaciones». |
-| 8 | `xs-6` | Un `.MuiGrid-container` con dos ítems: `div#rest` (Reposo, sin `section` cuando está vacío) y `section#nutritionOrderEntrySection > div#nutritionOrder`. |
+| 7 | `xs-12` | Un solo botón de icono, `LocalPrintshopRoundedIcon`, con `aria-label="Imprimir indicaciones"` en su `svg`. Sin texto. |
+| 8 | `xs-6` | Un `.MuiGrid-container` con dos ítems `xs-12`: `div.MuiCard-root#rest` (Reposo, sin `section` cuando está vacío) y `section#nutritionOrderEntrySection > div#nutritionOrder`. |
 | 9 | `xs-12 md-6` | `section#alertEntrySection > div#alertEntries`. |
 | 10… | `xs-12` | `medicationEntrySection`, `noPharmaEntrySection`, `freeIndicationEntrySection`, `procedureEntrySection`, `diagnosisEntrySection`, `referralRequestEntrySection`, `procedureOrderEntrySection`, `diagnosisTestEntrySection`, `ramEntrySection`, `allergyEntrySection`, `operationTheaterRequestEntrySection`, `inputOutputHydricBalanceEntrySection`, `adverseEventEntrySection`, `obstetricGynecologicalExaminationEntrySection`. |
 
@@ -52,19 +52,45 @@ No hay `input[type=date]`. La fila tiene cuatro controles.
 
 ### Reposo y Régimen
 
-- Reposo vacío: `div#rest > .MuiCardContent-root > p` «No se presenta un Reposo registrado para este paciente».
+- Reposo vacío: `div.MuiCard-root#rest`, sin `section`, con su cabecera (título «Reposo», subtítulo y acciones vacíos) y `.MuiCardContent-root > p` «No se presenta un Reposo registrado para este paciente».
 - Régimen: `.MuiCardContent-root > div.MuiStack-root` con dos `div.MuiStack-root`: `p` «Régimen:» + `div.MuiChip-root` + `div.MuiBox-root > span.MuiTypography-caption`; y `p` «Observación:» + `div.MuiBox-root > span.MuiTypography-caption`.
 
 ### Alertas
 
-`div#alertEntries`: `.MuiCardContent-root` con `div.MuiBox-root` (una `div.MuiStack-root` por alerta: una pila con `p` «Cargo Nombre» y `div > span` mensaje; otra con `span.MuiTypography-caption` antigüedad y `div.MuiStack-root > button[aria-label="Archivar"] > svg[data-testid=ArchiveRoundedIcon]`) y un `form.MuiStack-root` con los interruptores «No reanimación» y «Gestión de Visitas» y el campo «Observaciones» con «Agregar». Una ficha tenía quince alertas.
+`div#alertEntries`: `.MuiCardContent-root` con `div.MuiBox-root` (alto máximo de 250 px con desplazamiento propio; una `div.MuiStack-root` por alerta: una pila con `p` «Cargo Nombre» y `div > span` mensaje; otra con `span.MuiTypography-caption` antigüedad y `div.MuiStack-root > button[aria-label="Archivar"] > svg[data-testid=ArchiveRoundedIcon]`) y un `form.MuiStack-root` con los interruptores «No reanimación» y «Gestión de Visitas» y el campo «Observaciones» con «Agregar». Una ficha tenía quince alertas.
 
 ### Fármacos
 
-- Acciones de cabecera en un `div.MuiStack-root`: `button` «validar tratamiento», interruptor «Mostrar Suspendidos», botón de icono `LocalPrintshopRoundedIcon`.
+- Cabecera con título «Fármacos» y subtítulo vacío: la tarjeta no lleva firma. Acciones en un `div.MuiStack-root`: `button.MuiButton-contained.MuiButton-containedSecondary` «validar tratamiento» (el texto está en minúsculas y se muestra en mayúsculas; 195 × 38 px), interruptor «Mostrar Suspendidos», botón de icono `LocalPrintshopRoundedIcon` con nombre en su `svg`.
 - Columnas (`th` fijas): Tiempo, Indication, Posología, Indicaciones específicas, Solicitante, Acciones.
-- Celdas: tiempo en `div.MuiBox-root` con `svg[data-testid=ChangeHistoryRoundedIcon]` y un número; los textos en `span.MuiTypography-caption`; el fármaco comparte un `div.MuiStack-root` con sus chips (por ejemplo «SOS»).
-- Acciones por fila: `CancelIcon` («Suspender»), `SpeakerNotesIcon` («Ver notas») y `MoreVertIcon`; el nombre está en el `svg`.
+- Celdas: tiempo en `div.MuiBox-root` con `svg[data-testid=ChangeHistoryRoundedIcon]` y un número de una o dos cifras; el fármaco en un `div.MuiStack-root` con su `span.MuiTypography-caption` y otra pila con sus chips (por ejemplo «SOS»); posología e indicaciones específicas en `div.MuiBox-root > span.MuiTypography-caption`; el solicitante en un `span.MuiTypography-caption`.
+- **Un texto largo llega cortado.** Posología e indicaciones específicas se cortan hacia los 48 caracteres con «...» y llevan debajo un `div.MuiBox-root > button.MuiButton-text` «Leer más», en su propia línea: 10 de 14 posologías en la lista leída.
+- En una lista de 14: nombres de 24 a 113 caracteres (mediana 35), solicitantes de 12 a 17.
+- Acciones por fila: `CancelIcon` («Suspender») y `SpeakerNotesIcon` («Ver notas», deshabilitado sin notas), de tamaño pequeño, y `MoreVertIcon`, de tamaño mediano y con `aria-haspopup`; el nombre está en el `svg`.
+
+### Diagnóstico
+
+`section#diagnosisEntrySection > div.MuiCard-root#diagnosisEntry`, tras Fármacos, Producto no Farmacológico, Indicaciones Libres y Procedimientos: en una ficha estaba a 2,5 pantallas del inicio.
+
+- Cabecera con título, subtítulo «Última actualización: …, Médico Nombre» y acciones vacías.
+- `.MuiCardContent-root > div.MuiPaper-root > div.MuiTableContainer-root > table` con siete columnas: una sin rótulo, Diagnóstico, Estado, Fecha, GES, Eno, Acciones.
+- Fila: `svg[data-testid=StarRoundedIcon]` en el diagnóstico principal; un `div.MuiStack-root` con una etiqueta de dos palabras (`div.MuiBox-root > span.MuiTypography-caption`) y el texto «código: descripción» en otro `span.MuiTypography-caption`; el estado en un selector de MUI (`div[role=combobox]#select-diagnosis-status`, 196 × 40 px, habilitado); la fecha; GES y Eno vacíos; y dos botones pequeños, `SpeakerNotesIcon` («Ver notas», deshabilitado) y `NoteAddIcon` («Agregar notas»).
+
+### Otras tablas
+
+| Tarjeta | Columnas |
+| --- | --- |
+| Indicaciones Libres | Indication, Programación, Solicitante, Acciones |
+| Procedimientos | Indicación, Estado, Fecha solicitud, Para, Nº de sesiones, Fundamentos, Solicitante, Acciones |
+| Solicitud interconsulta | Especialidad, Destino, Estado, Fecha solicitud, Interconsultor, Motivo, Acciones |
+| Órdenes de atención | Profesional, Estado, Fecha solicitud, Asignado, Motivo, Indicaciones, Acciones |
+| Solicitud de examen | Grupo de exámenes, Nro. Orden, Estado Orden, Fecha solicitud, Examen(es), Observaciones, Estado, Acciones |
+
+Las filas de Indicaciones Libres llevan las mismas tres acciones que las de Fármacos. Una ficha tenía 20 botones «Leer más» en sus tablas.
+
+### Línea de secciones
+
+Doce enlaces `div.MuiGrid-item > span.MuiBadge-root > span.MuiTypography-caption`, en este orden: Alertas, Diagnóstico, Solicitud de examen, Indicaciones (Indicación Libre), Indicaciones (Medicamento), Indicaciones (Régimen), Evolución, Solicitudes de intervención quirúrgica, Procedimientos, Órdenes de atención, Solicitud interconsulta, Signos vitales. **No es el orden de la página.**
 
 ## Plan de tratamiento
 
@@ -116,3 +142,4 @@ Cada evento es un `div.MuiCard-root`:
 - El Resumen ficticio usaba `input[type=date]` y un solo botón en la fila diaria, y daba `aria-label` a los botones de Evolución.
 - El lápiz de Evolución es «Enmendar», no «Editar».
 - No había ficha ficticia de Plan de tratamiento. La de `scripts/care-plan-visual-fixture.mjs` se escribió desde esta descripción.
+- Las fichas ficticias del Resumen dibujaban Fármacos con tres o cuatro columnas, un menú por fila y una firma de tarjeta; «Imprimir indicaciones» como un botón con texto; Reposo vacío dentro de una sección; y los interruptores y botones de Eloísa a un tamaño que no tienen. Con la forma real, la 0.48.192 dejaba Reposo vacío como una tarjeta a todo el ancho y Régimen en tres líneas. `scripts/summary-visual-fixture.mjs` sigue esta descripción bloque por bloque.

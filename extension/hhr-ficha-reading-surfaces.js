@@ -246,6 +246,10 @@
                 for (const body of table.tBodies) for (const row of body.rows) orderCells.set(row.cells[index], heading);
               }
               if (kind === 'care-orders' && heading === 'indicaciones') next.set(th,'order-instructions');
+              // The dose and its schedule are read whole: their column asks for the room of a line.
+              if (compact && kind === 'orders' && heading === 'posología') next.set(th,'order-posology');
+              // Who asked for each prescription: a name that reads on one line.
+              if (compact && kind === 'orders' && heading === 'solicitante') for (const body of table.tBodies) for (const row of body.rows) next.set(row.cells[index],'order-requester');
               if (!/^(tiempo|hora|horario|acciones)$/.test(heading)) return;
               // The buttons below already say what the column is for.
               if (compact && heading === 'acciones' && !th.childElementCount && !th.closest('dialog,[role=dialog],td') &&

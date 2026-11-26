@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.193
+
+- En el Resumen de la vista Compacta, Diagnóstico pasa a la primera pantalla: abre las tarjetas bajo la ronda, con una línea por diagnóstico, su estado y sus notas.
+- «Imprimir indicaciones» deja su línea propia y va junto al título de Fármacos, con su nombre a la vista.
+- Reposo sin registro se lee «Sin registro» en la línea de Régimen, en vez de ocupar una tarjeta a todo el ancho. Régimen muestra su valor y su observación en una línea.
+- En Fármacos, el solicitante ocupa una línea y la posología tiene más sitio: la mayoría de las indicaciones cabe en una línea. «Validar tratamiento», los interruptores y el estado de un diagnóstico miden lo que una línea de texto.
+- Las pestañas de la ficha y «Validar tratamiento» se escriben como una frase, no en mayúsculas. Las tarjetas bajo la ronda empiezan en su mismo borde.
+
 ## 0.48.192
 
 - En la vista Compacta, el Historial se lee como una línea de tiempo: una superficie por día, una línea por evento y la hora en una columna al margen. «Hoy» y «Ayer» muestran su fecha. Las evoluciones médicas y de enfermería llevan el mismo filete lateral que Evolución en el Resumen.

@@ -104,6 +104,8 @@
       > .MuiBox-root { font-size:.75rem !important; }
       > :is(sub,sup,span,strong,b,em):not(.MuiBox-root) { font-size:0 !important; }
     }
+    /* The Box beside a name carries its unit. Without one it is an empty line. */
+    [data-hhr-reading="vital-label"] > .MuiBox-root:has(> .MuiTypography-caption:empty:only-child) { display:none; }
     [data-hhr-reading="vital-value"] :is(h5,span) { font-weight:inherit; }
     [data-hhr-vital-elapsed] {
       font-size:0 !important;
@@ -217,6 +219,37 @@
       td :is(.MuiSelect-select,select:not([multiple],[size])) { padding-block:4px !important; min-height:24px; font-size:.8125rem; }
       td .MuiInputBase-root:has(.MuiSelect-select) { height:auto !important; min-height:28px; }
       td .MuiFormControl-root { margin-block:0; }
+    }
+  }
+}
+
+/* The sections of the ficha and «Historial» are named as they are written, not in capitals. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] :is([data-hhr-ficha-primary] [role="tab"], [data-hhr-reading="vital-history"]) { text-transform:none; }
+}
+
+/* Eloísa's own controls of the summary at the size of a line of the compact view. A filter
+   switch, the contained button of a card and the state of a diagnosis keep their colour and
+   their words: only their size and their case change. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
+    [data-hhr-reading-toggle] .MuiSwitch-root { zoom:.75; }
+    :is(#medicationEntrySection,#noPharmaEntrySection,#freeIndicationEntrySection) > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-action .MuiButton-root,
+    > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root {
+      /* A block, so that its first letter can be a capital: Eloísa writes «validar tratamiento» and shows it in capitals. */
+      display:inline-block; min-inline-size:0; min-block-size:26px; padding:2px 10px; border-radius:var(--hhr-ficha-radius); box-shadow:none;
+      font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/22px var(--hhr-ficha-sans); text-transform:none; white-space:nowrap;
+      &::first-letter { text-transform:uppercase; }
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+    }
+    /* A posology of some fifty characters fits on its line before the name or the instructions take the room. */
+    @media (min-width:1100px) { th[data-hhr-reading="order-posology"] { min-inline-size:20rem; } }
+    /* Who asked for a prescription situates it: one line, in the ink of what explains. */
+    [data-hhr-reading="order-requester"] { color:var(--hhr-ficha-muted); white-space:nowrap; }
+    /* The state of a diagnosis is a native select. It keeps its arrow and its menu. */
+    #diagnosisEntrySection td .MuiInputBase-root:has([role="combobox"]) {
+      block-size:auto !important; min-block-size:26px; font-size:var(--hhr-ficha-text-body);
+      [role="combobox"] { min-block-size:0 !important; padding-block:3px !important; }
     }
   }
 }

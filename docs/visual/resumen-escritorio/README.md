@@ -1,5 +1,54 @@
 # Resumen compacto en escritorio
 
+## El Resumen sobre la forma que dibuja Eloísa en 0.48.193
+
+Esta comparación usa una ficha ficticia nueva, [`scripts/summary-visual-fixture.mjs`](../../../scripts/summary-visual-fixture.mjs), escrita bloque por bloque desde la [estructura leída en Eloísa](../../estructura-eloisa.md#resumen): el marco y sus ítems en su orden, los doce enlaces de sección, Fármacos con sus seis columnas y catorce indicaciones, y Diagnóstico tras las indicaciones. Las fichas anteriores suponían formas más simples, y con la forma real la 0.48.192 se veía peor de lo que mostraban sus capturas.
+
+| Pantalla | 0.48.192 | 0.48.193 |
+| --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.193/antes/1280-resumen.png) | [Después](0.48.193/despues/1280-resumen.png) |
+| 1440 × 900 | [Antes](0.48.193/antes/1440-resumen.png) | [Después](0.48.193/despues/1440-resumen.png) |
+
+| Medida, 0.48.192 → 0.48.193 | 1280 × 800 | 1440 × 900 |
+| --- | ---: | ---: |
+| Inicio de Diagnóstico | 1684 → 514 px | 1684 → 514 px |
+| Inicio de Fármacos | 772 → 605 px | 772 → 605 px |
+| Indicaciones de Fármacos completas en la primera pantalla, de 14 | 0 → 3 | 1 → 8 |
+| Indicaciones de Fármacos en una sola línea, de 14 | 0 → 8 | 0 → 10 |
+| Final de Fármacos | 1468 → 1143 px | 1468 → 1109 px |
+
+Lo que la forma real dejaba sin compactar:
+
+- **Reposo sin registro** es una tarjeta sin su sección. No se reconocía y quedaba a todo el ancho, 124 px, entre la ronda y Fármacos. Ahora se lee «Sin registro» en la línea de Régimen.
+- **Régimen** envuelve su valor y su observación en una caja cada uno. Se partía en tres líneas, 96 px. Ahora ocupa una.
+- **«Imprimir indicaciones»** es un botón de icono solo en su línea, 46 px. Ahora va en la línea del título de Fármacos, tras el título, con el nombre que Eloísa le da en su icono. Para la tecla Tab se lee donde se ve: tras Diagnóstico y antes de las herramientas de Fármacos.
+- **Los controles de Eloísa** tenían su tamaño nativo: interruptores de 38 px, «VALIDAR TRATAMIENTO» de 38 px, selector de estado de 40 px. Ahora miden lo que una línea. Conservan su color y sus palabras; «Validar tratamiento» y las pestañas se escriben como una frase.
+- **Fármacos** partía «Solicitante» en dos líneas en todas las filas y daba a la posología 241 px. El solicitante ocupa una línea y la posología tiene sitio para unos cincuenta caracteres.
+- **Cada signo vital** dejaba una línea vacía bajo su nombre, la caja de una unidad que no lleva.
+
+Lo que cambia de lugar:
+
+- **Diagnóstico** abre las tarjetas bajo la ronda. Su nombre y su firma ocupan una columna al inicio, como Reposo y Régimen, y cada diagnóstico es una línea con su estrella, su estado y sus notas. La columna «Diagnóstico» no repite el nombre de la tarjeta.
+- **Las tarjetas bajo la ronda** empiezan en el borde de la ronda. Antes quedaban 16 px más adentro.
+
+Lo que tiene otra forma se queda donde Eloísa lo puso: una tabla cuya segunda columna no es «Diagnóstico», un icono con otro nombre, o una línea de impresión seguida de otra tarjeta que no sea Fármacos.
+
+```sh
+node scripts/capture-summary.mjs v0.48.192 /tmp/resumen-anterior
+node scripts/capture-summary.mjs WORKTREE /tmp/resumen-actual
+```
+
+Límites:
+
+- **Sigue siendo una reconstrucción.** La forma se leyó en una ficha real, pero los estilos nativos de la ficha ficticia son aproximados y nada de esto se ha visto aplicado sobre Eloísa.
+- **Diagnóstico cuesta primera pantalla a Fármacos.** Con dos diagnósticos ocupa 85 px: a 1280 px se ven tres indicaciones completas donde sin él cabrían siete.
+- **La fila de fecha diaria** conserva su línea, 36 px. Con los doce enlaces reales no cabe en la línea de secciones a ningún ancho probado.
+- **«Tiempo»** sigue siendo un triángulo con un número. No se sabe qué cuenta, y no se rotula.
+- **Por debajo de 1280 px** un diagnóstico largo ocupa dos líneas: las cifras valen desde ese ancho.
+- **En un Chrome anterior al 137** Diagnóstico conserva su lugar de siempre. Solo cambia de sitio donde la tecla Tab sigue el orden en que se ve. Y sin posicionamiento por anclas, anterior al 125, «Imprimir indicaciones» conserva su línea.
+- **La ficha ficticia anterior de ingreso** gana una línea por fármaco a 1440 px: sus instrucciones, mucho más largas que las leídas en Eloísa, dejan menos sitio al nombre ahora que la posología pide el suyo.
+- **Con muchas alertas** la columna derecha crece hasta 250 px de lista, el máximo que le da Eloísa. No se ha medido el Resumen con dieciséis.
+
 ## La fila diaria y las acciones de la nota como las dibuja Eloísa en 0.48.192
 
 La ficha ficticia se corrigió con la [estructura observada en Eloísa](../../estructura-eloisa.md#resumen). Dos formas eran distintas de las supuestas, y por eso dos cambios anteriores no llegaban a la página real:
