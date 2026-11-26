@@ -70,6 +70,17 @@
           > .MuiChip-root { display:inline-flex; vertical-align:middle; margin-inline-start:4px !important; }
         }
       }
+      /* The medical list reads like the care list: the patient takes the room of a whole name, which
+         breaks between words and never inside one, with «Nuevo» after it. Eloísa left that column the
+         width of a few letters. A small screen keeps the native widths and its sideways scroll. */
+      @media (min-width:900px) {
+        [data-hhr-worklist-layout="medical"] table[${marked}] td:has([data-hhr-patient-name-row=""]) {
+          width:clamp(15rem,20vw,19rem); min-width:15rem; max-width:none;
+        }
+      }
+      [data-hhr-worklist-layout="medical"] table[${marked}] td:nth-child(2) [data-hhr-patient-name-row=""] > :nth-child(2) {
+        overflow-wrap:break-word; word-break:normal;
+      }
       td[data-hhr-worklist-doctor] { width:136px; max-width:136px; }
       td[data-hhr-worklist-doctor] :is(.MuiFormControl-root,select) { box-sizing:border-box; width:100%; min-width:0; max-width:136px; }
       td[data-hhr-worklist-doctor] .MuiSelect-select { overflow:hidden; text-overflow:ellipsis; }

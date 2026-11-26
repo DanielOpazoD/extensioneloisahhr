@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.202
+
+- La lista de trabajo médico se lee como la de Gestión de cuidados. La columna Paciente toma el ancho de un nombre completo (de 264 a 328 px, según la ventana) y el nombre va en una línea, con su RUN debajo; si no cabe, se parte entre palabras. Hasta ahora esa columna medía unos 110 px y un nombre se partía dentro de sus palabras, en hasta ocho líneas.
+- «Nuevo» se muestra en la lista médica como en Gestión de cuidados: una etiqueta pequeña y verde tras el nombre, en lugar de la etiqueta naranja de Eloísa, que le quitaba sitio al nombre.
+- Con eso todas las filas de la lista médica miden lo mismo. En pantallas de menos de 900 px la columna conserva el ancho de Eloísa y su desplazamiento lateral.
+
 ## 0.48.201
 
 - En el Resumen de la vista Compacta, en escritorio, Signos vitales ocupa la primera mitad de su línea y deja la otra mitad a Reposo y Régimen y, debajo, al grupo «Sin datos»: las secciones sin registros o sin permiso, dos por fila, con las solicitudes de examen y de cirugía sin registros entre ellas. Antes Signos vitales ocupaba todo el ancho, Reposo y Régimen una línea aparte y el grupo «Sin datos» el final de la ficha.
