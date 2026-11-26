@@ -6,10 +6,15 @@
 
   const shortName = raw => globalThis.HhrFichaProfessionalName?.short(raw) ?? String(raw).trim().replace(/\s+/g, ' ');
   // The name keeps the spaces Eloísa wrote: they say which of its fields are empty.
-  function stamp(text) {
+  function readStamp(text) {
     const parts = stampPattern.exec(text.replace(/^\s+/, '').replace(/[^\S ]\s*$/, ''));
     if (!parts) return null;
     return { date:parts[1], time:parts[2].padStart(5, '0'), author:shortName(parts[3].replace(role, '')) };
+  }
+  // The byline of a card: its day, its hour and who signed it.
+  function stamp(text) {
+    const read = readStamp(text);
+    return read && read.date + ' · ' + read.time + ' · ' + read.author;
   }
   // «Enfermera(o) Ana  Rojas Soto» reads «Enfermera(o) Ana Rojas». Nothing when it is already that short.
   function shortAuthor(text) {
@@ -249,7 +254,7 @@
         for (const el of candidates) {
           if (el.closest('dialog,[role=dialog],#hhr-prescription-print-modal') ||
               el.querySelector('a,button,input,[tabindex]') || (!el.matches('.MuiCardHeader-subheader') && el.closest('.MuiCard-root'))) continue;
-          const read = stamp(el.textContent);
+          const read = readStamp(el.textContent);
           // The diagnosis says who confirmed it and on which day: the owner asked for it without the hour.
           if (read) label(el, 'data-hhr-update-label', el.closest('#diagnosisEntrySection') ? read.date + ' · ' + read.author :
             read.date + ' · ' + read.time + ' · ' + read.author);
