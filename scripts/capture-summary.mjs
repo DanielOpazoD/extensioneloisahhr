@@ -23,6 +23,9 @@ const read = page => page.evaluate(() => {
   const rows = [...medication.querySelectorAll('tbody tr')].map(row => ({
     ...box(row), requester:box(row.cells[4].firstElementChild).height, posology:row.cells[2].querySelector('.MuiTypography-caption').textContent.trim(),
     disclosures:[...row.querySelectorAll('.MuiButton-text')].filter(shown).length,
+    // A marker that did not fit after the last word starts a line of its own, as a word does.
+    markerBelow:(chip => { if (!chip) return false; const name = document.createRange(); name.selectNodeContents(row.cells[1].querySelector('.MuiTypography-root'));
+      return chip.getBoundingClientRect().top >= [...name.getClientRects()].at(-1).bottom - 2; })(row.cells[1].querySelector('.MuiChip-root')),
     days:(marker => ({text:marker.textContent.trim(), unit:getComputedStyle(marker, '::after').content, triangle:getComputedStyle(marker.querySelector('svg')).display,
       size:getComputedStyle(marker.querySelector('span')).fontSize, family:getComputedStyle(marker.querySelector('span')).fontFamily, zoom:getComputedStyle(marker).zoom,
       width:box(row.cells[0]).width, end:box(row.cells[0]).right - box(marker.querySelector('span')).right}))(row.cells[0].firstElementChild),
@@ -216,13 +219,16 @@ async function verifySummary(page, width, native, off, sans) {
     assert.equal(row.posology, summaryMedications[at][3], 'La posología se lee entera');
     assert.equal(row.disclosures, 0, 'Con el texto entero, «Leer menos» no ocupa una línea');
     assert.deepEqual(row.actions.map(([name, , named]) => [name, named]), [['Suspender', false], ['Ver notas', false], [null, false]], 'Las acciones conservan el nombre de su icono');
-    assert.ok(row.actions.every(([, height]) => height >= 24) && row.height <= 46 && row.height < native.medication.rows[at].height, `La fila ${at} es más baja: ${native.medication.rows[at].height} → ${row.height}`);
+    // Two lines at most, or three when a marker that did not fit after the last word took a line of its own.
+    assert.ok(row.actions.every(([, height]) => height >= 24) && row.height <= (row.markerBelow ? 66 : 46) && row.height < native.medication.rows[at].height,
+      `La fila ${at} es más baja: ${native.medication.rows[at].height} → ${row.height}`);
   });
   assert.equal(new Set(medication.rows.map(row => Math.round(row.days.end))).size, 1, 'Las unidades de los días caen en una línea: ' + medication.rows.map(row => Math.round(row.days.end)));
   const single = medication.rows.filter(row => row.height <= 30).length, visible = medication.rows.filter(row => row.bottom <= shown.viewport).length;
-  console.info('   Fármacos', width, sans ? 'letra ancha' : '', {single, visible});
   assert.ok(single >= 6, `La mayoría de las indicaciones cabe en una línea: ${single} de ${medication.rows.length}`);
-  assert.ok(visible >= (width < 1400 ? 3 : 6), 'La primera pantalla llega a los fármacos: ' + visible);
+  // How many rows fit depends on the metrics of the font. With Eloísa's fallback both platforms measure alike; the
+  // wide pass, which is DejaVu on Linux and Verdana on macOS, keeps one row less of margin.
+  assert.ok(visible >= (width < 1400 ? 3 : 6) - (sans ? 1 : 0), 'La primera pantalla llega a los fármacos: ' + visible);
 
   // At the narrowest width of the two columns a diagnosis may wrap its text, never its state or its date.
   const viewport = page.viewportSize();
