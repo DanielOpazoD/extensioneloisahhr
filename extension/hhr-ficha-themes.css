@@ -196,8 +196,10 @@
         :has(> [data-hhr-reading="order-validator"]:first-child + .MuiPaper-root:last-child > .MuiTableContainer-root:only-child > table)) {
       padding-inline:0 !important;
       > [data-hhr-reading="order-validator"] { padding-inline:var(--hhr-round-inset) !important; }
-      :is(th,td):first-child:not(:is(dialog,[role=dialog],td) *) { padding-inline-start:var(--hhr-round-inset) !important; }
-      :is(th,td):last-child:not(:is(dialog,[role=dialog],td) *) { padding-inline-end:var(--hhr-round-inset) !important; }
+      /* The reading edge is paid by the room between an edge column and its neighbour, which keeps its own
+         7 px: the columns that are read keep the width they had with a narrower edge. */
+      :is(th,td):first-child:not(:is(dialog,[role=dialog],td) *) { padding-inline:var(--hhr-round-inset) 1px !important; }
+      :is(th,td):last-child:not(:is(dialog,[role=dialog],td) *) { padding-inline:1px var(--hhr-round-inset) !important; }
     }
     /* Balance Hídrico: its filter at the height of a line, like the daily form. Each field keeps its
        label, its menu and its calendar; the switch and the print icon keep their place. */

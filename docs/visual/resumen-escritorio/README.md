@@ -19,7 +19,7 @@ El responsable pidió un orden de lectura: Diagnóstico primero, Evolución de t
 | Inicio de Fármacos, con la ficha liviana y con la cargada | 621 y 700 → 819 y 819 px |
 | Margen de lectura dentro de una tarjeta | 10 → 16 px |
 | Separación entre dos bloques | 8 → 12 px |
-| Margen de la página | 42 → 48 px |
+| Indicaciones de Fármacos en una línea, a 1280 y a 1440 | 7 y 8 → 7 y 8 |
 | Esquinas de una tarjeta | 6 → 8 px |
 
 La primera pantalla es ahora la ronda: por qué está el paciente, la nota con lo que la acompaña y los signos. El costo es Fármacos, que empieza 119 px más abajo que en la ficha cargada de antes y sale de la primera pantalla a 800 px de alto. Las capturas de la primera pantalla se toman ahora desde el inicio de la página: la ficha ficticia, como Eloísa, da el foco al campo de alerta al cargar y la dejaba desplazada.

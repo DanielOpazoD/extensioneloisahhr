@@ -286,9 +286,8 @@ async function verifySummary(page, width, native, off, sans) {
   });
   assert.equal(new Set(medication.rows.map(row => Math.round(row.days.end))).size, 1, 'Las unidades de los días caen en una línea: ' + medication.rows.map(row => Math.round(row.days.end)));
   const single = medication.rows.filter(row => row.height <= 30).length, visible = medication.rows.filter(row => row.bottom <= shown.viewport).length;
-  // How many rows fit on a line depends on the metrics of the font. With Eloísa's fallback both platforms measure
-  // alike; the wide pass, which is DejaVu on Linux and Verdana on macOS, keeps one row less of margin.
-  assert.ok(single >= 6 - (sans ? 1 : 0), `La mayoría de las indicaciones cabe en una línea: ${single} de ${medication.rows.length}`);
+  // The columns that are read keep the width they had before the reading edge grew: the same rows fit on a line.
+  assert.ok(single >= 6, `La mayoría de las indicaciones cabe en una línea: ${single} de ${medication.rows.length}`);
   // The first screen is the round: why the patient is here, the note and what goes with it, and the signs.
   assert.ok(shown.signs.bottom <= shown.viewport, `La primera pantalla llega a los signos vitales: ${shown.signs.bottom} de ${shown.viewport}`);
   void visible;

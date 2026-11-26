@@ -37,10 +37,10 @@ html[data-hhr-ficha-theme] {
   --hhr-ficha-block-gap:12px;
   /* The room a card leaves above its heading and below its last line. */
   --hhr-ficha-card-pad:8px;
-  /* The page: never less than 40 px at each side, Eloísa's 32 and a little air, and more as the window
-     grows (41 px at 1280, 48 at 1440, 67 at 1920). On a wide screen the content stops at a readable
-     width and stays at the centre. A laptop keeps its width for the clinical text. */
-  --hhr-ficha-page-margin:clamp(40px, 4vw - 10px, 72px);
+  /* The page: never less than Eloísa's 32 px at each side, a little more as the window grows (35 px at
+     1280, 42 at 1440, 56 from 1800), and on a wide screen the content stops at a readable width and
+     stays at the centre. A laptop keeps its width for the clinical text. */
+  --hhr-ficha-page-margin:clamp(32px, 4vw - 16px, 56px);
   --hhr-ficha-page-max:1600px;
   --hhr-ficha-control:28px;
   /* The lines of the note that the desktop round shows at once, for every patient. */
