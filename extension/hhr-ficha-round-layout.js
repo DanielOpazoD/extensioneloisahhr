@@ -347,7 +347,8 @@
       for (const [el, value] of next) if (previous.get(el) !== value) el.setAttribute(attribute, value);
       const changed = previous.size !== next.size || [...next].some(([el, role]) => previous.get(el) !== role);
       previous = next;
-      if (!changed && frame) { schedule(); return; }
+      // Packed now: the caller runs before the paint, and a frame later a card would be seen out of place.
+      if (!changed && frame) { pack(); return; }
       resetColumns();
       const roles = new Map([...next].map(([el, role]) => [role, el]));
       if ((!roles.has('vitals') && !roles.has('alerts')) || !resize || !desktop) return;

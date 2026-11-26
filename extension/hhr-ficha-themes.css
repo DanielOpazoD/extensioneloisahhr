@@ -313,7 +313,8 @@
    window. Both take the same inset, so the tabs, the section links and every card share one edge.
    Percentages resolve against the window without its scroll bar, so both sides stay equal. */
 @media screen {
-  html[data-hhr-ficha-theme="compact"] main:has([role="tab"][id^="encounter-event-tab-"]) {
+  /* Eloísa draws the placeholders of the summary a frame before its tabs: the margins are there for both. */
+  html[data-hhr-ficha-theme="compact"] main:has([role="tab"][id^="encounter-event-tab-"], .MuiGrid-container > .MuiGrid-item .MuiCard-root > .MuiCardContent-root > .MuiSkeleton-root:first-child) {
     padding-inline:max(var(--hhr-ficha-page-margin), calc((100% - var(--hhr-ficha-page-max)) / 2)) !important;
     > header.MuiAppBar-root:has([role="tab"][id^="encounter-event-tab-"]) {
       /* The tab text starts on the reading edge of the cards, one inset inside them; the tabs keep 24 px of their own. */

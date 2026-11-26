@@ -88,7 +88,17 @@ export const verifyNativeFicha = async (page, worker) => {
     const link=page.locator('[data-hhr-ficha-link]').filter({hasText:'Evolución'});
     if (width === 1280) {
       const optional = page.locator('#procedureEntrySection');
-      await optional.evaluate(el => el.lastChild.textContent = 'Sin registros');
+      // What Eloísa draws takes this view in the frame that paints it: the section is never seen first as
+      // Eloísa drew it. Read once that frame is over, long before the slower pass of the bar would run.
+      const presented = await optional.evaluate(el => new Promise(done => {
+        el.lastChild.textContent = 'Sin registros';
+        requestAnimationFrame(() => {
+          const after = new MessageChannel();
+          after.port1.onmessage = () => done(el.getClientRects().length === 0 && Boolean(document.querySelector('.hhr-ficha-empty-toggle')));
+          after.port2.postMessage(0);
+        });
+      }));
+      assert.equal(presented, true, 'Un apartado que queda vacío se pliega en el mismo cuadro en que cambia');
       const showEmpty = page.getByRole('button', { name:'Ver vacías (1)' });
       await showEmpty.waitFor();
       assert.equal(await optional.isVisible(), false);

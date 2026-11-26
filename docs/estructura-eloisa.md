@@ -31,6 +31,17 @@ El cuerpo es `main > div.MuiStack-root`: primero la fila de enlaces de sección 
 
 Títulos de las tarjetas, en ese orden: Fecha estimada de alta, Observaciones de entrega de turno, Instrumentos de evaluación, Examen físico, Signos vitales, Reposo, Régimen, Alertas, Fármacos, Producto no Farmacológico, Indicaciones Libres, Procedimientos, Diagnóstico, Solicitud interconsulta, Órdenes de atención, Solicitud de examen, RAM, Alergias, Solicitudes de intervención quirúrgica, Balance Hídrico, Eventos Adversos, Examen Gíneco Obstétrico.
 
+### Mientras carga
+
+Leído en la página el 26-11-2026, al pasar de la lista a una ficha (los tiempos son de esa lectura y cambian con la red):
+
+- Durante casi un segundo `main` está vacío (64 px). Después Eloísa dibuja el encabezado del paciente con cinco `span.MuiSkeleton-root` y una barra `MuiLinearProgress`.
+- A los ~1,3 s dibuja el marco del Resumen completo, con **un marcador por apartado**: los mismos ítems `.MuiGrid-item` que tendrá después, cada uno con una `div.MuiPaper-root.MuiCard-root` de 176 px: `.MuiCardHeader-root` (88 px) con el título real en `span.MuiTypography-h6.MuiCardHeader-title` y una barra en `.MuiCardHeader-subheader`; `.MuiCardContent-root` (88 px) con dos `span.MuiSkeleton-root.MuiSkeleton-text.MuiSkeleton-pulse`. Son 24 ítems y casi 4.000 px de página. Los marcadores no tienen `id`: el `section` con su `id` llega con los datos.
+- La fila diaria ya está en ese marco, con su formulario; en lugar de la firma lleva una barra `span.MuiSkeleton-root` de 300 × 14 px.
+- Las pestañas aparecen un cuadro después que el marco.
+- Cada apartado reemplaza a su marcador cuando llegan sus datos: la nota a los ~1,5 s, la mayoría antes de los 2,2 s y algunos (seis barras en esa lectura) recién a los 5 s.
+- Un apartado ya cargado puede llevar una barra propia mientras termina (Diagnóstico y Balance Hídrico tenían una): no es un marcador, y tiene otros hijos en su contenido.
+
 ### Fila diaria
 
 `div.MuiGrid-item` (flex) con dos hijos:

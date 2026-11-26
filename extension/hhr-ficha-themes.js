@@ -27,6 +27,19 @@
     }).catch(() => { if (active && revision === initial) listener('off'); });
     return () => { active = false; storage.onChanged.removeListener(changed); };
   }
+  // A reload opens in the saved view: this file also runs before Eloísa draws anything, and names the
+  // view on the page so that its first card is already drawn in it. The route is the one of a ficha;
+  // the presentation, which starts later, keeps or removes the name from then on.
+  const ficha = /^\/dashboard\/encounter-list(?:-nurse)?\/\d+(?:\/.*)?$/;
+  const page = globalThis.document;
+  if (page?.readyState === 'loading' && ficha.test(globalThis.location?.pathname || '')) {
+    chrome.storage.local.get(key).then(result => {
+      const theme = normalize(result[key]), root = page.documentElement;
+      if (theme !== 'off' && !root.hasAttribute('data-hhr-ficha-theme') && ficha.test(location.pathname)) {
+        root.setAttribute('data-hhr-ficha-theme', theme);
+      }
+    }).catch(() => {});
+  }
   globalThis.HhrFichaThemes = Object.freeze({
     choices: () => [...choices], observe,
     save: value => chrome.storage.local.set({ [key]: normalize(value) }),

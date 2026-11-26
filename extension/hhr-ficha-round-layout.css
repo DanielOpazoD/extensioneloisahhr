@@ -244,17 +244,20 @@
         border-block-start:1px solid var(--hhr-round-edge); border-radius:0 0 var(--hhr-ficha-radius) 0 !important;
       }
       [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root { border-radius:var(--hhr-ficha-radius) !important; }
-      /* The note keeps one height whatever its length: a short one leaves room and a long one scrolls
-         inside. The cards beside it and below it then start at the same place for every patient. */
+      /* The note never takes less than its lines, so the cards beside it and below it start at the same
+         place for every patient with a short one. A longer note takes the room it needs, up to what the
+         window leaves between the heading of the ficha and the signs, which stay on the first screen, and
+         scrolls inside beyond that. Its actions are in the card's heading: nothing is drawn under the text. */
       [data-hhr-round="note"] #evolution [data-hhr-evolution-block]:has(> [data-hhr-note-text]) {
-        display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto minmax(28px,auto);
-        align-items:center; reading-flow:grid-rows;
+        display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; reading-flow:grid-rows;
         > [data-hhr-note-text] {
-          grid-column:1 / -1; align-self:start;
-          block-size:calc(var(--hhr-ficha-note-lines) * 1.45 * var(--hhr-ficha-text-body));
-          block-size:calc(var(--hhr-ficha-note-lines) * 1lh);
-          max-block-size:none; border-block-end:1px solid var(--hhr-ficha-line-soft);
+          grid-column:1 / -1; align-self:start; border-block-end:0;
+          min-block-size:calc(var(--hhr-ficha-note-lines) * 1lh);
+          max-block-size:clamp(calc(var(--hhr-ficha-note-lines) * 1lh), 100vh - 31rem, calc(var(--hhr-ficha-note-most) * 1lh));
+          max-block-size:clamp(calc(var(--hhr-ficha-note-lines) * 1lh), round(down, 100vh - 31rem, 1lh), calc(var(--hhr-ficha-note-most) * 1lh));
         }
+        /* Without a heading to hold them, the actions keep their line under the text. */
+        &:has(> .hhr-note-open) > [data-hhr-note-text] { border-block-end:1px solid var(--hhr-ficha-line-soft); }
         > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; margin-block-start:2px; }
       }
       /* The alerts take the height the handoff leaves beside the note. Their list scrolls inside it

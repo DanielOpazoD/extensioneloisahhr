@@ -29,12 +29,12 @@ async function verifyAdmissionReader(page, noteText, directory, width) {
       const {x,y,width,height} = document.querySelector(selector).getBoundingClientRect();
       return [x,y,width,height];
     }));
-  // Start at the native note text. The host may place its own disclosure before the reader action.
-  for (let step = 0; step < 4; step++) {
-    await page.keyboard.press('Tab');
-    if (await opener.evaluate(el => el === document.activeElement)) break;
-  }
-  assert.ok(await opener.evaluate(el => el === document.activeElement), 'El lector entra en la secuencia de Tab');
+  // The reader opens from the card's heading, in the line of the other actions and right after «Ver evoluciones».
+  await page.getByRole('button', {name:'Ver evoluciones', exact:true}).focus();
+  await page.keyboard.press('Tab');
+  assert.ok(await opener.evaluate(el => el === document.activeElement), 'El lector entra en la secuencia de Tab, tras «Ver evoluciones»');
+  assert.ok(await opener.evaluate(el => { const box = el.getBoundingClientRect(), entry = el.parentElement.querySelector('.hhr-evo-entry').getBoundingClientRect();
+    return el.textContent === 'Nota completa' && Math.abs(box.top - entry.top) < 2 && box.left >= entry.right && box.height >= 28; }), '«Nota completa» comparte la línea de acciones de la tarjeta');
   const initialColumns = await columnBounds();
   await page.keyboard.press('Enter');
   await reader.waitFor();
@@ -157,8 +157,7 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   assert.deepEqual(toolbar.lefts, [...toolbar.lefts].sort((a,b) => a - b), 'Las acciones se leen de las evoluciones al menú');
   assert.equal(new Set(toolbar.tops).size, 1, 'Las cinco acciones de la nota comparten una línea');
   assert.ok(toolbar.sizes.every(([w,h]) => w >= 28 && h >= 28) && toolbar.inside, 'Cada acción conserva su área activa dentro de la tarjeta');
-  assert.deepEqual(toolbar.captions.slice(1,4).map(text => text.split('"')[1]), ['Enmendar','Enmendados','Pautas'],
-    'Cada acción nativa lleva el nombre que le da Eloísa');
+  assert.deepEqual(toolbar.captions.slice(1,4), ['none','none','none'], 'Las herramientas de Eloísa y las pautas son un icono cada una: solo lo que abre una lectura lleva una palabra');
   assert.ok(toolbar.byline.top < toolbar.heading.bottom && toolbar.byline.left >= toolbar.heading.right,
     'La fecha y el profesional siguen al título en su misma línea');
   const focusStart = page.getByRole('button',{name:'Ver evoluciones',exact:true});
