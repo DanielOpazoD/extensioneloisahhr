@@ -255,8 +255,8 @@ async function verifySummary(page, width, native, off, sans) {
   else assert.ok(!daily.clipped && daily.name.width > 100 && daily.name.right <= daily.field.left && Math.abs((daily.name.top + daily.name.bottom) / 2 - (daily.field.top + daily.field.bottom) / 2) <= 2,
     'El nombre del campo del resumen diario se lee entero, antes del campo: ' + JSON.stringify(daily));
   // What has no records, or cannot be seen, closes the summary together: a heading and a short line for each section.
-  assert.ok(group.count === 5 && group.inside && group.rows <= 4 && group.heights.every(height => height <= 44) && group.top >= shown.careLine.bottom && group.left >= shown.signs.right - 1 &&
-    group.bottom <= shown.signs.bottom + 1, 'Las secciones sin datos se leen junto a Signos, bajo Reposo y Régimen, y no pasan de su altura: ' + JSON.stringify(group));
+  assert.ok(group.count === 5 && group.inside && group.rows <= 4 && group.heights.every(height => height <= 44) && group.top >= shown.signs.top && group.left >= shown.signs.right - 1,
+    'Las secciones sin datos se leen junto a Signos, en la otra mitad de su línea: ' + JSON.stringify(group));
   assert.deepEqual([group.heading, group.headingSize, group.surfaces], ['"Sin datos"', '12px', ['rgba(0, 0, 0, 0)']], 'El grupo tiene su rótulo y no dibuja una tarjeta por sección');
   assert.deepEqual(group.says, ['"Sin registros" / ""', '"Sin registros" / ""', '"Sin registros" / ""', '"Sin permiso" / ""', '"Sin permiso" / ""'],
     'Cada sección dice su estado en dos palabras, y sin permiso no es lo mismo que sin registros');
@@ -268,10 +268,16 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(near(shown.note.top, shown.handoff.top) && near(shown.alerts.bottom, shown.note.bottom, 1), `La nota y las tarjetas a su lado empiezan y terminan en la misma línea: ${shown.note.bottom} y ${shown.alerts.bottom}`);
   assert.ok(shown.alertList.overflow === 'auto' && shown.alertList.scroll <= shown.alertList.height + 1, 'Tres alertas caben en su lista sin desplazarla: ' + JSON.stringify(shown.alertList));
   assert.equal(shown.noteLines, 14, 'La nota muestra catorce líneas a la vez');
-  // Under the note, the signs take the first half of the line: the care instructions and what has no data sit beside them.
+  // Under the note, the signs take the first half of the line and the care instructions follow under them: what has no
+  // data sits beside both. The owner saw the signs stretched to the height of that column, with a blank band under
+  // their measurements: each column is as high as what it carries.
   const middle = rect => (rect.top + rect.bottom) / 2, {careLine, requests} = shown;
-  assert.ok(near(shown.signs.left, shown.note.left) && near(shown.signs.top, shown.note.bottom + gap0) && near(shown.signs.right, careLine.left, 2) && near(careLine.right, shown.alerts.right),
-    `Signos ocupa la mitad de la línea bajo la nota, con Reposo y Régimen al lado: ${shown.signs.right} y ${careLine.left}`);
+  assert.ok(near(shown.signs.left, shown.note.left) && near(shown.signs.top, shown.note.bottom + gap0) && near(careLine.left, shown.signs.left) && near(careLine.right, shown.signs.right, 2) &&
+    near(careLine.top, shown.signs.bottom + gap0), `Signos ocupa la mitad de la línea bajo la nota, con Reposo y Régimen debajo: ${shown.signs.bottom} y ${careLine.top}`);
+  const blank = await page.evaluate(() => { const card = document.querySelector('#vitalSignsEntry.MuiCard-root'), content = card.querySelector('.MuiCardContent-root');
+    const last = Math.max(...[...content.children].filter(el => el.getClientRects().length && getComputedStyle(el).position !== 'absolute').map(el => el.getBoundingClientRect().bottom));
+    return Math.round(card.getBoundingClientRect().bottom - last); });
+  assert.ok(blank >= 0 && blank <= 12, 'La tarjeta de Signos termina con sus mediciones, sin una franja en blanco: ' + blank);
   assert.ok(new Set(shown.tiles.map(tile => Math.round(tile.top))).size <= 3, 'Las nueve mediciones ocupan tres filas a lo más en su mitad de la línea');
   assert.ok(shown.tiles.every(tile => tile.height <= 44), 'Una medición sin unidad no deja una línea vacía: ' + shown.tiles.map(tile => Math.round(tile.height)));
 
@@ -279,16 +285,16 @@ async function verifySummary(page, width, native, off, sans) {
   assert.equal(shown.rest.mark, 'care-row', 'El reposo sin registro se reconoce sin su sección');
   assert.match(shown.rest.empty, /^"Sin registro"/);
   assert.equal(shown.rest.native, 'No se presenta un Reposo registrado para este paciente', 'La frase de Eloísa sigue en la página');
-  assert.ok(near(middle(shown.rest), middle(shown.diet)) && near(careLine.top, shown.signs.top) && shown.diet.left >= shown.rest.right - 1 && near(shown.diet.right, shown.alerts.right),
-    'Reposo y Régimen comparten una línea junto a Signos, a la altura de su centro');
+  assert.ok(near(middle(shown.rest), middle(shown.diet)) && shown.diet.left >= shown.rest.right - 1 && near(shown.diet.right, shown.signs.right, 2),
+    'Reposo y Régimen comparten una línea bajo Signos, a la altura de su centro');
   // In half the line the diet keeps its value and its observation on one line and its byline on the next.
   assert.ok(shown.rest.height <= 60 && shown.diet.height <= 60 && shown.diet.text, `El régimen se lee en dos líneas a lo más: ${shown.diet.height}`);
   // Exámenes and Cirugía without requests are two more sections without data, in their group.
-  assert.ok(requests.length === 2 && requests.every(request => request.top >= careLine.bottom && request.left >= shown.signs.right - 1 && request.right <= shown.alerts.right + 1 && request.height <= 30),
+  assert.ok(requests.length === 2 && requests.every(request => request.top >= shown.signs.top && request.left >= shown.signs.right - 1 && request.right <= shown.alerts.right + 1 && request.height <= 30),
     'Las solicitudes sin registros se leen con las demás secciones sin datos: ' + JSON.stringify(requests));
 
   // The diagnosis says why the patient is here: it opens the round, above the note, one line each.
-  const roundEnd = Math.max(shown.signs.bottom, group.bottom), {diagnosis, medication, print} = shown;
+  const roundEnd = Math.max(careLine.bottom, group.bottom), {diagnosis, medication, print} = shown;
   assert.ok(near(shown.note.top - diagnosis.card.bottom, gap0) && diagnosis.card.top < shown.note.top, `Diagnóstico abre la ronda: ${diagnosis.card.bottom} y ${shown.note.top}`);
   assert.ok(diagnosis.card.bottom <= shown.viewport, `Diagnóstico se lee en la primera pantalla: ${diagnosis.card.bottom}`);
   assert.ok(diagnosis.card.top < native.diagnosis.card.top - 600, 'Diagnóstico deja de estar tras las indicaciones');

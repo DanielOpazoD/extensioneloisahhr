@@ -184,17 +184,17 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   assert.ok(note.height < measured.viewport[1] * 0.62, 'El ingreso largo deja espacio para Signos en el primer pantallazo');
   // The space between two blocks of the ficha.
   const gap = 12, middle = r => r.y + r.height / 2;
-  assert.ok(Math.abs(signs.x - note.x) < 2 && Math.abs(signs.y - bottom(note) - gap) < 2 && right(signs) <= rest.x + 2, 'Signos sigue a la nota, en la primera mitad de la línea');
+  assert.ok(Math.abs(signs.x - note.x) < 2 && Math.abs(signs.y - bottom(note) - gap) < 2 && right(signs) <= exam.x + 2, 'Signos sigue a la nota, en la primera mitad de la línea');
   assert.ok(Math.abs(bottom(alerts) - bottom(note)) < 2, 'Alertas termina donde termina la nota');
   assert.ok(aligned(observations,alerts) && Math.abs(alerts.y - bottom(observations)) < 2, 'Alertas sigue a Observaciones sin hueco');
   for (const request of [exam,surgery]) {
     assert.ok(request.x >= right(signs) - 1 && right(request) <= right(alerts) + 1 && request.height > 0 && request.height <= 36, 'La solicitud vacía se lee en una fila junto a Signos');
   }
   assert.ok(Math.abs(exam.x - right(signs)) <= 2 && Math.abs(right(surgery) - right(alerts)) < 2 && Math.abs(surgery.x - right(exam)) <= 2 && Math.abs(exam.y - surgery.y) < 2 &&
-    exam.y >= Math.max(bottom(rest), bottom(diet)) && Math.abs(exam.height - surgery.height) < 1, 'Las dos solicitudes comparten una línea bajo Reposo y Régimen');
-  // Without a rest order, both instructions share a line beside the measurements, or the diet takes the next one.
-  assert.ok(rest.x >= right(signs) - 1 && Math.abs(right(diet) - right(alerts)) < 2 && Math.min(rest.y, diet.y) >= signs.y - 1 && Math.min(rest.y, diet.y) <= signs.y + 12 &&
-    (Math.abs(diet.x - right(rest)) < 2 ? Math.abs(middle(diet) - middle(rest)) <= 3 || Math.abs(diet.y - rest.y) < 2 : Math.abs(diet.y - bottom(rest)) < 2), 'Reposo y Régimen se leen junto a Signos');
+    exam.y >= signs.y && exam.y <= signs.y + 32 && Math.abs(exam.height - surgery.height) < 1, 'Las dos solicitudes comparten una línea junto a Signos, bajo su rótulo');
+  // Without a rest order, both instructions share a line under the measurements, or the diet takes the next one.
+  assert.ok(Math.abs(rest.x - signs.x) < 2 && Math.abs(right(diet) - right(signs)) <= 2 && Math.abs(Math.min(rest.y, diet.y) - bottom(signs) - gap) < 2 &&
+    (Math.abs(diet.x - right(rest)) < 2 ? Math.abs(middle(diet) - middle(rest)) <= 3 || Math.abs(diet.y - rest.y) < 2 : Math.abs(diet.y - bottom(rest)) < 2), 'Reposo y Régimen se leen bajo Signos');
   assert.ok(rest.height > 0 && rest.height <= 36 && diet.height > 0 && diet.height <= 60, 'Reposo vacío y Régimen con observación y firma son compactos');
   const emptyRest = await page.locator('#rest [data-hhr-round="care-empty"]').evaluate(el => getComputedStyle(el,'::after').content);
   assert.match(emptyRest, /^"Sin registro"/, 'Un reposo sin registro se resume en dos palabras');

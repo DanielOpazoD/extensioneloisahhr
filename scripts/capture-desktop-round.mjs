@@ -89,21 +89,22 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         const aligned = (a,b) => Math.abs(a.left-b.left) <= 1 && Math.abs(a.right-b.right) <= 1;
         // The space between two blocks of the ficha.
         const gap = 12, middle = box => (box.top + box.bottom) / 2;
-        assert.ok(Math.abs(band.signs.left - band.note.left) <= 1 && band.signs.right <= band.rest.left + 2 && Math.abs(band.signs.top - band.note.bottom - gap) < 2,
+        assert.ok(Math.abs(band.signs.left - band.note.left) <= 1 && band.signs.right <= band.exam.left + 2 && Math.abs(band.signs.top - band.note.bottom - gap) < 2,
           'Signos debe quedar debajo de Evolución, en la primera mitad de la línea');
         assert.ok(Math.abs(band.alerts.bottom - band.note.bottom) < 2, 'Alertas debe terminar donde termina Evolución');
         assert.ok(aligned(band.handoff,band.alerts) && Math.abs(band.alerts.top - band.handoff.bottom) < 2,
           'Observaciones debe compartir ambos bordes con Alertas y aparecer primero');
         // Two short instructions share a line. Otherwise each one uses the whole width.
-        // The other half of that line, from the end of the signs to the edge of the round.
-        const side = {left:band.signs.right, right:band.alerts.right};
-        const inSide = box => box.left >= side.left - 1 && box.right <= side.right + 1;
+        // The care instructions follow under the signs, in their half. The other half, from the end of the signs to
+        // the edge of the round, is for what has no records.
+        const side = {left:band.signs.right, right:band.alerts.right}, under = {left:band.signs.left, right:band.signs.right};
+        const inSide = box => box.left >= under.left - 1 && box.right <= under.right + 2;
         const stacked = Math.abs(band.rest.left - band.diet.left) <= 1 && Math.abs(band.rest.right - band.diet.right) <= 1 && Math.abs(band.diet.top - band.rest.bottom) < 2;
         // On a shared line the shorter instruction is read at the middle of the taller one.
         const sharedLine = Math.abs(middle(band.diet) - middle(band.rest)) < 2 && Math.abs(band.diet.left - band.rest.right) <= 1;
         const careTop = Math.min(band.rest.top, band.diet.top);
-        assert.ok((stacked || sharedLine) && inSide(band.rest) && inSide(band.diet) && Math.abs(band.diet.right - side.right) <= 1 && careTop >= band.signs.top - 1 && careTop <= band.signs.top + 12,
-          'Reposo y Régimen deben leerse junto a Signos, en la otra mitad de la línea');
+        assert.ok((stacked || sharedLine) && inSide(band.rest) && inSide(band.diet) && Math.abs(band.diet.right - under.right) <= 2 && Math.abs(careTop - band.signs.bottom - gap) < 2,
+          'Reposo y Régimen deben leerse bajo Signos, en su misma mitad de la línea');
         // The fonts of each system decide the widths. The line is shared exactly when both instructions fit.
         const fit = await page.evaluate(() => {
           const line = document.querySelector('#rest').closest('.MuiGrid-container');
@@ -117,9 +118,9 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
           assert.equal(sharedLine, fit.needed < fit.available, 'Reposo y Régimen comparten línea siempre que caben, y solo entonces');
         }
         assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 && Math.abs(band.exam.left - side.left) <= 2 &&
-          Math.abs(band.surgery.right - side.right) <= 1 && band.exam.top >= Math.max(band.rest.bottom, band.diet.bottom) && Math.abs(band.exam.height - band.surgery.height) < 1,
-          'Las dos solicitudes vacías comparten una línea bajo Reposo y Régimen, junto a Signos');
-        for (const request of [band.exam,band.surgery]) assert.ok(inSide(request) && request.height > 0, 'Las solicitudes explícitamente vacías deben quedar visibles junto a Signos');
+          Math.abs(band.surgery.right - side.right) <= 1 && band.exam.top >= band.signs.top && band.exam.top <= band.signs.top + 32 && Math.abs(band.exam.height - band.surgery.height) < 1,
+          'Las dos solicitudes vacías comparten una línea junto a Signos, bajo su rótulo');
+        for (const request of [band.exam,band.surgery]) assert.ok(request.left >= side.left - 1 && request.right <= side.right + 1 && request.height > 0, 'Las solicitudes explícitamente vacías deben quedar visibles junto a Signos');
         assert.equal(band.pressureLines,1,'La sistólica, la barra y la diastólica deben leerse en la misma línea');
         assert.equal(band.pressureClearOfTime,true,'El tiempo no debe tapar los dígitos de la presión');
         assert.ok(band.requestCards.every(card => card.height > 0 && card.height < 36), 'Cada solicitud vacía debe caber en una fila');

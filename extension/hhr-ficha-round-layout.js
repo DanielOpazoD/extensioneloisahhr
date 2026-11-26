@@ -238,7 +238,7 @@
   // note with the handoff and the alerts beside it, the signs, the care instructions with the
   // empty requests. Cards that share a line and a column stack by their intrinsic heights.
   function create() {
-    let previous = new Map(), frame, stacks = [], halves = [], peers = [], requests = [], signs = null, lead = null, fill = null, pending = 0;
+    let previous = new Map(), frame, stacks = [], halves = [], peers = [], requests = [], placed = [], signs = null, lead = null, fill = null, pending = 0;
     const desktop = globalThis.matchMedia?.('(min-width:1100px)');
     // Updating margins does not resize the observed border boxes. Repack before paint.
     const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(pack) : null;
@@ -284,20 +284,41 @@
       // The side column ends where the note ends: its last card takes the height the handoff leaves.
       // The note never reads the height of that card, so the two cannot chase each other.
       if (fill) set(fill, '--hhr-round-fill', Math.max(0, lead.getBoundingClientRect().height - offsets.get(fill)) + 'px');
-      // Beside the signs, in the room their measurements leave: the care instructions, then a heading and
-      // the sections without records or without permission, two to a row. The signs span those lines.
+      // With signs, two columns on their line. At the start the signs and, under them, the care
+      // instructions. At the end a heading and the sections without records or without permission, two
+      // to a row, in the order Eloísa gives them. Every item sits on the same line of the grid: this
+      // stacks each column, so that neither card is stretched to the height of the other column.
       // A section folded behind «Ver vacías» keeps its item in the page, without a height.
       const drawn = el => el.getBoundingClientRect().height > 0;
       const tiles = signs ? [...requests, ...peers.filter(([, role]) => role === 'peer').map(([el]) => el).filter(el =>
-        el.querySelector(':scope > section > [data-hhr-reading="status-card"]:only-child, :scope > [data-hhr-reading="status-card"]:only-child'))].filter(drawn) : [];
-      // A section with a filter of its own takes a whole line of that column.
-      const whole = tiles.filter(el => el.querySelector('label')).length;
+        el.querySelector(':scope > section > [data-hhr-reading="status-card"]:only-child, :scope > [data-hhr-reading="status-card"]:only-child'))]
+        .filter(drawn).sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1) : [];
       const care = signs && stacks[2].some(drawn) ? 1 : 0;
-      const lines = care + (tiles.length ? 1 + whole + Math.ceil((tiles.length - whole) / 2) : 0);
       const side = [care && 'care', tiles.length && 'tiles'].filter(Boolean).join(' ');
-      if (!side) { frame.removeAttribute('data-hhr-round-side'); frame.style.removeProperty('--hhr-round-side-lines'); return; }
+      for (const tile of placed) if (!tiles.includes(tile)) { tile.removeAttribute('data-hhr-round-tile'); tile.style.removeProperty('--hhr-round-tile'); }
+      placed = tiles;
+      if (!side) { frame.removeAttribute('data-hhr-round-side'); frame.style.removeProperty('--hhr-round-under'); return; }
       if (frame.getAttribute('data-hhr-round-side') !== side) frame.setAttribute('data-hhr-round-side', side);
-      set(frame, '--hhr-round-side-lines', String(lines));
+      // A section with a filter of its own takes a whole line of the column. The others pair up.
+      const rows = [];
+      let open = null;
+      for (const tile of tiles) {
+        if (tile.querySelector('label')) rows.push([tile]);
+        else if (open) { open.push(tile); open = null; }
+        else rows.push(open = [tile]);
+      }
+      for (const row of rows) row.forEach((tile, at) => {
+        const place = row.length === 1 && tile.querySelector('label') ? 'whole' : at ? 'end' : 'start';
+        if (tile.getAttribute('data-hhr-round-tile') !== place) tile.setAttribute('data-hhr-round-tile', place);
+      });
+      // Heights are read once every tile has its width. The first row starts under the heading.
+      const gap = parseFloat(getComputedStyle(frame).rowGap) || 0;
+      let top = tiles.length ? parseFloat(getComputedStyle(frame, '::before').height) || 20 : 0;
+      for (const row of rows) {
+        for (const tile of row) set(tile, '--hhr-round-tile', top + 'px');
+        top += Math.max(...row.map(tile => tile.getBoundingClientRect().height)) + 4;
+      }
+      set(frame, '--hhr-round-under', signs.getBoundingClientRect().height + gap + 'px');
     }
     function resetColumns() {
       if (pending) cancelAnimationFrame(pending);
@@ -309,8 +330,10 @@
         frame.removeAttribute('data-hhr-round-columns');
         frame.removeAttribute('data-hhr-round-side');
         frame.style.removeProperty('--hhr-round-line');
-        frame.style.removeProperty('--hhr-round-side-lines');
+        frame.style.removeProperty('--hhr-round-under');
       }
+      for (const tile of placed) { tile.removeAttribute('data-hhr-round-tile'); tile.style.removeProperty('--hhr-round-tile'); }
+      placed = [];
       for (const item of stacks.flat()) item.style.removeProperty('--hhr-round-offset');
       fill?.style.removeProperty('--hhr-round-fill');
       for (const item of halves) item.removeAttribute('data-hhr-round-half');
@@ -343,7 +366,8 @@
       lead = note; fill = alerts.at(-1) || null;
       frame.setAttribute('data-hhr-round-columns','');
       desktop.addEventListener('change', schedule);
-      for (const item of stacks.flat()) {
+      // The signs head a column of their own: what is under them follows their height.
+      for (const item of [...stacks.flat(), ...(signs ? [signs] : [])]) {
         resize.observe(item, {box:'border-box'});
         content.observe(item, {childList:true, subtree:true});
       }

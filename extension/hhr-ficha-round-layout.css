@@ -191,27 +191,33 @@
         }
       }
       [data-hhr-round="empty-request"] [data-hhr-empty-request] > .MuiCard-root { border-radius:0 !important; }
-      /* With signs, the last lines of the round sit beside them, in the room their measurements leave:
-         the care instructions, then «Sin datos» and what has no records or cannot be seen, two to a row.
-         The signs span the lines that column takes; the script counts them. Each of those sections is
-         placed by the grid in the first room left beside the signs, in the order Eloísa gives them. */
+      /* With signs, the last lines of the round are two columns on one line of the grid, each as high as
+         what it carries. At the start, the signs and under them the care instructions. At the end,
+         «Sin datos» and what has no records or cannot be seen, two to a row. No card is stretched to the
+         height of its neighbour: the owner saw the signs end in a blank band. The script stacks each
+         column, since every item sits on the same line of the grid. Without sections for the second
+         column, the care instructions take it. */
       &[data-hhr-round-side] {
-        grid-auto-flow:row dense;
-        [data-hhr-round="vitals"] {
-          grid-column:1 / 7; grid-row:var(--hhr-round-signs) / span var(--hhr-round-side-lines,1); align-self:stretch;
-          section#vitalSignsEntry, section#vitalSignsEntry > .MuiCard-root { box-sizing:border-box; block-size:100% !important; }
-        }
+        [data-hhr-round="vitals"] { grid-column:1 / 7; grid-row:var(--hhr-round-signs); align-self:start; }
         :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
           grid-row:var(--hhr-round-signs); grid-column:7 / -1; align-self:start; border-radius:var(--hhr-ficha-radius);
         }
-        &::before { grid-column:7 / -1 !important; margin-block-start:0 !important; }
+        &[data-hhr-round-side~="tiles"] :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
+          grid-column:1 / 7; margin-block-start:calc(var(--hhr-round-under,0px) + var(--hhr-round-offset,0px)) !important;
+        }
+        &::before {
+          grid-column:7 / -1 !important; grid-row:var(--hhr-round-signs); align-self:start;
+          box-sizing:border-box; block-size:1.25rem; margin-block-start:0 !important;
+        }
         [data-hhr-round="empty-request"],
         > [data-hhr-round="peer"]:has(> section > [data-hhr-reading="status-card"]:only-child, > [data-hhr-reading="status-card"]:only-child) {
-          order:1; grid-row:auto; grid-column:span 3; align-self:start; margin:calc(4px - var(--hhr-round-row-gap)) 0 0 !important;
+          order:1; grid-row:var(--hhr-round-signs); grid-column:7 / span 3; align-self:start;
+          margin:var(--hhr-round-tile,1.25rem) 0 0 !important;
           border-radius:0; background:transparent;
           /* Beside the signs they belong to the round: the Tab key reaches them before the cards under it. */
           reading-order:0;
-          &:has(label) { grid-column:span 6; }
+          &[data-hhr-round-tile="end"] { grid-column:10 / span 3; }
+          &[data-hhr-round-tile="whole"] { grid-column:7 / span 6; }
         }
         [data-hhr-round="empty-request"] { display:block !important; }
         /* In half the line the nine measurements read as five and four, never with one left alone on a third row. */

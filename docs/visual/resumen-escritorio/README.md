@@ -1,5 +1,24 @@
 # Resumen compacto en escritorio
 
+## Signos vitales sin franja en blanco, en 0.48.206
+
+Al comparar las dos fichas en la página (26-11-2026, 1728 × 966 px), la tarjeta de Signos vitales medía 259 px para 135 de contenido: se estiraba hasta el alto de la columna de su derecha, que llevaba Reposo, Régimen y el grupo «Sin datos». El responsable pidió corregirlo.
+
+| Pantalla | 0.48.205 | 0.48.206 |
+| --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.206/antes/1280-resumen.png) | [Después](0.48.206/despues/1280-resumen.png) |
+| 1440 × 900 | [Antes](0.48.206/antes/1440-resumen.png) | [Después](0.48.206/despues/1440-resumen.png) |
+
+| Medida a 1440 × 900, en la ficha ficticia, 0.48.205 → 0.48.206 | |
+| --- | ---: |
+| Alto de la tarjeta de Signos vitales | 199 → 134 px |
+| Franja en blanco bajo las mediciones | 65 → 0 px |
+| Reposo y Régimen | junto a Signos → bajo Signos |
+| Grupo «Sin datos» | bajo Reposo y Régimen → junto a Signos, desde arriba |
+| Inicio de Fármacos | 823 → 827 px |
+
+En la página, con más secciones sin datos que en la ficha ficticia, las dos columnas quedan en unos 204 y 192 px. Esa cifra es un cálculo sobre las medidas leídas, no una medición con la versión nueva.
+
 ## La ficha de Gestión de cuidados como la médica, en 0.48.205
 
 El responsable pidió que la tarjeta de Evolución de la ficha abierta desde Gestión de cuidados sea la de la ficha médica, y que Dispositivos invasivos sea más limpio y compacto. Las medidas son de la página, leída el 26-11-2026 a 1728 × 966 px.
