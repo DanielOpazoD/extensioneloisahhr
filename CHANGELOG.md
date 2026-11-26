@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.206
+
+- En el Resumen de la vista Compacta, en escritorio, la tarjeta de Signos vitales termina con sus mediciones. Hasta ahora se estiraba hasta el alto de la columna de su derecha y dejaba una franja en blanco bajo las mediciones (en la página, 259 px de tarjeta para 135 de contenido).
+- Reposo y Régimen pasan a leerse bajo Signos vitales, en su misma mitad de la línea, y el grupo «Sin datos» ocupa la otra mitad desde arriba. En la ficha leída las dos columnas miden 202 y 163 px, y Fármacos empieza 57 px más arriba. Sin secciones para el grupo «Sin datos», Reposo y Régimen siguen junto a Signos.
+- Vale igual para la ficha abierta desde la lista de trabajo médico y desde Gestión de cuidados.
+
 ## 0.48.205
 
 - La ficha abierta desde Gestión de cuidados muestra su nota como la ficha médica. Su tarjeta se titula «Valoración» y trae un párrafo «Evolución:» antes del texto: por esa diferencia la vista no la reconocía, y la nota quedaba plegada en una caja de 350 px, sin sus catorce líneas ni sus herramientas con nombre. Ahora ocupa el mismo ancho y alto, se abre entera, se desplaza dentro de su cuadro y lleva «Ver evoluciones» y la herramienta que Eloísa le da. La tarjeta conserva su título, «Valoración».
