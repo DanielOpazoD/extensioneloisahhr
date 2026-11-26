@@ -162,3 +162,17 @@ it('marca la posología y el solicitante de una tabla de fármacos solo en la vi
   reader.clear();
   expect(main.querySelector('[data-hhr-reading]')).toBeNull();
 });
+
+it('marca los días de tratamiento y distingue un solo día', () => {
+  const marker = days => '<div class="MuiBox-root"><svg data-testid="ChangeHistoryRoundedIcon"></svg><div class="MuiBox-root"><span>' + days + '</span></div></div>';
+  document.body.innerHTML = '<main><section id="medicationEntrySection"><h3>Fármacos</h3><table><thead><tr><th>Tiempo</th><th>Indication</th></tr></thead><tbody>' +
+    ['12', '1', '1000', 'hoy'].map(days => '<tr><td>' + marker(days) + '</td><td>Preparación ficticia</td></tr>').join('') +
+    '<tr><td><div class="MuiBox-root"><span>4</span></div></td><td>Sin símbolo</td></tr>' +
+    '<tr><td><div class="MuiBox-root"><svg></svg><button type="button">7</button></div></td><td>Con un control</td></tr></tbody></table></section></main>';
+  const reader = globalThis.HhrFichaReadingSurfaces.create(), main = document.querySelector('main');
+  reader.refresh(main, true);
+  expect([...main.querySelectorAll('tbody td:first-child > div')].map(marker => marker.getAttribute('data-hhr-reading')))
+    .toEqual(['time-symbol', 'time-symbol-one', null, null, null, null]);
+  reader.clear();
+  expect(main.querySelector('[data-hhr-reading]')).toBeNull();
+});

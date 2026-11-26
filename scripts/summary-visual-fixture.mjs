@@ -1,6 +1,7 @@
 // A fictional Resumen with the structure of the real one (docs/estructura-eloisa.md): the frame
 // and its items in Eloísa's order, the twelve section links in theirs, and each card with the
 // elements and classes that were observed. Every name, drug and figure is invented.
+// MUI names the family on every Typography, as here: a text takes the family of the view only where a rule gives it.
 // Not modelled: Balance Hídrico, Eventos Adversos and Examen Gíneco Obstétrico, whose content was not read.
 const paths = {
   MoreVertRoundedIcon:'M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4m0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4',
@@ -221,7 +222,7 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiGrid-grid-xs-12{flex:0 0 100%;max-width:100%}.MuiGrid-grid-xs-6{flex:0 0 50%;max-width:50%}
   @media(min-width:900px){.MuiGrid-grid-md-6{flex:0 0 50%;max-width:50%}}
   .rail{flex-wrap:nowrap;align-items:center;gap:8px;padding:8px 0}.rail>.MuiGrid-item{flex:none}.MuiBadge-root{position:relative;display:inline-flex}
-  .MuiTypography-caption{font-size:12px;line-height:1.66}.MuiTypography-body2{margin:0;font-size:14px;line-height:1.43}.MuiTypography-body1{margin:0;font-size:16px;line-height:1.5}
+  .MuiTypography-root{font-family:Arial,sans-serif}.MuiTypography-caption{font-size:12px;line-height:1.66}.MuiTypography-body2{margin:0;font-size:14px;line-height:1.43}.MuiTypography-body1{margin:0;font-size:16px;line-height:1.5}
   .MuiTypography-h6{font-size:20px;font-weight:500;line-height:1.6}.MuiTypography-h5{margin:0;font-size:24px;font-weight:400;line-height:1.334}
   .MuiStack-root{display:flex;flex-direction:column}.MuiCard-root{border-radius:4px;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2);height:100%}section.MuiBox-root{height:100%}
   .MuiCardHeader-root{display:flex;align-items:center;padding:16px}.MuiCardHeader-content{flex:1 1 auto;min-width:0}.MuiCardHeader-title,.MuiCardHeader-subheader{display:block}

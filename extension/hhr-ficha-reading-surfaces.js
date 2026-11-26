@@ -267,7 +267,10 @@
                 const marker = cell.firstElementChild;
                 if (heading === 'tiempo' && marker && cell.childElementCount === 1 &&
                     marker.matches('div,span,svg') && !marker.querySelector('button,a,[tabindex]') &&
-                    (marker.matches('svg') || marker.querySelector('svg')) && /^\d{1,3}$/.test(cell.textContent.trim())) next.set(marker,'time-symbol');
+                    (marker.matches('svg') || marker.querySelector('svg')) && /^\d{1,3}$/.test(cell.textContent.trim())) {
+                  // The number counts days of treatment. One day is said in the singular.
+                  next.set(marker, Number(cell.textContent) === 1 ? 'time-symbol-one' : 'time-symbol');
+                }
               }
             });
           }

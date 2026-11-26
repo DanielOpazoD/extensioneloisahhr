@@ -1,5 +1,16 @@
 # Resumen compacto en escritorio
 
+## Los días de tratamiento en 0.48.194
+
+En Fármacos, la columna «Tiempo» de Eloísa es un triángulo con un número. El número cuenta días de tratamiento, según confirmó el responsable clínico. La vista Compacta lo dice: «12 d», con las unidades alineadas en el borde de la columna. Un lector de pantalla lee «12 días», y «1 día» en singular. El triángulo, que no nombraba nada, deja su sitio a la unidad; la columna no cambia de ancho ni las filas de alto.
+
+| Pantalla | 0.48.193 | 0.48.194 |
+| --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.194/antes/1280-farmacos.png) | [Después](0.48.194/despues/1280-farmacos.png) |
+| 1440 × 900 | [Antes](0.48.194/antes/1440-farmacos.png) | [Después](0.48.194/despues/1440-farmacos.png) |
+
+Fuera de la vista Compacta los días conservan el símbolo de Eloísa. La ficha ficticia nombra desde esta versión la letra en cada texto, como hace MUI: así se comprueba que el número y su unidad se leen con la misma.
+
 ## El Resumen sobre la forma que dibuja Eloísa en 0.48.193
 
 Esta comparación usa una ficha ficticia nueva, [`scripts/summary-visual-fixture.mjs`](../../../scripts/summary-visual-fixture.mjs), escrita bloque por bloque desde la [estructura leída en Eloísa](../../estructura-eloisa.md#resumen): el marco y sus ítems en su orden, los doce enlaces de sección, Fármacos con sus seis columnas y catorce indicaciones, y Diagnóstico tras las indicaciones. Las fichas anteriores suponían formas más simples, y con la forma real la 0.48.192 se veía peor de lo que mostraban sus capturas.

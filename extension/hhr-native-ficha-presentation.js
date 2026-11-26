@@ -168,7 +168,7 @@
           table { min-inline-size:44rem; }
         }
       }
-      [data-hhr-reading="time-symbol"] { zoom:.68; }
+      [data-hhr-reading^="time-symbol"] { zoom:.68; }
       [data-hhr-reading="vital-grid"] {
         display:grid !important; grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5rem),1fr)) !important;
         gap:3px !important; margin:0 !important; width:100% !important; align-items:stretch;
