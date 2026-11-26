@@ -35,6 +35,11 @@ html[data-hhr-ficha-theme] {
   --hhr-ficha-radius-small:4px;
   /* The space between two blocks of the ficha, everywhere. */
   --hhr-ficha-block-gap:8px;
+  /* The page: never less than Eloísa's 32 px at each side, a little more as the window grows (35 px at
+     1280, 42 at 1440, 56 from 1800), and on a wide screen the content stops at a readable width and
+     stays at the centre. A laptop keeps its width for the clinical text. */
+  --hhr-ficha-page-margin:clamp(32px, 4vw - 16px, 56px);
+  --hhr-ficha-page-max:1600px;
   --hhr-ficha-control:28px;
   /* One family of icons. Each mask takes the colour of its own button. */
   --hhr-icon-notes:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='3' width='12' height='14' rx='2'/%3E%3Cpath d='M4 8v11a2 2 0 0 0 2 2h9'/%3E%3Cpath d='M12 8h4M12 12h4'/%3E%3C/svg%3E");

@@ -71,7 +71,9 @@ const read = page => page.evaluate(() => {
         const card = document.getElementById(id);
         return Math.round(card.querySelector('[data-hhr-reading="status-message"]').getBoundingClientRect().left - card.querySelector('.MuiCardHeader-title').getBoundingClientRect().right);
       });
+      const tab = document.createRange(); tab.selectNodeContents(one('[role="tab"][aria-selected="true"]'));
       return {
+        tabEdge:Math.round(tab.getClientRects()[0].left - firstText(one('#evolution .MuiCardHeader-title'))),
         rail:[Math.round(rail.left), Math.round(innerWidth - rail.right)],
         lefts:[...new Set(cards.map(card => Math.round(card.getBoundingClientRect().left)))].sort((a, b) => a - b),
         rights:[...new Set(cards.map(card => Math.round(innerWidth - card.getBoundingClientRect().right)))].sort((a, b) => a - b),
@@ -106,7 +108,8 @@ const read = page => page.evaluate(() => {
           const cell = [...document.querySelectorAll('#medicationEntrySection tbody tr')][2].cells[1];
           const name = document.createRange(); name.selectNodeContents(cell.querySelector('.MuiTypography-root'));
           const lines = [...name.getClientRects()], last = lines.at(-1), chip = cell.querySelector('.MuiChip-root').getBoundingClientRect();
-          return {lines:new Set(lines.map(rect => Math.round(rect.top))).size, gap:Math.round(chip.left - last.right), onLast:chip.top < last.bottom && chip.bottom > last.top};
+          return {lines:new Set(lines.map(rect => Math.round(rect.top))).size, gap:Math.round(chip.left - last.right), onLast:chip.top < last.bottom && chip.bottom > last.top,
+            below:chip.top >= last.bottom - 2, start:Math.round(chip.left - lines[0].left)};
         })(),
       };
     })(),
@@ -126,6 +129,8 @@ async function verifySummary(page, width, native, off, sans) {
   // The edges of the page: the round, every card and the section links keep the same margin on both sides.
   const {look} = shown;
   assert.equal(look.rail[0], look.rail[1], 'La línea de secciones deja el mismo margen a cada lado: ' + look.rail);
+  assert.ok(look.rail[0] >= 32, 'El margen nunca es menor que el de Eloísa: ' + look.rail[0]);
+  assert.equal(look.tabEdge, 0, 'Las pestañas empiezan donde empiezan los títulos de las tarjetas');
   assert.ok(look.lefts[0] === look.rail[0] && look.rights[0] === look.rail[1], `Las tarjetas empiezan y terminan en los bordes de la línea de secciones: ${look.lefts[0]}/${look.rights[0]} frente a ${look.rail}`);
   // One gap between blocks, one typeface, two weights, four sizes, one title, one surface.
   assert.ok(look.gaps.length >= 6 && look.gaps.every(gap => gap === 8), 'Los bloques bajo la ronda se separan siempre 8 px: ' + look.gaps);
@@ -142,7 +147,10 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(look.filter.end === 10 && look.filter.afterMessage && look.filter.oneLine, 'El filtro de una sección vacía cierra su línea: ' + JSON.stringify(look.filter));
   assert.equal(look.filter.freeEnd, 10, 'Un filtro que cierra la cabecera termina en el borde de lectura');
   assert.ok(look.diagnosisTop <= 10, 'El nombre de Diagnóstico queda arriba: ' + look.diagnosisTop);
-  assert.ok(look.marker.lines === 2 && look.marker.onLast && look.marker.gap >= 4 && look.marker.gap <= 10, 'La etiqueta sigue a la última palabra del nombre: ' + JSON.stringify(look.marker));
+  // Like a word: after the last word of the name, or, when that line is full, at the start of the next one. Never in a column of its own.
+  const {marker} = look;
+  assert.ok(marker.lines === 2 && ((marker.onLast && marker.gap >= 4 && marker.gap <= 10) || (marker.below && marker.start >= 0 && marker.start <= 10)),
+    'La etiqueta sigue al nombre como una palabra: ' + JSON.stringify(marker));
 
   // The round: note, signs and care on the left; handoff and alerts on the right, on shared edges.
   assert.ok(near(shown.note.left, shown.signs.left) && near(shown.note.right, shown.signs.right) && near(shown.signs.top, shown.note.bottom), 'Signos sigue a la nota con sus bordes');
@@ -201,7 +209,9 @@ async function verifySummary(page, width, native, off, sans) {
     const [count] = summaryMedications[at];
     assert.deepEqual([row.days.text, row.days.triangle, row.days.size, row.days.zoom], [String(count), 'none', '12px', '1'], `Los días de la fila ${at} se leen como un número`);
     assert.match(row.days.unit, count === 1 ? /^"\s?d" \/ " día"$/ : /^"\s?d" \/ " días"$/, `El número dice su unidad: ${row.days.unit}`);
-    assert.ok(row.days.width <= 64 && !/^Arial/.test(row.days.family), 'La columna de días no pide más ancho que antes y usa la letra de la vista: ' + row.days.width);
+    // Compared with Eloísa's own column in the same run: a fixed number of pixels depends on the font of each platform.
+    assert.ok(row.days.width <= native.medication.rows[at].days.width + 1 && !/^Arial/.test(row.days.family),
+      `La columna de días no pide más ancho que la de Eloísa: ${native.medication.rows[at].days.width} → ${row.days.width}`);
     assert.ok(row.requester <= 20, `El solicitante de la fila ${at} ocupa una línea: ${row.requester}`);
     assert.equal(row.posology, summaryMedications[at][3], 'La posología se lee entera');
     assert.equal(row.disclosures, 0, 'Con el texto entero, «Leer menos» no ocupa una línea');
@@ -210,6 +220,7 @@ async function verifySummary(page, width, native, off, sans) {
   });
   assert.equal(new Set(medication.rows.map(row => Math.round(row.days.end))).size, 1, 'Las unidades de los días caen en una línea: ' + medication.rows.map(row => Math.round(row.days.end)));
   const single = medication.rows.filter(row => row.height <= 30).length, visible = medication.rows.filter(row => row.bottom <= shown.viewport).length;
+  console.info('   Fármacos', width, sans ? 'letra ancha' : '', {single, visible});
   assert.ok(single >= 6, `La mayoría de las indicaciones cabe en una línea: ${single} de ${medication.rows.length}`);
   assert.ok(visible >= (width < 1400 ? 3 : 6), 'La primera pantalla llega a los fármacos: ' + visible);
 
@@ -220,6 +231,15 @@ async function verifySummary(page, width, native, off, sans) {
   const narrow = await page.evaluate(() => [...document.querySelectorAll('#diagnosisEntrySection tbody tr')].map(row =>
     [row.querySelector('[role="combobox"]'), row.cells[3]].map(cell => { const range = document.createRange(); range.selectNodeContents(cell); return new Set([...range.getClientRects()].map(rect => Math.round(rect.top))).size; })));
   assert.ok(narrow.every(lines => lines.every(count => count === 1)), 'A 1100 px el estado y la fecha de un diagnóstico ocupan una línea: ' + JSON.stringify(narrow));
+  await page.setViewportSize(viewport);
+  await refresh(page);
+
+  // On a wide screen the content stops at 1600 px and stays at the centre, tabs included.
+  await page.setViewportSize({width:1990, height:viewport.height});
+  await refresh(page);
+  const wide = (await read(page)).look;
+  assert.ok(wide.rail[0] === wide.rail[1] && Math.abs(1990 - wide.rail[0] * 2 - 1600) <= 1 && wide.tabEdge === 0,
+    'En una pantalla ancha el contenido mide 1600 px y queda centrado: ' + wide.rail);
   await page.setViewportSize(viewport);
   await refresh(page);
 

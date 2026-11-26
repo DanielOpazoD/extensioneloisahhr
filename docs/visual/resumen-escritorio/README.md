@@ -8,16 +8,19 @@ Un repaso con reglas mínimas de buena composición, medidas en la página. Ante
 | --- | --- | --- | --- |
 | 1280 × 800 | [Antes](0.48.196/antes/1280-resumen.png) | [Después](0.48.196/despues/1280-resumen.png) | [Antes](0.48.196/antes/1280-resumen-completo.png) · [Después](0.48.196/despues/1280-resumen-completo.png) |
 | 1440 × 900 | [Antes](0.48.196/antes/1440-resumen.png) | [Después](0.48.196/despues/1440-resumen.png) | [Antes](0.48.196/antes/1440-resumen-completo.png) · [Después](0.48.196/despues/1440-resumen-completo.png) |
+| 1990 × 1086, la ventana del responsable | [Antes](0.48.196/antes/1990-resumen.png) | [Después](0.48.196/despues/1990-resumen.png) | |
 
 | Medida, 0.48.195 → 0.48.196 | 1280 × 800 | 1440 × 900 |
 | --- | ---: | ---: |
-| Margen izquierdo y derecho de las tarjetas | 16 y 32 → 32 y 32 px | 16 y 32 → 32 y 32 px |
+| Margen izquierdo y derecho de las tarjetas | 16 y 32 → 35 y 35 px | 16 y 32 → 42 y 42 px |
 | Separación entre bloques bajo la ronda | 6 o 10 → 8 px | 6 o 10 → 8 px |
 | Tipografías / pesos / tamaños de letra | 2 / 5 / 6 → 1 / 2 / 4 | 2 / 5 / 6 → 1 / 2 / 4 |
-| Inicio de Fármacos | 634 → 604 px | 607 → 608 px |
-| Indicaciones de Fármacos completas en la primera pantalla, de 14 | 2 → 4 | 7 → 7 |
+| Inicio de Fármacos | 649 → 619 px | 622 → 623 px |
+| Indicaciones de Fármacos completas en la primera pantalla, de 14 | 2 → 3 | 7 → 7 |
 
-- **Márgenes.** La ronda de dos columnas tomaba el canal de 16 px que Eloísa cuelga a la izquierda de su rejilla y no lo devolvía. Ahora la ronda, las tarjetas bajo ella y la fila diaria descansan en los bordes de la línea de secciones, con el mismo margen a cada lado.
+En una ventana de 1990 px el contenido ocupaba 1926 px de borde a borde; ahora se detiene en 1600 px, centrado, con 195 px a cada lado.
+
+- **Márgenes.** La ronda de dos columnas tomaba el canal de 16 px que Eloísa cuelga a la izquierda de su rejilla y no lo devolvía. Ahora la ronda, las tarjetas bajo ella, la fila diaria, la línea de secciones y las pestañas comparten un borde, con el mismo margen a cada lado. Ese margen nunca es menor que los 32 px de Eloísa y crece con la ventana: 35 px a 1280, 42 a 1440, 56 desde 1800. En una pantalla ancha el contenido se detiene en 1600 px y queda centrado. En un portátil crece poco, para no quitar ancho al texto clínico.
 - **Una tipografía.** La vista escribía sus textos con la letra del sistema y dejaba los de Eloísa en Inter: una misma tarjeta mezclaba dos. Ahora todo es Inter.
 - **Dos pesos y cuatro tamaños.** Había 400, 500, 600, 650 y 750, y tamaños de 12 a 17 px. Quedan 400 y 600; 12, 13, 15 y 16 px. Cada tarjeta se titula a 15 px, Evolución incluida, y cada tabla nombra sus columnas a 12 px.
 - **Grises neutros.** Los textos secundarios tenían un tinte verde que los acercaba al verde de las acciones: el nombre de quien indica parecía un enlace. Ahora usan los grises de Eloísa; el verde queda para lo que se puede pulsar.
@@ -34,7 +37,8 @@ Límites:
 
 - **Nada de esto se ha visto aplicado sobre Eloísa.** La página real tiene Inter cargada; la ficha ficticia, sin ella en este equipo, dibuja la letra de reserva en las dos partes. La comprobación de una sola tipografía mide la familia declarada.
 - **Historial y Plan** ya tenían márgenes simétricos. Sus fichas ficticias siguen con el fondo y el margen de 24 px anteriores a esta medida.
-- **Por debajo de 1100 px**, sin las dos columnas, Diagnóstico queda a 40 px de cada borde y los demás bloques a 32 px, como antes. No hay comprobación de márgenes en esa franja.
+- **Por debajo de 1100 px**, sin las dos columnas, Diagnóstico queda 8 px más adentro que los demás bloques, como antes. No hay comprobación de márgenes en esa franja.
+- **A 1990 px la fila de fecha diaria ya no cabe junto a la línea de secciones**, que ahora termina antes y queda bajo la barra flotante de Centro HHR: ocupa su propia línea, unos 40 px.
 - **Bordes y fondos** escritos a mano quedan en algunas reglas; pasan a tokens cuando se vuelvan a editar.
 
 ## Los días de tratamiento en 0.48.194

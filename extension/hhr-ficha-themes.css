@@ -236,6 +236,19 @@
   }
 }
 
+/* The margins of the page. Eloísa pads main with 32 px and hangs the tab bar, fixed, across the whole
+   window. Both take the same inset, so the tabs, the section links and every card share one edge.
+   Percentages resolve against the window without its scroll bar, so both sides stay equal. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] main:has([role="tab"][id^="encounter-event-tab-"]) {
+    padding-inline:max(var(--hhr-ficha-page-margin), calc((100% - var(--hhr-ficha-page-max)) / 2)) !important;
+    > header.MuiAppBar-root:has([role="tab"][id^="encounter-event-tab-"]) {
+      /* The tab text starts on the reading edge of the cards, 10 px inside them; the tabs keep 24 px of their own. */
+      padding-inline:max(calc(var(--hhr-ficha-page-margin) - 14px), calc((100% - var(--hhr-ficha-page-max)) / 2 - 14px)) !important;
+    }
+  }
+}
+
 /* The sections of the ficha and «Historial» are named as they are written, not in capitals. */
 @media screen {
   html[data-hhr-ficha-theme="compact"] :is([data-hhr-ficha-primary] [role="tab"], [data-hhr-reading="vital-history"]) { text-transform:none; }

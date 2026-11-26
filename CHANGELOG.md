@@ -2,7 +2,7 @@
 
 ## 0.48.196
 
-- En el Resumen de la vista Compacta, las tarjetas recuperan los márgenes de Eloísa: 32 px a cada lado, en los bordes de la línea de secciones. Empezaban 16 px más a la izquierda y terminaban en su sitio a la derecha.
+- En la vista Compacta, la ficha deja el mismo margen a cada lado, y algo más amplio: 35 px a 1280, 42 a 1440, 56 desde 1800. En una pantalla ancha el contenido se detiene en 1600 px y queda centrado. Las tarjetas del Resumen empezaban 16 px más a la izquierda que la línea de secciones. Pestañas, línea de secciones y tarjetas comparten ahora un borde.
 - Las vistas de la ficha escriben con la tipografía de Eloísa, Inter, en lugar de la del sistema: una tarjeta ya no mezcla dos letras. Usan dos pesos y cuatro tamaños, y cada tarjeta se titula a 15 px, Evolución incluida.
 - El texto usa los grises neutros de Eloísa. El nombre de quien indica un fármaco ya no se confunde con un enlace.
 - Entre dos bloques del Resumen hay siempre 8 px, y todas las tarjetas tienen la misma superficie. Cada tabla empieza en el borde de su título, y sus encabezados tienen un solo tamaño.

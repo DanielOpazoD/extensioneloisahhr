@@ -1,7 +1,8 @@
 // A fictional Resumen with the structure of the real one (docs/estructura-eloisa.md): the frame
 // and its items in Eloísa's order, the twelve section links in theirs, and each card with the
 // elements and classes that were observed. Every name, drug and figure is invented.
-// Measured in Eloísa on 26-11-2026: page #f1f1f1, white cards without shadow and with 12 px corners, Inter on every text.
+// Measured in Eloísa on 26-11-2026: page #f1f1f1, white cards without shadow and with 12 px corners, Inter on every text,
+// 32 px of padding on main at each side and a fixed tab bar across the whole width with 24 px of padding.
 // MUI names the family on every Typography, as here: a text takes the family of the view only where a rule gives it.
 // Not modelled: Balance Hídrico, Eventos Adversos and Examen Gíneco Obstétrico, whose content was not read.
 const paths = {
@@ -215,10 +216,10 @@ const floatingBar = `<div id="hhr-clinical-operations-bar" aria-hidden="true"><s
 export const summaryPage = options => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
   *{box-sizing:border-box}body{margin:0;background:#f1f1f1;color:rgba(0,0,0,.87);font:16px/1.5 Inter,"Inter Fallback",system-ui,sans-serif}
   .banner{position:sticky;top:0;z-index:30;background:#218b80;color:white;padding:15px 24px;font-size:16px;font-weight:600}.banner small{margin-left:18px;font-size:12px;font-weight:400}
-  main>.MuiAppBar-root{position:sticky;top:54px;z-index:20;background:white}.MuiTabs-root [role=tablist]{display:flex}
+  main{padding:64px 32px 16px}main>.MuiAppBar-root{position:fixed;top:54px;left:0;right:0;z-index:20;padding:0 24px;background:white}.MuiTabs-root [role=tablist]{display:flex}
   .MuiTab-root{min-height:48px;padding:12px 16px;border:0;background:none;font:500 14px/1.25 Inter,"Inter Fallback",system-ui,sans-serif;text-transform:uppercase;color:rgba(0,0,0,.6);cursor:pointer}
   .MuiTab-root[aria-selected=true]{color:#086b63;box-shadow:inset 0 -2px #086b63}
-  main>.MuiStack-root{display:flex;flex-direction:column;padding:16px 32px}
+  main>.MuiStack-root{display:flex;flex-direction:column}
   .MuiGrid-container{display:flex;flex-wrap:wrap;width:100%}.MuiGrid-spacing-xs-2{width:calc(100% + 16px);margin-left:-16px;margin-top:-16px}
   .MuiGrid-spacing-xs-2>.MuiGrid-item{padding-left:16px;padding-top:16px}.MuiGrid-item{min-width:0}
   .MuiGrid-grid-xs-12{flex:0 0 100%;max-width:100%}.MuiGrid-grid-xs-6{flex:0 0 50%;max-width:50%}
