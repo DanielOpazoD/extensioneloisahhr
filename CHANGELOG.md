@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.198
+
+- En el Resumen de la vista Compacta, en escritorio, cada bloque tiene su lugar: Diagnóstico abre la ficha; después Evolución, con Observaciones de entrega y Alertas a su lado; luego Signos vitales a todo el ancho; y una línea con Reposo, Régimen y las solicitudes de examen y cirugía sin registros. Hasta ahora Diagnóstico y Fármacos empezaban hasta 100 px más arriba o más abajo según el largo de la nota y el número de alertas.
+- Evolución muestra siempre catorce líneas, en lugar de entre nueve y doce según el alto de la ventana. Una nota corta deja espacio y una larga se desplaza dentro de su cuadro. Observaciones de entrega y Alertas terminan en la misma línea que la nota, y la lista de alertas se desplaza dentro de su cuadro, con los interruptores a la vista.
+- La vista respira más. Ningún texto toca el borde de su cuadro: el margen de lectura dentro de cada tarjeta pasa de 10 a 16 px. Entre dos bloques hay 12 px en lugar de 8, las esquinas miden 8 px y el margen de la página nunca baja de 40 px.
+- Reposo, Régimen y las solicitudes sin registros se leen a la altura del centro de su línea, aunque uno ocupe más alto que el otro.
+- Fármacos empieza más abajo: en una ventana de 800 px de alto queda bajo la primera pantalla, que ahora es la ronda completa hasta Signos vitales.
+
 ## 0.48.197
 
 - En el Resumen de la vista Compacta, Fármacos vuelve a alinearse con las demás tarjetas, con su título, su botón «Validar tratamiento» e «Imprimir indicaciones» junto al título. Eloísa había puesto la tarjeta dentro de una segunda sección, y la vista dejó de reconocerla: quedaba 10 px más adentro y a su tamaño nativo, y el icono de impresión ocupaba una línea propia.
