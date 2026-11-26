@@ -235,7 +235,7 @@
   // note with the handoff and the alerts beside it, the signs, the care instructions with the
   // empty requests. Cards that share a line and a column stack by their intrinsic heights.
   function create() {
-    let previous = new Map(), frame, stacks = [], halves = [], peers = [], lead = null, fill = null, pending = 0;
+    let previous = new Map(), frame, stacks = [], halves = [], peers = [], requests = [], signs = null, lead = null, fill = null, pending = 0;
     const desktop = globalThis.matchMedia?.('(min-width:1100px)');
     // Updating margins does not resize the observed border boxes. Repack before paint.
     const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(pack) : null;
@@ -281,6 +281,20 @@
       // The side column ends where the note ends: its last card takes the height the handoff leaves.
       // The note never reads the height of that card, so the two cannot chase each other.
       if (fill) set(fill, '--hhr-round-fill', Math.max(0, lead.getBoundingClientRect().height - offsets.get(fill)) + 'px');
+      // Beside the signs, in the room their measurements leave: the care instructions, then a heading and
+      // the sections without records or without permission, two to a row. The signs span those lines.
+      // A section folded behind «Ver vacías» keeps its item in the page, without a height.
+      const drawn = el => el.getBoundingClientRect().height > 0;
+      const tiles = signs ? [...requests, ...peers.filter(([, role]) => role === 'peer').map(([el]) => el).filter(el =>
+        el.querySelector(':scope > section > [data-hhr-reading="status-card"]:only-child, :scope > [data-hhr-reading="status-card"]:only-child'))].filter(drawn) : [];
+      // A section with a filter of its own takes a whole line of that column.
+      const whole = tiles.filter(el => el.querySelector('label')).length;
+      const care = signs && stacks[2].some(drawn) ? 1 : 0;
+      const lines = care + (tiles.length ? 1 + whole + Math.ceil((tiles.length - whole) / 2) : 0);
+      const side = [care && 'care', tiles.length && 'tiles'].filter(Boolean).join(' ');
+      if (!side) { frame.removeAttribute('data-hhr-round-side'); frame.style.removeProperty('--hhr-round-side-lines'); return; }
+      if (frame.getAttribute('data-hhr-round-side') !== side) frame.setAttribute('data-hhr-round-side', side);
+      set(frame, '--hhr-round-side-lines', String(lines));
     }
     function resetColumns() {
       if (pending) cancelAnimationFrame(pending);
@@ -290,13 +304,15 @@
       if (frame) {
         desktop?.removeEventListener('change', schedule);
         frame.removeAttribute('data-hhr-round-columns');
+        frame.removeAttribute('data-hhr-round-side');
         frame.style.removeProperty('--hhr-round-line');
+        frame.style.removeProperty('--hhr-round-side-lines');
       }
       for (const item of stacks.flat()) item.style.removeProperty('--hhr-round-offset');
       fill?.style.removeProperty('--hhr-round-fill');
       for (const item of halves) item.removeAttribute('data-hhr-round-half');
       for (const [peer] of peers) peer.style.removeProperty('--hhr-round-span');
-      stacks = []; halves = []; peers = []; lead = fill = frame = null;
+      stacks = []; halves = []; peers = []; requests = []; signs = lead = fill = frame = null;
     }
     function refresh(main) {
       const next = layout(main);
@@ -313,7 +329,8 @@
       const items = (...roles) => [...next].filter(([,value]) => roles.includes(value)).map(([el]) => el);
       peers = [...next].filter(([,role]) => role === 'peer' || role === 'before');
       // Two requests without records share their end of the last line of the round.
-      const requests = items('empty-request');
+      requests = items('empty-request');
+      signs = roles.get('vitals') || null;
       halves = requests.length === 2 ? requests : [];
       halves.forEach((item, index) => item.setAttribute('data-hhr-round-half', index ? 'end' : 'start'));
       // The signs and the requests take a line of the grid each. The handoff and the alerts share the

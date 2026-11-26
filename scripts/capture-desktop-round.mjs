@@ -66,8 +66,10 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         return [...range.getClientRects()].map(rect => ({top:rect.top,bottom:rect.bottom,right:rect.right}));
       });
       const pressureTime = pressure.closest('.tile').querySelector('[data-hhr-reading="vital-time"]').getBoundingClientRect();
+      // An age shared by the whole strip is said once beside its title: here it is kept for a screen reader only.
+      const pressureTimeShown = pressureTime.width > 1 && pressureTime.height > 1;
       return {pressureLines:new Set(pressureFragments.map(rect => Math.round(rect.top))).size,
-        pressureClearOfTime:pressureFragments.every(rect => rect.top >= pressureTime.bottom ||
+        pressureClearOfTime:!pressureTimeShown || pressureFragments.every(rect => rect.top >= pressureTime.bottom ||
           rect.bottom <= pressureTime.top + 1 || rect.right <= pressureTime.left + 1),
         note:box('#evolution'),signs:box('section#vitalSignsEntry'),handoff:box('#shiftChangeObservation'),
         alerts:box('#alerts'),rest:box('#rest'),diet:box('#diet'),exam:box('#diagnosisTestEntrySection'),
@@ -77,7 +79,8 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     });
     heights.push(metrics.noteHeight);
     assert.equal(metrics.pageWidth,width);
-    assert.ok(metrics.vitalsRows <= (round ? 2 : 1));
+    // Beside the care instructions the nine measurements take half the line: three rows at most.
+    assert.ok(metrics.vitalsRows <= (round ? 3 : 1));
     assert.deepEqual(metrics.values,['118/72','78','96','38,1','17','15','21','104','2']);
     console.log(JSON.stringify(round ? {...metrics, band} : metrics));
     if (verifyLayout) {
@@ -86,19 +89,21 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         const aligned = (a,b) => Math.abs(a.left-b.left) <= 1 && Math.abs(a.right-b.right) <= 1;
         // The space between two blocks of the ficha.
         const gap = 12, middle = box => (box.top + box.bottom) / 2;
-        assert.ok(Math.abs(band.signs.left - band.note.left) <= 1 && Math.abs(band.signs.right - band.alerts.right) <= 1 &&
-          Math.abs(band.signs.top - band.note.bottom - gap) < 2, 'Signos debe quedar debajo de Evolución, a todo el ancho de la ronda');
+        assert.ok(Math.abs(band.signs.left - band.note.left) <= 1 && band.signs.right <= band.rest.left + 2 && Math.abs(band.signs.top - band.note.bottom - gap) < 2,
+          'Signos debe quedar debajo de Evolución, en la primera mitad de la línea');
         assert.ok(Math.abs(band.alerts.bottom - band.note.bottom) < 2, 'Alertas debe terminar donde termina Evolución');
         assert.ok(aligned(band.handoff,band.alerts) && Math.abs(band.alerts.top - band.handoff.bottom) < 2,
           'Observaciones debe compartir ambos bordes con Alertas y aparecer primero');
         // Two short instructions share a line. Otherwise each one uses the whole width.
-        const stacked = aligned(band.rest,band.note) && aligned(band.diet,band.rest) && Math.abs(band.diet.top - band.rest.bottom) < 2;
+        // The other half of that line, from the end of the signs to the edge of the round.
+        const side = {left:band.signs.right, right:band.alerts.right};
+        const inSide = box => box.left >= side.left - 1 && box.right <= side.right + 1;
+        const stacked = Math.abs(band.rest.left - band.diet.left) <= 1 && Math.abs(band.rest.right - band.diet.right) <= 1 && Math.abs(band.diet.top - band.rest.bottom) < 2;
         // On a shared line the shorter instruction is read at the middle of the taller one.
-        const sharedLine = Math.abs(middle(band.diet) - middle(band.rest)) < 2 && Math.abs(band.diet.left - band.rest.right) <= 1 &&
-          Math.abs(band.rest.left - band.note.left) <= 1 && Math.abs(band.diet.right - band.note.right) <= 1;
+        const sharedLine = Math.abs(middle(band.diet) - middle(band.rest)) < 2 && Math.abs(band.diet.left - band.rest.right) <= 1;
         const careTop = Math.min(band.rest.top, band.diet.top);
-        assert.ok((stacked || sharedLine) && careTop >= band.signs.bottom + gap - 1 && careTop <= band.signs.bottom + gap + 12,
-          'Reposo y Régimen deben seguir a Signos en el margen izquierdo, sin otro hueco');
+        assert.ok((stacked || sharedLine) && inSide(band.rest) && inSide(band.diet) && Math.abs(band.diet.right - side.right) <= 1 && careTop >= band.signs.top - 1 && careTop <= band.signs.top + 12,
+          'Reposo y Régimen deben leerse junto a Signos, en la otra mitad de la línea');
         // The fonts of each system decide the widths. The line is shared exactly when both instructions fit.
         const fit = await page.evaluate(() => {
           const line = document.querySelector('#rest').closest('.MuiGrid-container');
@@ -111,14 +116,10 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         if (Math.abs(fit.needed - fit.available) > 2) {
           assert.equal(sharedLine, fit.needed < fit.available, 'Reposo y Régimen comparten línea siempre que caben, y solo entonces');
         }
-        assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 &&
-          Math.abs(band.exam.left - band.alerts.left) <= 1 && Math.abs(band.surgery.right - band.alerts.right) <= 1 &&
-          band.exam.top >= careTop - 1 && band.exam.bottom <= Math.max(band.rest.bottom, band.diet.bottom) + 1 && Math.abs(band.exam.height - band.surgery.height) < 1,
-          'Las dos solicitudes vacías cierran la línea de Reposo y Régimen');
-        for (const side of [band.exam,band.surgery]) {
-          assert.ok(side.left >= band.handoff.left - 1 && side.right <= band.handoff.right + 1 && side.height > 0,
-            'Las solicitudes explícitamente vacías deben quedar visibles en el lateral');
-        }
+        assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 && Math.abs(band.exam.left - side.left) <= 2 &&
+          Math.abs(band.surgery.right - side.right) <= 1 && band.exam.top >= Math.max(band.rest.bottom, band.diet.bottom) && Math.abs(band.exam.height - band.surgery.height) < 1,
+          'Las dos solicitudes vacías comparten una línea bajo Reposo y Régimen, junto a Signos');
+        for (const request of [band.exam,band.surgery]) assert.ok(inSide(request) && request.height > 0, 'Las solicitudes explícitamente vacías deben quedar visibles junto a Signos');
         assert.equal(band.pressureLines,1,'La sistólica, la barra y la diastólica deben leerse en la misma línea');
         assert.equal(band.pressureClearOfTime,true,'El tiempo no debe tapar los dígitos de la presión');
         assert.ok(band.requestCards.every(card => card.height > 0 && card.height < 36), 'Cada solicitud vacía debe caber en una fila');
@@ -545,14 +546,16 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
       value:card.querySelector('.MuiChip-label').textContent, stamp:stamp.dataset.hhrUpdateLabel,
       height:box.height, horizontalGap:signature.left - content.right,
       sharedBaseline:signature.bottom > content.top && content.bottom > signature.top,
+      below:signature.top >= content.bottom - 1 && signature.top <= content.bottom + 6,
       stampFits:signature.width > 0 && signature.right <= box.right && signature.bottom <= box.bottom,
     };
   }));
   assert.deepEqual(care.map(card => card.value),['Relativo','Común']);
   assert.match(care[0].stamp,/09:12.*Tomás Ejemplo/);
   assert.match(care[1].stamp,/10:45.*Elena Ejemplo/);
-  if (verifyLayout) assert.ok(care.every(card => card.sharedBaseline && card.horizontalGap >= 0 && card.stampFits),
-    'Cada autoría debe poder leerse junto al valor de su propia indicación');
+  // In half the line a byline may take the line under its own value, never the line of another instruction.
+  if (verifyLayout) assert.ok(care.every(card => card.stampFits && (card.sharedBaseline ? card.horizontalGap >= 0 : card.below)),
+    'Cada autoría debe poder leerse junto al valor de su propia indicación, o justo debajo');
   if (verifyLayout) {
     // One age for the measurements taken together. The older one keeps its own, in bold.
     const ages = await page.locator('section#vitalSignsEntry').evaluate(section => {
