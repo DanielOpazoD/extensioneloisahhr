@@ -244,6 +244,17 @@
     }
     /* A posology of some fifty characters fits on its line before the name or the instructions take the room. */
     @media (min-width:1100px) { th[data-hhr-reading="order-posology"] { min-inline-size:20rem; } }
+    /* The number beside Eloísa's triangle counts days of treatment. It says so: «12 d». The
+       triangle, which named nothing, gives its place to the unit. */
+    [data-hhr-reading^="time-symbol"] {
+      /* On the trailing edge of its column, so that the units of one list fall in line. */
+      zoom:1; display:flex; align-items:baseline; justify-content:flex-end; color:var(--hhr-ficha-ink-soft); white-space:nowrap;
+      font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans); font-variant-numeric:tabular-nums;
+      svg { display:none; }
+      .MuiTypography-root { color:inherit; font:inherit; }
+      &::after { content:'\a0 d' / ' días'; color:var(--hhr-ficha-muted); }
+      &[data-hhr-reading="time-symbol-one"]::after { content:'\a0 d' / ' día'; }
+    }
     /* Who asked for a prescription situates it: one line, in the ink of what explains. */
     [data-hhr-reading="order-requester"] { color:var(--hhr-ficha-muted); white-space:nowrap; }
     /* The state of a diagnosis is a native select. It keeps its arrow and its menu. */

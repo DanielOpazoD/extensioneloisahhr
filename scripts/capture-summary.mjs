@@ -23,6 +23,9 @@ const read = page => page.evaluate(() => {
   const rows = [...medication.querySelectorAll('tbody tr')].map(row => ({
     ...box(row), requester:box(row.cells[4].firstElementChild).height, posology:row.cells[2].querySelector('.MuiTypography-caption').textContent.trim(),
     disclosures:[...row.querySelectorAll('.MuiButton-text')].filter(shown).length,
+    days:(marker => ({text:marker.textContent.trim(), unit:getComputedStyle(marker, '::after').content, triangle:getComputedStyle(marker.querySelector('svg')).display,
+      size:getComputedStyle(marker.querySelector('span')).fontSize, family:getComputedStyle(marker.querySelector('span')).fontFamily, zoom:getComputedStyle(marker).zoom,
+      width:box(row.cells[0]).width, end:box(row.cells[0]).right - box(marker.querySelector('span')).right}))(row.cells[0].firstElementChild),
     actions:[...row.cells[5].querySelectorAll('button')].map(button => [button.querySelector('svg').getAttribute('aria-label'), Math.round(box(button).height), button.hasAttribute('aria-label') || button.hasAttribute('title')]),
   }));
   const diagnoses = [...diagnosis.querySelectorAll('tbody tr')].map(row => ({...box(row), star:shown(row.cells[0].querySelector('svg') || row.cells[0]) && Boolean(row.cells[0].querySelector('svg')),
@@ -115,12 +118,18 @@ async function verifySummary(page, width, native, off) {
   // Each prescription: its requester on one line, its cut texts whole, its three actions with their names.
   assert.equal(medication.rows.length, summaryMedications.length);
   medication.rows.forEach((row, at) => {
+    // «Tiempo» counts days of treatment: the number says its unit, and one day is read in the singular.
+    const [count] = summaryMedications[at];
+    assert.deepEqual([row.days.text, row.days.triangle, row.days.size, row.days.zoom], [String(count), 'none', '12px', '1'], `Los días de la fila ${at} se leen como un número`);
+    assert.match(row.days.unit, count === 1 ? /^"\s?d" \/ " día"$/ : /^"\s?d" \/ " días"$/, `El número dice su unidad: ${row.days.unit}`);
+    assert.ok(row.days.width <= 64 && !/^Arial/.test(row.days.family), 'La columna de días no pide más ancho que antes y usa la letra de la vista: ' + row.days.width);
     assert.ok(row.requester <= 20, `El solicitante de la fila ${at} ocupa una línea: ${row.requester}`);
     assert.equal(row.posology, summaryMedications[at][3], 'La posología se lee entera');
     assert.equal(row.disclosures, 0, 'Con el texto entero, «Leer menos» no ocupa una línea');
     assert.deepEqual(row.actions.map(([name, , named]) => [name, named]), [['Suspender', false], ['Ver notas', false], [null, false]], 'Las acciones conservan el nombre de su icono');
     assert.ok(row.actions.every(([, height]) => height >= 24) && row.height <= 46 && row.height < native.medication.rows[at].height, `La fila ${at} es más baja: ${native.medication.rows[at].height} → ${row.height}`);
   });
+  assert.equal(new Set(medication.rows.map(row => Math.round(row.days.end))).size, 1, 'Las unidades de los días caen en una línea: ' + medication.rows.map(row => Math.round(row.days.end)));
   const single = medication.rows.filter(row => row.height <= 30).length, visible = medication.rows.filter(row => row.bottom <= shown.viewport).length;
   assert.ok(single >= 6, `La mayoría de las indicaciones cabe en una línea: ${single} de ${medication.rows.length}`);
   assert.ok(visible >= (width < 1400 ? 3 : 6), 'La primera pantalla llega a los fármacos: ' + visible);
@@ -181,6 +190,11 @@ async function verifySummary(page, width, native, off) {
   });
   assert.equal(writes, 0, 'Un refresco idéntico no reescribe marcas');
 
+  // In the other views the days keep the triangle of Eloísa, one day like the rest.
+  await theme(page, 'balanced');
+  const elsewhere = (await read(page)).medication.rows.map(row => [row.days.zoom, row.days.triangle !== 'none', row.days.unit]);
+  assert.ok(elsewhere.every(([zoom, triangle, unit]) => zoom === '0.68' && triangle && unit === 'none'), 'Fuera de la vista compacta los días conservan su símbolo: ' + elsewhere.at(-1));
+  await theme(page, 'compact');
   // Without the compact view the page is the one Eloísa drew, with «Ver evoluciones» as in every view.
   await theme(page, 'off');
   const restored = await read(page);

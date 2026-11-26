@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.194
+
+- En el Resumen de la vista Compacta, la columna «Tiempo» de Fármacos muestra los días de tratamiento con su unidad: «12 d», en lugar de un triángulo con un número.
+
 ## 0.48.193
 
 - En el Resumen de la vista Compacta, Diagnóstico pasa a la primera pantalla: abre las tarjetas bajo la ronda, con una línea por diagnóstico, su estado y sus notas.
