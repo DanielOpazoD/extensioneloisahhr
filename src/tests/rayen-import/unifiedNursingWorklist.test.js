@@ -299,3 +299,30 @@ it('usa el episodio del enlace nativo para imprimir y editar la entrega, incluso
     { print:undefined, handoff:undefined, href:path + '/500' },
   ]);
 });
+
+it('marca «Nuevo» también en la lista médica, sea cual sea su tamaño, y solo el pequeño en Gestión de cuidados', () => {
+  Function(readFileSync('extension/hhr-worklist-print-column.js', 'utf8'))();
+  const jsx = (type, props, key) => ({ type, props, key });
+  const Chip = () => null;
+  const marked = (route, size) => {
+    const row = jsx('tr', { children: [
+      jsx('td', { children: ['AMQI', jsx('br', {}), 'R1'] }),
+      jsx('td', { children: jsx('div', { children: [jsx('a', { href: route + '/7', children: jsx('span', { children: [
+        jsx('span', { administrativeSexId: 1 }), jsx('strong', { fontWeight: 'bold', children: 'Paciente sintético' }),
+        jsx(Chip, { label: 'Nuevo', size }),
+      ] }) })] }) }),
+      jsx('td', { children: 'GES' }),
+    ] }, 7);
+    const adapted = globalThis.HhrWorklistPrintColumn.adapt(jsx, {
+      children: [row], listLenght: 1, columns: ['location', 'patient', 'ges'].map(id => ({ id })),
+    }, route);
+    // The care list wraps the link with its tools: look the name row up wherever the adapter leaves it.
+    const find = node => Array.isArray(node) ? node.map(find).find(Boolean) :
+      !node?.props ? undefined : Object.hasOwn(node.props, 'data-hhr-patient-name-row') ? node : find(node.props.children);
+    const nameRow = find(adapted.children[0].props.children[1]);
+    expect(nameRow.props['data-hhr-patient-name-row']).toBe('');
+    return Object.hasOwn(nameRow.props.children.at(-1).props, 'data-hhr-new-patient-chip');
+  };
+  expect(['small', undefined, 'medium'].map(size => marked('/dashboard/encounter-list', size))).toEqual([true, true, true]);
+  expect(['small', 'medium'].map(size => marked(path, size))).toEqual([true, false]);
+});

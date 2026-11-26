@@ -132,7 +132,8 @@
       if (nursing && node.props.label === 'Alta médica' && node.props.size === 'small') {
         return jsx(node.type, { ...node.props, 'data-hhr-discharge-chip': '' }, node.key ?? undefined);
       }
-      if (nursing && node.props.label === 'Nuevo' && node.props.size === 'small') {
+      // «Nuevo» reads the same in both lists. The medical list may draw it at another size.
+      if (node.props.label === 'Nuevo' && (node.props.size === 'small' || !nursing)) {
         return jsx(node.type, { ...node.props, 'data-hhr-new-patient-chip': '' }, node.key ?? undefined);
       }
       const text = node.props.children;

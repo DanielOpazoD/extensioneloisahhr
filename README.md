@@ -93,6 +93,8 @@ En el menú lateral y en Ajustes de Centro HHR, «Favoritos» reúne los accesos
 
 En el menú lateral, «Un día como hoy» reúne las conmemoraciones de Efemerides.cl, hasta tres hechos históricos destacados por Wikipedia en español y hasta ocho nacimientos ordenados por visitas recientes. Cada hecho y nacimiento enlaza a su artículo. La lista de nacimientos muestra tres al abrirse y permite desplegar el resto.
 
+La lista de trabajo médico y la de Gestión de cuidados se leen igual: el nombre del paciente en una línea, su RUN debajo y «Nuevo» como una etiqueta pequeña tras el nombre. En la lista médica la columna Paciente toma el ancho de un nombre completo en lugar del que le deja Eloísa. [Ver las capturas](docs/visual/listas-de-trabajo/README.md)
+
 La ubicación muestra servicio y cama. Las filas se ordenan por cama desde R1–R4 y NEO1–NEO2 hasta H1C1–H6C2. Las ubicaciones adicionales siguen a las camas de sala y las de urgencias cierran la lista. En interconsultas se aplica el orden dentro de cada servicio. La fila se resalta al pasar el cursor o enfocar sus controles. En Gestión de cuidados, el lápiz junto al nombre abre «Modificación del paciente» en Gestión de Camas. El lápiz reutiliza la pestaña de Camas del profesional, incluso en otra ventana. Si hace falta iniciar sesión, se usa el acceso oficial de Camas. El editor comprueba profesional, establecimiento, episodio, paciente y disponibilidad de la acción nativa. El profesional revisa los datos y decide si guardar.
 
 Las recetas y las indicaciones se abren desde Centro HHR; la extensión no agrega iconos
