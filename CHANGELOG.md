@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.201
+
+- En el Resumen de la vista Compacta, en escritorio, Signos vitales ocupa la primera mitad de su línea y deja la otra mitad a Reposo y Régimen y, debajo, al grupo «Sin datos»: las secciones sin registros o sin permiso, dos por fila, con las solicitudes de examen y de cirugía sin registros entre ellas. Antes Signos vitales ocupaba todo el ancho, Reposo y Régimen una línea aparte y el grupo «Sin datos» el final de la ficha.
+- Con eso la ficha es más corta y «sin alergias registradas» o «sin RAM» se leen en la primera parte del Resumen, sin llegar al final. Fármacos empieza 46 px más abajo.
+- Las mediciones de Signos vitales se reparten en dos o tres filas dentro de su mitad. Sin Reposo, Régimen ni secciones sin datos, Signos vitales conserva todo el ancho.
+- Una sección plegada tras «Ver vacías» ya no deja un hueco entre las demás.
+
 ## 0.48.200
 
 - Al leer el censo desde Ficha Médico, la extensión informa explícitamente `documentType: 'Pasaporte'` cuando Eloísa identifica al paciente con pasaporte (en la cabecera/lista o en el rótulo «Pasaporte:» verificado de la fila o ficha abierta), sin adivinar tipos desconocidos ni confundir RUN materno/progenitor. Así HHR puede reconocer pasaportes numéricos desde la primera sincronización.

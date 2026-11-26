@@ -1,5 +1,25 @@
 # Resumen compacto en escritorio
 
+## Reposo, Régimen y lo que no tiene datos, junto a Signos vitales, en 0.48.201
+
+El responsable propuso estrechar el cuadro de Signos vitales y usar el espacio que sobra a su derecha para Reposo, Régimen y las secciones sin datos. En la página real las mediciones ocupan la mitad de su tarjeta.
+
+| Pantalla | 0.48.200 | 0.48.201 | Página completa |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.201/antes/1280-resumen.png) | [Después](0.48.201/despues/1280-resumen.png) | [Antes](0.48.201/antes/1280-resumen-completo.png) · [Después](0.48.201/despues/1280-resumen-completo.png) |
+| 1440 × 900 | [Antes](0.48.201/antes/1440-resumen.png) | [Después](0.48.201/despues/1440-resumen.png) | [Antes](0.48.201/antes/1440-resumen-completo.png) · [Después](0.48.201/despues/1440-resumen-completo.png) |
+
+| Medida a 1440 × 900, 0.48.200 → 0.48.201 | |
+| --- | ---: |
+| Ancho de Signos vitales | toda la línea → su primera mitad |
+| Filas de las nueve mediciones | 1 → 2 |
+| Reposo y Régimen | una línea propia bajo Signos → junto a Signos |
+| Grupo «Sin datos» | al final de la ficha, tres por fila → junto a Signos, dos por fila |
+| Alto de la página | 1923 → 1876 px |
+| Inicio de Fármacos | 819 → 865 px |
+
+La rejilla coloca cada sección sin datos en el primer hueco junto a los signos (`grid-auto-flow: dense`), y `hhr-ficha-round-layout.js` cuenta las líneas que ocupa esa columna para que Signos vitales las abarque. No se mueve ningún nodo.
+
 ## Lo vacío junto, las tablas con un ritmo y el Resumen desde arriba, en 0.48.199
 
 El responsable revisó la 0.48.198 en su pantalla y pidió: agrupar con más elegancia las secciones sin datos; dar el estilo de la vista a Procedimientos, Solicitud interconsulta, Solicitud de examen y Solicitudes de intervención quirúrgica cuando tienen registros; que un Régimen en edición no se vea de otro programa; quitar el nombre del funcionario de la línea de secciones y dejar entero «Resumen diario paciente»; un lector de la evolución más grande y más limpio; más margen general; y que la ficha no quede a mitad de documento al recargar.
