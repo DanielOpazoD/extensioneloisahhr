@@ -48,6 +48,8 @@ Leídos en la página el 26-11-2026, enmascarados y con sus espacios. La mayorí
 - Signos vitales y Alertas: «Cargo Nombre··Apellido·» (sin segundo nombre ni segundo apellido: queda un espacio al final).
 - Evolución: «Médico Nombre Apellido», con un solo espacio.
 - «Solicitante» en Fármacos: «Nombre Apellido·» o «Nombre Apellido Apellido».
+- Historial: el título de cada evento es el cargo y su subtítulo, sin elementos dentro, el nombre en cuatro campos («Nombre··Apellido Apellido», «Nombre··Apellido·»). 33 de 33 eventos leídos.
+- Plan de tratamiento: ningún texto con cargo ni nombre de profesional.
 
 Leída de nuevo el 26-11-2026 con la vista Compacta activa (0.48.199), a 1303 × 970 px: la fila es el primer hijo de la rejilla de la ronda, que sigue al hueco de la línea de secciones, y medía 30 px **en su propia línea**. No había subido a la línea de secciones: la barra flotante de Centro HHR tapa su final y la fila no cabía entre el último enlace y esa barra. Desde la 0.48.201 va en la línea de pestañas.
 

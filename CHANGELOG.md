@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.208
+
+- En el Historial de la vista Compacta, quien firma cada evento se lee con su primer nombre y su primer apellido, como en el Resumen: «Daniel Opazo Damiani» se lee «Daniel Opazo». El nombre completo sigue en la página.
+- El filtro «Evoluciones por profesional» del Historial usa el mismo nombre corto. Si dos profesionales se leyeran igual, cada uno conserva su nombre completo.
+- El Plan de tratamiento no cambia: no muestra nombres de profesionales.
+
 ## 0.48.207
 
 - En el Resumen de la vista Compacta ya no se muestra la barra de enlaces de sección (Alertas, Diagnóstico, Indicaciones libres, Fármacos, Régimen, Evolución o Valoración, Reposo, Dispositivos invasivos, Signos vitales…), ni en la ficha abierta desde la lista de trabajo médico ni en la de Gestión de cuidados. El responsable pidió quitarla. La ficha empieza donde estaba la barra.

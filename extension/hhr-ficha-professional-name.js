@@ -18,5 +18,8 @@
     while (particles.has(surname.at(-1).toLowerCase()) && tokens[at + surname.length]) surname.push(tokens[at + surname.length]);
     return tokens[0] + ' ' + surname.join(' ');
   }
-  globalThis.HhrFichaProfessionalName = Object.freeze({ short });
+  // The role Eloísa writes beside a name, alone in its own element.
+  const profession = /^(?:m[eé]dic[oa](?:\s+(?:cirujan[oa]|especialista|tratante))?|enfermer[oa]|kinesi[oó]log[oa]|param[eé]dic[oa]|nutricionista|matr[oó]n(?:a)?|t[eé]cnic[oa](?: (?:de|en) enfermer[ií]a)?|tens|terapeuta ocupacional|fonoaudi[oó]log[oa]|psic[oó]log[oa]|asistente social|trabajador(?:a)? social|qu[ií]mic[oa] farmac[eé]utic[oa]|odont[oó]log[oa])$/i;
+  const isProfession = label => profession.test(String(label ?? '').replace(/\([oa]\)/gi, '').trim().replace(/\s+/g, ' '));
+  globalThis.HhrFichaProfessionalName = Object.freeze({ short, isProfession });
 })();

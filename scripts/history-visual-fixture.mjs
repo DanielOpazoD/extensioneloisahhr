@@ -36,9 +36,11 @@ const day = (label, events) => {
   return groups.map((cards, index) => box(cards, index ? '' : label)).join('');
 };
 
-const doctor = {name:'Tomás Ejemplo', role:'Médico'}, nurse = {name:'Elena Ejemplo', role:'Enfermera(o)'};
-const therapist = {name:'Luis Ejemplo', role:'Kinesiólogo(a)'}, resident = {name:'Marta Ejemplo', role:'Médico'};
-const aide = {name:'Luis Ejemplo', role:'Paramédico'};
+// Names as Eloísa writes them in the header of an event (read 26-11-2026): first name, second name, first surname and
+// second surname joined by a space, each empty field leaving its own. None of these has a second name.
+const doctor = {name:'Tomás  Ejemplo Prueba', role:'Médico'}, nurse = {name:'Elena  Ejemplo ', role:'Enfermera(o)'};
+const therapist = {name:'Luis  Ejemplo ', role:'Kinesiólogo(a)'}, resident = {name:'Marta  Ejemplo Prueba', role:'Médico'};
+const aide = {name:'Luis  Ejemplo ', role:'Paramédico'};
 export const historyDays = [
   ['Hoy', [
     {...nurse, time:'13:40', category:'Evolución', shape:'note',
