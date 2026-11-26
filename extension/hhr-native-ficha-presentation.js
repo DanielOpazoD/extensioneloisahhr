@@ -458,7 +458,8 @@
       const next = new Set();
       const add = (element, attribute) => { mark(element, attribute); next.add(element); };
       const summary = document.getElementById('evolution');
-      if (summary?.getClientRects().length && summary.querySelector('.MuiCardHeader-title')?.textContent.trim() === 'Evolución') {
+      // The ficha opened from Gestión de cuidados titles the same card «Valoración» (read 26-11-2026).
+      if (summary?.getClientRects().length && /^(?:Evolución|Valoración)$/.test(summary.querySelector('.MuiCardHeader-title')?.textContent.trim() || '')) {
         summary.querySelectorAll('.MuiCardContent-root > .MuiStack-root > .MuiStack-root > .MuiBox-root').forEach(block => {
           if (block.querySelector(':scope > .MuiTypography-caption') && block.querySelector(':scope > .MuiBox-root') &&
               !block.querySelector('input,textarea,[contenteditable="true"],[role="textbox"]')) add(block, 'data-hhr-evolution-block');

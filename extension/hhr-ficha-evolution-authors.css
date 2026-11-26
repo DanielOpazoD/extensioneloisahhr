@@ -109,6 +109,11 @@
           }
         }
         > .MuiCardContent-root, > .MuiCardContent-root > .MuiStack-root { display:contents; }
+        /* «Evolución:» before the note, in the ficha opened from Gestión de cuidados: the card already
+           names it. It stays in the page for a screen reader. */
+        > .MuiCardContent-root > p.MuiTypography-root:first-child:has(+ .MuiStack-root:last-child) {
+          position:absolute; inline-size:1px; block-size:1px; margin:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap;
+        }
         > .MuiCardContent-root > .MuiStack-root {
           > :first-child { grid-column:1 / -1; min-width:0; margin:0 !important; }
           > :last-child {

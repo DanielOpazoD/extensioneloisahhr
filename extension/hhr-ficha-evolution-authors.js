@@ -40,8 +40,11 @@
     const iconButton = el => el.matches('button') && text(el).length <= 1;
     const headButtons = card.firstElementChild.querySelectorAll('.MuiCardHeader-action button:not(.hhr-evo-entry)');
     if (![...headButtons].every(iconButton)) return false;
-    const stack = card.lastElementChild.querySelector(':scope > div.MuiStack-root:only-child');
-    if (stack?.children.length !== 2 ||
+    // In the ficha opened from Gestión de cuidados a paragraph, «Evolución:», names the note before it.
+    const [label, ...rest] = card.lastElementChild.children;
+    const named = rest.length === 1 && label.matches('p.MuiTypography-root') && !label.children.length && /^evoluci[oó]n:?$/i.test(text(label));
+    const stack = named ? rest[0] : rest.length ? null : label;
+    if (!stack?.matches('div.MuiStack-root') || stack.children.length !== 2 ||
         !stack.firstElementChild.matches('div.MuiStack-root') ||
         !stack.firstElementChild.querySelector(':scope > .MuiBox-root > .MuiTypography-caption') ||
         stack.querySelector('form,input,textarea,[contenteditable],[role="textbox"]')) return false;

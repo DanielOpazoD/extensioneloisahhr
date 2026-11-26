@@ -132,6 +132,18 @@ Las filas de Indicaciones Libres llevan las mismas tres acciones que las de Fár
 
 Doce enlaces `div.MuiGrid-item > span.MuiBadge-root > span.MuiTypography-caption`, en este orden: Alertas, Diagnóstico, Solicitud de examen, Indicaciones (Indicación Libre), Indicaciones (Medicamento), Indicaciones (Régimen), Evolución, Solicitudes de intervención quirúrgica, Procedimientos, Órdenes de atención, Solicitud interconsulta, Signos vitales. **No es el orden de la página.** Eloísa muestra solo los de las secciones que el paciente tiene: en la segunda lectura del 26-11-2026 eran siete (Alertas, Indicaciones (Indicación Libre), Indicaciones (Medicamento), Indicaciones (Régimen), Evolución, uno más y Signos vitales).
 
+## Resumen de la ficha abierta desde Gestión de cuidados
+
+Leído en la página el 26-11-2026 (`/dashboard/encounter-list-nurse/<episodio>`), con Claude en Chrome y textos enmascarados, a 1728 × 966 px y con la vista Compacta. Es la misma rejilla del Resumen médico, con estas diferencias:
+
+- **Pestañas:** Resumen, Plan de tratamiento, Ejecución de cuidados, Historial. No tiene Antecedentes ni Alta.
+- **Nota:** `section#observationEntrySection > div#evolution`, la misma tarjeta, pero su título es **«Valoración»** y su `.MuiCardContent-root` tiene dos hijos: un `p.MuiTypography-body2` «Evolución:» y la pila de la nota. La pila es la del Resumen médico (`div.MuiStack-root > div.MuiStack-root > div.MuiBox-root > span.MuiTypography-caption` y el `div.MuiBox-root` de «Leer más»), con **una** herramienta al pie en lugar de dos. La caja del texto mide 350 px.
+- **Dispositivos invasivos:** `section#invasiveDeviceEntrySection > div#invasiveDeviceEntry > .MuiCardContent-root > .MuiPaper-root > .MuiTableContainer-root > table.MuiTable-stickyHeader`. Columnas: Dispositivo, Nº, Fecha instalación, Fecha de caducidad, Localización, Procedencia, Observación, Acciones. Las celdas de texto son un `span.MuiTypography-caption`, o un `div.MuiBox-root` de 300 px con un `p.MuiTypography-body2`. Las dos fechas van en columnas de unos 103 px: «dd-mm-aaaa hh:mm» ocupa dos líneas. Celdas con 16 px de relleno; la tabla mide 1517 px en un contenedor de 1412.
+- **Otras tarjetas:** `section#medicalServiceEntrySection > div#medicalServiceEntry`, que no está en el Resumen médico. No tiene Fecha estimada de alta, Examen físico ni Solicitudes de intervención quirúrgica.
+- El título de Indicaciones libres se escribe con minúscula («Indicaciones libres»); en el Resumen médico, «Indicaciones Libres».
+
+Con el menú lateral de Eloísa abierto, o cualquiera de sus ventanas, toda la página lleva `aria-hidden="true"` en un antecesor de `main`.
+
 ## Plan de tratamiento
 
 `main > div.MuiStack-root > div.MuiStack-root` con un interruptor «Mostrar todos los ocultos» y cuatro `div.MuiCard-root`:
