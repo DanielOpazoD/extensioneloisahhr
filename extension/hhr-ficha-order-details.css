@@ -10,9 +10,16 @@
       background:var(--hhr-marker-surface) !important; color:var(--hhr-marker-ink) !important;
       border:0 !important; border-inline-start:2px solid currentColor !important; border-radius:0 !important;
       box-shadow:none !important; margin-inline-start:6px !important; padding:0 3px !important;
-      height:auto !important; min-height:0; font:650 .75rem/1.35 system-ui,sans-serif;
+      height:auto !important; min-height:0; font:600 .75rem/1.35 var(--hhr-ficha-sans);
       > .MuiChip-label { padding:0 !important; }
       &:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+    }
+    /* A marker follows the last word of its name, as a word of the same line. As a column of its own
+       beside the name it took the room of the name and broke a long one into one more line. */
+    td > .MuiStack-root:has(> .MuiTypography-root:first-child + .MuiStack-root:last-child > .MuiChip-root[data-hhr-reading^="order-marker-"]) {
+      display:block !important;
+      > .MuiTypography-root { display:inline; }
+      > .MuiStack-root { display:inline-flex !important; flex-wrap:wrap; vertical-align:baseline; gap:4px; }
     }
     [data-hhr-reading="order-marker-sos"] { --hhr-marker-ink:#704200; --hhr-marker-surface:#fff4dd; }
     [data-hhr-reading="order-marker-antimicrobial"] { --hhr-marker-ink:#155754; --hhr-marker-surface:#e8f5f1; }

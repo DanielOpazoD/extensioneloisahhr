@@ -209,7 +209,7 @@
       shadow.innerHTML = `
         <style>
           :host { color-scheme: light; }
-          nav { display:flex;align-items:center;gap:3px;white-space:nowrap;font:12px/1.4 system-ui,sans-serif;color:#22333a; }
+          nav { display:flex;align-items:center;gap:3px;white-space:nowrap;font:12px/1.4 var(--hhr-ficha-sans, system-ui, sans-serif);color:#22333a; }
           button,select { box-sizing:border-box;height:26px;border:1px solid #d7e1df;border-radius:6px;background:#fff;color:#0b6e66;font:inherit; }
           button { width:24px;flex:none;cursor:pointer;font-size:18px; }
           select { width:136px;padding:0 5px;cursor:pointer; }

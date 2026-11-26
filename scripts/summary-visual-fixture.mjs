@@ -1,6 +1,7 @@
 // A fictional Resumen with the structure of the real one (docs/estructura-eloisa.md): the frame
 // and its items in Eloísa's order, the twelve section links in theirs, and each card with the
 // elements and classes that were observed. Every name, drug and figure is invented.
+// Measured in Eloísa on 26-11-2026: page #f1f1f1, white cards without shadow and with 12 px corners, Inter on every text.
 // MUI names the family on every Typography, as here: a text takes the family of the view only where a rule gives it.
 // Not modelled: Balance Hídrico, Eventos Adversos and Examen Gíneco Obstétrico, whose content was not read.
 const paths = {
@@ -58,21 +59,22 @@ const rowActions = () => `<div class="MuiStack-root"><div class="MuiStack-root">
   `<div>${iconButton('MoreVertIcon', '', 'Medium', ` id="fixture-menu-${menus++}" aria-haspopup="true"`)}</div></div>`;
 
 const requester = 'Tomás Ejemplo';
-// Days of treatment, name, markers, posology, specific instructions. Lengths follow one real list of fourteen.
+// Days of treatment, name, markers, posology, specific instructions. Each name has the length of its row in one real
+// list of fourteen (24 to 113 characters). The posology is whole: Eloísa cuts it at about 48 with «Leer más».
 export const summaryMedications = [
-  [12, 'Preparación de prueba A 500 mg comprimido', [], '1 comprimido cada 8 horas - oral', ''],
-  [12, 'Preparación de prueba B 40 mg/0,4 mL solución inyectable en jeringa prellenada de un solo uso', [], '1 jeringa cada 24 horas por 7 días - subcutánea, rotar el sitio', ''],
-  [9, 'Preparación de prueba C 1 g polvo para solución inyectable, frasco ampolla de uso exclusivo en la simulación del turno', ['Antimic.'], '1 g cada 12 horas - endovenosa', ''],
-  [9, 'Preparación de prueba D 20 mg', [], '1 cápsula cada 24 horas en ayunas por 30 días - oral', 'Registrar la tolerancia de prueba.'],
-  [7, 'Preparación de prueba E 5 mg comprimido recubierto', [], '1 comprimido cada 12 horas por 14 días - oral, con agua', 'Suspender si el caso lo indica.'],
-  [7, 'Preparación de prueba F', ['SOS'], '1 comprimido cada 6 horas si lo requiere - oral, máximo 4', 'Avisar al equipo de la simulación.'],
-  [5, 'Preparación de prueba G 100 mcg inhalador', [], '2 inhalaciones cada 6 horas con aerocámara - inhalatoria', 'Enjuagar después de usar.'],
-  [5, 'Preparación de prueba H 10 mg/mL gotas', [], '10 gotas cada 8 horas - oral', ''],
-  [4, 'Preparación de prueba I 25 mg comprimido', [], '1 comprimido cada 24 horas por la noche durante 10 días - oral', 'Controlar el registro ficticio antes de la dosis de la noche.'],
-  [4, 'Preparación de prueba J 2 mg comprimido', [], '1 comprimido cada 12 horas - sublingual', 'Mantener bajo la lengua hasta disolver, sin tragar agua.'],
-  [3, 'Preparación de prueba K 50 mg ampolla', [], '1 ampolla cada 8 horas diluida en 100 mL - endovenosa lenta', 'Pasar en treinta minutos de prueba.'],
-  [3, 'Preparación de prueba L crema', [], 'Aplicar una capa fina cada 12 horas en la zona indicada - tópica', 'Usar guantes en la simulación.'],
-  [2, 'Preparación de prueba M 300 mg cápsula de liberación lenta', [], '1 cápsula cada 24 horas con el desayuno por 60 días - oral', ''],
+  [12, 'Preparación de prueba A 5 mg comprimido', [], '1 comprimido cada 8 horas - oral', ''],
+  [12, 'Preparación de prueba B 40 mg/0,4 mL solución inyectable en jeringa prellenada 100', [], '1 jeringa cada 24 horas por 7 días - subcutánea, rotar el sitio', ''],
+  [9, 'Preparación de prueba C 1 g polvo para solución inyectable, frasco ampolla de uso exclusivo de la simulación 2026', ['Antimic.'], '1 g cada 12 horas - endovenosa', ''],
+  [9, 'Preparación de prueba D 2 g', [], '1 cápsula cada 24 horas en ayunas por 30 días - oral', 'Registrar la tolerancia de prueba.'],
+  [7, 'Preparación de prueba E 500 mg comprimido recubierto', [], '1 comprimido cada 12 horas por 14 días - oral, con agua', 'Suspender si el caso lo indica.'],
+  [7, 'Preparación de prueba F1', ['SOS'], '1 comprimido cada 6 horas si lo requiere - oral, máximo 4', 'Avisar al equipo de la simulación.'],
+  [5, 'Preparación de prueba G 100 mcg aero', [], '2 inhalaciones cada 6 horas con aerocámara - inhalatoria', 'Enjuagar después de usar.'],
+  [5, 'Preparación de prueba H 10 mg/mL1', [], '10 gotas cada 8 horas - oral', ''],
+  [4, 'Preparación de prueba I 25 mg compr', [], '1 comprimido cada 24 horas por la noche durante 10 días - oral', 'Controlar el registro ficticio antes de la dosis de la noche.'],
+  [4, 'Preparación de prueba J 2 mg compri', [], '1 comprimido cada 12 horas - sublingual', 'Mantener bajo la lengua hasta disolver, sin tragar agua.'],
+  [3, 'Preparación de prueba K 50 mg amp', [], '1 ampolla cada 8 horas diluida en 100 mL - endovenosa lenta', 'Pasar en treinta minutos de prueba.'],
+  [3, 'Preparación de prueba L 10 g', [], 'Aplicar una capa fina cada 12 horas en la zona indicada - tópica', 'Usar guantes en la simulación.'],
+  [2, 'Preparación de prueba M 300 mg cápsula liberación lenta', [], '1 cápsula cada 24 horas con el desayuno por 60 días - oral', ''],
   [1, 'Preparación de prueba N 1 mg', [], '1 comprimido cada 24 horas con la comida principal - oral', 'Registrar en la hoja de prueba.'],
 ];
 const medicationRow = ([days, name, markers, posology, instructions]) => [
@@ -211,10 +213,10 @@ const floatingBar = `<div id="hhr-clinical-operations-bar" aria-hidden="true"><s
 
 /** The page. `alertList` and `diagnoses` replace the default lists (an empty array is an empty card). */
 export const summaryPage = options => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
-  *{box-sizing:border-box}body{margin:0;background:#eff1f0;color:rgba(0,0,0,.87);font:16px/1.5 Arial,sans-serif}
+  *{box-sizing:border-box}body{margin:0;background:#f1f1f1;color:rgba(0,0,0,.87);font:16px/1.5 Inter,"Inter Fallback",system-ui,sans-serif}
   .banner{position:sticky;top:0;z-index:30;background:#218b80;color:white;padding:15px 24px;font-size:16px;font-weight:600}.banner small{margin-left:18px;font-size:12px;font-weight:400}
   main>.MuiAppBar-root{position:sticky;top:54px;z-index:20;background:white}.MuiTabs-root [role=tablist]{display:flex}
-  .MuiTab-root{min-height:48px;padding:12px 16px;border:0;background:none;font:500 14px/1.25 Arial,sans-serif;text-transform:uppercase;color:rgba(0,0,0,.6);cursor:pointer}
+  .MuiTab-root{min-height:48px;padding:12px 16px;border:0;background:none;font:500 14px/1.25 Inter,"Inter Fallback",system-ui,sans-serif;text-transform:uppercase;color:rgba(0,0,0,.6);cursor:pointer}
   .MuiTab-root[aria-selected=true]{color:#086b63;box-shadow:inset 0 -2px #086b63}
   main>.MuiStack-root{display:flex;flex-direction:column;padding:16px 32px}
   .MuiGrid-container{display:flex;flex-wrap:wrap;width:100%}.MuiGrid-spacing-xs-2{width:calc(100% + 16px);margin-left:-16px;margin-top:-16px}
@@ -222,9 +224,9 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiGrid-grid-xs-12{flex:0 0 100%;max-width:100%}.MuiGrid-grid-xs-6{flex:0 0 50%;max-width:50%}
   @media(min-width:900px){.MuiGrid-grid-md-6{flex:0 0 50%;max-width:50%}}
   .rail{flex-wrap:nowrap;align-items:center;gap:8px;padding:8px 0}.rail>.MuiGrid-item{flex:none}.MuiBadge-root{position:relative;display:inline-flex}
-  .MuiTypography-root{font-family:Arial,sans-serif}.MuiTypography-caption{font-size:12px;line-height:1.66}.MuiTypography-body2{margin:0;font-size:14px;line-height:1.43}.MuiTypography-body1{margin:0;font-size:16px;line-height:1.5}
+  .MuiTypography-root{font-family:Inter,"Inter Fallback",system-ui,sans-serif}.MuiTypography-caption{font-size:12px;line-height:1.66}.MuiTypography-body2{margin:0;font-size:14px;line-height:1.43}.MuiTypography-body1{margin:0;font-size:16px;line-height:1.5}
   .MuiTypography-h6{font-size:20px;font-weight:500;line-height:1.6}.MuiTypography-h5{margin:0;font-size:24px;font-weight:400;line-height:1.334}
-  .MuiStack-root{display:flex;flex-direction:column}.MuiCard-root{border-radius:4px;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2);height:100%}section.MuiBox-root{height:100%}
+  .MuiStack-root{display:flex;flex-direction:column}.MuiCard-root{border-radius:12px;background:white;box-shadow:none;height:100%}section.MuiBox-root{height:100%}
   .MuiCardHeader-root{display:flex;align-items:center;padding:16px}.MuiCardHeader-content{flex:1 1 auto;min-width:0}.MuiCardHeader-title,.MuiCardHeader-subheader{display:block}
   .MuiCardHeader-subheader{color:rgba(0,0,0,.6)}.MuiCardHeader-action{flex:none;align-self:flex-start;margin:-4px -8px -4px 0}.MuiCardHeader-action>.MuiStack-root{flex-direction:row;align-items:center;gap:8px}
   .MuiCardContent-root{padding:16px}.MuiCardContent-root:last-child{padding-bottom:24px}
@@ -232,7 +234,7 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiIconButton-root{display:inline-flex;flex:none;align-items:center;justify-content:center;padding:8px;border:0;border-radius:50%;background:none;color:rgba(0,0,0,.54);cursor:pointer}
   .MuiIconButton-sizeSmall{padding:5px}.MuiIconButton-root:disabled{color:rgba(0,0,0,.26);cursor:default}
   .MuiButton-root{display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 16px;border:0;border-radius:4px;background:none;color:#218b80;
-    font:500 14px/1.75 Arial,sans-serif;text-transform:uppercase;cursor:pointer}.MuiButton-contained{background:#218b80;color:white;box-shadow:0 3px 1px -2px rgba(0,0,0,.2)}
+    font:500 14px/1.75 Inter,"Inter Fallback",system-ui,sans-serif;text-transform:uppercase;cursor:pointer}.MuiButton-contained{background:#218b80;color:white;box-shadow:0 3px 1px -2px rgba(0,0,0,.2)}
   .MuiButton-containedSecondary{background:#6d5a9c}.MuiButton-root:disabled{background:rgba(0,0,0,.12);color:rgba(0,0,0,.26);box-shadow:none}
   .MuiButton-text{background:none}.MuiButton-textSizeSmall{padding:4px 5px;font-size:13px}
   .MuiFormControlLabel-root{display:inline-flex;align-items:center;margin:0 16px 0 -11px;cursor:pointer}

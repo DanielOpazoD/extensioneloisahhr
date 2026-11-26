@@ -7,11 +7,13 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 1. **Eloísa conserva sus nodos.** La extensión marca lo que reconoce con atributos `data-hhr-*` y lo presenta con CSS. No mueve, clona ni recrea controles de React.
 2. **El texto nativo sigue en la página.** Un rótulo abreviado, una firma omitida o una antigüedad compartida se resuelven con contenido generado en CSS. El lector de pantalla, la búsqueda y la impresión reciben el texto original.
 3. **Cada dato se dice una vez.** Antes de añadir un rótulo, comprobar si la pantalla ya lo dice a un renglón de distancia.
-4. **El color tiene función.** Verde para lo que se puede pulsar, ámbar para una marca clínica, y el color que da Eloísa para un valor fuera de rango. La estructura usa grises.
-5. **Cuatro tamaños y dos pesos.** Meta (12 px), lectura (13 px), título (15 px) y título principal (16 px); normal y 600.
+4. **El color tiene función.** Verde para lo que se puede pulsar, ámbar para una marca clínica, y el color que da Eloísa para un valor fuera de rango. El texto usa las tintas neutras de Eloísa (negro al 87, 71 y 60 %): un nombre en gris no debe parecer un enlace.
+5. **Una tipografía, cuatro tamaños y dos pesos.** La de Eloísa (Inter), para que una tarjeta no mezcle dos. Meta (12 px), lectura (13 px), título (15 px) y valor destacado (16 px); normal y 600. Cada tarjeta se titula a 15 px.
 6. **Un margen de lectura.** El título de una tarjeta, sus columnas y su primera celda empiezan en la misma línea (`--hhr-ficha-inset`).
-7. **Una acción es un icono y su nombre, y el nombre es el de Eloísa.** Se lee del botón o de su icono; la extensión no inventa uno. Sin sitio para el nombre queda el icono, con el nombre al pasar el cursor. Un icono cuyo significado no consta, como los estados del Plan de tratamiento, conserva su dibujo y su color.
-8. **Lo que no se reconoce no se toca.** Una tarjeta, fila o botón con una forma distinta de la prevista conserva el aspecto de Eloísa.
+7. **Los bordes de la página.** El contenido deja el mismo margen a cada lado: el de Eloísa, 32 px, el de la línea de secciones. Ninguna vista lo estrecha ni lo ensancha de un solo lado.
+8. **Una separación y una superficie.** Entre dos bloques, 8 px (`--hhr-ficha-block-gap`). Cada tarjeta es la superficie blanca de Eloísa, sin sombra, con las esquinas de la vista (`--hhr-ficha-radius`).
+9. **Una acción es un icono y su nombre, y el nombre es el de Eloísa.** Se lee del botón o de su icono; la extensión no inventa uno. Sin sitio para el nombre queda el icono, con el nombre al pasar el cursor. Un icono cuyo significado no consta, como los estados del Plan de tratamiento, conserva su dibujo y su color.
+10. **Lo que no se reconoce no se toca.** Una tarjeta, fila o botón con una forma distinta de la prevista conserva el aspecto de Eloísa.
 
 ## Dónde vive cada cosa
 
@@ -27,7 +29,11 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 
 Un lector nuevo sigue la forma de [`hhr-ficha-care-plan.js`](../extension/hhr-ficha-care-plan.js): `create()` devuelve `refresh(raíz)` y `clear()`, reconoce por estructura y texto nativo, lleva la cuenta de cada atributo que pone y lo retira cuando deja de aplicar. [`hhr-native-ficha-presentation.js`](../extension/hhr-native-ficha-presentation.js) lo crea y le pasa `main` solo en su pestaña y en la vista Compacta.
 
-Una regla nueva toma sus valores de los tokens. Una regla anterior, escrita con el color o el tamaño a mano, se pasa a tokens cuando se vuelve a editar; no hace falta una migración aparte.
+Una regla nueva toma sus valores de los tokens. Desde 0.48.196 ningún color de texto ni ninguna tipografía de las vistas de la ficha se escribe a mano. Quedan algunos bordes y fondos escritos a mano; pasan a tokens cuando se vuelvan a editar.
+
+`capture-summary.mjs` comprueba estas reglas en la página: márgenes, separación, tipografía, pesos, tamaños, títulos, superficies y bordes de tabla. Una regla de estilo nueva que las rompa hace fallar la captura.
+
+Un detalle de CSS que ya costó una regla entera: `:has()` no admite otro `:has()` dentro. El navegador descarta la regla sin avisar; dos condiciones se escriben como `:is(:has(…), :has(…))`.
 
 ## Cómo cambiar o añadir una vista
 
