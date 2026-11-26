@@ -1,5 +1,15 @@
 # Cambios
 
+## 0.48.199
+
+- En el Resumen de la vista Compacta, en escritorio, las secciones sin registros o sin permiso cierran la ficha juntas, bajo el rótulo «Sin datos»: cada una dice su nombre y «Sin registros» o «Sin permiso», tres por fila y sin tarjeta propia. Antes cada una ocupaba una tarjeta de una línea, intercalada entre las que tienen datos. Balance Hídrico conserva su tarjeta: su filtro permite buscar otro período.
+- Procedimientos, Solicitud interconsulta, Solicitud de examen y Solicitudes de intervención quirúrgica con registros se leen como las demás tablas: mismo título, misma banda de encabezados, mismo tamaño de letra y filas de una a tres líneas. «Imprimir selección» se escribe como «Validar tratamiento». Su forma se leyó en capturas de pantalla y falta confirmarla con la estructura exportada de la página.
+- Un Reposo o un Régimen que espera confirmación conserva el color y las herramientas que le da Eloísa, y toma el margen y la letra de las tarjetas que lo rodean: al confirmar cambia de forma, no de aspecto.
+- La fila del resumen diario nombra su campo delante de él, «Resumen diario paciente», en lugar de cortarlo sobre su borde, y ya no muestra quién actualizó el resumen. En una línea sin sitio para el nombre, la fila se acopla sin él.
+- «Leer nota completa» abre la evolución en una ventana más grande y más limpia: hasta 960 px de ancho y el 92 % del alto de la pantalla, una sola superficie blanca y más aire alrededor del texto.
+- En una pantalla ancha el contenido se detiene en 1440 px en lugar de 1600 y queda más centrado.
+- El Resumen se abre arriba. Eloísa da el foco al campo de alertas mientras carga y la página lo seguía hasta la mitad del documento; ahora vuelve a su inicio mientras nadie se haya desplazado, pulsado ni escrito.
+
 ## 0.48.198
 
 - En el Resumen de la vista Compacta, en escritorio, cada bloque tiene su lugar: Diagnóstico abre la ficha; después Evolución, con Observaciones de entrega y Alertas a su lado; luego Signos vitales a todo el ancho; y una línea con Reposo, Régimen y las solicitudes de examen y cirugía sin registros. Hasta ahora Diagnóstico y Fármacos empezaban hasta 100 px más arriba o más abajo según el largo de la nota y el número de alertas.
