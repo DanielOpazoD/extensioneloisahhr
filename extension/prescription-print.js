@@ -1431,7 +1431,7 @@
           encounter.firstFamilyName,
           encounter.secondFamilyName,
         ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
-        return {
+        var item = {
           encounterId: String(encounter.encounterId),
           name: ((encounter.firstFamilyName || encounter.secondFamilyName) && name) ||
             encounter.patientName || name || 'Paciente sin nombre',
@@ -1446,6 +1446,8 @@
           patientId: String(encounter.patientId || '').trim(),
           diagnosis: String(encounter.diagnosis || '').replace(/\s+/g, ' ').trim(),
         };
+        if (encounter.documentType === 'Pasaporte') item.documentType = 'Pasaporte';
+        return item;
       })
       .sort(function (a, b) {
         return a.service.localeCompare(b.service) || a.room.localeCompare(b.room) ||
