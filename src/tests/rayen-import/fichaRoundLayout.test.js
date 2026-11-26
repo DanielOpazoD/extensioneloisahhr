@@ -194,7 +194,7 @@ it('uses only isolated native branches for the two columns and returns populated
   expect(surgery.parentElement.dataset.hhrRound).toBe('peer');
 });
 
-it('pairs two empty requests on the last side line and stacks each column from its own row heights', () => {
+it('pairs two empty requests on the last line, stacks the alerts under the handoff and lets them fill the line of the note', () => {
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('matchMedia', () => ({matches:true, addEventListener() {}, removeEventListener() {}}));
   const heights = {observationEntrySection:200, vitalSignsEntry:90, shiftChangeEntrySection:30, alertEntrySection:120,
@@ -218,22 +218,30 @@ it('pairs two empty requests on the last side line and stacks each column from i
     desktop.refresh(main);
     expect(main.firstElementChild.hasAttribute('data-hhr-round-columns')).toBe(true);
     expect([exam,surgery].map(el => el.parentElement.dataset.hhrRoundHalf)).toEqual(['start','end']);
-    expect(['observationEntrySection','vitalSignsEntry'].map(offset)).toEqual(['0px','200px']);
+    // The signs and the requests take a line of the grid each: only what shares a line and a column stacks.
+    expect(['observationEntrySection','vitalSignsEntry'].map(offset)).toEqual(['0px','']);
     expect(['shiftChangeEntrySection','alertEntrySection','diagnosisTestEntrySection','operationTheaterRequestEntrySection'].map(offset))
-      .toEqual(['0px','30px','150px','150px']);
-    // The taller half sets the height of the line for both.
-    const rowHeight = id => item(id).style.getPropertyValue('--hhr-round-row-height');
-    expect(['diagnosisTestEntrySection','operationTheaterRequestEntrySection'].map(rowHeight)).toEqual(['45px','45px']);
-    expect(rowHeight('alertEntrySection')).toBe('');
+      .toEqual(['0px','30px','','']);
+    // The alerts end where the note ends: they take the height the handoff leaves beside it.
+    const fill = id => item(id).style.getPropertyValue('--hhr-round-fill');
+    expect(['observationEntrySection','shiftChangeEntrySection','alertEntrySection'].map(fill)).toEqual(['','','170px']);
+    // A taller note gives them its height on the next packing. Their own height is never read back.
+    heights.observationEntrySection = 260;
+    heights.alertEntrySection = 400;
+    desktop.repack();
+    expect(fill('alertEntrySection')).toBe('230px');
+    heights.observationEntrySection = 200;
+    desktop.repack();
+    expect(fill('alertEntrySection')).toBe('170px');
 
     // A request with a record leaves the pair. The remaining notice takes the whole line.
     delete exam.dataset.hhrEmptyRequest;
     desktop.refresh(main);
     expect(exam.parentElement.dataset.hhrRound).toBe('peer');
     expect(main.querySelector('[data-hhr-round-half]')).toBeNull();
-    expect(offset('operationTheaterRequestEntrySection')).toBe('150px');
-    expect(rowHeight('operationTheaterRequestEntrySection')).toBe('');
+    expect(offset('operationTheaterRequestEntrySection')).toBe('');
     expect(offset('diagnosisTestEntrySection')).toBe('');
+    expect(fill('alertEntrySection')).toBe('170px');
 
     exam.dataset.hhrEmptyRequest = 'exam';
     desktop.refresh(main);
@@ -362,7 +370,7 @@ function realSummary({second = 'Diagnóstico', printName = 'Imprimir indicacione
 }
 const role = selector => document.querySelector(selector).closest('.MuiGrid-container > .MuiGrid-item:not(.MuiGrid-container .MuiGrid-container *)')?.getAttribute('data-hhr-round') ?? null;
 
-it('reads an empty rest without its section, brings the diagnosis under the round and docks the print icon on Fármacos', () => {
+it('reads an empty rest without its section, marks the diagnosis that opens the round and docks the print icon on Fármacos', () => {
   const main = realSummary({folded:' hidden'}), original = main.innerHTML;
   layout.refresh(main);
   expect(document.getElementById('rest').dataset.hhrRound).toBe('care-row');

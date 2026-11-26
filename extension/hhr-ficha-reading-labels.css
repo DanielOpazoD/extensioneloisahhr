@@ -35,7 +35,7 @@
     }
     #alertEntrySection {
       :is(.MuiCardHeader-root,.MuiCardContent-root):not(:is(dialog,[role=dialog]) *) {
-        min-height:0 !important; padding-block:3px !important; padding-inline:10px !important;
+        min-height:0 !important; padding-block:5px !important; padding-inline:var(--hhr-ficha-inset) !important;
       }
       .MuiCardHeader-title { font-size:.875rem; font-weight:600; line-height:1.35; }
       .MuiCardContent-root :is(p,.MuiTypography-body1,.MuiTypography-body2):not(:is(dialog,[role=dialog]) *) {
@@ -197,11 +197,11 @@
   /* The handoff heading names the destination, so its action sits on the same line. */
   html[data-hhr-ficha-theme="compact"] #shiftChangeEntrySection .MuiCard-root:has(> .MuiCardHeader-root .MuiCardHeader-title):has([data-hhr-entry-open]) {
     position:relative;
-    > .MuiCardHeader-root { min-height:30px; padding-inline-end:6.4rem !important; box-sizing:border-box; align-items:center; }
+    > .MuiCardHeader-root { min-height:34px; padding-inline-end:calc(5.8rem + var(--hhr-ficha-inset)) !important; box-sizing:border-box; align-items:center; }
     > .MuiCardContent-root { padding-block:0 4px !important; }
     /* Stay on the heading line while focused: a jump between press and release would lose the click. */
     [data-hhr-entry-open] {
-      position:absolute; inset-block-start:3px; inset-inline-end:10px; min-height:24px; padding-block:1px;
+      position:absolute; inset-block-start:5px; inset-inline-end:var(--hhr-ficha-inset); min-height:24px; padding-block:1px;
       font-size:0 !important;
       &::after { content:'Agregar' / ''; font:600 .75rem/1.35 var(--hhr-ficha-sans); }
     }

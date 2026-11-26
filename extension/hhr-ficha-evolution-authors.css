@@ -89,7 +89,7 @@
          reaches the header menu before the tools: a header subtree keeps its place in the focus order. */
       html[data-hhr-ficha-theme="compact"] #observationEntrySection > #evolution[data-hhr-evo-toolbar] {
         display:grid; grid-template-columns:minmax(0,1fr) repeat(6,auto); align-items:center;
-        reading-flow:grid-rows; gap:3px 0; padding:4px 10px 6px 7px;
+        reading-flow:grid-rows; gap:3px 0; padding:var(--hhr-ficha-card-pad) var(--hhr-ficha-inset) var(--hhr-ficha-card-pad) calc(var(--hhr-ficha-inset) - 3px);
         > .MuiCardHeader-root {
           grid-area:1 / 1; min-width:0; padding:0 !important; margin:0;
           column-gap:8px;

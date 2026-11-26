@@ -72,6 +72,7 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         note:box('#evolution'),signs:box('section#vitalSignsEntry'),handoff:box('#shiftChangeObservation'),
         alerts:box('#alerts'),rest:box('#rest'),diet:box('#diet'),exam:box('#diagnosisTestEntrySection'),
         surgery:box('#operationTheaterRequestEntrySection'),orders:box('#procedureOrder'), medication:box('#medication'),
+        requestCards:['#diagnosisTestEntrySection','#operationTheaterRequestEntrySection'].map(id => box(id + ' .MuiCard-root')),
         orderRowHeights:[...document.querySelectorAll('#procedureOrder tbody tr')].map(tr => Math.round(tr.getBoundingClientRect().height))};
     });
     heights.push(metrics.noteHeight);
@@ -80,19 +81,24 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     assert.deepEqual(metrics.values,['118/72','78','96','38,1','17','15','21','104','2']);
     console.log(JSON.stringify(round ? {...metrics, band} : metrics));
     if (verifyLayout) {
-      assert.deepEqual(metrics.titleInsets, [10,10,10], 'Signos, Alertas y Fármacos deben compartir el mismo margen de lectura');
+      assert.deepEqual(metrics.titleInsets, [16,16,16], 'Signos, Alertas y Fármacos deben compartir el mismo margen de lectura');
       if (round) {
         const aligned = (a,b) => Math.abs(a.left-b.left) <= 1 && Math.abs(a.right-b.right) <= 1;
-        assert.ok(aligned(band.note,band.signs) && Math.abs(band.signs.top - band.note.bottom) < 2,
-          'Signos debe quedar debajo de Evolución y compartir ambos bordes');
+        // The space between two blocks of the ficha.
+        const gap = 12, middle = box => (box.top + box.bottom) / 2;
+        assert.ok(Math.abs(band.signs.left - band.note.left) <= 1 && Math.abs(band.signs.right - band.alerts.right) <= 1 &&
+          Math.abs(band.signs.top - band.note.bottom - gap) < 2, 'Signos debe quedar debajo de Evolución, a todo el ancho de la ronda');
+        assert.ok(Math.abs(band.alerts.bottom - band.note.bottom) < 2, 'Alertas debe terminar donde termina Evolución');
         assert.ok(aligned(band.handoff,band.alerts) && Math.abs(band.alerts.top - band.handoff.bottom) < 2,
           'Observaciones debe compartir ambos bordes con Alertas y aparecer primero');
         // Two short instructions share a line. Otherwise each one uses the whole width.
-        const stacked = aligned(band.rest,band.signs) && aligned(band.diet,band.rest) && Math.abs(band.diet.top - band.rest.bottom) < 2;
-        const sharedLine = Math.abs(band.diet.top - band.rest.top) < 2 && Math.abs(band.diet.left - band.rest.right) <= 1 &&
-          Math.abs(band.rest.left - band.signs.left) <= 1 && Math.abs(band.diet.right - band.signs.right) <= 1;
-        assert.ok((stacked || sharedLine) && Math.abs(band.rest.top - band.signs.bottom) < 2,
-          'Reposo y Régimen deben continuar el margen izquierdo sin crear otro hueco');
+        const stacked = aligned(band.rest,band.note) && aligned(band.diet,band.rest) && Math.abs(band.diet.top - band.rest.bottom) < 2;
+        // On a shared line the shorter instruction is read at the middle of the taller one.
+        const sharedLine = Math.abs(middle(band.diet) - middle(band.rest)) < 2 && Math.abs(band.diet.left - band.rest.right) <= 1 &&
+          Math.abs(band.rest.left - band.note.left) <= 1 && Math.abs(band.diet.right - band.note.right) <= 1;
+        const careTop = Math.min(band.rest.top, band.diet.top);
+        assert.ok((stacked || sharedLine) && careTop >= band.signs.bottom + gap - 1 && careTop <= band.signs.bottom + gap + 12,
+          'Reposo y Régimen deben seguir a Signos en el margen izquierdo, sin otro hueco');
         // The fonts of each system decide the widths. The line is shared exactly when both instructions fit.
         const fit = await page.evaluate(() => {
           const line = document.querySelector('#rest').closest('.MuiGrid-container');
@@ -107,15 +113,15 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         }
         assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 &&
           Math.abs(band.exam.left - band.alerts.left) <= 1 && Math.abs(band.surgery.right - band.alerts.right) <= 1 &&
-          Math.abs(band.exam.top - band.alerts.bottom) < 2 && Math.abs(band.exam.height - band.surgery.height) < 1,
-          'Las dos solicitudes vacías comparten la última línea del lateral');
+          band.exam.top >= careTop - 1 && band.exam.bottom <= Math.max(band.rest.bottom, band.diet.bottom) + 1 && Math.abs(band.exam.height - band.surgery.height) < 1,
+          'Las dos solicitudes vacías cierran la línea de Reposo y Régimen');
         for (const side of [band.exam,band.surgery]) {
           assert.ok(side.left >= band.handoff.left - 1 && side.right <= band.handoff.right + 1 && side.height > 0,
             'Las solicitudes explícitamente vacías deben quedar visibles en el lateral');
         }
         assert.equal(band.pressureLines,1,'La sistólica, la barra y la diastólica deben leerse en la misma línea');
         assert.equal(band.pressureClearOfTime,true,'El tiempo no debe tapar los dígitos de la presión');
-        assert.ok(band.exam.height < 36 && band.surgery.height < 36, 'Cada solicitud vacía debe caber en una fila');
+        assert.ok(band.requestCards.every(card => card.height > 0 && card.height < 36), 'Cada solicitud vacía debe caber en una fila');
         assert.ok(band.orderRowHeights.every(height => height <= 42), 'Las órdenes han de compactarse incluso con controles');
       } else {
         assert.ok(metrics.firstMedicationBottom <= metrics.viewportHeight, 'La primera fila del fármaco debe caber completa');
@@ -126,7 +132,9 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
       await page.screenshot({fullPage:round && !reading && width === 1440, path:path.join(directory,width + (expanded ? '-expandida.png' : '-contraida.png'))});
     }
   }
-  assert.ok(heights[1] > heights[0], 'Al desplegar, la nota completa debe ocupar más alto que el extracto');
+  // In the two columns of the desktop round the note keeps one height. Elsewhere the whole note is taller than its excerpt.
+  if (round && verifyLayout) assert.equal(heights[1], heights[0], 'En la ronda de escritorio la nota conserva su alto al desplegarse');
+  else assert.ok(heights[1] >= heights[0], 'Al desplegar, la nota completa no debe ocupar menos que el extracto');
 
   if (round && verifyLayout) {
     const tiles = page.locator('.vitals-grid > .tile');
@@ -261,8 +269,10 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
   assert.equal(await handoff.inputValue(),draft);
   if (reading && verifyLayout) {
     for (const [field, expected] of [[handoff,draft],[alertText,'Aviso de prueba']]) {
-      // Delete at the end of an input and Escape both leave the native draft untouched.
-      await field.press('End');
+      // Delete at the end of an input and Escape both leave the native draft untouched. The caret is put
+      // there by its range: the End key moves it on Linux and scrolls the page instead on macOS.
+      await field.focus();
+      await field.evaluate(input => input.setSelectionRange(input.value.length, input.value.length));
       await field.press('Delete');
       await field.press('Escape');
       await page.evaluate(() => document.dispatchEvent(new Event('fixture-refresh')));

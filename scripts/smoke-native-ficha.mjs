@@ -373,17 +373,19 @@ export const verifyNativeFicha = async (page, worker) => {
         return {note:box('#evolution'),vitals:box('section#vitalSignsEntry'),handoff:box('#shiftChangeObservation'),alerts:box('#alerts')};
       });
       assert.ok(boxes.note.width > boxes.handoff.width && boxes.note.right <= boxes.handoff.left + 1);
-      for (const [upper,lower] of [[boxes.note,boxes.vitals],[boxes.handoff,boxes.alerts]]) {
-        assert.ok(Math.abs(upper.left-lower.left) < 2 && Math.abs(upper.right-lower.right) < 2 && lower.top >= upper.bottom - 1,
-          JSON.stringify({expanded, upper, lower}));
-      }
+      assert.ok(Math.abs(boxes.handoff.left-boxes.alerts.left) < 2 && Math.abs(boxes.handoff.right-boxes.alerts.right) < 2 &&
+        boxes.alerts.top >= boxes.handoff.bottom - 1, JSON.stringify({expanded, boxes}));
+      // The signs follow the note across the round, from its edge to the edge of the side column.
+      assert.ok(Math.abs(boxes.note.left-boxes.vitals.left) < 2 && Math.abs(boxes.vitals.right-boxes.alerts.right) < 2 &&
+        boxes.vitals.top >= boxes.note.bottom - 1, JSON.stringify({expanded, boxes}));
       if (!expanded) closed = boxes;
       else {
         for (const key of Object.keys(boxes)) {
           assert.equal(boxes[key].x,closed[key].x);
           assert.equal(boxes[key].width,closed[key].width);
         }
-        assert.ok(boxes.note.height > closed.note.height);
+        // Beside the side column the note keeps one height, whatever the length of its text.
+        assert.ok(boxes.note.height >= closed.note.height);
         assert.ok(await noteBody.evaluate(text => {
           const view = text.getBoundingClientRect();
           const range = document.createRange();
