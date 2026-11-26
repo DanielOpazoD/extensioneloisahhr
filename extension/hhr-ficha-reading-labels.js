@@ -69,6 +69,19 @@
     return true;
   }
 
+  // The last time the person scrolled, pressed or typed anywhere on the page.
+  let lastInput = -1;
+  for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
+    globalThis.addEventListener?.(type, () => { lastInput = performance.now(); }, {capture:true, passive:true});
+  }
+  // Where the summary scrolls: the page, or a container of the page with a scroll of its own.
+  function pageScroller(element) {
+    for (let parent = element.closest('main'); parent && parent !== document.body; parent = parent.parentElement) {
+      if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY) && parent.scrollHeight > parent.clientHeight) return parent;
+    }
+    return document.scrollingElement;
+  }
+
   function createEntry(row, field, action, entry, arriving) {
     const opener = document.createElement('button');
     opener.type = 'button';
@@ -82,12 +95,21 @@
     // next keys. A focus that was already there when the editor came back, after a narrow window
     // or a change of view, is the person's.
     let wanted = !arriving && row.contains(document.activeElement);
+    const born = performance.now();
     const update = () => {
       const inside = row.contains(document.activeElement);
       if (!inside) wanted = false;
       const folded = action.disabled && field.value === '' && !wanted;
       row.toggleAttribute('data-hhr-entry-folded', folded);
-      if (folded && inside) document.activeElement.blur();
+      if (folded && inside) {
+        document.activeElement.blur();
+        // The page followed that focus, far down Eloísa's own layout, and would stay there once the
+        // summary is laid out. Nobody has scrolled, pressed or typed yet: the summary opens at its top.
+        if (lastInput < born) {
+          const scroller = pageScroller(row);
+          if (scroller?.scrollTop) scroller.scrollTop = 0;
+        }
+      }
       const expanded = String(!folded);
       if (opener.getAttribute('aria-expanded') !== expanded) opener.setAttribute('aria-expanded', expanded);
       // Rayen may restore a draft into the editor while its opener has keyboard focus.

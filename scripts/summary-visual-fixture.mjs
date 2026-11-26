@@ -177,12 +177,32 @@ const noPharma = section('noPharmaEntrySection', 'noPharmaEntry', 'Producto no F
 const free = section('freeIndicationEntrySection', 'freeIndicationEntry', 'Indicaciones Libres', table(['Indication', 'Programación', 'Solicitante', 'Acciones'],
   summaryFree.map(([name, schedule]) => [`<div class="MuiStack-root">${readable(name)}</div>`, caption(schedule), caption(requester), rowActions()])),
   '', toggle('Mostrar Suspendidos'));
-const procedures = section('procedureEntrySection', 'procedureEntry', 'Procedimientos', message('No presenta procedimientos registrados'));
+// A state that can still change is a native select, as the state of a diagnosis; a closed one is its word.
+const stateSelect = (id, value) => `<div class="MuiFormControl-root"><div class="MuiInputBase-root MuiOutlinedInput-root"><div role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" id="${id}">${caption(value)}</div>` +
+  `<input aria-hidden="true" tabindex="-1" value="${value}">${icon('ArrowDropDownIcon')}</div></div>`;
+// The four sections below with records. Their columns and controls were read on screenshots of 26-11-2026, not
+// on an exported structure: the table is the one Eloísa draws everywhere else. To be calibrated with the page.
+export const summaryProcedures = [
+  ['Curación de prueba de la simulación', 'Solicitada', '11-04-2026', 'Enfermera(o)', '1', 'Se realiza una curación ficticia con apósito de prueba, sin hallazgos en el caso simulado.', 'Elena Ejemplo'],
+  ['Toma de muestra de prueba', 'Realizada', '10-04-2026', 'Enfermera(o)', '1', 'Muestra ficticia para el laboratorio de la simulación.', 'Elena Ejemplo'],
+];
+const procedures = list => section('procedureEntrySection', 'procedureEntry', 'Procedimientos', list.length ?
+  table(['Indicación', 'Estado', 'Fecha solicitud', 'Para', 'Nº de sesiones', 'Fundamentos', 'Solicitante', 'Acciones'], list.map(([name, state, date, target, sessions, reason, by], at) =>
+    [caption(name), state === 'Solicitada' ? stateSelect('select-procedure-status-' + at, state) : caption(state), caption(date), caption(target), caption(sessions), readable(reason), caption(by), rowActions()])) :
+  message('No presenta procedimientos registrados'), '', list.length ? toggle('Mostrar suspendidos') : '');
 // Without records Eloísa writes a sentence in place of the table, «diagnosticos» without its accent.
 const diagnosis = list => section('diagnosisEntrySection', 'diagnosisEntry', 'Diagnóstico', list.length ?
   table(['', 'Diagnóstico', 'Estado', 'Fecha', 'GES', 'Eno', 'Acciones'], list.map(diagnosisRow)) : message('No se presentan diagnosticos registrados para este paciente'),
   list.length ? signature('Médico', requester, '09:05:10') : '');
-const referral = section('referralRequestEntrySection', 'referralRequestEntry', 'Solicitud interconsulta', message('No presenta interconsultas solicitadas'));
+export const summaryReferrals = [
+  ['Especialidad de prueba', 'Interna', 'Solicitada', '12-04-2026 13:35', 'Pendiente asignar', 'Control por especialidad de la simulación'],
+  ['Segunda especialidad de prueba', 'Interna', 'Solicitada', '13-04-2026 09:00', 'Pendiente asignar', 'Control por especialidad de la simulación'],
+];
+const printActions = () => `<div class="MuiStack-root"><div class="MuiStack-root">${iconButton('ArchiveRoundedIcon', 'Archivar')}${iconButton('LocalPrintshopRoundedIcon', 'Imprimir')}</div>` +
+  `<div>${iconButton('MoreVertIcon', '', 'Medium', ` id="fixture-menu-${menus++}" aria-haspopup="true"`)}</div></div>`;
+const referral = list => section('referralRequestEntrySection', 'referralRequestEntry', 'Solicitud interconsulta', list.length ?
+  table(['Especialidad', 'Destino', 'Estado', 'Fecha solicitud', 'Interconsultor', 'Motivo', 'Acciones'], list.map(cells => [...cells.map(text => caption(text)), printActions()])) :
+  message('No presenta interconsultas solicitadas'), list.length ? signature('Médico', requester) : '');
 export const summaryCareOrders = [
   ['Kinesiólogo(a)', 'Solicitada', '15-04-2026', 'Pendiente asignar', 'Tratamiento', 'Evaluar la marcha con apoyo antes del próximo turno.'],
   ['Terapeuta ocupacional', 'Realizada', '14-04-2026', 'Pendiente asignar', 'Tratamiento', 'Revisar el uso de cubiertos adaptados durante el almuerzo.'],
@@ -191,11 +211,24 @@ const orders = list => section('procedureOrderEntrySection', 'procedureOrderEntr
   table(['Profesional', 'Estado', 'Fecha solicitud', 'Asignado', 'Motivo', 'Indicaciones', 'Acciones'],
     list.map(cells => [...cells.map(text => caption(text)), iconButton('LocalPrintshopRoundedIcon', 'Imprimir orden')])) :
   message('No se presenta orden de atención solicitada para este paciente'), list.length ? signature('Médico', requester) : '');
-const tests = section('diagnosisTestEntrySection', 'diagnosisTestEntry', 'Solicitud de examen', message('No presenta solicitudes de exámenes registradas'));
+export const summaryTests = [
+  ['Grupo de prueba A', '31001', 'Solicitado', '09-04-2026', 'Examen ficticio de la simulación', '', 'Solicitado'],
+  ['Grupo de prueba B', '31002', 'Solicitado', '09-04-2026', 'Segundo examen ficticio, con un nombre largo que ocupa más de una línea en una columna estrecha', '', 'Solicitado'],
+];
+// The button that prints the selected orders sits above the table, inside the content of the card.
+const tests = list => section('diagnosisTestEntrySection', 'diagnosisTestEntry', 'Solicitud de examen', list.length ?
+  `<div class="MuiBox-root" style="display:flex;justify-content:flex-end"><button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-contained" id="fixture-print-tests">imprimir selección (2-3 órdenes)</button></div>` +
+  table(['Grupo de exámenes', 'Nro. Orden', 'Estado Orden', 'Fecha solicitud', 'Examen(es)', 'Observaciones', 'Estado', 'Acciones'], list.map(([group, number, order, date, names, notes, state], at) =>
+    [caption(group), caption(number), stateSelect('select-test-status-' + at, order), caption(date), caption(names), caption(notes), caption(state), printActions()])) :
+  message('No presenta solicitudes de exámenes registradas'));
 const reactions = section('ramEntrySection', 'ramEntry', 'RAM', message('No presenta RAM registradas'));
 const allergies = section('allergyEntrySection', 'allergyEntry', 'Alergias', message('No presenta alergias registradas'));
 // React writes this sentence in three text nodes, around the name of the section. The script below splits it.
-const surgery = section('operationTheaterRequestEntrySection', 'operationTheaterRequestEntry', 'Solicitudes de intervención quirúrgica',
+export const summarySurgeries = [
+  ['Urgente', 'Ingresada', 'Diagnóstico de prueba de la simulación', 'Intervención ficticia del caso simulado', '10-04-2026', '10-04-2026'],
+];
+const surgery = list => section('operationTheaterRequestEntrySection', 'operationTheaterRequestEntry', 'Solicitudes de intervención quirúrgica', list.length ?
+  table(['Tipo de solicitud', 'Estado', 'Diagnóstico', 'Intervención', 'Fecha solicitud', 'Fecha estimada', 'Acciones'], list.map(cells => [...cells.map(text => caption(text)), printActions()])) :
   `<p class="MuiTypography-root MuiTypography-body2" data-fixture-split>No se presentan |Solicitudes de intervención quirúrgica| registradas para este paciente</p>`);
 // Balance Hídrico: a switch and a disabled print icon in its heading; four small fields and «Filtrar» in a row; a sentence below.
 const select = (id, label, value, disabled = false) => `<div class="MuiBox-root"><div class="MuiFormControl-root MuiFormControl-fullWidth select">
@@ -222,7 +255,7 @@ const daily = `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 daily"><
 // «Imprimir indicaciones» is an icon button alone on its line, at the end.
 const printOrders = `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 print">${iconButton('LocalPrintshopRoundedIcon', 'Imprimir indicaciones', 'Medium', ' id="fixture-print"')}</div>`;
 const grid = 'MuiGrid-root MuiGrid-container MuiGrid-spacing-xs-2';
-const frame = ({alertList = summaryAlerts, diagnoses = summaryDiagnoses, careOrders = summaryCareOrders, ...shape} = {}) => `<div class="${grid} frame">${daily}
+const frame = ({alertList = summaryAlerts, diagnoses = summaryDiagnoses, careOrders = summaryCareOrders, procedureList = [], referralList = [], testList = [], surgeryList = [], ...shape} = {}) => `<div class="${grid} frame">${daily}
   ${item(`<div class="${grid}">${item(discharge)}${item(evolution)}</div>`, 'xs-6')}
   ${item(handoff, 'xs-12 md-6')}
   ${item(card('encounterFormEntry', 'Instrumentos de evaluación', message('No presentan instrumentos de evaluación registrados')))}
@@ -230,7 +263,7 @@ const frame = ({alertList = summaryAlerts, diagnoses = summaryDiagnoses, careOrd
   ${item(vitals)}${printOrders}
   ${item(`<div class="MuiGrid-root MuiGrid-container">${item(rest)}${item(diet)}</div>`, 'xs-6')}
   ${item(alerts(alertList), 'xs-12 md-6')}
-  ${[medication(shape), noPharma, free, procedures, diagnosis(diagnoses), referral, orders(careOrders), tests, reactions, allergies, surgery, balance, adverse, gyneco]
+  ${[medication(shape), noPharma, free, procedures(procedureList), diagnosis(diagnoses), referral(referralList), orders(careOrders), tests(testList), reactions, allergies, surgery(surgeryList), balance, adverse, gyneco]
     .map(content => item(content)).join('')}</div>`;
 
 // The section links in the order Eloísa gives them, which is not the order of the page.
@@ -246,7 +279,8 @@ const floatingBar = `<div id="hhr-clinical-operations-bar" aria-hidden="true"><s
   @media(max-width:1280px){#hhr-clinical-operations-bar{width:250px}#hhr-clinical-operations-bar b{display:none}}
 </style><i></i><i></i><i></i><i></i><i></i><b></b><i></i></div>`;
 
-/** The page. `alertList` and `diagnoses` replace the default lists (an empty array is an empty card). */
+/** The page. `alertList` and `diagnoses` replace the default lists (an empty array is an empty card);
+ *  `procedureList`, `referralList`, `testList` and `surgeryList` fill the sections that are empty by default. */
 export const summaryPage = options => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
   /* Inter is not installed where the captures run. Eloísa's own fallback, as next/font writes it, is Arial
      scaled to Inter's width; Liberation Sans and Arimo have Arial's metrics on Linux. Both platforms then draw
@@ -302,8 +336,8 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiTableCell-head{position:sticky;top:0;z-index:2;background:white;font-weight:500}
   td .MuiStack-root:has(>.MuiStack-root>.MuiIconButton-root){flex-direction:row;align-items:center}td .MuiStack-root>.MuiStack-root:has(>.MuiIconButton-root){flex-direction:row}
   td>.MuiStack-root:has(>.markers){flex-direction:row;align-items:center;gap:8px}.markers{flex-direction:row;gap:4px}
-  #diagnosisEntry [role=combobox]{min-width:196px;padding:8.5px 32px 8.5px 14px;cursor:pointer}#diagnosisEntry .MuiOutlinedInput-root{position:relative}
-  #diagnosisEntry .MuiOutlinedInput-root>input{position:absolute;bottom:0;left:0;width:100%;opacity:0;pointer-events:none}#diagnosisEntry .MuiOutlinedInput-root>svg{position:absolute;right:7px;pointer-events:none}
+  :is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) [role=combobox]{min-width:196px;padding:8.5px 32px 8.5px 14px;cursor:pointer}:is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) .MuiOutlinedInput-root{position:relative}
+  :is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) .MuiOutlinedInput-root>input{position:absolute;bottom:0;left:0;width:100%;opacity:0;pointer-events:none}:is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) .MuiOutlinedInput-root>svg{position:absolute;right:7px;pointer-events:none}
   .balance{flex-direction:row;align-items:center;gap:8px;margin-bottom:16px}.balance>.MuiBox-root{width:200px}.balance>.MuiBox-root:last-child{width:auto}
   .select{position:relative;display:flex}.select .MuiOutlinedInput-root{position:relative;width:100%}.select [role=combobox]{width:100%;height:40px;padding:8.5px 32px 8.5px 14px;font-size:16px;line-height:23px;cursor:pointer}
   .select .Mui-disabled{color:rgba(0,0,0,.38);cursor:default}.select .MuiOutlinedInput-root>input{position:absolute;bottom:0;left:0;width:100%;opacity:0;pointer-events:none}.select .MuiOutlinedInput-root>svg{position:absolute;right:7px;pointer-events:none}

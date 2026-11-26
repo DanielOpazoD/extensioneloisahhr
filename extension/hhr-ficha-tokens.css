@@ -41,7 +41,7 @@ html[data-hhr-ficha-theme] {
      1280, 42 at 1440, 56 from 1800), and on a wide screen the content stops at a readable width and
      stays at the centre. A laptop keeps its width for the clinical text. */
   --hhr-ficha-page-margin:clamp(32px, 4vw - 16px, 56px);
-  --hhr-ficha-page-max:1600px;
+  --hhr-ficha-page-max:1440px;
   --hhr-ficha-control:28px;
   /* The lines of the note that the desktop round shows at once, for every patient. */
   --hhr-ficha-note-lines:14;

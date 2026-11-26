@@ -62,7 +62,8 @@
     const request = requestAnchors.get(name);
     if (!denied && (!record || plain(record[1]) !== plain(expected))) return;
     next.set(card,'status-card');
-    if (message.parentElement !== card) next.set(message.parentElement,'status-message');
+    // Without permission is not the same as without records: each says its own short state where they are grouped.
+    if (message.parentElement !== card) next.set(message.parentElement, denied ? 'status-denied' : 'status-message');
     if (denied || filter || !optionalStates.has(name)) return;
     if (request) {
       const section = title.closest('#' + request[0]) || card;

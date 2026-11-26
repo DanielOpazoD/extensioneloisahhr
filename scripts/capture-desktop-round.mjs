@@ -461,14 +461,16 @@ async function checkDailyRow(page, width) {
     assert.ok(onTheLine(await measure()), 'Con su nombre y su «Imprimir», la fila diaria vuelve a la línea');
   }
 
-  // Another professional updated the summary after the note: that byline is new information.
+  // The row says what it prints, not who last updated the summary, also when it was somebody else than
+  // the author of the note. The byline stays in the page for a screen reader.
   const stamp = page.locator('.toolbar > [data-hhr-update-label]');
   const original = await stamp.textContent();
   await stamp.evaluate(el => { el.textContent = 'Última actualización: 15-04-2026, 11:30 - Elena Ejemplo'; });
   await refresh();
   const distinct = await measure();
-  assert.ok(distinct.stamp.width > 60 && distinct.stamp.right <= distinct.date.left + 1, 'Una firma distinta se lee antes de la fecha');
-  assert.ok(distinct.docked ? clearOfLinks(distinct) : inPlace(distinct), 'Con la firma a la vista, la fila tampoco tapa los enlaces');
+  assert.ok(distinct.stamp.width <= 1 && distinct.stamp.height <= 1, 'La fila diaria no muestra quién actualizó el resumen');
+  assert.match(await stamp.textContent(), /Elena Ejemplo/, 'La firma sigue en la página');
+  assert.ok(distinct.docked ? clearOfLinks(distinct) : inPlace(distinct), 'Con otra firma, la fila tampoco tapa los enlaces');
   await stamp.evaluate((el, text) => { el.textContent = text; }, original);
 
   // A line full of section links keeps the row in its native place.
