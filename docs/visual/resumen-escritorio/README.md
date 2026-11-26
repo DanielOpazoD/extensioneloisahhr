@@ -44,6 +44,9 @@ Límites:
 - **Diagnóstico cuesta primera pantalla a Fármacos.** Con dos diagnósticos ocupa 85 px: a 1280 px se ven tres indicaciones completas donde sin él cabrían siete.
 - **La fila de fecha diaria** conserva su línea, 36 px. Con los doce enlaces reales no cabe en la línea de secciones a ningún ancho probado.
 - **«Tiempo»** sigue siendo un triángulo con un número. No se sabe qué cuenta, y no se rotula.
+- **Por debajo de 1280 px** un diagnóstico largo ocupa dos líneas: las cifras valen desde ese ancho.
+- **En un Chrome anterior al 137** Diagnóstico conserva su lugar de siempre. Solo cambia de sitio donde la tecla Tab sigue el orden en que se ve. Y sin posicionamiento por anclas, anterior al 125, «Imprimir indicaciones» conserva su línea.
+- **La ficha ficticia anterior de ingreso** gana una línea por fármaco a 1440 px: sus instrucciones, mucho más largas que las leídas en Eloísa, dejan menos sitio al nombre ahora que la posología pide el suyo.
 - **Con muchas alertas** la columna derecha crece hasta 250 px de lista, el máximo que le da Eloísa. No se ha medido el Resumen con dieciséis.
 
 ## La fila diaria y las acciones de la nota como las dibuja Eloísa en 0.48.192

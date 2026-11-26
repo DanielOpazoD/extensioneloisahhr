@@ -124,8 +124,10 @@
     });
     if (at < 0) return null;
     // A folded empty section is not drawn. Anything else between the line and the card is.
-    const next = items.slice(at + 1).find(item => !marks.has(item) && !item.hidden && getComputedStyle(item).display !== 'none');
-    return next?.querySelector(':scope > #medicationEntrySection > .MuiCard-root > .MuiCardHeader-root .MuiCardHeader-title') ? items[at] : null;
+    const next = items.slice(at + 1).find(item => !marks.has(item) && getComputedStyle(item).display !== 'none');
+    // The button takes the room after the title. A byline there, which Eloísa does not write today, keeps it.
+    const heading = next?.querySelector(':scope > #medicationEntrySection > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-content');
+    return heading?.querySelector(':scope > .MuiCardHeader-title') && !heading.querySelector(':scope > .MuiCardHeader-subheader')?.textContent.trim() ? items[at] : null;
   }
 
   function diagnosisTable(section) {
@@ -133,7 +135,7 @@
     const tables = card?.querySelectorAll(':scope > .MuiCardContent-root table') || [];
     const headings = tables.length === 1 && tables[0].tHead?.rows.length === 1 ? [...tables[0].tHead.rows[0].cells] : [];
     return Boolean(card?.querySelector(':scope > .MuiCardHeader-root .MuiCardHeader-title')) && card.children.length === 2 &&
-      headings.length > 2 && headings[1].textContent.trim() === 'Diagnóstico' && !tables[0].querySelector('table');
+      headings.length > 2 && headings[1].textContent.trim() === 'Diagnóstico';
   }
 
   function layout(main) {
@@ -207,8 +209,8 @@
       // The diagnosis says why the patient is here. Its card opens the ones under the round when it
       // is the table Eloísa draws: a heading and one table whose second column is «Diagnóstico».
       const diagnosis = surface(main, '#diagnosisEntrySection');
-      const reason = diagnosis && frame.contains(diagnosis) && diagnosisTable(diagnosis) && placement(diagnosis, frame, hidden);
-      if (reason && !reason.bridges.length && !marks.has(reason.item)) markSlot(reason, 'diagnosis');
+      const reason = diagnosis && diagnosisTable(diagnosis) && placement(diagnosis, frame, hidden);
+      if (reason && !reason.bridges.length) markSlot(reason, 'diagnosis');
       const printing = printLine(frame, marks);
       if (printing) marks.set(printing, 'print');
       // These are the actual CSS grid items after display:contents. Preserve

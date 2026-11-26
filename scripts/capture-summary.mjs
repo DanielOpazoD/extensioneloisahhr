@@ -26,7 +26,8 @@ const read = page => page.evaluate(() => {
     actions:[...row.cells[5].querySelectorAll('button')].map(button => [button.querySelector('svg').getAttribute('aria-label'), Math.round(box(button).height), button.hasAttribute('aria-label') || button.hasAttribute('title')]),
   }));
   const diagnoses = [...diagnosis.querySelectorAll('tbody tr')].map(row => ({...box(row), star:shown(row.cells[0].querySelector('svg') || row.cells[0]) && Boolean(row.cells[0].querySelector('svg')),
-    state:box(row.querySelector('[role="combobox"]')).height, text:row.cells[1].textContent.replace(/\s+/g, ' ').trim()}));
+    state:box(row.querySelector('[role="combobox"]')).height, text:row.cells[1].textContent.replace(/\s+/g, ' ').trim(),
+    icons:[...row.querySelectorAll('td > svg, td button')].map(el => Math.round(box(el).width) + '×' + Math.round(box(el).height))}));
   const care = name => { const card = one('#' + name); return {...box(card), mark:card.getAttribute('data-hhr-round')}; };
   return {
     pageWidth:document.documentElement.scrollWidth, viewport:innerHeight, columns:frame.hasAttribute('data-hhr-round-columns'),
@@ -39,10 +40,12 @@ const read = page => page.evaluate(() => {
     diagnosis:{card:box(one('#diagnosisEntry')), rows:diagnoses, title:box(diagnosis.querySelector('.MuiCardHeader-title')), byline:box(diagnosis.querySelector('.MuiCardHeader-subheader')),
       repeated:getComputedStyle(diagnosis.querySelector('thead th:nth-child(2) p')).fontSize, heading:diagnosis.querySelector('thead th:nth-child(2)').textContent.trim()},
     medication:{card:box(one('#medicationEntry')), head:box(medicationHead), title:box(medicationHead.querySelector('.MuiCardHeader-title')), rows,
-      validate:{...box(validate), text:validate.textContent, transform:getComputedStyle(validate).textTransform, initial:getComputedStyle(validate, '::first-letter').textTransform},
+      validate:{...box(validate), text:validate.textContent, transform:getComputedStyle(validate).textTransform, initial:getComputedStyle(validate, '::first-letter').textTransform,
+        display:getComputedStyle(validate).display},
+      requester:getComputedStyle(medication.querySelector('tbody tr').cells[4]).color,
       filter:box(medicationHead.querySelector('.MuiSwitch-root')).height, actions:box(medicationHead.querySelector('.MuiCardHeader-action'))},
     print:{...box(print), position:getComputedStyle(print.parentElement).position, caption:getComputedStyle(print, '::after').content, name:print.querySelector('svg').getAttribute('aria-label'),
-      named:print.hasAttribute('aria-label') || print.hasAttribute('title')},
+      named:print.hasAttribute('aria-label') || print.hasAttribute('title'), colour:getComputedStyle(print).color},
     switches:[...document.querySelectorAll('#alertEntries .MuiSwitch-root')].map(el => Math.round(box(el).height)),
     archive:[...document.querySelectorAll('#alertEntries .alert-row button')].map(button => [Math.round(box(button.querySelector('svg')).width), Math.round(box(button).height), button.getAttribute('aria-label')]),
     tabs:getComputedStyle(one('[role="tab"]')).textTransform,
@@ -80,6 +83,7 @@ async function verifySummary(page, width, native, off) {
   assert.ok(diagnosis.card.top < native.diagnosis.card.top - 600, 'Diagnóstico deja de estar tras las indicaciones');
   assert.ok(diagnosis.rows.length === summaryDiagnoses.length && diagnosis.rows.every((row, at) => row.text.includes(summaryDiagnoses[at][1])), 'Cada diagnóstico conserva su texto');
   assert.ok(diagnosis.rows.every(row => row.height <= 34 && row.state >= 24), 'Un diagnóstico es una línea y su estado sigue siendo pulsable: ' + diagnosis.rows.map(row => row.height));
+  assert.deepEqual(diagnosis.rows.map(row => row.icons), [['18×18', '24×24', '24×24'], ['24×24', '24×24']], 'La estrella y las notas de un diagnóstico miden lo que una línea');
   assert.deepEqual(diagnosis.rows.map(row => row.star), [true, false], 'La estrella marca el diagnóstico principal');
   assert.ok(diagnosis.title.right <= diagnosis.rows[0].left + 1 && near(diagnosis.byline.height, 16, 3), 'El nombre y la firma de la tarjeta ocupan su columna, la firma en una línea');
   assert.ok(diagnosis.rows[0].left - diagnosis.card.left <= diagnosis.byline.width + 24, `La columna del nombre mide lo que su firma: ${diagnosis.rows[0].left - diagnosis.card.left} para ${diagnosis.byline.width}`);
@@ -91,14 +95,18 @@ async function verifySummary(page, width, native, off) {
 
   // «Imprimir indicaciones» is an icon alone on a line. It rides on the heading of Fármacos, after the title.
   assert.equal(print.position, 'absolute');
-  assert.ok(near((print.top + print.bottom) / 2, (medication.title.top + medication.title.bottom) / 2, 3) && print.left >= medication.title.right + 8 &&
-    print.right <= medication.actions.left - 8, 'El botón sigue al título de Fármacos y no toca las herramientas de la tarjeta');
+  assert.ok(near((print.top + print.bottom) / 2, (medication.title.top + medication.title.bottom) / 2, 1) && near(print.left, medication.title.right + 14, 1) &&
+    print.right <= medication.actions.left - 8, `El botón sigue al título de Fármacos, en su línea, y no toca las herramientas de la tarjeta: ${print.left - medication.title.right}`);
+  assert.equal(print.colour, 'rgb(40, 95, 89)', 'El botón lleva el verde de lo que se puede pulsar');
   assert.deepEqual([print.caption.split('"')[1], print.name, print.named, Math.round(print.height)], ['Imprimir indicaciones', 'Imprimir indicaciones', false, 26],
     'El botón dice el nombre que Eloísa le da en su icono, sin un nombre añadido');
   assert.ok(medication.card.top - diagnosis.card.bottom <= 8, 'La línea del icono no deja un hueco sobre Fármacos');
 
   // The controls of Eloísa at the height of a line, with their words.
-  assert.deepEqual([medication.validate.text, medication.validate.transform, medication.validate.initial], ['validar tratamiento', 'none', 'uppercase'], '«Validar tratamiento» se escribe como una frase');
+  // The capital is drawn only on a block: the same rule on a flex button would leave the phrase in lower case.
+  assert.deepEqual([medication.validate.text, medication.validate.transform, medication.validate.initial, medication.validate.display], ['validar tratamiento', 'none', 'uppercase', 'block'],
+    '«Validar tratamiento» se escribe como una frase');
+  assert.equal(medication.requester, 'rgb(81, 105, 99)', 'El solicitante se lee en la tinta de lo que explica');
   assert.ok(medication.validate.height <= 28 && medication.filter <= 30 && medication.head.height <= 36, 'La cabecera de Fármacos es una línea: ' + medication.head.height);
   assert.ok(shown.switches.every(height => height <= 30) && shown.switches.every((height, at) => height < native.switches[at]), 'Los interruptores miden lo que una línea');
   assert.equal(shown.tabs, 'none', 'Las pestañas se escriben como su nombre');
@@ -153,6 +161,11 @@ async function verifySummary(page, width, native, off) {
   const busy = await read(page);
   assert.deepEqual([busy.roles['fixture-print'], busy.rest.mark], ['peer', null], 'Con otra tarjeta entre el icono y Fármacos, el icono conserva su línea');
   await page.evaluate(() => document.querySelector('[data-fixture-extra]').remove());
+  // Eloísa does not sign the card of Fármacos. If it did, the byline would take the room of the button.
+  await page.evaluate(() => { document.querySelector('#medicationEntrySection .MuiCardHeader-subheader').textContent = 'Última actualización: 15-04-2026, 09:12:35, Médico Tomás Ejemplo'; });
+  await refresh(page);
+  assert.equal((await roles())['fixture-print'], 'peer', 'Con una firma junto al título de Fármacos, el icono conserva su línea');
+  await page.evaluate(() => { document.querySelector('#medicationEntrySection .MuiCardHeader-subheader').textContent = ''; });
   await refresh(page);
   assert.deepEqual(await roles(), shown.roles, 'Al volver la forma conocida, todo vuelve a su sitio');
 

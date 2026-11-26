@@ -259,7 +259,7 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiTableCell-head{position:sticky;top:0;z-index:2;background:white;font-weight:500}
   td .MuiStack-root:has(>.MuiStack-root>.MuiIconButton-root){flex-direction:row;align-items:center}td .MuiStack-root>.MuiStack-root:has(>.MuiIconButton-root){flex-direction:row}
   td>.MuiStack-root:has(>.markers){flex-direction:row;align-items:center;gap:8px}.markers{flex-direction:row;gap:4px}
-  #diagnosisEntry [role=combobox]{min-width:150px;padding:8.5px 32px 8.5px 14px;cursor:pointer}#diagnosisEntry .MuiOutlinedInput-root{position:relative}
+  #diagnosisEntry [role=combobox]{min-width:196px;padding:8.5px 32px 8.5px 14px;cursor:pointer}#diagnosisEntry .MuiOutlinedInput-root{position:relative}
   #diagnosisEntry .MuiOutlinedInput-root>input{position:absolute;bottom:0;left:0;width:100%;opacity:0;pointer-events:none}#diagnosisEntry .MuiOutlinedInput-root>svg{position:absolute;right:7px;pointer-events:none}
 </style><header class="MuiPaper-root MuiAppBar-root banner" id="menu-app-bar-element">Ficha de hospitalizados <small>Resumen médico · Episodio ficticio</small></header>
 <main class="MuiBox-root"><header class="MuiPaper-root MuiAppBar-root"><div class="MuiBox-root"><div class="MuiTabs-root"><div><div role="tablist" aria-label="Pestañas de prueba">${tabs.map(([id, label]) =>

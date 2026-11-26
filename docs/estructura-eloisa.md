@@ -74,7 +74,7 @@ No hay `input[type=date]`. La fila tiene cuatro controles.
 
 - Cabecera con título, subtítulo «Última actualización: …, Médico Nombre» y acciones vacías.
 - `.MuiCardContent-root > div.MuiPaper-root > div.MuiTableContainer-root > table` con siete columnas: una sin rótulo, Diagnóstico, Estado, Fecha, GES, Eno, Acciones.
-- Fila: `svg[data-testid=StarRoundedIcon]` en el diagnóstico principal; un `div.MuiStack-root` con una etiqueta de dos palabras (`div.MuiBox-root > span.MuiTypography-caption`) y el texto «código: descripción»; el estado en un selector de MUI (`div[role=combobox]#select-diagnosis-status`, 196 × 40 px, habilitado); la fecha; GES y Eno vacíos; y dos botones pequeños, `SpeakerNotesIcon` («Ver notas», deshabilitado) y `NoteAddIcon` («Agregar notas»).
+- Fila: `svg[data-testid=StarRoundedIcon]` en el diagnóstico principal; un `div.MuiStack-root` con una etiqueta de dos palabras (`div.MuiBox-root > span.MuiTypography-caption`) y el texto «código: descripción» en otro `span.MuiTypography-caption`; el estado en un selector de MUI (`div[role=combobox]#select-diagnosis-status`, 196 × 40 px, habilitado); la fecha; GES y Eno vacíos; y dos botones pequeños, `SpeakerNotesIcon` («Ver notas», deshabilitado) y `NoteAddIcon` («Agregar notas»).
 
 ### Otras tablas
 

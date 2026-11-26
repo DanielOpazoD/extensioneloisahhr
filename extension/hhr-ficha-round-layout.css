@@ -122,12 +122,13 @@
       /* The diagnosis opens the cards under the round. Its name and its byline take a column at the
          start, as Reposo and Régimen do, and each diagnosis is one line of its table. */
       > [data-hhr-round="diagnosis"] {
-        order:-1; grid-column:1 / -1; box-sizing:border-box; min-width:0; width:100% !important; max-width:100% !important; padding:0 !important;
+        padding:0 !important;
+        /* It changes place only where the Tab key follows what is seen. Elsewhere it keeps its own. */
+        @supports (reading-flow:grid-rows) { order:-1; }
         #diagnosisEntrySection > .MuiCard-root {
-          display:grid; grid-template-columns:fit-content(18rem) minmax(0,1fr); align-items:start;
-          > .MuiCardHeader-root { grid-column:1; }
+          display:grid; grid-template-columns:fit-content(18rem) minmax(0,1fr);
           > .MuiCardHeader-root > .MuiCardHeader-content { flex-direction:column; align-items:start; gap:0; }
-          > .MuiCardContent-root { grid-column:2; padding:0 !important; }
+          > .MuiCardContent-root { padding:0 !important; }
           /* The card is named beside its table: the column of the same name does not repeat it. */
           thead th:nth-child(2) > * { font-size:0; }
           td > .MuiStack-root:has(> .MuiBox-root + .MuiTypography-root) { flex-flow:row wrap; align-items:baseline; gap:0 8px; }
