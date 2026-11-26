@@ -9,7 +9,7 @@
       margin-block:0 4px !important; border-radius:5px !important;
     }
     :is([data-hhr-reading="diagnosis"],[data-hhr-reading="orders"],[data-hhr-reading="vitals"]) {
-      padding:1px 10px !important;
+      padding:5px var(--hhr-ficha-inset) !important;
       > :is(.MuiCardContent-root,.MuiCardHeader-root,.MuiCardActions-root) { padding-inline:0 !important; }
       :is(.MuiCardContent-root,.MuiCardHeader-root,.MuiCardActions-root):not(:is(dialog,[role=dialog]) *) {
         padding-block:1px !important;
@@ -18,7 +18,7 @@
     [data-hhr-reading="vital-tile"] { border-radius:2px !important; }
     [data-hhr-reading="vitals"] .MuiCardContent-root > p { margin-block:3px !important; font-size:var(--hhr-ficha-text-body); line-height:1.4; }
     [data-hhr-reading="status-card"] {
-      padding:4px 10px !important; min-height:0 !important; height:auto !important; margin-block:0 4px !important;
+      padding:4px var(--hhr-ficha-inset) !important; min-height:0 !important; height:auto !important; margin-block:0 4px !important;
       :is(h2,h3,h4,h5,h6,p,.MuiCardHeader-title) { margin-block:1px !important; }
       :is(.MuiCardHeader-root,.MuiCardContent-root) { padding-block:1px !important; }
     }
@@ -167,7 +167,7 @@
 @media screen and (min-width:1100px) {
   html[data-hhr-ficha-theme="compact"] .hhr-ficha-vitals small { font-size:.75rem; line-height:1.05; }
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
-    --hhr-round-inset:10px;
+    --hhr-round-inset:var(--hhr-ficha-inset);
     --hhr-round-heading:.9375rem;
     > .MuiGrid-item:has(> :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#inputOutputHydricBalanceEntrySection):only-child) {
       padding-block-start:0 !important;
@@ -196,8 +196,10 @@
         :has(> [data-hhr-reading="order-validator"]:first-child + .MuiPaper-root:last-child > .MuiTableContainer-root:only-child > table)) {
       padding-inline:0 !important;
       > [data-hhr-reading="order-validator"] { padding-inline:var(--hhr-round-inset) !important; }
-      :is(th,td):first-child:not(:is(dialog,[role=dialog],td) *) { padding-inline-start:var(--hhr-round-inset) !important; }
-      :is(th,td):last-child:not(:is(dialog,[role=dialog],td) *) { padding-inline-end:var(--hhr-round-inset) !important; }
+      /* The reading edge is paid by the room between an edge column and its neighbour, which keeps its own
+         7 px: the columns that are read keep the width they had with a narrower edge. */
+      :is(th,td):first-child:not(:is(dialog,[role=dialog],td) *) { padding-inline:var(--hhr-round-inset) 1px !important; }
+      :is(th,td):last-child:not(:is(dialog,[role=dialog],td) *) { padding-inline:1px var(--hhr-round-inset) !important; }
     }
     /* Balance Hídrico: its filter at the height of a line, like the daily form. Each field keeps its
        label, its menu and its calendar; the switch and the print icon keep their place. */
@@ -274,8 +276,8 @@
   html[data-hhr-ficha-theme="compact"] main:has([role="tab"][id^="encounter-event-tab-"]) {
     padding-inline:max(var(--hhr-ficha-page-margin), calc((100% - var(--hhr-ficha-page-max)) / 2)) !important;
     > header.MuiAppBar-root:has([role="tab"][id^="encounter-event-tab-"]) {
-      /* The tab text starts on the reading edge of the cards, 10 px inside them; the tabs keep 24 px of their own. */
-      padding-inline:max(calc(var(--hhr-ficha-page-margin) - 14px), calc((100% - var(--hhr-ficha-page-max)) / 2 - 14px)) !important;
+      /* The tab text starts on the reading edge of the cards, one inset inside them; the tabs keep 24 px of their own. */
+      padding-inline:max(calc(var(--hhr-ficha-page-margin) + var(--hhr-ficha-inset) - 24px), calc((100% - var(--hhr-ficha-page-max)) / 2 + var(--hhr-ficha-inset) - 24px)) !important;
     }
   }
 }
@@ -382,7 +384,7 @@
     &[data-hhr-empty-request="surgery"], [data-hhr-empty-request="surgery"] { --hhr-request-label:"Cirugía"; }
     [data-hhr-reading="status-card"], &[data-hhr-reading="status-card"] {
       display:flex; align-items:baseline; flex-wrap:wrap; justify-content:space-between; gap:1px 8px;
-      border-radius:0 !important; margin:0 !important; padding:4px 10px !important;
+      border-radius:0 !important; margin:0 !important; padding:4px var(--hhr-ficha-inset) !important;
       :is(.MuiCardHeader-root,.MuiCardContent-root) { padding:0 !important; margin:0 !important; }
       /* Short visual labels apply only to the recognized read-only empty message.
          Keep the full native wording for screen readers and printed records. */

@@ -18,13 +18,13 @@
     }
     :is(#shiftChangeObservation,#evolution).MuiCard-root { border-radius:6px; box-shadow:none; }
     #shiftChangeObservation {
-      > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:4px 10px !important; margin:0 !important; }
+      > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:6px var(--hhr-ficha-inset) !important; margin:0 !important; }
       > .MuiCardHeader-root .MuiCardHeader-title { font-size:.8125rem; font-weight:600; line-height:1.3; }
       :is(.MuiTextField-root,.MuiInputBase-root,input,textarea) { min-width:0; max-width:100%; }
     }
     #evolution.MuiCard-root {
       border-inline-start:3px solid #31877c;
-      > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:4px 10px !important; }
+      > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:6px var(--hhr-ficha-inset) !important; }
       > .MuiCardHeader-root .MuiCardHeader-title { color:var(--hhr-ficha-ink); font-size:var(--hhr-ficha-text-title); line-height:1.35; font-weight:600; }
       [data-hhr-evolution-block] > .MuiTypography-caption { font-size:.8125rem; line-height:1.45 !important; overflow-wrap:anywhere; }
     }
@@ -70,7 +70,7 @@
       inline-size:100% !important; margin-inline:0 !important;
       :is([data-hhr-round="before"],[data-hhr-round="peer"]) { padding-block-start:0 !important; padding-inline-start:0 !important; }
       /* One card style under the round: Eloísa's white surface without shadow, the corners of the view
-         (6 px, denser than Eloísa's 12) and the same gap. */
+         (8 px, denser than Eloísa's 12) and the same gap. */
       [data-hhr-round="peer"] > :is(section, .MuiCard-root),
       [data-hhr-round="peer"] > section > .MuiCard-root { margin-block:0 !important; }
       [data-hhr-round="peer"] > section > .MuiCard-root,
@@ -86,37 +86,106 @@
       }
       [data-hhr-round="before"] { order:-3; }
       --hhr-round-edge:#d6e2dd;
+      /* The lines of the round, from the top: the diagnosis, where the Tab key can follow what is seen;
+         the note with the handoff and the alerts beside it; the signs across the page; and the care
+         instructions with the requests without records. Without signs the last line closes up. */
+      --hhr-round-top:var(--hhr-round-line,2);
+      @supports (reading-flow:grid-rows) {
+        &:has(> [data-hhr-round="diagnosis"]) { --hhr-round-top:calc(var(--hhr-round-line,2) + 1); }
+      }
+      --hhr-round-signs:calc(var(--hhr-round-top) + 1);
+      --hhr-round-care:calc(var(--hhr-round-top) + 2);
+      &:not(:has([data-hhr-round="vitals"])) { --hhr-round-care:calc(var(--hhr-round-top) + 1); }
       :is([data-hhr-round="note"],[data-hhr-round="vitals"],[data-hhr-round="handoff"],[data-hhr-round="alerts"],:is([data-hhr-round="care"],[data-hhr-round="care-card"]),[data-hhr-round="empty-request"]) {
-        grid-row:var(--hhr-round-line,2); order:-1; box-sizing:border-box; min-height:0 !important;
+        grid-row:var(--hhr-round-top); order:-1; box-sizing:border-box; min-height:0 !important;
         min-width:0; width:100% !important; max-width:100% !important;
         align-self:start; height:auto !important; padding:0 !important; margin:var(--hhr-round-offset,0px) 0 0 !important;
         section:is(#vitalSignsEntry,#alertEntrySection,#shiftChangeEntrySection,#observationEntrySection,[data-hhr-empty-request]), > section { margin-block:0 !important; padding:0 !important; }
         > section > .MuiCard-root { margin-block:0 !important; border-radius:0 !important; }
       }
-      :is([data-hhr-round="note"],[data-hhr-round="vitals"],:is([data-hhr-round="care"],[data-hhr-round="care-card"])) { grid-column:1 / 9; }
-      :is([data-hhr-round="handoff"],[data-hhr-round="alerts"],[data-hhr-round="empty-request"]) { grid-column:9 / -1; }
-      /* Both halves end on the same line, also when only one of them wraps. */
-      [data-hhr-round="empty-request"][data-hhr-round-half] {
-        min-height:var(--hhr-round-row-height,0px) !important; background:#fff;
+      [data-hhr-round="note"] { grid-column:1 / 9; }
+      :is([data-hhr-round="handoff"],[data-hhr-round="alerts"]) { grid-column:9 / -1; }
+      [data-hhr-round="vitals"] { grid-row:var(--hhr-round-signs); grid-column:1 / -1; }
+      /* The last line: the care instructions at the start and the requests without records at the end.
+         They end on the same line, also when only one of them wraps, and each takes the whole line
+         when the other is missing. */
+      :is([data-hhr-round="care"],[data-hhr-round="care-card"],[data-hhr-round="empty-request"]) {
+        grid-row:var(--hhr-round-care); align-self:stretch; overflow:clip; background:var(--hhr-ficha-surface);
       }
-      [data-hhr-round="empty-request"][data-hhr-round-half="start"] { grid-column:9 / 11; border-end-start-radius:5px; }
-      [data-hhr-round="empty-request"][data-hhr-round-half="end"] { grid-column:11 / -1; border-end-end-radius:5px; }
-      [data-hhr-round="note"] #evolution { border-radius:6px 0 0 0 !important; }
-      [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root {
-        border-block-start:1px solid var(--hhr-round-edge); border-radius:0 0 5px 5px !important;
+      /* A shorter neighbour keeps its text at the middle of the line. Eloísa gives a section the height
+         of its item: here it takes its own, so that it can be centred, also through a wrapper that
+         only lends its children to the line. */
+      :is([data-hhr-round="care"],[data-hhr-round="empty-request"]) { display:flex !important; align-items:center; }
+      [data-hhr-round="care"] > *,
+      [data-hhr-round="empty-request"] [data-hhr-empty-request],
+      [data-hhr-round="empty-request"][data-hhr-empty-request] > .MuiCard-root {
+        flex:1 1 auto; align-self:center; min-inline-size:0; block-size:auto !important;
       }
-      [data-hhr-round="handoff"] #shiftChangeObservation { border-radius:0 6px 0 0 !important; }
-      [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root,
-      [data-hhr-round="empty-request"] [data-hhr-empty-request] > .MuiCard-root {
-        border-block-start:1px solid var(--hhr-round-edge); border-radius:0 !important;
+      /* The line is a block of its own: its instructions take its corners and no rule opens it.
+         Two instructions of different heights read on one middle line. */
+      :is([data-hhr-round="care"],[data-hhr-round="care-card"]) .MuiGrid-container:has(> .MuiGrid-item [data-hhr-round="care-row"]) {
+        border-radius:0;
+        > .MuiGrid-item { display:flex; align-items:center; > * { flex:1 1 auto; min-inline-size:0; } }
       }
-      &:has(:is([data-hhr-round="care"],[data-hhr-round="care-card"])) [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root { border-radius:0 !important; }
-      &:not(:has([data-hhr-round="empty-request"])) [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root,
-      [data-hhr-round="empty-request"]:not(:has(~ [data-hhr-round="empty-request"])) [data-hhr-empty-request] > .MuiCard-root {
-        border-radius:0 0 5px 5px !important;
+      :is([data-hhr-round="care"],[data-hhr-round="care-card"]):is([data-hhr-round="care-card"],:has([data-hhr-round="care-row"])) :is([data-hhr-round="care-row"],[data-hhr-round="care-card"]) {
+        border-block-start-color:transparent; border-radius:0;
       }
-      [data-hhr-round="empty-request"][data-hhr-round-half="start"] [data-hhr-empty-request] > .MuiCard-root { border-radius:0 0 0 5px !important; }
-      [data-hhr-round="empty-request"][data-hhr-round-half="end"] [data-hhr-empty-request] > .MuiCard-root { border-radius:0 0 5px 0 !important; }
+      :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
+        grid-column:1 / 9; border-radius:var(--hhr-ficha-radius) 0 0 var(--hhr-ficha-radius);
+      }
+      [data-hhr-round="empty-request"] { grid-column:9 / -1; }
+      [data-hhr-round="empty-request"][data-hhr-round-half="start"] { grid-column:9 / 11; }
+      [data-hhr-round="empty-request"][data-hhr-round-half="end"] { grid-column:11 / -1; }
+      [data-hhr-round="empty-request"]:not([data-hhr-round-half="start"]) { border-radius:0 var(--hhr-ficha-radius) var(--hhr-ficha-radius) 0; }
+      &:not(:has([data-hhr-round="empty-request"])) :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
+        grid-column:1 / -1; border-radius:var(--hhr-ficha-radius);
+      }
+      &:not(:has(:is([data-hhr-round="care"],[data-hhr-round="care-card"]))) {
+        [data-hhr-round="empty-request"] { grid-column:1 / -1; border-radius:var(--hhr-ficha-radius); }
+        [data-hhr-round="empty-request"][data-hhr-round-half="start"] {
+          grid-column:1 / 7; border-radius:var(--hhr-ficha-radius) 0 0 var(--hhr-ficha-radius);
+        }
+        [data-hhr-round="empty-request"][data-hhr-round-half="end"] {
+          grid-column:7 / -1; border-radius:0 var(--hhr-ficha-radius) var(--hhr-ficha-radius) 0;
+        }
+      }
+      [data-hhr-round="empty-request"] [data-hhr-empty-request] > .MuiCard-root { border-radius:0 !important; }
+      /* The note and the cards beside it are one block: its corners are the outer ones. */
+      [data-hhr-round="note"] #evolution { border-radius:var(--hhr-ficha-radius) 0 0 var(--hhr-ficha-radius) !important; }
+      [data-hhr-round="handoff"] #shiftChangeObservation { border-radius:0 var(--hhr-ficha-radius) 0 0 !important; }
+      &:not(:has([data-hhr-round="alerts"])) [data-hhr-round="handoff"] #shiftChangeObservation {
+        border-radius:0 var(--hhr-ficha-radius) var(--hhr-ficha-radius) 0 !important;
+      }
+      [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root {
+        border-block-start:1px solid var(--hhr-round-edge); border-radius:0 0 var(--hhr-ficha-radius) 0 !important;
+      }
+      [data-hhr-round="vitals"] section#vitalSignsEntry > .MuiCard-root { border-radius:var(--hhr-ficha-radius) !important; }
+      /* The note keeps one height whatever its length: a short one leaves room and a long one scrolls
+         inside. The cards beside it and below it then start at the same place for every patient. */
+      [data-hhr-round="note"] #evolution [data-hhr-evolution-block]:has(> [data-hhr-note-text]) {
+        display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto minmax(28px,auto);
+        align-items:center; reading-flow:grid-rows;
+        > [data-hhr-note-text] {
+          grid-column:1 / -1; align-self:start;
+          block-size:calc(var(--hhr-ficha-note-lines) * 1.45 * var(--hhr-ficha-text-body));
+          block-size:calc(var(--hhr-ficha-note-lines) * 1lh);
+          max-block-size:none; border-block-end:1px solid var(--hhr-ficha-line-soft);
+        }
+        > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; margin-block-start:2px; }
+      }
+      /* The alerts take the height the handoff leaves beside the note. Their list scrolls inside it
+         and their switches stay in view at the end. */
+      [data-hhr-round="alerts"] {
+        block-size:var(--hhr-round-fill,auto) !important; min-block-size:9rem !important;
+        #alertEntrySection { block-size:100%; }
+        /* Should Eloísa draw the list in another shape, the card scrolls as a whole: nothing spills over the signs. */
+        #alertEntrySection > .MuiCard-root { box-sizing:border-box; block-size:100% !important; display:flex; flex-direction:column; overflow-y:auto; scrollbar-width:thin; }
+        #alertEntrySection > .MuiCard-root > .MuiCardContent-root { flex:1 1 auto; min-block-size:0; display:flex; flex-direction:column; }
+        #alertEntrySection > .MuiCard-root > .MuiCardContent-root > .MuiBox-root:first-child {
+          flex:1 1 auto; min-block-size:0; max-block-size:none !important; overflow-y:auto;
+          scrollbar-width:thin; scrollbar-color:#809c95 transparent;
+        }
+      }
       [data-hhr-round="vitals"] section#vitalSignsEntry { container:hhr-round-signs / inline-size; }
       [data-hhr-round="vitals"] :is([data-hhr-reading="vital-value"],[data-hhr-reading="vital-pam"]) { white-space:nowrap; }
       /* Fit the standard nine measurements without splitting the pressure pair.
@@ -132,12 +201,12 @@
           }
         }
       }
-      /* The diagnosis opens the cards under the round. Its name and its byline take a column at the
-         start, as Reposo and Régimen do, and each diagnosis is one line of its table. */
+      /* The diagnosis says why the patient is here: it opens the round. Its name and its byline take a
+         column at the start, as Reposo and Régimen do, and each diagnosis is one line of its table. */
       > [data-hhr-round="diagnosis"] {
         padding:0 !important;
-        /* It changes place only where the Tab key follows what is seen. Elsewhere it keeps its own. */
-        @supports (reading-flow:grid-rows) { order:-1; }
+        /* It opens the round only where the Tab key follows what is seen. Elsewhere it keeps its place. */
+        @supports (reading-flow:grid-rows) { grid-row:var(--hhr-round-line,2); order:-2; }
         #diagnosisEntrySection > .MuiCard-root {
           display:grid; grid-template-columns:fit-content(18rem) minmax(0,1fr); align-items:start;
           > .MuiCardHeader-root > .MuiCardHeader-content { flex-direction:column; align-items:start; gap:0; }
@@ -199,10 +268,10 @@
       .MuiGrid-item { width:auto !important; max-width:100% !important; flex:1 1 12rem !important; padding:0 !important; }
       :is(section,.MuiCard-root) { min-height:0 !important; height:auto !important; margin:0 !important; }
       .MuiCard-root { border-radius:5px; box-shadow:none; }
-      .MuiCardHeader-root { padding:4px 9px 0 !important; }
+      .MuiCardHeader-root { padding:6px var(--hhr-ficha-inset) 0 !important; }
       .MuiCardHeader-content { display:flex; align-items:baseline; flex-wrap:wrap; gap:0 8px; }
       .MuiCardHeader-title { font-size:.8125rem; line-height:1.3; font-weight:600; }
-      .MuiCardContent-root { padding:2px 9px 5px !important; }
+      .MuiCardContent-root { padding:2px var(--hhr-ficha-inset) 6px !important; }
       .MuiCardContent-root :is(p,.MuiTypography-body1,.MuiTypography-body2) { margin:0; font-size:.8125rem; line-height:1.35; }
 
       /* Recognized native cards use a compact row. Their titles form a short left column;
@@ -226,7 +295,7 @@
         :is(#restEntrySection,#nutritionOrderEntrySection) { padding:0 !important; }
         &[data-hhr-round="care-card"], [data-hhr-round="care-row"] {
           display:grid; grid-template-columns:4.1rem minmax(0,1fr); align-items:baseline;
-          column-gap:8px; padding:3px 10px; border-radius:0;
+          column-gap:8px; padding:6px var(--hhr-ficha-inset); border-radius:0;
           &:is(.MuiGrid-item:last-child > section > *) { border-end-start-radius:5px; border-end-end-radius:5px; }
           > .MuiCardHeader-root, .MuiCardHeader-content { display:contents !important; }
           .MuiCardHeader-action { display:none; }

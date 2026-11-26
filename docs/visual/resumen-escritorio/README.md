@@ -1,5 +1,29 @@
 # Resumen compacto en escritorio
 
+## Cada bloque en su lugar y más aire, en 0.48.198
+
+El responsable pidió un orden de lectura: Diagnóstico primero, Evolución de tamaño fijo con Observaciones de entrega y Alertas al lado, y después el resto. También más margen general y dentro de los cuadros. En la 0.48.197 nada tenía un lugar fijo: Diagnóstico empezaba entre los 526 y los 628 px, y Fármacos entre los 616 y los 718, según el largo de la nota, el número de alertas y el alto de la ventana.
+
+| Pantalla | 0.48.197 | 0.48.198 | Página completa |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.198/antes/1280-resumen.png) | [Después](0.48.198/despues/1280-resumen.png) | [Antes](0.48.198/antes/1280-resumen-completo.png) · [Después](0.48.198/despues/1280-resumen-completo.png) |
+| 1440 × 900 | [Antes](0.48.198/antes/1440-resumen.png) | [Después](0.48.198/despues/1440-resumen.png) | [Antes](0.48.198/antes/1440-resumen-completo.png) · [Después](0.48.198/despues/1440-resumen-completo.png) |
+
+| Medida a 1440 × 900, 0.48.197 → 0.48.198 | |
+| --- | ---: |
+| Inicio de Diagnóstico | 530 → 201 px |
+| Alto de Evolución, con una nota de 7 líneas y con una de 31 | 197 y 276 → 339 y 339 px |
+| Líneas de la nota a la vista | 11, y entre 9 y 12 según el alto de la ventana → 14 |
+| Fin de Alertas respecto del fin de Evolución, con 3 y con 8 alertas | 74 y 102 px más abajo → 0 y 0 px |
+| Lista de 8 alertas a la vista | 250 de 406 px → 207 de 406 px |
+| Inicio de Fármacos, con la ficha liviana y con la cargada | 621 y 700 → 819 y 819 px |
+| Margen de lectura dentro de una tarjeta | 10 → 16 px |
+| Separación entre dos bloques | 8 → 12 px |
+| Indicaciones de Fármacos en una línea, a 1280 y a 1440 | 7 y 8 → 7 y 8 |
+| Esquinas de una tarjeta | 6 → 8 px |
+
+La primera pantalla es ahora la ronda: por qué está el paciente, la nota con lo que la acompaña y los signos. El costo es Fármacos, que empieza 119 px más abajo que en la ficha cargada de antes y sale de la primera pantalla a 800 px de alto. Las capturas de la primera pantalla se toman ahora desde el inicio de la página: la ficha ficticia, como Eloísa, da el foco al campo de alerta al cargar y la dejaba desplazada.
+
 ## Las formas que Eloísa dibuja hoy, en 0.48.197
 
 El responsable vio en su pantalla un Resumen todavía flojo. Se midió su ficha el 26-11-2026, en un paciente de estadía corta, y aparecieron formas que la vista no reconocía (detalle en [`estructura-eloisa.md`](../../estructura-eloisa.md)):

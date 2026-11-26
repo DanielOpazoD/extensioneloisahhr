@@ -231,10 +231,11 @@
     return marks;
   }
 
-  // Sibling cards belong to React. Keep them in place on a shared CSS grid row
-  // and use their intrinsic heights to stack the two reading columns independently.
+  // Sibling cards belong to React. Keep them in place on the lines of a shared CSS grid: the
+  // note with the handoff and the alerts beside it, the signs, the care instructions with the
+  // empty requests. Cards that share a line and a column stack by their intrinsic heights.
   function create() {
-    let previous = new Map(), frame, columns = [], halves = [], peers = [], pending = 0;
+    let previous = new Map(), frame, stacks = [], halves = [], peers = [], lead = null, fill = null, pending = 0;
     const desktop = globalThis.matchMedia?.('(min-width:1100px)');
     // Updating margins does not resize the observed border boxes. Repack before paint.
     const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(pack) : null;
@@ -268,24 +269,18 @@
         }
       }
       set(frame, '--hhr-round-line', String(leadingRows + 1));
-      const offsets = [], rowHeights = [];
-      // Measure each half at its own height before both take the height of their row.
-      for (const item of halves) set(item, '--hhr-round-row-height', '0px');
-      // A column is a stack of rows. The two halves of a row start at the same height.
-      for (const column of columns) {
+      const offsets = new Map();
+      for (const stack of stacks) {
         let top = 0;
-        for (const row of column) {
-          let height = 0;
-          for (const item of row) {
-            offsets.push([item, top]);
-            height = Math.max(height, item.getBoundingClientRect().height);
-          }
-          if (row.length > 1) for (const item of row) rowHeights.push([item, height]);
-          top += height;
+        for (const item of stack) {
+          offsets.set(item, top);
+          top += item.getBoundingClientRect().height;
         }
       }
       for (const [el, top] of offsets) set(el, '--hhr-round-offset', top + 'px');
-      for (const [el, height] of rowHeights) set(el, '--hhr-round-row-height', height + 'px');
+      // The side column ends where the note ends: its last card takes the height the handoff leaves.
+      // The note never reads the height of that card, so the two cannot chase each other.
+      if (fill) set(fill, '--hhr-round-fill', Math.max(0, lead.getBoundingClientRect().height - offsets.get(fill)) + 'px');
     }
     function resetColumns() {
       if (pending) cancelAnimationFrame(pending);
@@ -297,13 +292,11 @@
         frame.removeAttribute('data-hhr-round-columns');
         frame.style.removeProperty('--hhr-round-line');
       }
-      for (const item of columns.flat(2)) item.style.removeProperty('--hhr-round-offset');
-      for (const item of halves) {
-        item.removeAttribute('data-hhr-round-half');
-        item.style.removeProperty('--hhr-round-row-height');
-      }
+      for (const item of stacks.flat()) item.style.removeProperty('--hhr-round-offset');
+      fill?.style.removeProperty('--hhr-round-fill');
+      for (const item of halves) item.removeAttribute('data-hhr-round-half');
       for (const [peer] of peers) peer.style.removeProperty('--hhr-round-span');
-      columns = []; halves = []; peers = []; frame = null;
+      stacks = []; halves = []; peers = []; lead = fill = frame = null;
     }
     function refresh(main) {
       const next = layout(main);
@@ -319,16 +312,18 @@
       const note = roles.get('note'), handoff = roles.get('handoff');
       const items = (...roles) => [...next].filter(([,value]) => roles.includes(value)).map(([el]) => el);
       peers = [...next].filter(([,role]) => role === 'peer' || role === 'before');
-      // Two requests without records share the last line of the side column.
+      // Two requests without records share their end of the last line of the round.
       const requests = items('empty-request');
       halves = requests.length === 2 ? requests : [];
       halves.forEach((item, index) => item.setAttribute('data-hhr-round-half', index ? 'end' : 'start'));
-      const single = item => [item];
-      columns = [[note, ...items('vitals'), ...items('care', 'care-card')].map(single),
-        [handoff, ...items('alerts')].map(single).concat(halves.length ? [halves] : requests.map(single))];
+      // The signs and the requests take a line of the grid each. The handoff and the alerts share the
+      // line of the note, and two care instructions drawn apart share theirs.
+      const alerts = items('alerts');
+      stacks = [[note], [handoff, ...alerts], items('care', 'care-card')];
+      lead = note; fill = alerts.at(-1) || null;
       frame.setAttribute('data-hhr-round-columns','');
       desktop.addEventListener('change', schedule);
-      for (const item of columns.flat(2)) {
+      for (const item of stacks.flat()) {
         resize.observe(item, {box:'border-box'});
         content.observe(item, {childList:true, subtree:true});
       }
