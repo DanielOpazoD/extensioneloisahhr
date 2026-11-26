@@ -213,7 +213,11 @@
       if (ids.length) toggle.setAttribute('aria-controls', ids.join(' '));
       else toggle.removeAttribute('aria-controls');
       display();
-      if (toggle.parentElement !== row) row.append(toggle);
+      // With the round laid out the section links are not shown: the button stays with what it unfolds,
+      // on the line of «Sin datos».
+      const frame = row.parentElement?.nextElementSibling;
+      const host = frame?.matches('[data-hhr-round="frame"]') ? frame : row;
+      if (toggle.parentElement !== host) host.append(toggle);
     }
     function reveal(target) {
       if ((previous.has(target) || navItems.has(target)) && !expanded) { expanded = true; display(); }

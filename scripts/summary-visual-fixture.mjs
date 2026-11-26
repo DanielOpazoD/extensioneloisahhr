@@ -34,7 +34,10 @@ const toggle = (label, checked = false) => `<label class="MuiFormControlLabel-ro
 const textField = (label, id, attributes = '', adornment = '') => `<div class="MuiFormControl-root MuiTextField-root">
   <label class="MuiFormLabel-root MuiInputLabel-root" for="${id}">${label}</label>
   <div class="MuiInputBase-root MuiOutlinedInput-root"><input class="MuiInputBase-input MuiOutlinedInput-input" id="${id}" type="text"${attributes}>${adornment}</div></div>`;
-const signature = (role, name, time = '09:12:35', comma = ',') => `Última actualización: 15-04-2026${comma} ${time}, ${role} ${name}`;
+// A name as Eloísa writes it in a byline (read 26-11-2026): first name, second name, first surname and second
+// surname joined by a space. The second name is empty here, so its space stays.
+const fields = name => name.replace(' ', '  ') + ' Prueba';
+const signature = (role, name, time = '09:12:35', comma = ',') => `Última actualización: 15-04-2026${comma} ${time}, ${role} ${fields(name)}`;
 const card = (cardId, title, body, subheader = '', action = '') => `<div class="MuiPaper-root MuiCard-root"${cardId ? ` id="${cardId}"` : ''}>
   <div class="MuiCardHeader-root"><div class="MuiCardHeader-content"><span class="MuiTypography-root MuiTypography-h6 MuiCardHeader-title">${title}</span>
     <span class="MuiTypography-root MuiTypography-body2 MuiCardHeader-subheader">${subheader}</span></div>
@@ -84,7 +87,7 @@ export const summaryMedications = [
 const medicationRow = ([days, name, markers, posology, instructions]) => [
   `<div class="MuiBox-root" style="display:flex">${icon('ChangeHistoryRoundedIcon')}<div class="MuiBox-root">${caption(days)}</div></div>`,
   `<div class="MuiStack-root">${caption(name)}<div class="MuiStack-root markers">${markers.map(chip).join('')}</div></div>`,
-  readable(posology), instructions ? readable(instructions) : `<div class="MuiBox-root">${caption('', true)}</div>`, caption(requester), rowActions(),
+  readable(posology), instructions ? readable(instructions) : `<div class="MuiBox-root">${caption('', true)}</div>`, caption(requester + ' Prueba'), rowActions(),
 ];
 // The first cell marks the main diagnosis. GES and Eno stay empty, as in the list that was read.
 export const summaryDiagnoses = [
@@ -147,9 +150,9 @@ const alertRow = ([author, text, age]) => `<div class="MuiStack-root alert-row">
   <div><span class="MuiTypography-root MuiTypography-body2" style="display:inline-flex">${text}</span></div></div>
   <div class="MuiStack-root">${caption(age)}<div class="MuiStack-root">${iconButton('ArchiveRoundedIcon', '', 'Small', ' aria-label="Archivar"')}</div></div></div>`;
 export const summaryAlerts = [
-  ['Enfermera(o) Elena Ejemplo', 'Pauta de seguimiento pendiente para el próximo turno.', '2 horas'],
-  ['Médico Tomás Ejemplo', 'Se acordó una visita con la familia.', '4 horas'],
-  ['Enfermera(o) Elena Ejemplo', 'Evaluación de riesgo de prueba 12/04 ---- repetir la evaluación de la simulación.', '3 días'],
+  ['Enfermera(o) Elena  Ejemplo Prueba', 'Pauta de seguimiento pendiente para el próximo turno.', '2 horas'],
+  ['Médico Tomás  Ejemplo ', 'Se acordó una visita con la familia.', '4 horas'],
+  ['Enfermera(o) Elena  Ejemplo Prueba', 'Evaluación de riesgo de prueba 12/04 ---- repetir la evaluación de la simulación.', '3 días'],
 ];
 const alerts = list => section('alertEntrySection', 'alertEntries', 'Alertas', `<div class="MuiBox-root alerts-list">${list.map(alertRow).join('')}</div>
   <form class="MuiStack-root" onsubmit="return false">${toggle('No reanimación')}${toggle('Gestión de Visitas', true)}
@@ -175,7 +178,7 @@ const medication = ({nested = true, validator = ''} = {}) => {
 };
 const noPharma = section('noPharmaEntrySection', 'noPharmaEntry', 'Producto no Farmacológico', message('No presenta productos no farmacológicos registrados'), '', toggle('Mostrar Suspendidos'));
 const free = section('freeIndicationEntrySection', 'freeIndicationEntry', 'Indicaciones Libres', table(['Indication', 'Programación', 'Solicitante', 'Acciones'],
-  summaryFree.map(([name, schedule]) => [`<div class="MuiStack-root">${readable(name)}</div>`, caption(schedule), caption(requester), rowActions()])),
+  summaryFree.map(([name, schedule]) => [`<div class="MuiStack-root">${readable(name)}</div>`, caption(schedule), caption(requester + ' Prueba'), rowActions()])),
   '', toggle('Mostrar Suspendidos'));
 // A state that can still change is a native select, as the state of a diagnosis; a closed one is its word.
 const stateSelect = (id, value) => `<div class="MuiFormControl-root"><div class="MuiInputBase-root MuiOutlinedInput-root"><div role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" id="${id}">${caption(value)}</div>` +
@@ -242,7 +245,7 @@ const balance = section('inputOutputHydricBalanceEntrySection', 'inputOutputHydr
   `<div class="MuiStack-root balance">${select('type', 'Tipo de Registro', 'Todos')}${select('item', 'Item', '<em>Seleccione un tipo</em>', true)}` +
   `${when('fixture-balance-from', '14/04/2026 08:00', '14 abr 2026')}${when('fixture-balance-to', '15/04/2026 08:00', '15 abr 2026')}` +
   `<div class="MuiBox-root"><button type="submit" class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary">Filtrar</button></div></div>` +
-  message('No se encontraron registros de prueba para el período'), '',
+  message('No se presentan registros de balance hídrico para este paciente'), '',
   toggle('Balance Hídrico Indicado') + iconButton('LocalPrintshopRoundedIcon', 'Imprimir ingresos y egresos', 'Medium', ' disabled').replace('MuiButtonBase-root ', 'MuiButtonBase-root Mui-disabled '));
 const adverse = section('adverseEventEntrySection', 'adverseEventEntry', 'Eventos Adversos', message('No tiene permiso para visualizar'));
 const gyneco = section('obstetricGynecologicalExaminationEntrySection', 'obstetricGynecologicalExaminationEntry', 'Examen Gíneco Obstétrico', message('No tiene permiso para visualizar'));
@@ -323,7 +326,7 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiDivider-vertical{align-self:stretch;width:0;height:auto;margin:0;border:0;border-left:1px solid rgba(0,0,0,.12)}
   .MuiChip-root{display:inline-flex;align-items:center;height:32px;border-radius:16px;background:rgba(0,0,0,.08);font-size:13px}.MuiChip-sizeSmall{height:24px}.MuiChip-label{padding:0 12px}.MuiChip-sizeSmall .MuiChip-label{padding:0 8px}
   .daily{display:flex;align-items:center;justify-content:space-between;gap:8px}.daily>.MuiStack-root,.daily form{flex-direction:row;align-items:center;gap:8px}.daily .MuiInputLabel-root{background:#eff1f0}
-  .daily .MuiOutlinedInput-input{padding-right:0}.print{display:flex;justify-content:flex-end}
+  .daily .MuiOutlinedInput-input{padding-right:0}.daily .MuiTextField-root{width:180px}.print{display:flex;justify-content:flex-end}
   #estimatedDischarge section.MuiStack-root,#estimatedDischarge form{flex-direction:row;align-items:center;gap:16px}
   #evolution .MuiBox-root>.MuiTypography-caption{white-space:pre-line;font-size:14px}#evolution .MuiCardContent-root>.MuiStack-root>.MuiStack-root+.MuiStack-root>.MuiStack-root{flex-direction:row;justify-content:flex-end}
   #shiftChangeObservation form,#alertEntries form>.MuiStack-root{flex-direction:row;align-items:center;gap:8px}#shiftChangeObservation .MuiTextField-root,#alertEntries form .MuiBox-root{flex:1}#alertEntries .MuiTextField-root{width:100%}

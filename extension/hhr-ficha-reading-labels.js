@@ -4,11 +4,20 @@
   const stampPattern = /^Última actualización:\s*(\d{2}[-/]\d{2}[-/]\d{4})(?:,\s*|\s+)(\d{1,2}:\d{2})(?::\d{2})?\s*(?:,|[-–·])\s*(.+)$/i;
   const role = /^(?:médic[oa](?:\s+(?:cirujan[oa]|tratante|especialista))?|enfermer[oa]|paramédic[oa]|kinesiólog[oa]|matr[oó]n(?:a)?|nutricionista|terapeuta ocupacional|fonoaudiólog[oa]|psicólog[oa]|técnic[oa] de enfermería|tens|dra?\.)(?:\([oa]\))?\s+/i;
 
+  const shortName = raw => globalThis.HhrFichaProfessionalName?.short(raw) ?? String(raw).trim().replace(/\s+/g, ' ');
+  // The name keeps the spaces Eloísa wrote: they say which of its fields are empty.
   function stamp(text) {
-    const parts = stampPattern.exec(text.trim());
+    const parts = stampPattern.exec(text.replace(/^\s+/, '').replace(/[^\S ]\s*$/, ''));
     if (!parts) return null;
-    const author = parts[3].replace(role, '').trim();
-    return parts[1] + ' · ' + parts[2].padStart(5, '0') + ' · ' + author;
+    return { date:parts[1], time:parts[2].padStart(5, '0'), author:shortName(parts[3].replace(role, '')) };
+  }
+  // «Enfermera(o) Ana  Rojas Soto» reads «Enfermera(o) Ana Rojas». Nothing when it is already that short.
+  function shortAuthor(text) {
+    const raw = text.replace(/^\s+/, '').replace(/[^\S ]\s*$/, ''), title = role.exec(raw)?.[0] || '';
+    const name = raw.slice(title.length);
+    if (!name.trim() || /[\d:,;·]/.test(name)) return null;
+    const brief = (title.trim() + ' ' + shortName(name)).trim();
+    return brief === raw.trim().replace(/\s+/g, ' ') ? null : brief;
   }
 
   // Hidden inside the summary. A menu or a window of Eloísa hides the whole page from a screen reader
@@ -240,9 +249,26 @@
         for (const el of candidates) {
           if (el.closest('dialog,[role=dialog],#hhr-prescription-print-modal') ||
               el.querySelector('a,button,input,[tabindex]') || (!el.matches('.MuiCardHeader-subheader') && el.closest('.MuiCard-root'))) continue;
-          const compact = stamp(el.textContent);
-          if (compact) label(el, 'data-hhr-update-label', compact);
+          const read = stamp(el.textContent);
+          // The diagnosis says who confirmed it and on which day: the owner asked for it without the hour.
+          if (read) label(el, 'data-hhr-update-label', el.closest('#diagnosisEntrySection') ? read.date + ' · ' + read.author :
+            read.date + ' · ' + read.time + ' · ' + read.author);
         }
+        // Who wrote an alert and who asked for a prescription read as a first name and a first surname.
+        const authors = [...main.querySelectorAll('#alertEntrySection .MuiCardContent-root > .MuiBox-root > .MuiStack-root > .MuiStack-root:first-child > p.MuiTypography-body2:first-child')];
+        for (const cell of main.querySelectorAll('td[data-hhr-reading="order-requester"]')) {
+          let leaf = cell;
+          while (leaf.children.length === 1 && ![...leaf.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) leaf = leaf.firstElementChild;
+          if (!leaf.children.length) authors.push(leaf);
+        }
+        for (const el of authors) {
+          if (el.closest('dialog,[role=dialog],#hhr-prescription-print-modal') || el.children.length) continue;
+          const brief = shortAuthor(el.textContent);
+          if (brief) label(el, 'data-hhr-author', brief);
+        }
+        // Balance Hídrico without records says so in two words. Its filter stays for another period.
+        const idle = main.querySelector('#inputOutputHydricBalanceEntrySection > .MuiCard-root > .MuiCardContent-root > p.MuiTypography-root:last-child');
+        if (idle && !idle.children.length && /^no se presentan registros de balance h[ií]drico\b/i.test(idle.textContent.trim())) label(idle, 'data-hhr-balance', 'empty');
         // Say a byline once. The daily row repeats the note's own, and the three
         // prescription cards often carry the byline of the card just above.
         // «Above» means painted above: a copy hidden by its own styles is not a card the reader can see.

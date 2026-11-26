@@ -307,8 +307,6 @@
       docked = false;
       for (const name of ['data-hhr-ficha-dock', 'data-hhr-ficha-dock-line']) dailyRow?.removeAttribute(name);
       for (const name of dockProperties) dailyRow?.style.removeProperty(name);
-      row?.removeAttribute('data-hhr-ficha-docked');
-      row?.style.removeProperty('--hhr-dock-width');
     }
     // Only the recognized daily row: a byline and the form «Resumen diario paciente» with its date
     // field and «Imprimir». Eloísa adds a calendar button inside the field and a second print icon.
@@ -326,16 +324,14 @@
           item.querySelector('table,img,.MuiCard-root,[aria-live],[role="alert"],[role="status"]')) return null;
       return item;
     }
-    // On a desktop the daily row has no line of its own. It rides at the end of the line of tabs, the
-    // one line with room at every width: the floating Centro HHR bar covers the end of the section
-    // links. Without room there, or should that line paint over it, it rides on the section line, where
-    // the links scroll under it as they already scroll in a narrow window.
+    // On a desktop the daily row has no line of its own. It rides at the end of the line of tabs, beside
+    // the floating Centro HHR bar. Where that line scrolls away, or would paint over it, the row keeps
+    // its native place: the section links it once rode on are not shown with the round.
     function positionDailyRow() {
       const fits = () => {
-        if (!dailyRow?.isConnected || !row?.isConnected || !desktop?.matches) return null;
-        const items = [...row.children].filter(el => el.getClientRects().length);
+        if (!dailyRow?.isConnected || !slot?.isConnected || !desktop?.matches || tabsCovered) return null;
         const parts = [...dailyRow.children].filter(el => el.getClientRects().length);
-        if (!items.length || !parts.length) return null;
+        if (!parts.length) return null;
         const width = parts.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) + 8 * (parts.length - 1);
         // The name of the field is read before it while the line has room. Short of it, the row docks
         // without the name rather than give up the line: the field keeps it for a screen reader.
@@ -343,31 +339,23 @@
         const named = name && dailyRow.getAttribute('data-hhr-ficha-dock') !== 'short';
         const nameWidth = name ? (named ? name.getBoundingClientRect().width : name.scrollWidth) + 6 : 0;
         const whole = named || !name ? width : width + nameWidth;
-        const rail = row.getBoundingClientRect();
-        // The floating Centro HHR bar hangs over the end of both lines. Stop short of it at every
-        // scroll position: the choice uses horizontal measures only, so scrolling never moves the round.
+        // The column of the ficha: the row ends where its cards end.
+        const column = slot.getBoundingClientRect();
+        // The floating Centro HHR bar hangs over the end of the line. Stop short of it.
         const bar = document.getElementById('hhr-clinical-operations-bar');
         const cover = bar?.getClientRects().length ? bar.getBoundingClientRect() : null;
-        const limit = cover && cover.left < rail.right && cover.right > rail.left ? Math.min(rail.right, cover.left - 10) : rail.right;
-        const place = (line, box, end) => {
-          const short = Boolean(name) && end + 28 + whole > limit;
-          const taken = short ? whole - nameWidth : whole;
-          return {line, box, rail, width:taken, limit, short, clear:end + 28 + taken <= limit};
-        };
+        const limit = cover && cover.left < column.right && cover.right > column.left ? Math.min(column.right, cover.left - 10) : column.right;
         // Only a line of tabs that stays in view: one that scrolls away would take the date with it.
-        const strip = primary?.isConnected && !tabsCovered ? primary.closest('.MuiAppBar-root') || primary : null;
+        const strip = primary?.isConnected ? primary.closest('.MuiAppBar-root') || primary : null;
         const head = strip && /^(fixed|sticky)$/.test(getComputedStyle(strip).position) ? strip : null;
         const tabs = head ? [...primary.querySelectorAll('[role="tab"]')].filter(el => el.getClientRects().length) : [];
-        if (tabs.length) {
-          const box = head.getBoundingClientRect();
-          const onTabs = place('tabs', box, Math.max(...tabs.map(tab => tab.getBoundingClientRect().right)));
-          const layer = Number.parseInt(getComputedStyle(head).zIndex, 10);
-          if (onTabs.clear && box.height >= 30) return {...onTabs, head, layer:Number.isFinite(layer) ? layer + 1 : null};
-        }
-        // Where the links end with the line at rest: scrolling them sideways never changes the choice.
-        const onLinks = place('sections', rail, items.at(-1).getBoundingClientRect().right + row.scrollLeft);
-        // A bar unfolded over nearly the whole line leaves no end to ride on: the row keeps its native place.
-        return limit - onLinks.width - rail.left >= 160 ? onLinks : null;
+        if (!tabs.length) return null;
+        const box = head.getBoundingClientRect(), end = Math.max(...tabs.map(tab => tab.getBoundingClientRect().right));
+        const short = Boolean(name) && end + 28 + whole > limit;
+        const taken = short ? whole - nameWidth : whole;
+        if (end + 28 + taken > limit || box.height < 30) return null;
+        const layer = Number.parseInt(getComputedStyle(head).zIndex, 10);
+        return {box, limit, short, head, layer:Number.isFinite(layer) ? layer + 1 : null};
       };
       const room = fits();
       if (!room) {
@@ -379,20 +367,12 @@
         if (value === null) element.style.removeProperty(name);
         else if (element.style.getPropertyValue(name) !== value) element.style.setProperty(name, value);
       };
-      const attr = (element, name, value) => {
-        if (value === null) element.removeAttribute(name);
-        else if (element.getAttribute(name) !== value) element.setAttribute(name, value);
-      };
-      const onLinks = room.line === 'sections';
+      const attr = (element, name, value) => { if (element.getAttribute(name) !== value) element.setAttribute(name, value); };
       set(dailyRow, '--hhr-dock-top', room.box.top + 'px');
       set(dailyRow, '--hhr-dock-right', Math.max(0, document.documentElement.clientWidth - room.limit) + 'px');
       set(dailyRow, '--hhr-dock-height', room.box.height + 'px');
       set(dailyRow, '--hhr-dock-layer', room.layer ? String(room.layer) : null);
-      // Only the section links make room: the tabs never reach the end of their line. The room is the
-      // row with its own edges and the space a link keeps from it.
-      set(row, '--hhr-dock-width', onLinks ? Math.ceil(room.rail.right - room.limit + room.width + 28) + 'px' : null);
-      attr(row, 'data-hhr-ficha-docked', onLinks ? '' : null);
-      attr(dailyRow, 'data-hhr-ficha-dock-line', room.line);
+      attr(dailyRow, 'data-hhr-ficha-dock-line', 'tabs');
       attr(dailyRow, 'data-hhr-ficha-dock', room.short ? 'short' : '');
       const settled = docked;
       docked = true;
@@ -400,7 +380,7 @@
       if (!settled) round.repack();
       // Eloísa could give the line of tabs a layer of its own. If that line paints over the date, the
       // row leaves it for good: it is checked once, and never while a dialog covers the page.
-      if (room.line !== 'tabs' || tabsChecked || document.querySelector('[role="dialog"],.MuiBackdrop-root')) return;
+      if (tabsChecked || document.querySelector('[role="dialog"],.MuiBackdrop-root')) return;
       tabsChecked = true;
       const field = dailyRow.querySelector('form input'), spot = field?.getBoundingClientRect();
       const top = spot && document.elementFromPoint(spot.left + spot.width / 2, spot.top + spot.height / 2);
@@ -511,7 +491,8 @@
       round.refresh(compact);
       carePlan.refresh(theme === 'compact' && tab.id === 'encounter-event-tab-care-plan' ? document.querySelector('main') : null);
       const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
-        ['evolucion','valoracion'].includes(normalize(element.textContent)) && element.getClientRects().length);
+        // The line this view already holds counts while the round keeps it out of sight.
+        ['evolucion','valoracion'].includes(normalize(element.textContent)) && (element.getClientRects().length || row?.contains(element)));
       const nextRow = caption?.closest('.MuiGrid-container');
       if (row && row !== nextRow) {
         undock(); dailyRow = null;

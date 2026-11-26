@@ -120,6 +120,7 @@
         [data-hhr-reading="status-message"]::after { content:'Sin registros' / ''; }
         [data-hhr-reading="status-denied"]::after { content:'Sin permiso' / ''; }
       }
+      > .hhr-ficha-empty-toggle { grid-column:1 / -1; justify-self:end; }
       :is([data-hhr-round="bridge"],[data-hhr-round="inner"]) { display:contents !important; }
       :is([data-hhr-round="before"],[data-hhr-round="peer"]) {
         grid-column:span var(--hhr-round-span,12);
@@ -220,6 +221,10 @@
           &[data-hhr-round-tile="whole"] { grid-column:7 / span 6; }
         }
         [data-hhr-round="empty-request"] { display:block !important; }
+        /* «Ver vacías» ends the line of «Sin datos»: it unfolds more of the same. */
+        &[data-hhr-round-side~="tiles"] > .hhr-ficha-empty-toggle {
+          grid-row:var(--hhr-round-signs); grid-column:10 / -1; align-self:start; justify-self:end; z-index:1;
+        }
         /* In half the line the nine measurements read as five and four, never with one left alone on a third row. */
         @container hhr-round-signs (min-width:36rem) {
           [data-hhr-round="vitals"] #vitalSignsEntry [data-hhr-reading="vital-grid"]:has(> [data-hhr-reading="vital-tile"]:nth-child(9)) {

@@ -1,5 +1,16 @@
 # Cambios
 
+## 0.48.207
+
+- En el Resumen de la vista Compacta ya no se muestra la barra de enlaces de sección (Alertas, Diagnóstico, Indicaciones libres, Fármacos, Régimen, Evolución o Valoración, Reposo, Dispositivos invasivos, Signos vitales…), ni en la ficha abierta desde la lista de trabajo médico ni en la de Gestión de cuidados. El responsable pidió quitarla. La ficha empieza donde estaba la barra.
+- «Ver vacías», que estaba en esa barra, pasa al final de la línea del rótulo «Sin datos»: sigue desplegando y plegando las secciones vacías.
+- El cuadro del resumen diario ya no dibuja «Imprimir» sobre la fecha. Eloísa da 180 px a ese campo y, con su nombre delante, el botón quedaba 101 px encima; ahora cada control sigue al anterior: nombre, fecha con su calendario, «Imprimir» y el icono.
+- Los profesionales se leen con su primer nombre y su primer apellido, sea médico, enfermera, kinesiólogo u otro: en la firma de cada tarjeta, en quién escribió una alerta, en «Solicitante» y en el lector de evoluciones. «Daniel Opazo Damiani» se lee «Daniel Opazo». El nombre completo sigue en la página para el lector de pantalla, la búsqueda y la impresión.
+- La firma de Diagnóstico dice el día y quién, sin la hora.
+- En Fármacos e Indicaciones libres, la columna que Eloísa titula «Indication» se lee «Indicación».
+- Balance Hídrico sin registros es una línea: su nombre, su filtro, «Sin registros» y, al final, su interruptor y su icono de impresión. Antes medía 125 px y decía «No se presentan registros de balance hídrico para este paciente»; ahora mide 45.
+- Si el Resumen no tiene la forma que la vista reconoce, la barra de enlaces se conserva.
+
 ## 0.48.206
 
 - En el Resumen de la vista Compacta, en escritorio, la tarjeta de Signos vitales termina con sus mediciones. Hasta ahora se estiraba hasta el alto de la columna de su derecha y dejaba una franja en blanco bajo las mediciones (en la página, 259 px de tarjeta para 135 de contenido).
