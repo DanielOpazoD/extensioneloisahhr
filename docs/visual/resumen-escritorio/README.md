@@ -17,7 +17,16 @@ Al comparar las dos fichas en la página (26-11-2026, 1728 × 966 px), la tarjet
 | Grupo «Sin datos» | bajo Reposo y Régimen → junto a Signos, desde arriba |
 | Inicio de Fármacos | 823 → 827 px |
 
-En la página, con más secciones sin datos que en la ficha ficticia, las dos columnas quedan en unos 204 y 192 px. Esa cifra es un cálculo sobre las medidas leídas, no una medición con la versión nueva.
+En la página (ficha médica, 1728 × 966 px), con la disposición nueva aplicada a mano en una pestaña propia:
+
+| Medida en la página, 0.48.205 → disposición nueva | |
+| --- | ---: |
+| Alto de la tarjeta de Signos vitales | 259 → 133 px |
+| Franja en blanco bajo las mediciones | 134 → 8 px |
+| Columna de Signos, Reposo y Régimen, y columna «Sin datos» (seis filas) | 259 y 259 → 202 y 163 px |
+| Inicio de Fármacos | 857 → 800 px |
+
+Falta verla con la versión instalada.
 
 ## La ficha de Gestión de cuidados como la médica, en 0.48.205
 
