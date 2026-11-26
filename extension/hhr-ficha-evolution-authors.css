@@ -187,4 +187,55 @@
     :focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:-2px; }
   }
 }
-@media print { .hhr-evo-entry,.hhr-evo-filters,.hhr-note-open,dialog.hhr-note-dialog { display:none !important; } }
+@media screen {
+  /* The evolutions of every profession in one window, the latest first: who wrote, when, and the
+     whole text. It reads like the window of a single note, with a line of professions to choose from. */
+  dialog.hhr-evo-reader {
+    box-sizing:border-box; width:min(60rem,calc(100vw - 4rem)); height:92dvh; max-height:56rem;
+    margin:auto; padding:0; border:0; border-radius:12px; overflow:hidden;
+    background:var(--hhr-ficha-surface); color:var(--hhr-ficha-ink); box-shadow:0 24px 64px rgb(17 38 34 / 30%);
+    font:inherit;
+    &[open] { display:flex; flex-direction:column; }
+    &::backdrop { background:rgb(17 38 34 / 52%); }
+    > header { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:2px 8px;
+      flex:none; padding:20px 32px 14px; border-block-end:1px solid var(--hhr-ficha-line-soft); }
+    h2 { grid-area:1 / 1; margin:0; font:600 var(--hhr-ficha-text-lead)/1.4 var(--hhr-ficha-sans); }
+    small { grid-area:2 / 1; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans); }
+    > header > button { grid-row:1 / span 2; }
+    > :is(header,footer) > button { min-height:32px; padding:4px 14px; border:1px solid var(--hhr-ficha-line);
+      border-radius:var(--hhr-ficha-radius); background:transparent; color:var(--hhr-ficha-action);
+      font:600 var(--hhr-ficha-text-body)/1 var(--hhr-ficha-sans); white-space:nowrap; cursor:pointer;
+      &:hover { background:var(--hhr-ficha-action-hover); } }
+    .hhr-evo-reader-filters { display:flex; flex-wrap:wrap; gap:6px; flex:none; padding:10px 32px;
+      border-block-end:1px solid var(--hhr-ficha-line-soft);
+      &:empty { display:none; } }
+    .hhr-evo-reader-filter { display:inline-flex; align-items:center; gap:6px; min-height:28px; padding:2px 10px;
+      border:1px solid var(--hhr-ficha-line); border-radius:14px; background:transparent; color:var(--hhr-ficha-ink-soft);
+      font:400 var(--hhr-ficha-text-body)/1.2 var(--hhr-ficha-sans); cursor:pointer;
+      > span { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); font-variant-numeric:tabular-nums; }
+      &:hover { background:var(--hhr-ficha-action-hover); }
+      &[aria-pressed="true"] { border-color:#a8cfc5; background:#e5f2ee; color:var(--hhr-ficha-focus); font-weight:600; } }
+    .hhr-evo-reader-feed { flex:1 1 auto; min-block-size:0; overflow:auto; padding:2px 32px 16px; scrollbar-width:thin; }
+    .hhr-evo-reader-note { padding:14px 0 16px; border-block-end:1px solid var(--hhr-ficha-line-soft);
+      &:last-child { border-block-end:0; }
+      > header { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; margin-block-end:6px; }
+      strong { font:600 var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans); }
+      header > span { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans); }
+      time { margin-inline-start:auto; color:var(--hhr-ficha-muted); white-space:nowrap;
+        font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); font-variant-numeric:tabular-nums; }
+      mark { padding:0 6px; border-radius:var(--hhr-ficha-radius-small); background:#fff0d8; color:#775119;
+        font:600 .6875rem/1.6 var(--hhr-ficha-sans); }
+      p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font:400 var(--hhr-ficha-text-title)/1.55 var(--hhr-ficha-sans); }
+      /* A note its author crossed out, or archived, is still listed: it says so and steps back. */
+      &[data-state="void"] p { color:var(--hhr-ficha-muted); } }
+    > footer { display:flex; align-items:center; gap:10px; flex:none; min-block-size:32px; padding:8px 32px 12px;
+      border-block-start:1px solid var(--hhr-ficha-line-soft);
+      > span { flex:1 1 auto; color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans); }
+      > [hidden] { display:none; } }
+    /* Nothing to list yet: the message takes the place of the notes. */
+    &:has(.hhr-evo-reader-feed[hidden]) > footer { flex:1 1 auto; align-items:flex-start; border-block-start:0; padding-block-start:24px; }
+    [hidden] { display:none !important; }
+    :focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:-2px; }
+  }
+}
+@media print { .hhr-evo-entry,.hhr-evo-filters,.hhr-note-open,dialog.hhr-note-dialog,dialog.hhr-evo-reader { display:none !important; } }

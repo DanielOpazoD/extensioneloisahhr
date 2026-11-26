@@ -59,7 +59,9 @@
     onNoveltyUnavailable: () => showPageNotice('No se encontró una publicación médica en el historial cargado.', { title: 'Historial' }),
   });
   let fichaTheme = null;
-  const evolutionAuthors = globalThis.HhrFichaEvolutionAuthors.create();
+  const evolutionAuthors = globalThis.HhrFichaEvolutionAuthors.create({
+    readNotes: (encId, lookbackDays) => sendMessage({ type: runtimeMessages.EVOLUTION_NOTES_REQUEST, encId, lookbackDays }),
+  });
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
     returnContext: message => chrome.runtime.sendMessage({ ...message, type: runtimeMessages.WORKLIST_RETURN_CONTEXT }),

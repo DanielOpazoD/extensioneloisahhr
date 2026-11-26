@@ -103,7 +103,9 @@
     }
     return cards;
   }
-  function create() {
+  // With `readNotes`, the button on the Resumen opens the evolutions of every profession in place.
+  // Without it, or in Historial, it filters the timeline Eloísa has drawn, as it always did.
+  function create({ readNotes } = {}) {
     const entry = button('Ver evoluciones', 'hhr-evo-entry');
     const bar = document.createElement('div');
     bar.className = 'hhr-evo-filters';
@@ -164,6 +166,7 @@
       authorButtons.clear();
     }
     function clear() {
+      notesReader?.close();
       markToolbar(null);
       entry.remove();
       unfilter();
@@ -174,6 +177,7 @@
       focusOnOpen = false;
     }
     function refresh(encounter) {
+      notesReader?.refresh(encounter);
       if (encounter !== episode || !encounter) clear();
       if (!encounter) return;
       episode = encounter;
@@ -254,11 +258,17 @@
         !notes.length ? 'Sin evoluciones entre los registros cargados.' : '';
       if (message.textContent !== status) message.textContent = status;
     }
-    entry.addEventListener('click', () => {
+    const openInHistory = () => {
       viewing = true;
       focusOnOpen = true;
       if (historyTab?.getAttribute('aria-selected') !== 'true') historyTab?.click();
       refresh(episode);
+    };
+    const notesReader = typeof readNotes === 'function' ?
+      globalThis.HhrFichaEvolutionReader?.create({ readNotes, openHistory: openInHistory }) : null;
+    entry.addEventListener('click', () => {
+      if (notesReader && historyTab?.getAttribute('aria-selected') !== 'true' && notesReader.open(episode, entry)) return;
+      openInHistory();
     });
     back.addEventListener('click', () => {
       viewing = false;
