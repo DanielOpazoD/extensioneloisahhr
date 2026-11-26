@@ -99,7 +99,9 @@ Las recetas y las indicaciones se abren desde Centro HHR; la extensión no agreg
 junto a «Validar tratamiento». El selector Estándar/Compacta está sobre el contenido
 desplazable, tanto para un paciente como para el censo.
 
-En Ajustes de Centro HHR, «Descargar extensión desde GitHub (.zip)» descarga la última versión publicada.
+En Ajustes de Centro HHR, «Descargar ZIP» descarga la última versión publicada.
+
+Chrome no actualiza sola una extensión cargada desde una carpeta. Cuando hay una versión publicada posterior a la instalada, la barra de Centro HHR muestra «Actualizar» y Ajustes dice cuál tienes, cuál está publicada y cómo cambiarla. Con la barra contraída, el aviso es un punto ámbar sobre el logo. Para saberlo, mientras hay una ficha abierta la extensión pregunta a GitHub cuál es la última versión publicada, como mucho una vez cada seis horas: es una petición pública y fija, sin credenciales ni datos de la página o de la sesión. Si GitHub no responde, no se muestra ningún aviso y se vuelve a preguntar pasada una hora.
 
 Centro HHR se abre por defecto como un cuadro de diálogo centrado. Al actualizar esta
 versión se restablece esa apertura; después puedes elegir y guardar el panel lateral.

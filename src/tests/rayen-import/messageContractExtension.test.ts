@@ -40,13 +40,15 @@ describe('shared Rayen runtime-message contract', () => {
   it('registers every service-worker request type once', () => {
     const values = Object.values(contract.types);
 
-    expect(values).toHaveLength(78);
+    expect(values).toHaveLength(79);
     expect(contract.validateRuntimeMessage({ type: contract.types.CLINICAL_CHECKLIST, encId: '42', request: { action: 'templates' } }).ok).toBe(true);
     expect(contract.validateRuntimeMessage({ type: contract.types.WORKLIST_RETURN_CONTEXT, action: 'return', entryKeys: [] }).ok).toBe(true);
     expect(contract.validateRuntimeMessage({ type: contract.types.WORKLIST_RETURN_CONTEXT }).ok).toBe(false);
     expect(contract.types.RAPA_NUI_WEATHER).toBe('RAYEN_RAPA_NUI_WEATHER');
     expect(contract.types.DAILY_BIRTHS).toBe('RAYEN_DAILY_BIRTHS');
     expect(contract.validateRuntimeMessage({ type: contract.types.DAILY_BIRTHS }).ok).toBe(true);
+    expect(contract.types.EXTENSION_RELEASE_STATUS).toBe('RAYEN_EXTENSION_RELEASE_STATUS');
+    expect(contract.validateRuntimeMessage({ type: contract.types.EXTENSION_RELEASE_STATUS }).ok).toBe(true);
     expect(new Set(values).size).toBe(values.length);
     expect(values.every(value => /^RAYEN_[A-Z0-9_]+$/.test(value))).toBe(true);
   });

@@ -15,7 +15,7 @@
 
 ## Actualizar una instalación existente
 
-Pulsa el icono naranjo. Si aparece una versión nueva, selecciona **Descargar**. La guía ilustrada también está disponible dentro del menú. Extrae el ZIP nuevo y reemplaza el contenido de la carpeta que cargaste originalmente, conservando su nombre y ubicación. En `chrome://extensions`, pulsa **Recargar** (flecha circular) en la tarjeta de **Rayen → HHR**. Abre el icono para confirmar la versión. Guarda el trabajo que tengas abierto en Eloísa antes de recargar sus pestañas.
+Cuando hay una versión nueva, la barra de Centro HHR muestra **Actualizar** sobre la ficha; al pulsarlo, Ajustes dice qué versión tienes y cuál está publicada. También puedes pulsar el icono naranjo: si aparece una versión nueva, selecciona **Descargar**. La guía ilustrada también está disponible dentro del menú. Extrae el ZIP nuevo y reemplaza el contenido de la carpeta que cargaste originalmente, conservando su nombre y ubicación. En `chrome://extensions`, pulsa **Recargar** (flecha circular) en la tarjeta de **Rayen → HHR**. Abre el icono para confirmar la versión. Guarda el trabajo que tengas abierto en Eloísa antes de recargar sus pestañas.
 
 ## Deshabilitar o volver a habilitar
 

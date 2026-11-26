@@ -96,6 +96,12 @@
     #hhr-prescription-print-modal .hhr-center-toolbar.hhr-settings-toolbar { min-height: 44px; gap: 8px; padding-block: 6px; }
     #hhr-prescription-print-modal .hhr-settings-toolbar .hhr-center-heading { flex: 1 1 auto; }
     #hhr-prescription-print-modal .hhr-settings-toolbar a { display: inline-flex; align-items: center; min-height: 28px; text-decoration: none; }
+    #hhr-prescription-print-modal .hhr-settings-release { max-width: 34rem; margin: 0 0 8px; box-sizing: border-box; font-size: 12px; line-height: 1.45; color: var(--hhr-ink-700); }
+    #hhr-prescription-print-modal .hhr-settings-release:empty { display: none; }
+    #hhr-prescription-print-modal .hhr-settings-release[data-state="available"] {
+      padding: 7px 10px; border-left: 3px solid var(--hhr-amber-600); border-radius: 4px; background: #fff8e6; color: var(--hhr-ink-900);
+    }
+    #hhr-prescription-print-modal .hhr-settings-release a { color: var(--hhr-teal-ink); font-weight: 600; }
     #hhr-prescription-print-modal .hhr-settings-list { max-width: 34rem; font-size: 13px; color: var(--hhr-ink-900); }
     #hhr-prescription-print-modal .hhr-setting-row {
       display: grid; grid-template-columns: minmax(0,1fr) auto; column-gap: 12px; align-items: center;

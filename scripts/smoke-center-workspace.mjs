@@ -52,6 +52,56 @@ export const verifyCompactOperationsBar = async page => {
   await page.locator('#hhr-prescription-print-modal .hhr-rx-close').click();
 };
 
+// The service worker answers from its last check, so the smoke decides what «published» is and nothing leaves the machine.
+const publish = (serviceWorker, published) => serviceWorker.evaluate(published =>
+  chrome.storage.local.set({ 'hhr-release-check-v1': { published, checkedAt: Date.now() } }), published);
+const ready = page => page.waitForFunction(() => document.documentElement.dataset.hhrPrescriptionPrintState === 'ready');
+
+/** With a later version published the bar says so and Ajustes explains it. With the installed one, the bar is the usual one. */
+export const verifyReleaseNotice = async (page, serviceWorker, installed) => {
+  const bar = page.locator('#hhr-clinical-operations-bar'), update = bar.locator('.hhr-ops-update');
+  await publish(serviceWorker, '99.0.0');
+  await page.reload();
+  await ready(page);
+  await update.waitFor();
+  assert.deepEqual([await update.textContent(), await update.getAttribute('aria-label'), await bar.getAttribute('data-update')],
+    ['Actualizar', 'Hay una versión nueva de la extensión', '99.0.0']);
+  assert.match(await update.getAttribute('data-tip-note'), new RegExp('^Tienes la ' + installed.replaceAll('.', '\\.') + ' y está publicada la 99\\.0\\.0\\.'));
+  const box = await bar.boundingBox(), pill = await update.boundingBox();
+  assert.ok(box.width <= 330 && box.height <= 40 && pill.x + pill.width <= box.x + box.width && pill.height >= 24, 'El aviso cabe en la barra: ' + box.width);
+  if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+    await mkdir(process.env.HHR_VISUAL_ARTIFACT_DIR, { recursive: true });
+    await update.hover();
+    await bar.locator('.tip.is-visible').waitFor();
+    await page.screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'aviso-version-barra.png'), animations: 'disabled',
+      clip: { x: Math.max(0, box.x - 260), y: 0, width: Math.min(page.viewportSize().width - Math.max(0, box.x - 260), box.width + 280), height: 240 } });
+  }
+  await update.focus();
+  await page.keyboard.press('Enter');
+  const settings = page.locator('#hhr-prescription-print-modal[data-active-module="settings"]');
+  const line = settings.locator('[data-release-status]');
+  await line.getByRole('link', { name: 'Cómo actualizar', exact: true }).waitFor();
+  assert.equal(await line.getAttribute('data-state'), 'available');
+  assert.match(await line.textContent(), new RegExp('^Tienes la versión ' + installed.replaceAll('.', '\\.') + ' y está publicada la 99\\.0\\.0\\. Descarga el ZIP'));
+  assert.match(await line.getByRole('link').getAttribute('href'), /^https:\/\/github\.com\/DanielOpazoD\/extensioneloisahhr\/blob\/main\/docs\/instalacion\/README\.md#/);
+  if (process.env.HHR_VISUAL_ARTIFACT_DIR) {
+    await mkdir(process.env.HHR_VISUAL_ARTIFACT_DIR, { recursive: true });
+    await page.screenshot({ path: path.join(process.env.HHR_VISUAL_ARTIFACT_DIR, 'aviso-version-ajustes.png'), animations: 'disabled' });
+  }
+  await page.locator('#hhr-prescription-print-modal .hhr-rx-close').click();
+
+  await publish(serviceWorker, installed);
+  await page.reload();
+  await ready(page);
+  await bar.locator('.hhr-ops-session').waitFor();
+  assert.deepEqual([await update.isVisible(), await bar.getAttribute('data-update')], [false, null], 'Con la versión al día la barra no avisa');
+  await bar.locator('.brand').click();
+  await page.locator('#hhr-prescription-print-modal [data-module="settings"]').click();
+  await settings.locator('[data-release-status]').getByText('Versión instalada: ' + installed + '. Es la última publicada.', { exact: true }).waitFor();
+  assert.equal(await settings.locator('[data-release-status]').getAttribute('data-state'), null);
+  await page.locator('#hhr-prescription-print-modal .hhr-rx-close').click();
+};
+
 export const verifyDockedPanel = async page => {
   const root = page.locator('#hhr-prescription-print-modal');
   assert.equal(await root.getAttribute('data-panel-mode'), 'floating');

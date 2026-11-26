@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.195
+
+- Cuando hay una versión publicada posterior a la instalada, la barra de Centro HHR muestra «Actualizar» sobre la ficha, y Ajustes dice cuál tienes, cuál está publicada y cómo cambiarla. Chrome no actualiza sola una extensión cargada desde una carpeta, y hasta ahora el aviso solo aparecía al pulsar el icono naranjo.
+- Para saberlo, la extensión pregunta a GitHub cuál es la última versión publicada mientras hay una ficha abierta, como mucho una vez cada seis horas. La petición es pública y fija: no lleva credenciales ni datos de la página.
+
 ## 0.48.194
 
 - En el Resumen de la vista Compacta, la columna «Tiempo» de Fármacos muestra los días de tratamiento con su unidad: «12 d», en lugar de un triángulo con un número.

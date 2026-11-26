@@ -8,6 +8,24 @@
   new MutationObserver(syncHandoffCheckbox).observe(document.documentElement, {
     attributes: true, attributeFilter: ['data-hhr-handoff-enabled'],
   });
+  // Chrome does not update an unpacked extension. Say which version runs and whether a later one is published.
+  const guide = 'https://github.com/DanielOpazoD/extensioneloisahhr/blob/main/docs/instalacion/README.md#actualizar-una-instalaci%C3%B3n-existente';
+  const showRelease = line => {
+    let installed = '';
+    try { installed = chrome.runtime.getManifest().version; } catch (_error) { return; }
+    line.textContent = 'Versión instalada: ' + installed + '.';
+    const type = globalThis.HhrRayenMessageContract?.types?.EXTENSION_RELEASE_STATUS;
+    if (!type) return;
+    Promise.resolve(chrome.runtime.sendMessage({ type })).then(status => {
+      if (!line.isConnected || !status?.published) return;
+      if (!status.available) { line.textContent = 'Versión instalada: ' + installed + '. Es la última publicada.'; return; }
+      line.dataset.state = 'available';
+      line.textContent = 'Tienes la versión ' + installed + ' y está publicada la ' + status.published + '. Descarga el ZIP y reemplaza la carpeta de la extensión. ';
+      const link = Object.assign(document.createElement('a'), { href: guide, target: '_blank', rel: 'noopener noreferrer', textContent: 'Cómo actualizar' });
+      line.append(link);
+    }).catch(() => {});
+  };
+
   const render = ({ root, operationsBar }) => {
     const preferences = globalThis.HhrCenterPreferences;
     const main = root.querySelector('.hhr-center-main');
@@ -15,7 +33,7 @@
         <h2 class="hhr-center-heading">Ajustes</h2>
         <a class="hhr-center-action" href="https://github.com/DanielOpazoD/extensioneloisahhr/releases/latest/download/eloisa-hhr.zip" target="_blank" rel="noopener noreferrer">Descargar ZIP</a>
       </div>
-      <div class="hhr-center-content"><div class="hhr-settings-list">
+      <div class="hhr-center-content"><p class="hhr-settings-release" role="status" data-release-status></p><div class="hhr-settings-list">
         <div class="hhr-setting-row"><label for="hhr-setting-mode">Presentación</label><select id="hhr-setting-mode" class="hhr-center-select" data-setting="mode">
           <option value="floating">Cuadro centrado</option><option value="docked">Panel lateral</option>
         </select></div>
@@ -32,6 +50,7 @@
         <small role="status" data-checklist-status></small>
       </div></div>`;
     main.querySelector('.hhr-settings-list').append(globalThis.HhrFavoriteLinks.create());
+    showRelease(main.querySelector('[data-release-status]'));
     const theme = main.querySelector('#hhr-setting-ficha-theme');
     const themes = globalThis.HhrFichaThemes;
     for (const [id, title] of themes.choices()) theme.add(new Option(title, id));
