@@ -98,7 +98,7 @@ export async function installAdmissionFixture(page, width) {
     trigger.setAttribute('aria-haspopup', 'menu');
     trigger.setAttribute('aria-expanded', 'false');
     launcher.append(trigger);
-    get('#evolution [aria-label="Enmendamientos"]').after(launcher);
+    get('#evolution svg[aria-label="Ver enmendados"]').closest('button').after(launcher);
 
     const noteText = get('#evolution .MuiBox-root > .MuiTypography-caption');
     const originalButton = noteText.nextElementSibling.querySelector('button');

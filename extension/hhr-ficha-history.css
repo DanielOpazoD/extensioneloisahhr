@@ -1,0 +1,119 @@
+/* The compact Historial: one surface per day, one line per event, the time in a margin
+   column. Native words and controls stay in place; the reader only marks what it recognizes. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-history-timeline] {
+    /* Eloísa gives most events a box of their own and dates only the first box of a day.
+       The reader marks where a day starts and ends, and the boxes between read as one surface. */
+    > .MuiBox-root { margin:0 !important; background:var(--hhr-ficha-surface); }
+    /* With «Ver evoluciones», a box whose events are all filtered leaves no line and no gap: Eloísa
+       gives each event a box, and there can be hundreds. Its date stays measurable, as that filter needs. */
+    > .MuiBox-root:not([data-hhr-history-edge~="start"]):has(> :not([data-hhr-evolution-filtered])) { border-block-start:1px solid var(--hhr-ficha-line-soft); }
+    > .MuiBox-root[data-hhr-history-edge~="start"] {
+      border-start-start-radius:var(--hhr-ficha-radius); border-start-end-radius:var(--hhr-ficha-radius);
+    }
+    > .MuiBox-root[data-hhr-history-edge~="start"] ~ .MuiBox-root[data-hhr-history-edge~="start"]:has(> :not([data-hhr-evolution-filtered])) { margin-block-start:8px !important; }
+    > .MuiBox-root[data-hhr-history-edge~="end"] {
+      border-end-start-radius:var(--hhr-ficha-radius); border-end-end-radius:var(--hhr-ficha-radius);
+    }
+    > .MuiBox-root:not(:has(> .MuiCard-root:not([data-hhr-evolution-filtered]))) > :first-child:has(> .MuiChip-root:only-child) { border-block-end:0; }
+    /* The day heads its surface and, as in every view, stays under the tabs while its box passes. */
+    > .MuiBox-root > :first-child:has(> .MuiChip-root:only-child) {
+      display:flex; justify-content:flex-start; box-sizing:border-box; width:auto; max-width:none;
+      margin:0 !important; padding:3px var(--hhr-ficha-inset);
+      border-block-end:1px solid var(--hhr-ficha-line);
+      border-radius:var(--hhr-ficha-radius) var(--hhr-ficha-radius) 0 0; background:var(--hhr-ficha-band);
+      > .MuiChip-root {
+        height:auto; padding:0; border-radius:0; background:transparent; color:var(--hhr-ficha-ink-soft);
+        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.5 var(--hhr-ficha-sans);
+      }
+      .MuiChip-label { padding:0; font:inherit; }
+      /* «Hoy» and «Ayer» carry their date. The native word stays for screen readers. */
+      .MuiChip-label[data-hhr-history-day] {
+        font-size:0;
+        &::after { content:attr(data-hhr-history-day) / ''; font-size:var(--hhr-ficha-text-meta); }
+      }
+    }
+    > .MuiBox-root > .MuiCard-root {
+      margin:0 !important; border-radius:0; box-shadow:none; background:transparent;
+    }
+    > .MuiBox-root > .MuiCard-root + .MuiCard-root { border-block-start:1px solid var(--hhr-ficha-line-soft); }
+
+    /* A recognized event: time in the margin, then category, role and name on one line. */
+    [data-hhr-history-inline] {
+      /* Wide enough for «00:00 hrs», the form Eloísa uses. */
+      --hhr-history-margin:4.75rem;
+      position:relative; gap:1px 8px;
+      padding:5px var(--hhr-ficha-inset) 6px calc(var(--hhr-ficha-inset) + var(--hhr-history-margin)) !important;
+      color:var(--hhr-ficha-ink);
+      .MuiCardHeader-action {
+        position:absolute; inset-block-start:6px; inset-inline-start:var(--hhr-ficha-inset);
+        color:var(--hhr-ficha-ink-soft); white-space:nowrap;
+        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.5 var(--hhr-ficha-sans);
+        :is(p,.MuiTypography-root) { margin:0; color:inherit; font:inherit; }
+      }
+      :is(& > .MuiCardContent-root, [data-hhr-history-flat]) > p:first-child {
+        color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.45 var(--hhr-ficha-sans);
+      }
+      /* The letter of the avatar repeats the role beside it. A picture or an icon stays, at text size. */
+      .MuiCardHeader-avatar:not(:has(img,svg)) { display:none; }
+      .MuiCardHeader-avatar:has(img,svg) :is(.MuiAvatar-root,img,svg) { inline-size:18px; block-size:18px; font-size:.625rem; }
+      :is(.MuiCardHeader-title,.MuiCardHeader-subheader) {
+        color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.45 var(--hhr-ficha-sans);
+      }
+      .MuiCardHeader-title { color:var(--hhr-ficha-ink-soft); }
+      .MuiCardHeader-subheader:not(:empty)::before { content:'· ' / ''; }
+      :is(& > .MuiCardContent-root, [data-hhr-history-flat]) > :not(:first-child) {
+        font-size:var(--hhr-ficha-text-body); line-height:1.45;
+        :is(p,span,.MuiTypography-root) { font-size:inherit; line-height:inherit; }
+      }
+      /* Labelled details of an event flow on the line of their text. A label without a value says nothing. */
+      .MuiStack-root > span.MuiTypography-root:has(> span.MuiTypography-root + span.MuiTypography-root:last-child) {
+        display:inline-flex; inline-size:auto; column-gap:4px; margin:0;
+        > span:first-child { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
+        &:has(> span:last-child:empty) { display:none; }
+      }
+      .MuiStack-root:has(> span.MuiTypography-root > span.MuiTypography-root + span.MuiTypography-root:last-child) {
+        display:flex; flex-flow:row wrap; align-items:baseline; gap:0 14px;
+        > p { flex:1 0 100%; margin:0; }
+      }
+      /* Any other chip of an event is a small tag under its text, not a pill of its own height. */
+      .MuiChip-root:not([data-hhr-history-new]) {
+        height:16px; border-radius:4px; background:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft);
+        font:var(--hhr-ficha-weight-strong) .625rem/1 var(--hhr-ficha-sans);
+        > .MuiChip-label { padding-inline:5px; }
+      }
+      /* The state of the event closes its first line. */
+      [data-hhr-history-new] { position:absolute; inset-block-start:7px; inset-inline-end:var(--hhr-ficha-inset); margin:0; }
+      /* The last word of the line leaves the badge its place, also when the line wraps. */
+      &:has([data-hhr-history-new]) > .MuiCardHeader-root .MuiCardHeader-subheader { margin-inline-end:4.75rem; }
+    }
+    /* A note is what the reader comes for: the same marginal rule as Evolución in the summary. */
+    [data-hhr-history-kind="note"] { box-shadow:inset 3px 0 var(--hhr-ficha-accent) !important; }
+  }
+
+  /* The entry to the notes and their filter by professional, in the manner of the note actions. */
+  html[data-hhr-ficha-theme="compact"] [data-hhr-history-timeline] > .hhr-evo-entry {
+    display:inline-flex; align-items:center; gap:6px; margin:0 0 6px; min-height:var(--hhr-ficha-control);
+    border:1px solid var(--hhr-ficha-line); background:transparent; color:var(--hhr-ficha-action); font-size:var(--hhr-ficha-text-meta);
+    &::before {
+      content:''; flex:none; inline-size:15px; block-size:15px; background:currentColor;
+      mask:var(--hhr-icon-notes) center / contain no-repeat;
+    }
+    &:hover { background:var(--hhr-ficha-action-hover); }
+    @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
+  }
+  html[data-hhr-ficha-theme="compact"] .hhr-evo-filters {
+    margin:0 0 6px; padding:0 0 4px; border-block-end:1px solid var(--hhr-ficha-line); font-size:var(--hhr-ficha-text-meta);
+    .hhr-evo-author, .hhr-evo-back { min-height:26px; padding:2px 8px; color:var(--hhr-ficha-action); font-size:var(--hhr-ficha-text-meta); }
+    .hhr-evo-author[aria-pressed="true"] { background:var(--hhr-ficha-action-pressed); color:var(--hhr-ficha-ink); }
+  }
+}
+
+/* On a desktop window the native filters need less than their quarter of the line. */
+@media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] .MuiGrid-container:has(> .MuiGrid-item > [data-hhr-history-timeline]) {
+    flex-wrap:nowrap;
+    > .MuiGrid-item:first-child:has(form):not(:has([data-hhr-history-timeline])) { flex:0 0 17rem !important; max-width:17rem !important; }
+    > .MuiGrid-item:has(> [data-hhr-history-timeline]) { flex:1 1 0 !important; max-width:none !important; min-width:0; }
+  }
+}

@@ -38,6 +38,10 @@ jobs:
         run: node scripts/capture-medical-round.mjs WORKTREE "$RUNNER_TEMP/ficha-escritorio" lectura
       - name: Verify long admissions, bedside columns and full prescriptions
         run: node scripts/capture-medical-round.mjs WORKTREE "$RUNNER_TEMP/ficha-ingreso" ingreso
+      - name: Verify the compact history timeline and its notes by professional
+        run: node scripts/capture-history.mjs WORKTREE "$RUNNER_TEMP/ficha-historial"
+      - name: Verify the compact treatment plan keeps hours, states and native names
+        run: node scripts/capture-care-plan.mjs WORKTREE "$RUNNER_TEMP/ficha-plan"
       - run: npm run test:dau
       - run: npm run build
       - uses: actions/upload-artifact@v7

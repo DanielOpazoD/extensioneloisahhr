@@ -243,6 +243,7 @@
     const summaryDensity = globalThis.HhrFichaSummaryDensity.create(Object.values(SECTIONS));
     const labels = globalThis.HhrFichaReadingLabels.create();
     const round = globalThis.HhrFichaRoundLayout.create();
+    const carePlan = globalThis.HhrFichaCarePlan.create();
     const marked = new Map();
     const links = new Map();
     let primary = null, row = null, slot = null, style = null;
@@ -289,6 +290,7 @@
       surfaces.clear();
       labels.clear();
       round.clear();
+      carePlan.clear();
       summaryDensity.clear();
       resizeObserver?.disconnect();
       links.forEach((item, element) => removeLink(element, item));
@@ -308,14 +310,20 @@
       row?.removeAttribute('data-hhr-ficha-docked');
       row?.style.removeProperty('--hhr-dock-width');
     }
-    // Only the recognized daily row: a byline, one date field and one action, with nothing else inside.
+    // Only the recognized daily row: a byline and the form «Resumen diario paciente» with its date
+    // field and «Imprimir». Eloísa adds a calendar button inside the field and a second print icon.
     function findDailyRow() {
       const round = slot?.nextElementSibling;
       const item = round?.matches('[data-hhr-round="frame"]') ? round.firstElementChild : null;
       if (!item?.matches('.MuiGrid-item[data-hhr-round="before"]') || !item.querySelector(':scope > [data-hhr-update-label]')) return null;
-      const controls = [...item.querySelectorAll('input,select,textarea,button,a[href],[role="button"],[tabindex],[contenteditable]')];
-      if (controls.length !== 2 || !controls[0].matches('input[type="date"]') || !controls[1].matches('button') ||
-          item.querySelector('table,img,svg:not(button svg),.MuiCard-root,[aria-live],[role="alert"],[role="status"]')) return null;
+      const controls = [...item.querySelectorAll('input,select,textarea,button,a[href],[role="button"],[contenteditable]')];
+      const fields = controls.filter(el => el.matches('input')), buttons = controls.filter(el => el.matches('button'));
+      const field = fields[0];
+      const named = normalize([field?.getAttribute('aria-label'), ...Array.from(field?.labels || [], label => label.textContent)].join(' '));
+      if (fields.length !== 1 || !field.form || !field.matches('input[type="date"],input[type="text"],input:not([type])') ||
+          controls.length !== 1 + buttons.length || buttons.length < 1 || buttons.length > 3 || !/resumen diario/.test(named) ||
+          !buttons.some(button => button.form === field.form && normalize(button.textContent) === 'imprimir') ||
+          item.querySelector('table,img,.MuiCard-root,[aria-live],[role="alert"],[role="status"]')) return null;
       return item;
     }
     // The links never scroll under the docked row: it docks only while everything fits on the line.
@@ -456,6 +464,7 @@
       const paragraph = readableDisclosure?.parentElement.previousElementSibling;
       noteReader.refresh(paragraph?.matches('.MuiTypography-caption') ? paragraph : null, encounterId);
       round.refresh(compact);
+      carePlan.refresh(theme === 'compact' && tab.id === 'encounter-event-tab-care-plan' ? document.querySelector('main') : null);
       const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
         ['evolucion','valoracion'].includes(normalize(element.textContent)) && element.getClientRects().length);
       const nextRow = caption?.closest('.MuiGrid-container');

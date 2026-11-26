@@ -11,6 +11,14 @@ const section = (id, cardId, title, body, byline = '', action = '') => {
 };
 const item = (content, size = '12') =>
   `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-${size}">${content}</div>`;
+// Eloísa leaves its icon buttons without a name and labels the svg instead. The overflow menu has none.
+const iconPaths = {
+  EditNoteRoundedIcon:'M3 10h11v2H3zm0-2h11V6H3zm0 8h7v-2H3zm15.01-3.13.71-.71c.39-.39 1.02-.39 1.41 0l.71.71c.39.39.39 1.02 0 1.41l-.71.71zm-.71.71-5.3 5.3V21h2.12l5.3-5.3z',
+  FormatListBulletedRoundedIcon:'M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5m0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5m0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5M8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1m0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1M7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1',
+  MoreVertRoundedIcon:'M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2',
+};
+const iconButton = (icon, name, size) => `<button type="button" class="MuiButtonBase-root MuiIconButton-root MuiIconButton-size${size}">` +
+  `<svg class="MuiSvgIcon-root" data-testid="${icon}"${name ? ' aria-label="' + name + '"' : ''} viewBox="0 0 24 24" focusable="false"><path d="${iconPaths[icon]}"/></svg></button>`;
 const note = `Paciente de simulación en control de ronda. Refiere descanso adecuado y tolerancia a la alimentación.
 Se sienta en el sillón con asistencia. Sin cambios respecto de la revisión previa.
 
@@ -23,7 +31,7 @@ const discharge = section('estimatedDischargeSection', 'estimatedDischarge', 'Fe
 const evolution = section('observationEntrySection','evolution','Evolución',
   `<div class="MuiStack-root"><div class="MuiStack-root"><div class="MuiBox-root">
     <span class="MuiTypography-caption">${note}</span><div class="MuiBox-root"><button class="MuiButton-root">Leer menos</button></div>
-  </div></div><div class="MuiStack-root"><div class="MuiStack-root"><button aria-label="Editar evolución">✎</button><button aria-label="Enmendamientos">☷</button></div></div></div>`, stamp, '<button aria-label="Opciones de evolución">⋮</button>');
+  </div></div><div class="MuiStack-root"><div class="MuiStack-root">${iconButton('EditNoteRoundedIcon','Enmendar','Small')}${iconButton('FormatListBulletedRoundedIcon','Ver enmendados','Small')}</div></div></div>`, stamp, iconButton('MoreVertRoundedIcon','','Medium'));
 const handoff = section('shiftChangeEntrySection','shiftChangeObservation','Observaciones de entrega de turno',
   '<div class="MuiStack-root"><form><input aria-label="Observaciones" placeholder="Observaciones"><button disabled>Agregar</button></form></div>');
 
@@ -98,7 +106,7 @@ const orders = (rows,reading) => item(section('procedureOrderEntrySection','proc
   </tr>`).join('')}</tbody></table>`,stamp));
 const medication = action => section('medicationEntrySection','medication','Fármacos','<table><thead><tr><th>Indicación</th><th>Posología</th><th>Acciones</th></tr></thead><tbody><tr><td>Preparación de ejemplo</td><td>Según indicación de prueba</td><td><button aria-label="Ver comentario">···</button></td></tr></tbody></table>',stamp,action);
 const summaryBody = (controls,signs,desktopRound,reading) => `<div class="${grid} round-grid">
-  <div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 toolbar"><p class="MuiTypography-root MuiTypography-body2">Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo</p><div><input aria-label="Resumen diario paciente" type="date" value="2026-04-15"> <button>Imprimir</button></div></div>
+  <div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 toolbar"><p class="MuiTypography-root MuiTypography-body2">Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo</p>${dailyForm}</div>
   ${item(`<div class="${grid}">${item(discharge)}${item(evolution)}</div>`,'6')}
   <div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-md-6">${handoff}</div>
   ${item(item(section(null,'encounterFormEntry','Instrumentos de evaluación','<p>No presentan instrumentos de evaluación registrados</p>')))}
@@ -119,6 +127,18 @@ const floatingBar = `<div id="hhr-clinical-operations-bar" aria-hidden="true"><s
   #hhr-clinical-operations-bar b{flex:1;height:10px;border-radius:5px;background:#e3e9e7}
   @media(max-width:1280px){#hhr-clinical-operations-bar{width:250px}#hhr-clinical-operations-bar b{display:none}}
 </style><i></i><i></i><i></i><i></i><i></i><b></b><i></i></div>`;
+// The daily row as Eloísa draws it: a MUI date field with its calendar button, «Imprimir» and a second print icon.
+const dailyIcons = {
+  CalendarIcon:'M17 12h-5v5h5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1zm3 18H5V8h14z',
+  LocalPrintshopRoundedIcon:'M19 8H5c-1.66 0-3 1.34-3 3v4c0 1.1.9 2 2 2h2v2c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-2h2c1.1 0 2-.9 2-2v-4c0-1.66-1.34-3-3-3m-4 11H9c-.55 0-1-.45-1-1v-4h8v4c0 .55-.45 1-1 1m4-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m-2-9H7c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1h10c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1',
+};
+const dailyIcon = (icon, name) => `<svg class="MuiSvgIcon-root" data-testid="${icon}"${name ? ' aria-label="' + name + '"' : ''} viewBox="0 0 24 24" focusable="false"><path d="${dailyIcons[icon]}"/></svg>`;
+const dailyForm = `<div class="MuiStack-root"><form class="MuiStack-root" onsubmit="return false"><div class="MuiFormControl-root MuiTextField-root">
+  <label class="MuiFormLabel-root MuiInputLabel-root" for="daily-summary-date">Resumen diario paciente</label>
+  <div class="MuiInputBase-root MuiOutlinedInput-root"><input class="MuiInputBase-input MuiOutlinedInput-input" id="daily-summary-date" type="text" placeholder="dd/mm/aaaa" value="15/04/2026">
+    <div class="MuiInputAdornment-root"><button type="button" class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium" aria-label="Elegir fecha">${dailyIcon('CalendarIcon')}</button></div></div></div>
+  <button type="submit" class="MuiButtonBase-root MuiButton-root MuiButton-contained">Imprimir</button></form>
+  <hr class="MuiDivider-root MuiDivider-vertical"><button type="button" class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium">${dailyIcon('LocalPrintshopRoundedIcon', 'Imprimir')}</button></div>`;
 const tabs = ['Resumen', 'Antecedentes', 'Plan de tratamiento', 'Historial', 'Alta'];
 const historicalLinks = ['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales'];
 const readingLinks = ['Alertas','Indicaciones (Medicamento)','Evolución','Signos vitales','Indicaciones (Reposo)',
@@ -127,6 +147,9 @@ const renderRound = (controls = false, desktopRound = false, reading = false) =>
   *{box-sizing:border-box}body{margin:0;background:#eff1f0;color:#263432;font:14px/1.45 Arial,sans-serif}
   .banner{background:#218b80;color:white;padding:15px 24px;font-size:16px;font-weight:600}.banner small{margin-left:18px;font-size:12px;font-weight:400}
   .MuiTabs-root{display:flex;gap:8px;background:white}.MuiTabs-root button{background:none;border:0;font-size:13px}.MuiChip-root{display:inline-flex;border-radius:12px;padding:3px 11px;background:#e4e9e7;color:#344841;font-size:12px}
+  .MuiSvgIcon-root{display:inline-block;flex:none;width:1em;height:1em;font-size:1.5rem;fill:currentColor}
+  .MuiIconButton-root{display:inline-flex;align-items:center;justify-content:center;padding:8px;border-radius:50%;background:none !important}
+  .MuiIconButton-sizeSmall{padding:5px}.MuiIconButton-sizeSmall .MuiSvgIcon-root{font-size:1.25rem}
   main{padding:12px 24px}button,input{font:inherit}button{color:#166d63;background:#e8f2ef;border:0;border-radius:4px;padding:5px 9px;cursor:pointer}
   button:disabled{color:#79807e;background:#eeefee}.MuiGrid-container{display:flex;flex-wrap:wrap;gap:12px}
   .round-grid{padding-top:80px;margin-top:-16px}.round-grid>.MuiGrid-item{padding-top:16px}
@@ -140,7 +163,12 @@ const renderRound = (controls = false, desktopRound = false, reading = false) =>
   .vitals-grid{display:flex;gap:12px;flex-wrap:wrap}.tile{background:#f1f3f2;width:160px;height:auto}
   .tile h5{font-size:21px;font-weight:500;margin:2px 0}.tile p,.tile span{color:#5a6965;font-size:12px}
   .numeric{display:flex;gap:3px}.numeric h5{display:inline}
-  .toolbar{margin:0;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#50635b}
+  .toolbar{margin:0;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;font-size:12px;color:#50635b}
+  .toolbar .MuiStack-root{display:flex;align-items:center;gap:8px}.toolbar .MuiTextField-root{position:relative;display:inline-flex}
+  .toolbar .MuiInputLabel-root{position:absolute;top:-7px;left:8px;padding:0 3px;background:#eff1f0;font-size:10px;line-height:1.2;color:#50635b}
+  .toolbar .MuiInputBase-root{display:inline-flex;align-items:center;height:40px;border:1px solid #c2ccc8;border-radius:4px;background:white}
+  .toolbar .MuiInputBase-input{width:98px;border:0;padding:8px 0 8px 10px;font-size:14px;background:none}.toolbar .MuiInputAdornment-root{display:flex}
+  .toolbar .MuiDivider-vertical{width:0;height:24px;margin:0;border:0;border-left:1px solid #c2ccc8}
   .subnav{flex-wrap:nowrap;align-items:center;overflow:auto;min-width:0}
   form{display:flex;gap:8px;align-items:center}input{border:1px solid #cbd4d0;padding:7px 9px;border-radius:4px;min-width:0;max-width:100%}
   #shiftChangeEntrySection input{flex:1}table{width:100%;border-collapse:collapse;text-align:left}td,th{padding:7px;border-bottom:1px solid #dae1dd}

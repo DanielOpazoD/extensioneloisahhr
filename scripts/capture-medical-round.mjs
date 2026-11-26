@@ -1,24 +1,19 @@
 // Render the same synthetic medical round with the content scripts declared by each revision.
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { execFileSync } from 'node:child_process';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { desktopMedicalRound, medicalHistory, medicalRound, medicalRoundWithControls, readingMedicalRound } from './medical-round-visual-fixture.mjs';
 import { installAdmissionFixture } from './admission-round-visual-fixture.mjs';
 import { captureAdmissionRound } from './capture-admission-round.mjs';
 import { captureDesktopRound } from './capture-desktop-round.mjs';
+import { fichaAssets, mountFicha, settle } from './ficha-capture-harness.mjs';
 
 const [revision, directory, comparison] = process.argv.slice(2);
 if (!revision || !directory || (comparison && !['antes','despues','escritorio','ronda','lectura','ingreso'].includes(comparison))) {
   throw Error('Uso: node scripts/capture-medical-round.mjs <ref|WORKTREE> <directorio> [antes|despues|escritorio|ronda|lectura|ingreso]');
 }
-const source = filename => revision === 'WORKTREE' ? readFile('extension/' + filename, 'utf8') :
-  execFileSync('git', ['show', revision + ':extension/' + filename], {encoding:'utf8'});
-const manifest = JSON.parse(await source('manifest.json'));
-const entry = manifest.content_scripts.find(group => group.js?.includes('hhr-native-ficha-presentation.js'));
-const styles = entry.css.filter(name => name.startsWith('hhr-ficha-') || name === 'clinical-checklist.css');
-const scripts = entry.js.filter(name => /^(hhr-ficha-|hhr-(history-date-navigation|native-ficha-presentation)\.js$)/.test(name));
+const assets = await fichaAssets(revision);
 await mkdir(directory, {recursive:true});
 const browser = await chromium.launch();
 try {
@@ -32,20 +27,9 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     await page.setContent(reading ? readingMedicalRound : round ? desktopMedicalRound : comparison ? medicalRoundWithControls : medicalRound);
     if (admission) await installAdmissionFixture(page, width);
-    for (const name of styles) await page.addStyleTag({content:await source(name)});
-    for (const name of scripts) await page.addScriptTag({content:await source(name)});
+    await mountFicha(page, assets);
     await page.evaluate(historyMarkup => {
-      const summary = window.HhrNativeFichaPresentation.create();
-      const dates = window.HhrHistoryDateNavigation.create();
-      const authors = window.HhrFichaEvolutionAuthors?.create();
-      let theme = 'compact';
-      const refresh = () => {
-        summary.refresh('1', theme);
-        dates.refresh('1');
-        authors?.refresh('1');
-      };
-      // The Chrome profile can change the view of an open ficha.
-      document.addEventListener('fixture-theme', event => { theme = event.detail; refresh(); });
+      const {refresh} = window.fichaFixture;
       document.getElementById('encounter-event-tab-history').addEventListener('click', event => {
         document.querySelector('[aria-selected="true"]').setAttribute('aria-selected','false');
         event.currentTarget.setAttribute('aria-selected','true');
@@ -54,13 +38,8 @@ try {
       });
       // Simulate the content-script refresh following the host's React update.
       document.getElementById('evolution').addEventListener('click', () => queueMicrotask(refresh));
-      document.addEventListener('fixture-refresh', refresh);
-      refresh();
     },medicalHistory);
-    await page.evaluate(async () => {
-      await document.fonts.ready;
-      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-    });
+    await settle(page);
     if (desktop) {
       if (admission) await captureAdmissionRound(page, directory, width, revision === 'WORKTREE');
       else await captureDesktopRound(page, directory, width, revision === 'WORKTREE', round, reading);
@@ -80,7 +59,7 @@ try {
         pageWidth:document.documentElement.scrollWidth,
       };
     });
-    console.log(manifest.version, width, metrics);
+    console.log(assets.version, width, metrics);
     assert.equal(metrics.pageWidth, width, 'El resumen debe caber en la ventana');
     if (comparison === 'antes') {
       assert.equal(await page.locator('.vitals-grid [data-hhr-reading="vital-value"]').count(),0,
@@ -88,7 +67,7 @@ try {
       if (width === 1366) assert.equal(metrics.vitalsRows,2);
       assert.equal(await page.locator('.vitals-grid [data-hhr-vital-elapsed]').count(),0);
     }
-    if (scripts.includes('hhr-ficha-round-layout.js') && (!comparison || comparison === 'despues')) {
+    if (assets.scripts.includes('hhr-ficha-round-layout.js') && (!comparison || comparison === 'despues')) {
       const vitals = await page.evaluate(() => {
         const grid = document.querySelector('.vitals-grid');
         const elapsed = grid.querySelector('[data-hhr-vital-elapsed]');

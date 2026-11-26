@@ -204,8 +204,17 @@ export const verifyNativeFicha = async (page, worker) => {
       await page.evaluate(() => window.scrollBy(0,180));
       await page.waitForFunction(() => {
         const divider=document.querySelector('#native-timeline > .MuiBox-root > :first-child').getBoundingClientRect();
-        const rail=document.querySelector('[data-hhr-history-rail]').getBoundingClientRect();
-        return Math.abs(divider.top-rail.bottom)<2;
+        // The date stays under the fixed bar that holds the tabs, not under the bar's own padding.
+        const rail=document.querySelector('[data-hhr-history-rail]');
+        const bar=rail.closest('.MuiAppBar-root') || rail;
+        return Math.abs(divider.top-Math.max(rail.getBoundingClientRect().bottom,bar.getBoundingClientRect().bottom))<2;
+      }).catch(async error => {
+        const geometry = await page.evaluate(() => {
+          const divider=document.querySelector('#native-timeline > .MuiBox-root > :first-child'), rail=document.querySelector('[data-hhr-history-rail]');
+          return { divider:divider.getBoundingClientRect().top, rail:rail.getBoundingClientRect().bottom, bar:rail.closest('.MuiAppBar-root')?.getBoundingClientRect().bottom,
+            position:getComputedStyle(divider).position, top:getComputedStyle(divider).top, scrollY };
+        });
+        throw new Error('The date of the day did not stay under the tabs: '+JSON.stringify(geometry),{cause:error});
       });
       assert.equal(await divider.innerText(),'Hoy');
       await page.evaluate(() => window.scrollTo(0,0));

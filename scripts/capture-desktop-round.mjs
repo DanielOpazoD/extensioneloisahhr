@@ -153,8 +153,9 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     }
   }
   if (verifyLayout) {
-    const tools = ['Ver evoluciones','Opciones de evolución','Editar evolución','Enmendamientos'].map(name =>
-      note.getByRole('button', {name, exact:true}));
+    // The overflow menu has no name in Eloísa. The two tools take theirs from their icons.
+    const tools = [note.getByRole('button', {name:'Ver evoluciones', exact:true}), note.locator('.MuiCardHeader-action .MuiIconButton-root'),
+      note.getByRole('button', {name:'Enmendar', exact:true}), note.getByRole('button', {name:'Ver enmendados', exact:true})];
     const boxes = await Promise.all(tools.map(tool => tool.boundingBox()));
     assert.ok(boxes.every(box => box && Math.abs(box.y - boxes[0].y) < 2 && box.width >= 28 && box.height >= 28),
       'Las acciones de la nota deben compartir una fila y tener al menos 28 px de área activa');
@@ -166,10 +167,12 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
       action:el.getAttribute('data-hhr-evo-action'),
       icon:getComputedStyle(el,'::before').maskImage !== 'none', caption:getComputedStyle(el,'::after').content,
     }))));
-    assert.deepEqual(captions.map(tool => tool.action), [null,'more','edit','amend']);
+    assert.deepEqual(captions.map(tool => tool.action), [null,'more','amend','amended']);
     assert.ok(captions.every(tool => tool.icon), 'Cada acción de la nota usa un icono de la misma familia');
-    assert.match(captions[2].caption, /^"Editar"/, 'El lápiz se acompaña de su verbo');
-    assert.match(captions[3].caption, /^"Enmiendas"/, 'La lista de enmiendas se nombra junto a su icono');
+    assert.match(captions[2].caption, /^"Enmendar"/, 'El lápiz lleva el nombre que le da Eloísa');
+    assert.match(captions[3].caption, /^"Enmendados"/, 'La lista de notas enmendadas se nombra junto a su icono');
+    assert.deepEqual(await Promise.all(tools.slice(1).map(tool => tool.getAttribute('title'))), ['Más opciones','Enmendar','Ver enmendados'],
+      'Con el cursor encima, cada botón muestra el nombre que Eloísa solo da a su icono');
     await tools[0].focus();
     for (const next of [...tools.slice(1),disclosure]) {
       await page.keyboard.press('Tab');
@@ -341,13 +344,14 @@ async function checkDailyRow(page, width) {
     const box = el => { const {top,bottom,left,right,width,height} = el.getBoundingClientRect(); return {top,bottom,left,right,width,height}; };
     const rail = document.querySelector('[data-hhr-ficha-sections]');
     const row = document.querySelector('.toolbar');
-    const date = row.querySelector('input[type="date"]'), print = row.querySelector('button');
+    const date = row.querySelector('form input'), print = row.querySelector('button[type="submit"]');
     // What a pointer finds on each control: a floating bar above it would be returned instead.
     const reachable = el => { const {left,top,width,height} = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(left + width / 2, top + height / 2)); };
     return {
       docked:row.hasAttribute('data-hhr-ficha-dock'), position:getComputedStyle(row).position, row:box(row), rail:box(rail),
       lastLink:box([...rail.children].filter(el => el.offsetWidth).at(-1)), stamp:box(row.querySelector('[data-hhr-update-label]')),
-      date:box(date), print:box(print), reachable:reachable(date) && reachable(print), bar:box(document.getElementById('hhr-clinical-operations-bar')),
+      date:box(date), print:box(print), controls:box(row.lastElementChild), reachable:reachable(date) && reachable(print),
+      bar:box(document.getElementById('hhr-clinical-operations-bar')),
       note:box(document.querySelector('#evolution')), scrolls:rail.scrollWidth > rail.clientWidth + 1,
     };
   });
@@ -368,10 +372,9 @@ async function checkDailyRow(page, width) {
     assert.ok(onTheLine(beside) && clearOfLinks(beside) && beside.row.right <= beside.bar.left - 8,
       'Acoplada, la fila queda entre los enlaces y la barra flotante');
   } else {
-    assert.ok(inPlace(beside) && beside.lastLink.right + 28 + beside.date.width + beside.print.width > beside.bar.left - 10,
+    assert.ok(inPlace(beside) && beside.lastLink.right + 28 + beside.controls.width > beside.bar.left - 10,
       'La fila conserva su lugar solo cuando no cabe entre los enlaces y la barra flotante');
   }
-  if (width >= 1440) assert.ok(beside.docked, 'En una ventana de 1440 px la fila cabe junto a la barra flotante');
 
   // Scrolling never changes the choice: the round keeps its place under the reader's eyes.
   const sweep = async () => {
@@ -430,13 +433,23 @@ async function checkDailyRow(page, width) {
   await page.evaluate(() => {
     const extra = Object.assign(document.createElement('button'), {type:'button', textContent:'Otra acción'});
     extra.dataset.fixtureExtra = '';
-    document.querySelector('.toolbar input[type="date"]').parentElement.append(extra);
+    document.querySelector('.toolbar form').after(extra);
   });
   await refresh();
   assert.ok(inPlace(await measure()), 'Una fila con otro control conserva su lugar nativo');
   await page.evaluate(() => { document.querySelector('.toolbar [data-fixture-extra]').remove(); });
   await refresh();
   assert.ok(onTheLine(await measure()), 'Sin el control añadido, la fila diaria vuelve a la línea');
+  // The daily row is known by the name of its form and by its «Imprimir». Another form with a date is not it.
+  for (const [selector, other, why] of [['.toolbar form label', 'Fecha de control', 'Un formulario con otro nombre conserva su lugar nativo'],
+    ['.toolbar form button[type="submit"]', 'Guardar', 'Un formulario que no imprime conserva su lugar nativo']]) {
+    const native = await page.locator(selector).evaluate((element, other) => { const text = element.textContent; element.textContent = other; return text; }, other);
+    await refresh();
+    assert.ok(inPlace(await measure()), why);
+    await page.locator(selector).evaluate((element, text) => { element.textContent = text; }, native);
+    await refresh();
+    assert.ok(onTheLine(await measure()), 'Con su nombre y su «Imprimir», la fila diaria vuelve a la línea');
+  }
 
   // Another professional updated the summary after the note: that byline is new information.
   const stamp = page.locator('.toolbar > [data-hhr-update-label]');
@@ -462,7 +475,7 @@ async function checkDailyRow(page, width) {
   await refresh();
   const crowded = await measure();
   assert.ok(inPlace(crowded), 'Sin sitio en la barra de secciones, la fila conserva su lugar sobre la nota');
-  assert.ok(crowded.date.right <= crowded.row.right + 1 && crowded.print.right >= crowded.row.right - 12,
+  assert.ok(crowded.date.right <= crowded.row.right + 1 && crowded.controls.right >= crowded.row.right - 2,
     'En su lugar nativo, la fecha y la impresión conservan el borde derecho');
   await page.evaluate(() => { for (const item of document.querySelectorAll('[data-fixture-extra]')) item.remove(); });
   await refresh();

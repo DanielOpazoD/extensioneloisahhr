@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.192
+
+- En la vista Compacta, el Historial se lee como una línea de tiempo: una superficie por día, una línea por evento y la hora en una columna al margen. «Hoy» y «Ayer» muestran su fecha. Las evoluciones médicas y de enfermería llevan el mismo filete lateral que Evolución en el Resumen.
+- Cada evento muestra categoría, cargo y profesional en una línea. Los detalles de una administración de medicamentos siguen en la línea de su fármaco. Las iniciales que repetían el cargo dejan de mostrarse y «Nuevo» cierra la primera línea de su evento. «Ver evoluciones» reúne todas las evoluciones del episodio y cada día conserva su fecha.
+- En la vista Compacta, cada tarjeta de Plan de tratamiento pone en una línea su título, su interruptor y sus herramientas, que muestran su nombre: «Planificación estandar» y «Planificación única». Cada indicación ocupa una fila tan alta como su texto y su columna conserva al menos 224 px en una ventana estrecha. Las horas y los iconos de estado no cambian.
+- En el Resumen, las acciones de la nota usan los nombres de Eloísa: «Enmendar» y «Enmendados», en lugar de «Editar» y «Enmiendas». La fecha del resumen diario e «Imprimir» se reconocen con la forma que tienen en Eloísa: pasan a la línea de secciones cuando caben y su firma se omite cuando repite la de Evolución.
+- Los colores, tamaños, márgenes e iconos de las vistas de la ficha se definen en un solo archivo.
+
 ## 0.48.191
 
 - En el Resumen compacto de escritorio, la fecha del resumen diario e «Imprimir» pasan a la línea de los enlaces de sección cuando caben entre el último enlace y la barra flotante de Centro HHR. Ahí siguen a la vista al desplazar la ficha. Si no caben, conservan su fila.

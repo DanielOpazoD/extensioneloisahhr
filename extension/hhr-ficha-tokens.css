@@ -1,0 +1,40 @@
+/* The shared vocabulary of the ficha views. A view names a role (ink, line, action, flag)
+   and takes its value from here, so a change of palette, scale or spacing is made once.
+   New rules use these tokens; an older rule moves to them when it is next edited. */
+html[data-hhr-ficha-theme] {
+  /* Ink: what is read, what explains it, what only situates it. */
+  --hhr-ficha-ink:#20342f;
+  --hhr-ficha-ink-soft:#3f5952;
+  --hhr-ficha-muted:#516963;
+  /* Surfaces and the lines that divide them. */
+  --hhr-ficha-surface:#fff;
+  --hhr-ficha-band:#f2f6f4;
+  --hhr-ficha-line:#dce5e2;
+  --hhr-ficha-line-soft:#e1e9e6;
+  /* Colour by role: green for what can be pressed, amber for a clinical flag. A value out of
+     range keeps the colour Eloísa gives it. */
+  --hhr-ficha-action:#285f59;
+  --hhr-ficha-action-hover:#e8f2ef;
+  --hhr-ficha-action-pressed:#dceee9;
+  --hhr-ficha-focus:#086b63;
+  --hhr-ficha-accent:#31877c;
+  --hhr-ficha-flag:#b5793f;
+  /* Four sizes and two weights. */
+  --hhr-ficha-text-meta:.75rem;
+  --hhr-ficha-text-body:.8125rem;
+  --hhr-ficha-text-title:.9375rem;
+  --hhr-ficha-text-lead:1rem;
+  --hhr-ficha-weight-strong:600;
+  --hhr-ficha-sans:system-ui,sans-serif;
+  /* Space in steps of two and four pixels; one inset for every reading edge. */
+  --hhr-ficha-inset:10px;
+  --hhr-ficha-radius:6px;
+  --hhr-ficha-control:28px;
+  /* One family of icons. Each mask takes the colour of its own button. */
+  --hhr-icon-notes:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='3' width='12' height='14' rx='2'/%3E%3Cpath d='M4 8v11a2 2 0 0 0 2 2h9'/%3E%3Cpath d='M12 8h4M12 12h4'/%3E%3C/svg%3E");
+  --hhr-icon-edit:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z'/%3E%3Cpath d='m14.5 7.5 3 3'/%3E%3C/svg%3E");
+  --hhr-icon-amend:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h8l5 5v13H6z'/%3E%3Cpath d='M14 3v5h5'/%3E%3Cpath d='M9.5 13h6M9.5 17h6'/%3E%3C/svg%3E");
+  --hhr-icon-guide:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2'/%3E%3Crect x='8' y='3' width='8' height='4' rx='1.5'/%3E%3Cpath d='m8.5 13 2.3 2.3 4.7-5'/%3E%3C/svg%3E");
+  --hhr-icon-more:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5h.01M12 12h.01M12 19h.01'/%3E%3C/svg%3E");
+  --hhr-icon-expand:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7'/%3E%3C/svg%3E");
+}

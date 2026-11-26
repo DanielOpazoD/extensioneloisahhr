@@ -304,8 +304,19 @@
     margin:0 !important; padding:0 6px 0 0 !important; background:transparent;
     > [data-hhr-update-label] { margin:0 !important; white-space:nowrap; }
     > :not([data-hhr-update-label]) { display:inline-flex; align-items:center; gap:6px; }
-    input[type="date"]:not(.MuiInputBase-input) { min-height:26px; padding-block:1px; }
+  }
+  /* The daily form at the height of a line of text, on the section line or in its own row. */
+  html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-section-slot] + [data-hhr-round="frame"] > .MuiGrid-item[data-hhr-round="before"]:has(> [data-hhr-update-label]):has(form input) {
+    min-height:30px !important;
+    :is(form,.MuiStack-root) { align-items:center; gap:6px; }
+    form { margin:0; }
+    .MuiInputBase-root { block-size:28px; min-height:0; font-size:var(--hhr-ficha-text-body); }
+    .MuiInputBase-input { box-sizing:border-box; block-size:28px; padding-block:2px; font-size:inherit; }
+    input:not(.MuiInputBase-input) { box-sizing:border-box; min-height:26px; padding-block:1px; }
     button { min-height:26px; padding-block:2px; }
+    .MuiIconButton-root { inline-size:28px; block-size:28px; padding:4px; }
+    .MuiIconButton-root svg { inline-size:18px; block-size:18px; }
+    .MuiDivider-vertical { block-size:18px; align-self:center; margin:0; }
   }
 }
 
@@ -323,7 +334,7 @@
     [data-hhr-update-repeat="above"]::after { content:'↑ misma firma' / ''; }
     /* One age for the measurements taken together. An older one keeps its own. */
     #vitalSignsEntry [data-hhr-vital-shared]:not([data-hhr-vital-shared=""])::after {
-      content:'· medidos hace ' attr(data-hhr-vital-shared) / ''; color:#516963; font:normal .75rem/1.35 system-ui,sans-serif;
+      content:'· medidos hace ' attr(data-hhr-vital-shared) / ''; color:var(--hhr-ficha-muted); font:normal .75rem/1.35 system-ui,sans-serif;
     }
     #vitalSignsEntry [data-hhr-reading="vital-time"][data-hhr-vital-shared=""] {
       position:absolute !important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);

@@ -205,7 +205,7 @@
         const shown = el => Boolean(el) && !el.closest('[data-hhr-ficha-folded],[hidden],[aria-hidden=true],dialog,[role=dialog]') &&
           (typeof el.checkVisibility === 'function' ? el.checkVisibility({visibilityProperty:true}) : el.getClientRects().length > 0);
         const daily = [...candidates].find(el => !el.matches('.MuiCardHeader-subheader') && next.get(el)?.has('data-hhr-update-label') &&
-          el.parentElement.querySelector('input[type="date"]'));
+          el.parentElement.querySelector('form input'));
         const note = main.querySelector('#evolution > .MuiCardHeader-root .MuiCardHeader-subheader');
         const labelOf = el => next.get(el)?.get('data-hhr-update-label')?.value;
         if (daily && shown(note) && labelOf(daily) && labelOf(daily) === labelOf(note)) label(daily, 'data-hhr-update-repeat', 'note');

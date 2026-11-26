@@ -19,7 +19,7 @@ it('dice una sola vez la firma de la fila diaria y la de las tarjetas de indicac
   const main = document.createElement('main');
   const dailyText = 'Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo';
   main.innerHTML = '<div class="MuiGrid-item"><p class="MuiTypography-body2">' + dailyText + '</p></div>' +
-    '<div class="MuiGrid-item"><p class="MuiTypography-body2">' + dailyText + '</p><div><input type="date"><button>Imprimir</button></div></div>' +
+    '<div class="MuiGrid-item"><p class="MuiTypography-body2">' + dailyText + '</p><div><form><input type="text"><button>Imprimir</button></form></div></div>' +
     card('observationEntrySection', stamp, 'id="evolution"') + card('medicationEntrySection', stamp) +
     card('freeIndicationEntrySection', stamp) + card('procedureOrderEntrySection', stamp.replace('09:12:35', '09:12:36'));
   document.body.append(main);

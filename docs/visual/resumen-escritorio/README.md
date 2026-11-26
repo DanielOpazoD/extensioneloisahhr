@@ -1,5 +1,24 @@
 # Resumen compacto en escritorio
 
+## La fila diaria y las acciones de la nota como las dibuja Eloísa en 0.48.192
+
+La ficha ficticia se corrigió con la [estructura observada en Eloísa](../../estructura-eloisa.md#resumen). Dos formas eran distintas de las supuestas, y por eso dos cambios anteriores no llegaban a la página real:
+
+- **La fila diaria** es un campo de fecha con rótulo flotante, un botón de calendario, «Imprimir» y un segundo botón de impresión; no un selector de fecha nativo con un botón. La 0.48.191 no la reconocía: ni la acoplaba a la línea de secciones ni omitía su firma repetida. Desde esta versión la reconoce por su formulario «Resumen diario paciente».
+- **Los botones de Evolución** no tienen nombre propio; lo lleva su icono, y el lápiz se llama «Enmendar». La 0.48.189 lo rotulaba «Editar» y a su lista «Enmiendas». Ahora se leen «Enmendar» y «Enmendados», las palabras de Eloísa.
+
+| Pantalla | 0.48.191 | 0.48.192 | Detalle |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.192/antes/1280-ingreso.png) | [Después](0.48.192/despues/1280-ingreso.png) | [Con la barra flotante plegada](0.48.192/despues/1280-barra-plegada.png) |
+| 1440 × 900 | [Antes](0.48.192/antes/1440-ingreso.png) | [Después](0.48.192/despues/1440-ingreso.png) | |
+
+| Medida en px, 0.48.191 → 0.48.192 | 1280 × 800 | 1280 × 800, barra plegada | 1440 × 900 |
+| --- | ---: | ---: | ---: |
+| Inicio de Evolución | 175 → 165 | 175 → 129 | 175 → 165 |
+| Inicio de Fármacos | 604 → 594 | 604 → 558 | 623 → 613 |
+
+Con su forma real la fila es más ancha que la supuesta. Cabe en la línea de secciones con la barra flotante de Centro HHR plegada; con la barra desplegada conserva su fila a 1280 y a 1440 px, diez píxeles más baja que antes. Las cifras de la sección siguiente se midieron con la fila supuesta: su «a 1440 px caben» no vale para la fila real.
+
 ## Cada dato una vez y la fecha en la línea de secciones en 0.48.191
 
 La ficha ficticia incluye desde esta versión un doble de la barra flotante de Centro HHR, en el lugar y con el tamaño que le da la extensión: 5 px bajo la cabecera, a 18 px del borde derecho, 250 px de ancho hasta 1280 px y 350 px por encima. Las capturas anteriores no la mostraban.
