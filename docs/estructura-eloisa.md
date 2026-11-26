@@ -38,7 +38,16 @@ Títulos de las tarjetas, en ese orden: Fecha estimada de alta, Observaciones de
 1. `p.MuiTypography-root`: «Última actualización: dd-mm-aaaa, hh:mm - Nombre».
 2. `div.MuiStack-root` con: un `form.MuiStack-root` (campo MUI «Resumen diario paciente» con `input[type=text]` de marcador `dd/mm/aaaa`, un botón de calendario dentro del campo y un `button[type=submit]` «Imprimir»), un `hr.MuiDivider-vertical` y un botón de icono `LocalPrintshopRoundedIcon`.
 
-No hay `input[type=date]`. La fila tiene cuatro controles.
+No hay `input[type=date]`. La fila tiene cuatro controles. El `div.MuiFormControl-root` del campo mide 180 px de ancho (26-11-2026).
+
+### Nombres de profesionales
+
+Leídos en la página el 26-11-2026, enmascarados y con sus espacios. La mayoría de las firmas escriben cuatro campos unidos por un espacio: primer nombre, segundo nombre, primer apellido y segundo apellido. Un campo vacío deja su espacio:
+
+- Diagnóstico, Reposo, Régimen: «Médico Nombre··Apellido Apellido» (sin segundo nombre: dos espacios).
+- Signos vitales y Alertas: «Cargo Nombre··Apellido·» (sin segundo nombre ni segundo apellido: queda un espacio al final).
+- Evolución: «Médico Nombre Apellido», con un solo espacio.
+- «Solicitante» en Fármacos: «Nombre Apellido·» o «Nombre Apellido Apellido».
 
 Leída de nuevo el 26-11-2026 con la vista Compacta activa (0.48.199), a 1303 × 970 px: la fila es el primer hijo de la rejilla de la ronda, que sigue al hueco de la línea de secciones, y medía 30 px **en su propia línea**. No había subido a la línea de secciones: la barra flotante de Centro HHR tapa su final y la fila no cabía entre el último enlace y esa barra. Desde la 0.48.201 va en la línea de pestañas.
 

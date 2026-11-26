@@ -343,10 +343,10 @@ async function checkFocusedEntryRefresh(page) {
   assert.ok(await open.isVisible());
 }
 
-// The daily date and its print action have no line of their own. In this page the line of tabs scrolls
-// away, so they ride on the end of the section links, which stays in view: short of the floating Centro
-// HHR bar when that bar covers the end of the line, and over the last links when the line is full.
-async function checkDailyRow(page, width) {
+// With the round laid out the line of section links is not shown, as the owner asked. The daily date and
+// its print action ride on the line of tabs where that line stays in view. In this page it scrolls away
+// with the summary, so the row keeps its native place over the note, without the byline it repeats.
+async function checkDailyRow(page) {
   const settle = () => page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
   const refresh = async () => {
     await page.evaluate(() => { document.dispatchEvent(new Event('fixture-refresh')); window.dispatchEvent(new Event('resize')); });
@@ -355,177 +355,46 @@ async function checkDailyRow(page, width) {
   };
   const measure = () => page.evaluate(() => {
     const box = el => { const {top,bottom,left,right,width,height} = el.getBoundingClientRect(); return {top,bottom,left,right,width,height}; };
-    const rail = document.querySelector('[data-hhr-ficha-sections]');
-    const row = document.querySelector('.toolbar');
-    const date = row.querySelector('form input'), print = row.querySelector('button[type="submit"]');
+    const row = document.querySelector('.toolbar'), date = row.querySelector('form input'), print = row.querySelector('button[type="submit"]');
     // What a pointer finds on each control: a floating bar above it would be returned instead.
     const reachable = el => { const {left,top,width,height} = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(left + width / 2, top + height / 2)); };
     return {
-      docked:row.hasAttribute('data-hhr-ficha-dock'), position:getComputedStyle(row).position, row:box(row), rail:box(rail),
-      lastLink:box([...rail.children].filter(el => el.offsetWidth).at(-1)), stamp:box(row.querySelector('[data-hhr-update-label]')),
-      date:box(date), print:box(print), controls:box(row.lastElementChild), reachable:reachable(date) && reachable(print),
-      bar:box(document.getElementById('hhr-clinical-operations-bar')),
-      note:box(document.querySelector('#evolution')), scrolls:rail.scrollWidth > rail.clientWidth + 1,
+      links:document.querySelector('[data-hhr-ficha-sections]').getClientRects().length, slot:box(document.querySelector('[data-hhr-ficha-section-slot]')).height,
+      docked:row.hasAttribute('data-hhr-ficha-dock'), position:getComputedStyle(row).position, row:box(row), stamp:box(row.querySelector('[data-hhr-update-label]')),
+      date:box(date), print:box(print), reachable:reachable(date) && reachable(print), note:box(document.querySelector('#evolution')),
     };
   });
-  const clearOfLinks = state => state.row.left >= state.lastLink.right + 12 && !state.scrolls;
-  const onTheLine = state => state.docked && state.position === 'fixed' && state.row.top >= state.rail.top - 1 &&
-    state.row.bottom <= state.rail.bottom + 1 && state.note.top - state.rail.bottom < 16;
-  const inPlace = state => !state.docked && state.position !== 'fixed' && state.row.top >= state.rail.bottom - 1 &&
-    state.note.top >= state.row.bottom - 1;
-  // With the links scrolled to their end, the last one stops clear of the row.
-  const lastLinkClear = async () => {
-    await page.evaluate(() => { const rail = document.querySelector('[data-hhr-ficha-sections]'); rail.scrollLeft = rail.scrollWidth; });
-    await settle();
-    const state = await measure();
-    await page.evaluate(() => { document.querySelector('[data-hhr-ficha-sections]').scrollLeft = 0; });
-    await settle();
-    return onTheLine(state) && state.reachable && state.row.left >= state.lastLink.right + 8;
-  };
-  const floating = page.locator('#hhr-clinical-operations-bar');
   await page.evaluate(() => window.scrollTo(0,0));
   await refresh();
+  const shown = await measure();
+  assert.ok(shown.links === 0 && shown.slot === 0, 'Con la ronda, la línea de enlaces de sección no se muestra ni deja su hueco');
+  assert.ok(!shown.docked && shown.position !== 'fixed' && shown.note.top >= shown.row.bottom - 1 && shown.reachable,
+    'Donde la línea de pestañas se desplaza con la ficha, la fila diaria conserva su lugar sobre la nota: ' + JSON.stringify(shown));
+  assert.ok(shown.stamp.width <= 1 && shown.date.width > 80 && shown.print.width > 30 && shown.print.left >= shown.date.right,
+    'La firma repetida de la nota no se muestra junto a la fecha, e «Imprimir» sigue a la fecha sin taparla');
 
-  // As the extension draws it: the bar covers the end of the line.
-  const beside = await measure();
-  assert.ok(beside.bar.bottom > beside.rail.top + 1 && beside.bar.width > 200, 'La ficha de prueba incluye la barra flotante sobre el final de la línea');
-  assert.ok(beside.reachable, 'La barra flotante nunca tapa la fecha ni la impresión del resumen');
-  assert.ok(onTheLine(beside) && beside.row.right <= beside.bar.left - 8, 'La fila va en la línea de secciones, antes de la barra flotante: ' + JSON.stringify(beside));
-  if (!clearOfLinks(beside)) {
-    assert.ok(beside.scrolls && beside.lastLink.right + 28 + beside.controls.width > beside.bar.left - 10,
-      'Los enlaces pasan bajo la fila solo cuando no caben entre el inicio de la línea y la barra flotante');
-    assert.ok(await lastLinkClear(), 'Al final de su recorrido, el último enlace queda a la vista junto a la fila');
-  }
-
-  // Scrolling never changes the choice: the round keeps its place under the reader's eyes.
-  const sweep = async () => {
-    const states = [];
-    await page.evaluate(() => { document.body.style.paddingBlockEnd = '600px'; });
-    for (const offset of [0, 40, 64, 100, 160, 240]) {
-      await page.evaluate(top => window.scrollTo(0, top), offset);
-      await settle();
-      const state = await measure();
-      states.push([state.docked, Math.round(state.note.top + offset), state.reachable]);
-    }
-    await page.evaluate(() => { document.body.style.removeProperty('padding-block-end'); window.scrollTo(0,0); });
-    await settle();
-    return states;
-  };
-  const besideScroll = await sweep();
-  assert.ok(besideScroll.every(([docked, noteStart, reachable]) => docked && Math.abs(noteStart - besideScroll[0][1]) <= 1 && reachable),
-    'Al desplazar la ficha, la fila no cambia de lugar ni mueve la nota: ' + JSON.stringify(besideScroll));
-
-  // With the bar folded into its pill, the row fits in both windows. No other event announces the change.
-  await floating.evaluate(el => { el.style.width = '36px'; });
-  await settle();
-  await settle();
-  const folded = await measure();
-  assert.ok(onTheLine(folded) && clearOfLinks(folded) && folded.reachable && folded.row.right <= folded.bar.left - 8,
-    'Con la barra flotante plegada, la fecha se acopla también en la ventana menor');
-
-  // Unfolded again, the row is back where it was before the next paint settles.
-  await floating.evaluate(el => { el.style.removeProperty('width'); });
-  await settle();
-  await settle();
-  const unfolded = await measure();
-  assert.ok(unfolded.docked === beside.docked && Math.abs(unfolded.note.top - beside.note.top) < 1 &&
-    Math.abs(unfolded.row.top - beside.row.top) < 1, 'Al desplegar la barra flotante, la fila recupera su lugar anterior');
-
-  // Without the bar on the line, the row takes the end of it.
-  await floating.evaluate(el => { el.style.display = 'none'; });
-  await refresh();
-  const docked = await measure();
-  assert.ok(onTheLine(docked) && clearOfLinks(docked) && Math.abs(docked.row.right - docked.rail.right) <= 1,
-    'Sin barra flotante en la línea, la fila ocupa su final');
-  assert.ok(docked.stamp.width <= 1 && docked.date.width > 80 && docked.print.width > 30,
-    'La firma repetida de la nota no se muestra otra vez junto a la fecha');
-  // This synthetic summary is shorter than the window: give it room to scroll.
-  await page.evaluate(() => { document.body.style.paddingBlockEnd = '600px'; window.scrollTo(0,240); });
-  await settle();
-  const scrolled = await measure();
-  assert.ok(Math.abs(scrolled.row.top - scrolled.rail.top - (docked.row.top - docked.rail.top)) < 1 && scrolled.note.top < docked.note.top - 200,
-    'Al desplazar el resumen, la fecha sigue a la vista con la barra de secciones');
-  await page.evaluate(() => { document.body.style.removeProperty('padding-block-end'); window.scrollTo(0,0); });
-  await settle();
-
-  // A row with one more control is not the recognized daily row.
-  await page.evaluate(() => {
-    const extra = Object.assign(document.createElement('button'), {type:'button', textContent:'Otra acción'});
-    extra.dataset.fixtureExtra = '';
-    document.querySelector('.toolbar form').after(extra);
-  });
-  await refresh();
-  assert.ok(inPlace(await measure()), 'Una fila con otro control conserva su lugar nativo');
-  await page.evaluate(() => { document.querySelector('.toolbar [data-fixture-extra]').remove(); });
-  await refresh();
-  assert.ok(onTheLine(await measure()), 'Sin el control añadido, la fila diaria vuelve a la línea');
-  // The daily row is known by the name of its form and by its «Imprimir». Another form with a date is not it.
-  for (const [selector, other, why] of [['.toolbar form label', 'Fecha de control', 'Un formulario con otro nombre conserva su lugar nativo'],
-    ['.toolbar form button[type="submit"]', 'Guardar', 'Un formulario que no imprime conserva su lugar nativo']]) {
-    const native = await page.locator(selector).evaluate((element, other) => { const text = element.textContent; element.textContent = other; return text; }, other);
-    await refresh();
-    assert.ok(inPlace(await measure()), why);
-    await page.locator(selector).evaluate((element, text) => { element.textContent = text; }, native);
-    await refresh();
-    assert.ok(onTheLine(await measure()), 'Con su nombre y su «Imprimir», la fila diaria vuelve a la línea');
-  }
-
-  // The row says what it prints, not who last updated the summary, also when it was somebody else than
-  // the author of the note. The byline stays in the page for a screen reader.
-  const stamp = page.locator('.toolbar > [data-hhr-update-label]');
-  const original = await stamp.textContent();
-  await stamp.evaluate(el => { el.textContent = 'Última actualización: 15-04-2026, 11:30 - Elena Ejemplo'; });
-  await refresh();
-  const distinct = await measure();
-  assert.ok(distinct.stamp.width <= 1 && distinct.stamp.height <= 1, 'La fila diaria no muestra quién actualizó el resumen');
-  assert.match(await stamp.textContent(), /Elena Ejemplo/, 'La firma sigue en la página');
-  assert.ok(onTheLine(distinct) && clearOfLinks(distinct), 'Con otra firma, la fila tampoco tapa los enlaces');
-  await stamp.evaluate((el, text) => { el.textContent = text; }, original);
-
-  // On a line full of section links the row still rides at its end: the links scroll under it.
-  await page.evaluate(() => {
-    const rail = document.querySelector('[data-hhr-ficha-sections]');
-    for (let index = 0; index < 8; index++) {
-      const item = document.createElement('div');
-      item.className = 'MuiGrid-item';
-      item.dataset.fixtureExtra = '';
-      item.innerHTML = '<span class="MuiBadge-root"><span class="MuiTypography-caption">Sección de prueba ' + index + '</span></span>';
-      rail.insertBefore(item, rail.querySelector('.hhr-ficha-empty-toggle'));
-    }
-  });
-  await refresh();
-  const crowded = await measure();
-  assert.ok(onTheLine(crowded) && crowded.scrolls && crowded.reachable && Math.abs(crowded.row.right - crowded.rail.right) <= 1,
-    'Con la línea llena de enlaces, la fila sigue en su final y no ocupa una línea propia: ' + JSON.stringify(crowded));
-  assert.ok(await lastLinkClear(), 'Al final de su recorrido, el último de muchos enlaces queda a la vista junto a la fila');
-  await page.evaluate(() => { for (const item of document.querySelectorAll('[data-fixture-extra]')) item.remove(); });
-  await refresh();
-  const again = await measure();
-  assert.ok(onTheLine(again) && Math.abs(again.note.top - docked.note.top) < 1, 'Al recuperar el sitio, la fila vuelve a la barra');
-
-  // Leaving the compact view returns the row, its styles and every «once» mark to Eloísa.
+  // Leaving the compact view returns the row, the links, their styles and every «once» mark to Eloísa.
   const leftovers = () => page.evaluate(() => ({
     marks:document.querySelectorAll('[data-hhr-ficha-dock],[data-hhr-ficha-docked],[data-hhr-vital-shared],[data-hhr-update-repeat],[data-hhr-actions-heading]').length,
     styles:document.querySelectorAll('[style*="--hhr-dock"]').length, position:getComputedStyle(document.querySelector('.toolbar')).position,
   }));
-  assert.ok((await leftovers()).marks > 4, 'La vista compacta deja sus marcas mientras está activa');
+  assert.ok((await leftovers()).marks > 3, 'La vista compacta deja sus marcas mientras está activa');
   await page.evaluate(() => { document.dispatchEvent(new CustomEvent('fixture-theme', {detail:'off'})); });
   await settle();
-  assert.deepEqual(await leftovers(), {marks:0, styles:0, position:'static'}, 'Al desactivar la vista no queda rastro del acople ni de las marcas');
+  assert.deepEqual(await leftovers(), {marks:0, styles:0, position:'static'}, 'Al desactivar la vista no queda rastro de sus marcas');
   await page.evaluate(() => { document.dispatchEvent(new CustomEvent('fixture-theme', {detail:'compact'})); });
   await refresh();
-  assert.ok(onTheLine(await measure()), 'Al volver a la vista compacta, la fila se acopla de nuevo');
-
-  // Leave the floating bar as the extension draws it for the checks and captures that follow.
-  await floating.evaluate(el => { el.style.removeProperty('width'); el.style.removeProperty('display'); });
-  await refresh();
-  return (await measure()).docked;
+  const again = await measure();
+  assert.ok(again.links === 0 && Math.abs(again.note.top - shown.note.top) < 1, 'Al volver a la vista compacta, la ficha queda igual');
+  return false;
 }
 
 async function checkReadingRound(page, directory, width, verifyLayout) {
   const dailyDocked = verifyLayout && await checkDailyRow(page, width);
   const rail = page.locator('[data-hhr-ficha-sections]');
-  const nav = await rail.evaluate(el => {
+  // With the round laid out, the section links are not shown. Without it, they keep their line.
+  const railShown = await rail.evaluate(el => el.getClientRects().length > 0);
+  const nav = !railShown ? null : await rail.evaluate(el => {
     const shown = [...el.querySelectorAll('[data-hhr-ficha-link]')].filter(link => link.offsetWidth);
     const railBox = el.getBoundingClientRect();
     const lastBox = shown.at(-1).getBoundingClientRect();
@@ -588,13 +457,18 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
     assert.deepEqual(repeats, [[null,'15-04-2026 · 09:12 · Tomás Ejemplo',''],['above','↑ misma firma','15-04-2026 · 09:12 · Tomás Ejemplo']]);
   }
   console.log(JSON.stringify({width,nav,vitals,care}));
-  assert.ok(nav.links >= 7 && nav.visible > 0);
+  if (railShown) assert.ok(nav.links >= 7 && nav.visible > 0);
   assert.equal(vitals.pam,'PAM:87');
-  const toggle = rail.getByRole('button',{name:/ver vacías/i});
-  const lastLink = rail.locator('[data-hhr-ficha-link]:visible').last();
-  await lastLink.press('Tab');
-  assert.ok(await toggle.evaluate(el => el === document.activeElement));
-  if (verifyLayout) {
+  const toggle = page.getByRole('button',{name:/ver vacías/i});
+  if (!railShown) {
+    assert.ok(await toggle.evaluate(el => Boolean(el.closest('[data-hhr-round="frame"]')) && el.getClientRects().length > 0),
+      'Sin la línea de secciones, «Ver vacías» queda en la ronda, con lo que despliega');
+  } else {
+    const lastLink = rail.locator('[data-hhr-ficha-link]:visible').last();
+    await lastLink.press('Tab');
+    assert.ok(await toggle.evaluate(el => el === document.activeElement));
+  }
+  if (verifyLayout && railShown) {
     // Docked or in its native place, the date is the next stop after the section links.
     await toggle.press('Tab');
     assert.ok(await page.getByLabel('Resumen diario paciente').evaluate(el => el === document.activeElement),
@@ -602,16 +476,18 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
     await toggle.focus();
   }
   await toggle.press('Space');
-  const hide = rail.getByRole('button',{name:/ocultar vacías/i});
+  const hide = page.getByRole('button',{name:/ocultar vacías/i});
   assert.equal(await hide.getAttribute('aria-expanded'),'true');
   await hide.click();
   assert.equal(await toggle.getAttribute('aria-expanded'),'false');
-  const navOrders = rail.getByRole('link',{name:'Órdenes de atención'});
-  await navOrders.press('Enter');
-  await rail.locator('[data-hhr-ficha-link="procedureOrderEntrySection"][aria-current="location"]').waitFor();
-  assert.equal(await rail.locator('[aria-current="location"]').count(),1);
-  assert.ok(nav.toggleAfterLast >= 0);
-  if (verifyLayout) assert.ok(parseFloat(nav.separator) >= 1 && nav.toggleAfterLast >= 6);
+  if (railShown) {
+    const navOrders = rail.getByRole('link',{name:'Órdenes de atención'});
+    await navOrders.press('Enter');
+    await rail.locator('[data-hhr-ficha-link="procedureOrderEntrySection"][aria-current="location"]').waitFor();
+    assert.equal(await rail.locator('[aria-current="location"]').count(),1);
+    assert.ok(nav.toggleAfterLast >= 0);
+    if (verifyLayout) assert.ok(parseFloat(nav.separator) >= 1 && nav.toggleAfterLast >= 6);
+  }
 
   const orders = page.locator('#procedureOrder');
   const rows = orders.locator('tbody tr');
@@ -667,7 +543,7 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
     assert.deepEqual(await paint(rows.first()),idle, 'El ratón sobre otra orden debe respetar la fila que tiene el foco');
     assert.deepEqual(await paint(rows.last()),focus);
     await page.mouse.move(0,0);
-    await navOrders.focus();
+    await (railShown ? rail.getByRole('link',{name:'Órdenes de atención'}) : toggle).focus();
     assert.deepEqual(await paint(rows.last()),idleLast, 'Al salir el foco desaparece la guía de la segunda fila');
     assert.ok(parseFloat(vitals.elapsedFont) >= 12 && parseFloat(vitals.pamFont) >= 12);
   }

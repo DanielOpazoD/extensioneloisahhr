@@ -1,5 +1,29 @@
 # Resumen compacto en escritorio
 
+## Sin barra de secciones, nombres cortos y Balance Hídrico en una línea, en 0.48.207
+
+El responsable pidió quitar del todo la barra de enlaces de sección en las dos fichas, corregir el cuadro del resumen diario (el botón «Imprimir» tapaba la fecha), mostrar a cada profesional con un nombre y un apellido, quitar la hora de la firma de Diagnóstico, escribir «Indicación» donde Eloísa dice «Indication» y simplificar Balance Hídrico sin registros.
+
+| Pantalla | 0.48.206 | 0.48.207 | Página completa |
+| --- | --- | --- | --- |
+| 1440 × 900 | [Antes](0.48.207/antes/1440-resumen.png) | [Después](0.48.207/despues/1440-resumen.png) | [Antes](0.48.207/antes/1440-resumen-completo.png) · [Después](0.48.207/despues/1440-resumen-completo.png) |
+
+| Medida a 1440 × 900, ficha ficticia, 0.48.206 → 0.48.207 | |
+| --- | ---: |
+| Barra de enlaces de sección | 33 px bajo las pestañas → no se muestra |
+| Inicio de Diagnóstico | 159 → 122 px |
+| Inicio de Fármacos | 827 → 790 px |
+| Alto de la página | 1821 → 1714 px |
+| Firma de Diagnóstico | día, hora y nombre → día y nombre |
+| Balance Hídrico sin registros | 115 → 45 px |
+
+| Medida en la página (ficha médica, 1728 × 966 px), con las reglas aplicadas a mano | |
+| --- | ---: |
+| «Imprimir» respecto del campo de fecha | 101 px encima → 14 px después |
+| Balance Hídrico sin registros | 125 → 45 px, en una línea |
+
+Los nombres de las capturas son inventados y siguen la forma leída en la página: «Tomás··Ejemplo Prueba» se lee «Tomás Ejemplo».
+
 ## Signos vitales sin franja en blanco, en 0.48.206
 
 Al comparar las dos fichas en la página (26-11-2026, 1728 × 966 px), la tarjeta de Signos vitales medía 259 px para 135 de contenido: se estiraba hasta el alto de la columna de su derecha, que llevaba Reposo, Régimen y el grupo «Sin datos». El responsable pidió corregirlo.

@@ -149,14 +149,15 @@ it('restaura una apertura confirmada entre dos refrescos y conserva las apertura
     .toEqual(['Ver más','Ver menos','Ver más','Ver menos']);
 });
 
-it('marca la posología y el solicitante de una tabla de fármacos solo en la vista compacta', () => {
+it('marca la indicación, la posología y el solicitante de una tabla de fármacos solo en la vista compacta', () => {
   document.body.innerHTML = '<main><section id="medicationEntrySection"><h3>Fármacos</h3><table><thead><tr>' +
     ['Tiempo','Indication','Posología','Indicaciones específicas','Solicitante','Acciones'].map(heading => '<th><p>' + heading + '</p></th>').join('') + '</tr></thead>' +
     '<tbody><tr><td>3</td><td>Preparación ficticia</td><td>1 cada 8 horas</td><td></td><td><span>Tomás Ejemplo</span></td><td><button type="button"></button></td></tr></tbody></table></section></main>';
   const reader = globalThis.HhrFichaReadingSurfaces.create(), main = document.querySelector('main');
   const marks = () => [...main.querySelectorAll('th,td')].map(cell => cell.getAttribute('data-hhr-reading'));
   reader.refresh(main, true);
-  expect(marks()).toEqual(['narrow', null, 'order-posology', null, null, 'narrow', 'narrow', null, null, null, 'order-requester', 'narrow']);
+  // «Indication», as Eloísa heads the column, is marked to read «Indicación».
+  expect(marks()).toEqual(['narrow', 'order-indication', 'order-posology', null, null, 'narrow', 'narrow', null, null, null, 'order-requester', 'narrow']);
   reader.refresh(main, false);
   expect(marks()).toEqual(['narrow', null, null, null, null, 'narrow', 'narrow', null, null, null, null, 'narrow']);
   reader.clear();

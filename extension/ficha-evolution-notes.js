@@ -57,7 +57,9 @@
     const p = zoneParts(RAPA_NUI, instant);
     return { day: `${pad(p.day)}-${pad(p.month)}-${p.year}`, time: `${pad(p.hour)}:${pad(p.minute)}` };
   };
-  const authorOf = item => ['HCP_FGN', 'HCP_NGN', 'HCP_FFN', 'HCP_SFN'].map(key => text(item[key])).filter(Boolean).join(' ') ||
+  // A professional reads as a first name and a first surname, as in the cards of the ficha.
+  const authorOf = item => (text(item.HCP_FGN) && text(item.HCP_FFN) ? text(item.HCP_FGN) + ' ' + text(item.HCP_FFN) :
+    ['HCP_FGN', 'HCP_NGN', 'HCP_FFN', 'HCP_SFN'].map(key => text(item[key])).filter(Boolean).join(' ')) ||
     text(item.HCP_LEGAL) || text(item.HCP_NAME);
 
   /** The evolutions of a history report, the latest first. A note read twice is listed once. */

@@ -264,6 +264,8 @@
               if (kind === 'care-orders' && heading === 'indicaciones') next.set(th,'order-instructions');
               // The dose and its schedule are read whole: their column asks for the room of a line.
               if (compact && kind === 'orders' && heading === 'posología') next.set(th,'order-posology');
+              // Eloísa names this column in English, «Indication». It reads «Indicación».
+              if (compact && kind === 'orders' && heading === 'indication') next.set(th,'order-indication');
               // Who asked for each prescription: a name that reads on one line.
               if (compact && kind === 'orders' && heading === 'solicitante') for (const body of table.tBodies) for (const row of body.rows) next.set(row.cells[index],'order-requester');
               if (!/^(tiempo|hora|horario|acciones)$/.test(heading)) return;

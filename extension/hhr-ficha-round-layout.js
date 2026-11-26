@@ -226,7 +226,8 @@
           const role = marks.get(child);
           if (role === 'bridge') markPeers(child);
           else if (role === 'note' || role === 'handoff') leading = false;
-          else if (!role) marks.set(child, leading ? 'before' : 'peer');
+          // The button that unfolds the empty sections is this view's own: it is not a column of Eloísa.
+          else if (!role && !child.matches('.hhr-ficha-empty-toggle')) marks.set(child, leading ? 'before' : 'peer');
         }
       }
       markPeers(frame);
