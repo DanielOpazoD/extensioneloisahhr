@@ -15,7 +15,7 @@
   };
   const recordEncounterOutcome = ({
     item, isDischarged, results, clinicalCoverage, normalization, diagnosisCoding, index,
-    physicianById, physicianByEncounterId,
+    physicianById, physicianByEncounterId, documentTypesByEncounterId,
   }) => {
     const [headerResult, diagnosisResult, isolationResult] = results;
     const headerFailed = headerResult.status === 'rejected';
@@ -36,7 +36,8 @@
     );
     diagnosisCoding.queue(index, principalDiagnosis);
     return normalization.normalizeEncounter(
-      itemWithIsolation, header, principalDiagnosis, isDischarged, physicianById, physicianByEncounterId
+      itemWithIsolation, header, principalDiagnosis, isDischarged, physicianById,
+      physicianByEncounterId, documentTypesByEncounterId
     );
   };
   const readEncounterLists = async ({ context, base, apiGet, getAuth, signal }) => {
@@ -108,6 +109,12 @@
     ];
     const readEncounterCached = root.HhrFichaMedicoCaptureCache.create();
     const { physicians, physicianById, physicianByEncounterId } = await physicianCatalogPromise;
+    let documentTypesByEncounterId = {};
+    try {
+      documentTypesByEncounterId = normalization.documentTypesByEncounterFromDocument?.(documentRoot) || {};
+    } catch (_) {
+      documentTypesByEncounterId = {};
+    }
     assertCaptureActive(signal);
     const listsReady = tick();
     // Keep a small concurrency ceiling: headers and diagnoses are independent, but the bridge
@@ -147,7 +154,7 @@
         if (isAborted(signal)) return;
         encounters[index] = recordEncounterOutcome({
           item, isDischarged, results, clinicalCoverage, normalization, diagnosisCoding, index,
-          physicianById, physicianByEncounterId,
+          physicianById, physicianByEncounterId, documentTypesByEncounterId,
         });
       }
     };

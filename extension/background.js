@@ -477,7 +477,7 @@ const handleImagingFormPrintRequest = async ({ encId, localOrder, doc, physician
     const context = await getClinicalReportContext(encId, null, null, sender);
     if (context.error) return context;
     patient = context.patient || {};
-    formattedRun = self.HhrPrescriptionPrint.formatRun(patient.run) || String(patient.run || '');
+    formattedRun = (patient.documentType !== 'Pasaporte' && self.HhrPrescriptionPrint.formatRun(patient.run)) || String(patient.run || '');
   }
   const view = self.HhrRequestForms.buildPatientView(patient, formattedRun);
   try {

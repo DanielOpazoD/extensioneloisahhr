@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.200
+
+- Al leer el censo desde Ficha Médico, la extensión informa explícitamente `documentType: 'Pasaporte'` cuando Eloísa identifica al paciente con pasaporte (en la cabecera/lista o en el rótulo «Pasaporte:» verificado de la fila o ficha abierta), sin adivinar tipos desconocidos ni confundir RUN materno/progenitor. Así HHR puede reconocer pasaportes numéricos desde la primera sincronización.
+- En Centro HHR (recetas, órdenes de laboratorio e imágenes y listas de hospitalizados), un paciente con pasaporte identificado conserva su documento tal cual y se rotula como «Pasaporte», sin formatearlo nunca como RUN chileno aunque sus dígitos coincidan con un dígito verificador válido.
+
 ## 0.48.199
 
 - En el Resumen de la vista Compacta, en escritorio, las secciones sin registros o sin permiso cierran la ficha juntas, bajo el rótulo «Sin datos»: cada una dice su nombre y «Sin registros» o «Sin permiso», tres por fila y sin tarjeta propia. Antes cada una ocupaba una tarjeta de una línea, intercalada entre las que tienen datos. Balance Hídrico conserva su tarjeta: su filtro permite buscar otro período.

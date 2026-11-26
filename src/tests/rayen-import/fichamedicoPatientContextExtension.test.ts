@@ -474,4 +474,56 @@ describe('Ficha Médico patient-context owner', () => {
       ],
     });
   });
+
+  it('never formats a numeric passport as a Chilean RUN even when its digits pass mod-11', async () => {
+    const rows = [{ id: 910, bedShortName: 'R1', hospitalDepartmentShortName: 'MED' }];
+    const passportHeader = {
+      patID: 9101,
+      preferredIdentifierCode: '111111111',
+      preferredIdentifierTypeName: 'Pasaporte',
+      firstGivenName: 'Persona',
+      firstFamilyName: 'Extranjera',
+      bedShortName: 'R1',
+      hdeShortName: 'MED',
+    };
+    const self: Record<string, any> = {};
+    runInNewContext(readFileSync('extension/prescription-print.js', 'utf8'), { self });
+    const { context } = createHarness({
+      prescriptionPrint: self.HhrPrescriptionPrint,
+      fetchActiveEncounterRows: vi.fn(async () => ({ rows })),
+      fetchPatientHeader: vi.fn(async () => passportHeader),
+    });
+
+    const headerPayload = await context.handlePatientHeaderRequest({
+      encId: '910',
+      sender: { tab: { id: 21 } },
+    });
+    expect(headerPayload.patient).toMatchObject({
+      run: '111111111',
+      documentType: 'Pasaporte',
+      formattedRun: '111111111',
+    });
+
+    const censusPayload = await context.handleCensusListRequest({
+      currentEncId: '910',
+      sender: { tab: { id: 21 } },
+    });
+    expect(censusPayload.patients).toEqual([
+      expect.objectContaining({
+        encounterId: '910',
+        run: '111111111',
+      }),
+    ]);
+
+    const vitalsPayload = await context.handleVitalsCensusRequest({
+      currentEncId: '910',
+      sender: { tab: { id: 21 } },
+    });
+    expect(vitalsPayload.patients).toEqual([
+      expect.objectContaining({
+        encounterId: '910',
+        run: '111111111',
+      }),
+    ]);
+  });
 });

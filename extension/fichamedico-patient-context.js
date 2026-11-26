@@ -20,13 +20,7 @@
 
   const asObject = value => value && typeof value === 'object' ? value : {};
 
-  const firstTruthy = (...values) => {
-    for (const value of values) {
-      if (value) return value;
-    }
-    return '';
-  };
-
+  const firstTruthy = (...values) => values.find(Boolean) || '';
   const encounterIdFromRow = row => String(firstTruthy(row && row.id, row && row.encounterId));
 
   const isEncounterActive = row => Boolean(
@@ -36,6 +30,15 @@
     !Boolean(row.isDead)
   );
 
+  const DOC_TYPE_KEYS = ['preferredIdentifierTypeName', 'prefferedIdentifierTypeName', 'preferredIdentifierName', 'prefferedIdentifierName', 'identifierTypeName', 'patientIdentifierTypeName', 'peridentName', 'preferredPeridentName', 'prefferedPeridentName', 'documentType', 'tipoIdentificador', 'tipoDocumento'];
+  const DOC_TYPE_OBJS = ['preferredIdentifierType', 'prefferedIdentifierType', 'identifierType', 'patientIdentifierType', 'perident'];
+  const passportDocumentType = (...sources) => {
+    for (const src of sources) {
+      const obj = asObject(src);
+      const label = DOC_TYPE_KEYS.map(k => obj[k]).concat(DOC_TYPE_OBJS.map(k => obj[k] && typeof obj[k] === 'object' ? obj[k].name || obj[k].description || obj[k].label : obj[k])).find(v => typeof v === 'string' && v.trim());
+      if (label) return /^(?:pasaporte|passport)\b/i.test(label.trim()) ? 'Pasaporte' : undefined;
+    }
+  };
   const normalizeHospitalizedEncounter = (rawRow, rawHeader) => {
     const row = asObject(rawRow);
     const fallback = asObject(row.patient);
@@ -43,6 +46,7 @@
     return {
       encounterId: encounterIdFromRow(row),
       run: firstTruthy(patient.preferredIdentifierCode, fallback.identifier, row.patientIdentifier),
+      ...(passportDocumentType(patient, fallback, row) ? { documentType: 'Pasaporte' } : {}),
       firstGivenName: firstTruthy(
         patient.firstGivenName,
         patient.givenName,
@@ -99,6 +103,7 @@
         header.secondFamilyName,
       ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim(),
       run: firstTruthy(header.preferredIdentifierCode),
+      ...(passportDocumentType(header) ? { documentType: 'Pasaporte' } : {}),
       sex: firstTruthy(header.gendName),
       birthDate: firstTruthy(header.birthDate),
       age: firstTruthy(calculatedAge, fallbackAge),
@@ -280,6 +285,7 @@
       }
     };
 
+    const formatIdentifier = patient => (patient && patient.documentType === 'Pasaporte' ? '' : formatRun(patient && patient.run)) || String((patient && patient.run) || '');
     const handlePatientHeaderRequest = async ({ encId, sender }) => {
       const infoResult = await resolveSession({ sender });
       if (infoResult.error) return infoResult;
@@ -298,7 +304,7 @@
         patient: {
           ...patient,
           patientId: context.patientId,
-          formattedRun: formatRun(patient.run) || String(patient.run || ''),
+          formattedRun: formatIdentifier(patient),
         },
       };
       patientHeaderCache.set(cacheKey, { at: now(), payload });
@@ -319,7 +325,7 @@
         patients: (result.patients || []).map(patient => ({
           encounterId: String(patient.encounterId),
           name: patient.name,
-          run: formatRun(patient.run) || String(patient.run || ''),
+          run: formatIdentifier(patient),
           bed: patient.bed || patient.room || '',
           service: patient.service || '',
           isCurrent: String(patient.encounterId) === String(currentEncId || ''),
@@ -337,7 +343,7 @@
         return {
           encounterId: String(patient.encounterId),
           name: patient.name,
-          run: formatRun(patient.run) || String(patient.run || ''),
+          run: formatIdentifier(patient),
           bed: patient.bed || patient.room || '',
           service: patient.service || '',
           birthDate: patient.birthDate || '',

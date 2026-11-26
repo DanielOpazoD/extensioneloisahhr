@@ -175,11 +175,14 @@
         const location = [patient && patient.bed, patient && patient.room]
           .filter(Boolean)
           .join(' / ');
+        const isPassport = patient && patient.documentType === 'Pasaporte';
         const patientRun =
-          patient && patient.run ? helper.formatRun(patient.run) || String(patient.run) : '';
+          patient && patient.run
+            ? (isPassport ? '' : helper.formatRun(patient.run)) || String(patient.run)
+            : '';
         patientMeta.textContent =
           [
-            patientRun ? 'RUN ' + patientRun : '',
+            patientRun ? (isPassport ? 'Pasaporte ' : 'RUN ') + patientRun : '',
             location ? 'Cama ' + location : '',
             patient && patient.service ? patient.service : '',
           ]
