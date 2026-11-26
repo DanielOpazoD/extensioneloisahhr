@@ -375,8 +375,8 @@ export const verifyNativeFicha = async (page, worker) => {
       assert.ok(boxes.note.width > boxes.handoff.width && boxes.note.right <= boxes.handoff.left + 1);
       assert.ok(Math.abs(boxes.handoff.left-boxes.alerts.left) < 2 && Math.abs(boxes.handoff.right-boxes.alerts.right) < 2 &&
         boxes.alerts.top >= boxes.handoff.bottom - 1, JSON.stringify({expanded, boxes}));
-      // The signs follow the note across the round, from its edge to the edge of the side column.
-      assert.ok(Math.abs(boxes.note.left-boxes.vitals.left) < 2 && Math.abs(boxes.vitals.right-boxes.alerts.right) < 2 &&
+      // The signs follow the note from its edge. They take the whole line, or its first half with the care instructions beside them.
+      assert.ok(Math.abs(boxes.note.left-boxes.vitals.left) < 2 && boxes.vitals.right <= boxes.alerts.right + 1 &&
         boxes.vitals.top >= boxes.note.bottom - 1, JSON.stringify({expanded, boxes}));
       if (!expanded) closed = boxes;
       else {

@@ -11,6 +11,8 @@ html[data-hhr-ficha-theme] {
   /* Surfaces and the lines that divide them. */
   --hhr-ficha-surface:#fff;
   --hhr-ficha-band:#f2f6f4;
+  /* The line of section links, and whatever rides on it. */
+  --hhr-ficha-rail:#f7f9f8;
   --hhr-ficha-line:#dce5e2;
   --hhr-ficha-line-soft:#e1e9e6;
   /* Colour by role: green for what can be pressed, amber for a clinical flag. A value out of

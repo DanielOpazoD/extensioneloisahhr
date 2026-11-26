@@ -66,8 +66,10 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         return [...range.getClientRects()].map(rect => ({top:rect.top,bottom:rect.bottom,right:rect.right}));
       });
       const pressureTime = pressure.closest('.tile').querySelector('[data-hhr-reading="vital-time"]').getBoundingClientRect();
+      // An age shared by the whole strip is said once beside its title: here it is kept for a screen reader only.
+      const pressureTimeShown = pressureTime.width > 1 && pressureTime.height > 1;
       return {pressureLines:new Set(pressureFragments.map(rect => Math.round(rect.top))).size,
-        pressureClearOfTime:pressureFragments.every(rect => rect.top >= pressureTime.bottom ||
+        pressureClearOfTime:!pressureTimeShown || pressureFragments.every(rect => rect.top >= pressureTime.bottom ||
           rect.bottom <= pressureTime.top + 1 || rect.right <= pressureTime.left + 1),
         note:box('#evolution'),signs:box('section#vitalSignsEntry'),handoff:box('#shiftChangeObservation'),
         alerts:box('#alerts'),rest:box('#rest'),diet:box('#diet'),exam:box('#diagnosisTestEntrySection'),
@@ -77,7 +79,8 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     });
     heights.push(metrics.noteHeight);
     assert.equal(metrics.pageWidth,width);
-    assert.ok(metrics.vitalsRows <= (round ? 2 : 1));
+    // Beside the care instructions the nine measurements take half the line: three rows at most.
+    assert.ok(metrics.vitalsRows <= (round ? 3 : 1));
     assert.deepEqual(metrics.values,['118/72','78','96','38,1','17','15','21','104','2']);
     console.log(JSON.stringify(round ? {...metrics, band} : metrics));
     if (verifyLayout) {
@@ -86,19 +89,21 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         const aligned = (a,b) => Math.abs(a.left-b.left) <= 1 && Math.abs(a.right-b.right) <= 1;
         // The space between two blocks of the ficha.
         const gap = 12, middle = box => (box.top + box.bottom) / 2;
-        assert.ok(Math.abs(band.signs.left - band.note.left) <= 1 && Math.abs(band.signs.right - band.alerts.right) <= 1 &&
-          Math.abs(band.signs.top - band.note.bottom - gap) < 2, 'Signos debe quedar debajo de Evolución, a todo el ancho de la ronda');
+        assert.ok(Math.abs(band.signs.left - band.note.left) <= 1 && band.signs.right <= band.rest.left + 2 && Math.abs(band.signs.top - band.note.bottom - gap) < 2,
+          'Signos debe quedar debajo de Evolución, en la primera mitad de la línea');
         assert.ok(Math.abs(band.alerts.bottom - band.note.bottom) < 2, 'Alertas debe terminar donde termina Evolución');
         assert.ok(aligned(band.handoff,band.alerts) && Math.abs(band.alerts.top - band.handoff.bottom) < 2,
           'Observaciones debe compartir ambos bordes con Alertas y aparecer primero');
         // Two short instructions share a line. Otherwise each one uses the whole width.
-        const stacked = aligned(band.rest,band.note) && aligned(band.diet,band.rest) && Math.abs(band.diet.top - band.rest.bottom) < 2;
+        // The other half of that line, from the end of the signs to the edge of the round.
+        const side = {left:band.signs.right, right:band.alerts.right};
+        const inSide = box => box.left >= side.left - 1 && box.right <= side.right + 1;
+        const stacked = Math.abs(band.rest.left - band.diet.left) <= 1 && Math.abs(band.rest.right - band.diet.right) <= 1 && Math.abs(band.diet.top - band.rest.bottom) < 2;
         // On a shared line the shorter instruction is read at the middle of the taller one.
-        const sharedLine = Math.abs(middle(band.diet) - middle(band.rest)) < 2 && Math.abs(band.diet.left - band.rest.right) <= 1 &&
-          Math.abs(band.rest.left - band.note.left) <= 1 && Math.abs(band.diet.right - band.note.right) <= 1;
+        const sharedLine = Math.abs(middle(band.diet) - middle(band.rest)) < 2 && Math.abs(band.diet.left - band.rest.right) <= 1;
         const careTop = Math.min(band.rest.top, band.diet.top);
-        assert.ok((stacked || sharedLine) && careTop >= band.signs.bottom + gap - 1 && careTop <= band.signs.bottom + gap + 12,
-          'Reposo y Régimen deben seguir a Signos en el margen izquierdo, sin otro hueco');
+        assert.ok((stacked || sharedLine) && inSide(band.rest) && inSide(band.diet) && Math.abs(band.diet.right - side.right) <= 1 && careTop >= band.signs.top - 1 && careTop <= band.signs.top + 12,
+          'Reposo y Régimen deben leerse junto a Signos, en la otra mitad de la línea');
         // The fonts of each system decide the widths. The line is shared exactly when both instructions fit.
         const fit = await page.evaluate(() => {
           const line = document.querySelector('#rest').closest('.MuiGrid-container');
@@ -111,14 +116,10 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         if (Math.abs(fit.needed - fit.available) > 2) {
           assert.equal(sharedLine, fit.needed < fit.available, 'Reposo y Régimen comparten línea siempre que caben, y solo entonces');
         }
-        assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 &&
-          Math.abs(band.exam.left - band.alerts.left) <= 1 && Math.abs(band.surgery.right - band.alerts.right) <= 1 &&
-          band.exam.top >= careTop - 1 && band.exam.bottom <= Math.max(band.rest.bottom, band.diet.bottom) + 1 && Math.abs(band.exam.height - band.surgery.height) < 1,
-          'Las dos solicitudes vacías cierran la línea de Reposo y Régimen');
-        for (const side of [band.exam,band.surgery]) {
-          assert.ok(side.left >= band.handoff.left - 1 && side.right <= band.handoff.right + 1 && side.height > 0,
-            'Las solicitudes explícitamente vacías deben quedar visibles en el lateral');
-        }
+        assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 && Math.abs(band.exam.left - side.left) <= 2 &&
+          Math.abs(band.surgery.right - side.right) <= 1 && band.exam.top >= Math.max(band.rest.bottom, band.diet.bottom) && Math.abs(band.exam.height - band.surgery.height) < 1,
+          'Las dos solicitudes vacías comparten una línea bajo Reposo y Régimen, junto a Signos');
+        for (const request of [band.exam,band.surgery]) assert.ok(inSide(request) && request.height > 0, 'Las solicitudes explícitamente vacías deben quedar visibles junto a Signos');
         assert.equal(band.pressureLines,1,'La sistólica, la barra y la diastólica deben leerse en la misma línea');
         assert.equal(band.pressureClearOfTime,true,'El tiempo no debe tapar los dígitos de la presión');
         assert.ok(band.requestCards.every(card => card.height > 0 && card.height < 36), 'Cada solicitud vacía debe caber en una fila');
@@ -341,8 +342,9 @@ async function checkFocusedEntryRefresh(page) {
   assert.ok(await open.isVisible());
 }
 
-// The daily date and its print action ride on the free end of the section links,
-// short of the floating Centro HHR bar when that bar covers the end of the line.
+// The daily date and its print action have no line of their own. In this page the line of tabs scrolls
+// away, so they ride on the end of the section links, which stays in view: short of the floating Centro
+// HHR bar when that bar covers the end of the line, and over the last links when the line is full.
 async function checkDailyRow(page, width) {
   const settle = () => page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
   const refresh = async () => {
@@ -370,6 +372,15 @@ async function checkDailyRow(page, width) {
     state.row.bottom <= state.rail.bottom + 1 && state.note.top - state.rail.bottom < 16;
   const inPlace = state => !state.docked && state.position !== 'fixed' && state.row.top >= state.rail.bottom - 1 &&
     state.note.top >= state.row.bottom - 1;
+  // With the links scrolled to their end, the last one stops clear of the row.
+  const lastLinkClear = async () => {
+    await page.evaluate(() => { const rail = document.querySelector('[data-hhr-ficha-sections]'); rail.scrollLeft = rail.scrollWidth; });
+    await settle();
+    const state = await measure();
+    await page.evaluate(() => { document.querySelector('[data-hhr-ficha-sections]').scrollLeft = 0; });
+    await settle();
+    return onTheLine(state) && state.reachable && state.row.left >= state.lastLink.right + 8;
+  };
   const floating = page.locator('#hhr-clinical-operations-bar');
   await page.evaluate(() => window.scrollTo(0,0));
   await refresh();
@@ -378,12 +389,11 @@ async function checkDailyRow(page, width) {
   const beside = await measure();
   assert.ok(beside.bar.bottom > beside.rail.top + 1 && beside.bar.width > 200, 'La ficha de prueba incluye la barra flotante sobre el final de la línea');
   assert.ok(beside.reachable, 'La barra flotante nunca tapa la fecha ni la impresión del resumen');
-  if (beside.docked) {
-    assert.ok(onTheLine(beside) && clearOfLinks(beside) && beside.row.right <= beside.bar.left - 8,
-      'Acoplada, la fila queda entre los enlaces y la barra flotante');
-  } else {
-    assert.ok(inPlace(beside) && beside.lastLink.right + 28 + beside.controls.width > beside.bar.left - 10,
-      'La fila conserva su lugar solo cuando no cabe entre los enlaces y la barra flotante');
+  assert.ok(onTheLine(beside) && beside.row.right <= beside.bar.left - 8, 'La fila va en la línea de secciones, antes de la barra flotante: ' + JSON.stringify(beside));
+  if (!clearOfLinks(beside)) {
+    assert.ok(beside.scrolls && beside.lastLink.right + 28 + beside.controls.width > beside.bar.left - 10,
+      'Los enlaces pasan bajo la fila solo cuando no caben entre el inicio de la línea y la barra flotante');
+    assert.ok(await lastLinkClear(), 'Al final de su recorrido, el último enlace queda a la vista junto a la fila');
   }
 
   // Scrolling never changes the choice: the round keeps its place under the reader's eyes.
@@ -401,9 +411,7 @@ async function checkDailyRow(page, width) {
     return states;
   };
   const besideScroll = await sweep();
-  // In its native place the row scrolls away with the summary, as it always did. Docked, it must stay reachable.
-  assert.ok(besideScroll.every(([docked, noteStart, reachable]) => docked === beside.docked &&
-    Math.abs(noteStart - besideScroll[0][1]) <= 1 && (reachable || !docked)),
+  assert.ok(besideScroll.every(([docked, noteStart, reachable]) => docked && Math.abs(noteStart - besideScroll[0][1]) <= 1 && reachable),
     'Al desplazar la ficha, la fila no cambia de lugar ni mueve la nota: ' + JSON.stringify(besideScroll));
 
   // With the bar folded into its pill, the row fits in both windows. No other event announces the change.
@@ -470,10 +478,10 @@ async function checkDailyRow(page, width) {
   const distinct = await measure();
   assert.ok(distinct.stamp.width <= 1 && distinct.stamp.height <= 1, 'La fila diaria no muestra quién actualizó el resumen');
   assert.match(await stamp.textContent(), /Elena Ejemplo/, 'La firma sigue en la página');
-  assert.ok(distinct.docked ? clearOfLinks(distinct) : inPlace(distinct), 'Con otra firma, la fila tampoco tapa los enlaces');
+  assert.ok(onTheLine(distinct) && clearOfLinks(distinct), 'Con otra firma, la fila tampoco tapa los enlaces');
   await stamp.evaluate((el, text) => { el.textContent = text; }, original);
 
-  // A line full of section links keeps the row in its native place.
+  // On a line full of section links the row still rides at its end: the links scroll under it.
   await page.evaluate(() => {
     const rail = document.querySelector('[data-hhr-ficha-sections]');
     for (let index = 0; index < 8; index++) {
@@ -486,9 +494,9 @@ async function checkDailyRow(page, width) {
   });
   await refresh();
   const crowded = await measure();
-  assert.ok(inPlace(crowded), 'Sin sitio en la barra de secciones, la fila conserva su lugar sobre la nota');
-  assert.ok(crowded.date.right <= crowded.row.right + 1 && crowded.controls.right >= crowded.row.right - 2,
-    'En su lugar nativo, la fecha y la impresión conservan el borde derecho');
+  assert.ok(onTheLine(crowded) && crowded.scrolls && crowded.reachable && Math.abs(crowded.row.right - crowded.rail.right) <= 1,
+    'Con la línea llena de enlaces, la fila sigue en su final y no ocupa una línea propia: ' + JSON.stringify(crowded));
+  assert.ok(await lastLinkClear(), 'Al final de su recorrido, el último de muchos enlaces queda a la vista junto a la fila');
   await page.evaluate(() => { for (const item of document.querySelectorAll('[data-fixture-extra]')) item.remove(); });
   await refresh();
   const again = await measure();
@@ -545,14 +553,16 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
       value:card.querySelector('.MuiChip-label').textContent, stamp:stamp.dataset.hhrUpdateLabel,
       height:box.height, horizontalGap:signature.left - content.right,
       sharedBaseline:signature.bottom > content.top && content.bottom > signature.top,
+      below:signature.top >= content.bottom - 1 && signature.top <= content.bottom + 6,
       stampFits:signature.width > 0 && signature.right <= box.right && signature.bottom <= box.bottom,
     };
   }));
   assert.deepEqual(care.map(card => card.value),['Relativo','Común']);
   assert.match(care[0].stamp,/09:12.*Tomás Ejemplo/);
   assert.match(care[1].stamp,/10:45.*Elena Ejemplo/);
-  if (verifyLayout) assert.ok(care.every(card => card.sharedBaseline && card.horizontalGap >= 0 && card.stampFits),
-    'Cada autoría debe poder leerse junto al valor de su propia indicación');
+  // In half the line a byline may take the line under its own value, never the line of another instruction.
+  if (verifyLayout) assert.ok(care.every(card => card.stampFits && (card.sharedBaseline ? card.horizontalGap >= 0 : card.below)),
+    'Cada autoría debe poder leerse junto al valor de su propia indicación, o justo debajo');
   if (verifyLayout) {
     // One age for the measurements taken together. The older one keeps its own, in bold.
     const ages = await page.locator('section#vitalSignsEntry').evaluate(section => {

@@ -1,5 +1,34 @@
 # Resumen compacto en escritorio
 
+## Signos vitales en media línea, la fila diaria fuera de la ficha y tablas a una línea, en 0.48.201
+
+El responsable revisó la 0.48.199 en su pantalla y pidió tres cosas. Estrechar el cuadro de Signos vitales y usar el espacio que sobra a su derecha para Reposo, Régimen y las secciones sin datos. Quitar la franja de la fecha del resumen diario e «Imprimir», conservando la impresión. Y que Procedimientos se lea tan compacto como el resto.
+
+| Pantalla | 0.48.200 | 0.48.201 | Página completa |
+| --- | --- | --- | --- |
+| 1280 × 800 | [Antes](0.48.201/antes/1280-resumen.png) | [Después](0.48.201/despues/1280-resumen.png) | [Antes](0.48.201/antes/1280-resumen-completo.png) · [Después](0.48.201/despues/1280-resumen-completo.png) |
+| 1440 × 900 | [Antes](0.48.201/antes/1440-resumen.png) | [Después](0.48.201/despues/1440-resumen.png) | [Antes](0.48.201/antes/1440-resumen-completo.png) · [Después](0.48.201/despues/1440-resumen-completo.png) |
+| 1440 × 900, con registros en todas las secciones | | | [Antes](0.48.201/antes/1440-con-registros-completo.png) · [Después](0.48.201/despues/1440-con-registros-completo.png) |
+
+| Medida a 1440 × 900, 0.48.200 → 0.48.201 | |
+| --- | ---: |
+| Fecha del resumen diario e «Imprimir» | una franja de 30 px sobre la ficha → el final de la línea de pestañas |
+| Inicio de Diagnóstico | 201 → 159 px |
+| Ancho de Signos vitales | toda la línea → su primera mitad |
+| Filas de las nueve mediciones | 1 → 2, cinco y cuatro |
+| Reposo y Régimen | una línea propia bajo Signos → junto a Signos |
+| Grupo «Sin datos» | al final de la ficha, tres por fila → junto a Signos, dos por fila |
+| Inicio de Fármacos | 819 → 823 px |
+| Alto de la página | 1923 → 1817 px |
+| Fila de Procedimientos, con y sin selector de estado | 51 → 31 y 28 px |
+| Fila de Solicitud de examen | 46 → 31 px |
+| Fila de Solicitud interconsulta, Órdenes de atención y Solicitudes de intervención quirúrgica | 35 → 28 px |
+| Alto de la página con registros en todas las secciones | 2519 → 2266 px |
+
+**Por qué la fila no subía sola.** La estructura exportada de la página el 26-11-2026 ([`estructura-eloisa.md`](../../estructura-eloisa.md)) mostró la fila en su propia línea de 30 px, con la vista activa y a 1303 px de ancho. La ficha ficticia lo reproduce: la barra flotante de Centro HHR, de 350 px, tapa el final de la línea de secciones, y entre el último enlace y esa barra no caben la fecha y sus dos botones. En la línea de pestañas sí caben, a cualquier ancho desde 1100 px. Ahí la fila deja de contar como línea de la ronda.
+
+La rejilla coloca cada sección sin datos en el primer hueco junto a los signos (`grid-auto-flow: dense`), y `hhr-ficha-round-layout.js` cuenta las líneas que ocupa esa columna para que Signos vitales las abarque. No se mueve ningún nodo: la fila diaria se sitúa con `position: fixed`, como ya hacía en la línea de secciones.
+
 ## Lo vacío junto, las tablas con un ritmo y el Resumen desde arriba, en 0.48.199
 
 El responsable revisó la 0.48.198 en su pantalla y pidió: agrupar con más elegancia las secciones sin datos; dar el estilo de la vista a Procedimientos, Solicitud interconsulta, Solicitud de examen y Solicitudes de intervención quirúrgica cuando tienen registros; que un Régimen en edición no se vea de otro programa; quitar el nombre del funcionario de la línea de secciones y dejar entero «Resumen diario paciente»; un lector de la evolución más grande y más limpio; más margen general; y que la ficha no quede a mitad de documento al recargar.

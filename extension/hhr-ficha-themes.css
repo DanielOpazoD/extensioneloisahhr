@@ -258,23 +258,24 @@
 }
 
 @media screen {
-  /* Procedimientos, Solicitud interconsulta, Solicitud de examen and Solicitudes de intervención quirúrgica
-     with records take the same rhythm: any table of theirs, whatever Eloísa wraps it in. */
+  /* Órdenes de atención, Procedimientos, Solicitud interconsulta, Solicitud de examen and Solicitudes de
+     intervención quirúrgica with records take the rhythm of Fármacos: any table of theirs, whatever Eloísa
+     wraps it in, reads at one line a row, with the tools of a row at the size they have there. */
   html[data-hhr-ficha-theme="compact"] :is(#procedureOrderEntrySection,[data-hhr-reading="care-orders"],#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection) {
     table:not(:is(dialog,[role=dialog],table) *) {
       width:100%; table-layout:auto;
       :is(th,td) {
-        padding:3px 7px !important; height:auto !important;
+        padding:var(--hhr-ficha-cell-y,3px) 7px !important; height:auto !important;
         font-size:.8125rem; line-height:1.35 !important; vertical-align:middle;
       }
-      th { padding-block:2px !important; font-size:.75rem; }
+      th { font-size:.75rem; }
       tr { height:auto !important; }
       :is(p,.MuiTypography-body1,.MuiTypography-body2) { margin-block:0; font-size:inherit; line-height:inherit; }
       [data-hhr-reading="narrow"] { width:1%; white-space:nowrap; }
-      td .MuiIconButton-root { padding:4px !important; min-width:28px; min-height:28px; }
+      td .MuiIconButton-root { padding:4px !important; min-width:24px; min-height:24px; }
       td .MuiIconButton-root svg { width:16px; height:16px; }
-      td :is(.MuiSelect-select,select:not([multiple],[size])) { padding-block:4px !important; min-height:24px; font-size:.8125rem; }
-      td .MuiInputBase-root:has(.MuiSelect-select) { height:auto !important; min-height:28px; }
+      td :is(.MuiSelect-select,select:not([multiple],[size])) { padding-block:3px !important; min-height:20px; font-size:.8125rem; }
+      td .MuiInputBase-root:has(.MuiSelect-select) { height:auto !important; min-height:26px; }
       td .MuiFormControl-root { margin-block:0; }
     }
   }
@@ -358,17 +359,33 @@
       /* A screen reader hears Eloísa's label and then this state, as it is seen. */
       &:has(> .MuiTypography-root:last-child:empty) > .MuiTypography-root:first-child::after { content:'Tratamiento sin validar' / 'Tratamiento sin validar'; }
     }
-    /* The state of a diagnosis is a native select. It keeps its arrow and its menu. */
-    #diagnosisEntrySection td .MuiInputBase-root:has([role="combobox"]) {
+    /* The state of a diagnosis, of a procedure or of an examination order is a native select. It keeps its
+       arrow and its menu, at the height of a line of its table. */
+    :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) td .MuiInputBase-root:has([role="combobox"]) {
       block-size:auto !important; min-block-size:26px; font-size:var(--hhr-ficha-text-body);
       [role="combobox"] { min-block-size:0 !important; padding-block:3px !important; }
+    }
+    /* In Procedimientos and Solicitud de examen it takes the width of its longest state, not a third of the table. */
+    :is(#procedureEntrySection,#diagnosisTestEntrySection) td {
+      .MuiFormControl-root, .MuiInputBase-root { min-inline-size:0 !important; }
+      [role="combobox"] { box-sizing:border-box; min-inline-size:7.5rem !important; padding-inline-start:8px !important; }
+      /* A text Eloísa cuts keeps «Ver más» at the end of its own line, as the last word would be: the row
+         stays one line high until it is opened. */
+      > .MuiBox-root:has(> .MuiBox-root > button[data-hhr-note-disclosure]:only-child) {
+        display:flex; align-items:baseline; gap:2px 6px; min-inline-size:0;
+        > .MuiTypography-root { display:block !important; flex:0 1 auto; min-inline-size:0; }
+        > .MuiBox-root { flex:none; margin-inline-start:auto; }
+        &:has(button[data-hhr-note-disclosure="more"]) > .MuiTypography-root { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+        /* Open, the whole text is read and «Ver menos» closes it from the end of its last line. */
+        &:has(button[data-hhr-note-disclosure="less"]) { align-items:last baseline; }
+      }
     }
   }
 }
 
 @media screen and (min-width:1100px) {
   html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-sections] {
-    align-items:center; column-gap:2px; background:#f7f9f8;
+    align-items:center; column-gap:2px; background:var(--hhr-ficha-rail);
     [data-hhr-ficha-link] {
       box-sizing:border-box; padding-block:2px; border-radius:6px; line-height:20px !important;
       &[aria-current="location"] { border-color:#a8cfc5; background:#e5f2ee; color:var(--hhr-ficha-focus) !important; }
@@ -432,21 +449,28 @@
   }
 }
 
-/* With room after the last section link, the daily date and its print action ride on that
-   line and stay in view while the summary scrolls. The row keeps its native place otherwise. */
+/* The daily date and its print action stay in view while the summary scrolls: the row has no line
+   of its own. It rides at the end of the line of tabs, beside the floating Centro HHR bar. Should
+   that line have no room, it rides on the section links: they scroll under it and the last of them
+   still stops clear of it. */
 @media screen and (min-width:1100px) {
   html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-sections][data-hhr-ficha-docked] {
-    padding-inline-end:var(--hhr-dock-width) !important;
+    padding-inline-end:var(--hhr-dock-width) !important; scroll-padding-inline-end:var(--hhr-dock-width);
   }
   html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-section-slot] + [data-hhr-round="frame"] > .MuiGrid-item[data-hhr-round="before"][data-hhr-ficha-dock] {
     position:fixed !important; z-index:26;
     /* An out-of-flow item would otherwise be the last stop of the round for the Tab key. */
     reading-order:-1;
     inset-block-start:var(--hhr-dock-top); inset-inline-end:var(--hhr-dock-right);
-    box-sizing:border-box; block-size:var(--hhr-dock-height); min-height:0 !important;
+    /* The line keeps its lower rule under the row. */
+    box-sizing:border-box; block-size:calc(var(--hhr-dock-height) - 1px); min-height:0 !important;
     inline-size:max-content !important; max-inline-size:none !important;
     display:flex !important; align-items:center; justify-content:flex-end; gap:8px;
-    margin:0 !important; padding:0 6px 0 0 !important; background:transparent;
+    /* It is the end of the line: a link that scrolls there goes under it, behind a soft edge. */
+    margin:0 !important; padding:0 6px 0 10px !important; background:var(--hhr-ficha-rail);
+    box-shadow:-10px 0 8px -4px var(--hhr-ficha-rail), 10px 0 0 var(--hhr-ficha-rail);
+    /* On the line of tabs nothing scrolls under it: it takes that line's surface and paints above it. */
+    &[data-hhr-ficha-dock-line="tabs"] { z-index:var(--hhr-dock-layer,26); background:transparent; box-shadow:none; }
     > [data-hhr-update-label] { margin:0 !important; white-space:nowrap; }
     > :not([data-hhr-update-label]) { display:inline-flex; align-items:center; gap:6px; }
   }
