@@ -38,7 +38,10 @@ Una regla nueva toma sus valores de los tokens. Una regla anterior, escrita con 
 5. **Mutaciones de control.** Romper a propósito la regla nueva y comprobar que alguna prueba falla.
 6. **Antes y después.** Capturas a 1280 × 800 y 1440 × 900 en `docs/visual/`, con las medidas que cambian.
 
+El Resumen tiene dos generaciones de fichas ficticias. `summary-visual-fixture.mjs` sigue la estructura leída en Eloísa y es la que decide cómo se ve la página real. `medical-round-visual-fixture.mjs` y `admission-round-visual-fixture.mjs` son anteriores y más simples: conservan las comprobaciones de la nota, el lector y la fila diaria, y no deben usarse para juzgar una tabla o un control de Eloísa.
+
 ```sh
+node scripts/capture-summary.mjs WORKTREE /tmp/resumen-real
 node scripts/capture-medical-round.mjs WORKTREE /tmp/resumen lectura
 node scripts/capture-medical-round.mjs WORKTREE /tmp/ingreso ingreso
 node scripts/capture-history.mjs WORKTREE /tmp/historial

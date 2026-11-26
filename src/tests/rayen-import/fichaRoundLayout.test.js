@@ -334,3 +334,69 @@ it.each([
   expect(care.closest('[data-hhr-round="care"]')).toBeNull();
   expect(care.querySelector('[data-hhr-round="care-row"]')).toBeNull();
 });
+
+// The shapes read in Eloísa (docs/estructura-eloisa.md): an empty rest is a card without its section,
+// «Imprimir indicaciones» is an icon alone on its line, and the diagnosis is a table after the prescriptions.
+const realCard = (id, title, body) => '<div class="MuiPaper-root MuiCard-root" id="'+id+'"><div class="MuiCardHeader-root"><div class="MuiCardHeader-content">' +
+  '<span class="MuiCardHeader-title">'+title+'</span><span class="MuiCardHeader-subheader"></span></div><div class="MuiCardHeader-action"><div class="MuiStack-root"></div></div></div>' +
+  '<div class="MuiCardContent-root">'+body+'</div></div>';
+const realItem = (content, attributes = '') => '<div class="MuiGrid-item MuiGrid-grid-xs-12"'+attributes+'>'+content+'</div>';
+const realSection = (id, cardId, title, body) => '<section class="MuiBox-root" id="'+id+'">'+realCard(cardId, title, body)+'</section>';
+const realTable = headings => '<table><thead><tr>'+headings.map(heading => '<th><p>'+heading+'</p></th>').join('')+'</tr></thead><tbody><tr>'+headings.map(() => '<td></td>').join('')+'</tr></tbody></table>';
+function realSummary({second = 'Diagnóstico', printName = 'Imprimir indicaciones', folded = ''} = {}) {
+  document.body.innerHTML = '<main><div class="MuiGrid-container">' +
+    '<div class="MuiGrid-item MuiGrid-grid-xs-6"><div class="MuiGrid-container">'+realItem(realSection('observationEntrySection','evolution','Evolución','Nota'))+'</div></div>' +
+    realItem(realSection('shiftChangeEntrySection','shiftChangeObservation','Observaciones de entrega de turno','<input>')) +
+    realItem(realSection('vitalSignsEntry','vitals','Signos vitales','')) +
+    '<div class="MuiGrid-item MuiGrid-grid-xs-12" id="print-line"><button type="button" class="MuiIconButton-root"><svg aria-label="'+printName+'"></svg></button></div>' +
+    '<div class="MuiGrid-item MuiGrid-grid-xs-6" id="care-item"><div class="MuiGrid-container">' +
+      realItem(realCard('rest','Reposo','<p class="MuiTypography-body2">No se presenta un Reposo registrado para este paciente</p>')) +
+      realItem(realSection('nutritionOrderEntrySection','nutritionOrder','Régimen','<div class="MuiStack-root"><div class="MuiStack-root"><p>Régimen:</p>' +
+        '<div class="MuiChip-root"><span class="MuiChip-label">Común</span></div><div class="MuiBox-root"><span class="MuiTypography-caption"></span></div></div>' +
+        '<div class="MuiStack-root"><p>Observación:</p><div class="MuiBox-root"><span class="MuiTypography-caption">Porciones pequeñas.</span></div></div></div>')) + '</div></div>' +
+    realItem(realSection('alertEntrySection','alertEntries','Alertas','')) +
+    realItem(realSection('encounterFormEntrySection','encounterForm','Instrumentos','Vacío'), folded) +
+    realItem(realSection('medicationEntrySection','medicationEntry','Fármacos',realTable(['Tiempo','Indication']))) +
+    realItem(realSection('diagnosisEntrySection','diagnosisEntry','Diagnóstico',realTable(['',second,'Estado']))) + '</div></main>';
+  return document.querySelector('main');
+}
+const role = selector => document.querySelector(selector).closest('.MuiGrid-container > .MuiGrid-item:not(.MuiGrid-container .MuiGrid-container *)')?.getAttribute('data-hhr-round') ?? null;
+
+it('reads an empty rest without its section, brings the diagnosis under the round and docks the print icon on Fármacos', () => {
+  const main = realSummary({folded:' hidden'}), original = main.innerHTML;
+  layout.refresh(main);
+  expect(document.getElementById('rest').dataset.hhrRound).toBe('care-row');
+  expect(document.querySelector('#rest p').dataset.hhrRound).toBe('care-empty');
+  expect(document.querySelector('#nutritionOrder [data-hhr-round="care-value"] .MuiChip-label').textContent).toBe('Común');
+  expect(document.querySelector('#nutritionOrder [data-hhr-round="care-observation"]').textContent).toContain('Porciones pequeñas.');
+  expect([role('#rest'), role('#diagnosisEntrySection'), role('#medicationEntrySection'), document.getElementById('print-line').dataset.hhrRound])
+    .toEqual(['care', 'diagnosis', 'peer', 'print']);
+
+  const changes = new MutationObserver(() => {});
+  changes.observe(main, {subtree:true, attributes:true, childList:true});
+  layout.refresh(main);
+  expect(changes.takeRecords()).toHaveLength(0);
+  changes.disconnect();
+  layout.clear();
+  expect(main.innerHTML).toBe(original);
+});
+
+it('leaves a table of another kind, an icon of another name and a line followed by another card where they are', () => {
+  layout.refresh(realSummary({second:'Problema', folded:' hidden'}));
+  expect([role('#diagnosisEntrySection'), document.getElementById('print-line').dataset.hhrRound]).toEqual(['peer', 'print']);
+  layout.refresh(realSummary({printName:'Imprimir resumen', folded:' hidden'}));
+  expect([role('#diagnosisEntrySection'), document.getElementById('print-line').dataset.hhrRound]).toEqual(['diagnosis', 'peer']);
+  // A card drawn between the line and Fármacos: the line keeps its place above it.
+  layout.refresh(realSummary());
+  expect(document.getElementById('print-line').dataset.hhrRound).toBe('peer');
+  // A rest card with a control of its own is not a line to read.
+  const main = realSummary({folded:' hidden'});
+  document.querySelector('#rest .MuiCardHeader-action > .MuiStack-root').append(document.createElement('button'));
+  layout.refresh(main);
+  expect([document.getElementById('rest').dataset.hhrRound, document.getElementById('print-line').dataset.hhrRound]).toEqual([undefined, 'peer']);
+  // The icon button with a second control beside it is not the line that was recognized.
+  const busy = realSummary({folded:' hidden'});
+  document.getElementById('print-line').append(document.createElement('button'));
+  layout.refresh(busy);
+  expect(document.getElementById('print-line').dataset.hhrRound).toBe('peer');
+});

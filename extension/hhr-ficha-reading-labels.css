@@ -149,7 +149,8 @@
     }
     > :last-child > .MuiStack-root {
       grid-area:action; align-self:center; justify-self:end; margin:0;
-      button:enabled { background-color:transparent; }
+      button:enabled { background-color:transparent; color:var(--hhr-ficha-ink-soft); }
+      button > svg { inline-size:18px; block-size:18px; font-size:1.125rem; }
       button:enabled:is(:hover,:focus-visible) { background-color:#edf4f1; }
       button:focus-visible { outline:2px solid #0b6e66; outline-offset:1px; }
     }

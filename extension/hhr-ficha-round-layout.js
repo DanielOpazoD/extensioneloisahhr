@@ -111,6 +111,31 @@
     return marks;
   }
 
+  // The line that holds nothing but the icon «Imprimir indicaciones», when the card of Fármacos is
+  // the next thing drawn after it. With anything else in between, the line stays where Eloísa put it.
+  function printLine(frame, marks) {
+    const flow = parent => [...parent.children].flatMap(child => marks.get(child) === 'bridge' ? flow(child) : [child]);
+    const items = flow(frame);
+    const at = items.findIndex(item => {
+      const button = item.children.length === 1 && item.firstElementChild;
+      return button && item.matches('.MuiGrid-item') && !marks.has(item) && button.matches('button.MuiIconButton-root:enabled') &&
+        !hasOwnText(item) && item.querySelectorAll(controls).length === 1 &&
+        button.querySelector(':scope > svg[aria-label]')?.getAttribute('aria-label').trim().toLowerCase() === 'imprimir indicaciones';
+    });
+    if (at < 0) return null;
+    // A folded empty section is not drawn. Anything else between the line and the card is.
+    const next = items.slice(at + 1).find(item => !marks.has(item) && !item.hidden && getComputedStyle(item).display !== 'none');
+    return next?.querySelector(':scope > #medicationEntrySection > .MuiCard-root > .MuiCardHeader-root .MuiCardHeader-title') ? items[at] : null;
+  }
+
+  function diagnosisTable(section) {
+    const card = section.querySelector(':scope > .MuiCard-root');
+    const tables = card?.querySelectorAll(':scope > .MuiCardContent-root table') || [];
+    const headings = tables.length === 1 && tables[0].tHead?.rows.length === 1 ? [...tables[0].tHead.rows[0].cells] : [];
+    return Boolean(card?.querySelector(':scope > .MuiCardHeader-root .MuiCardHeader-title')) && card.children.length === 2 &&
+      headings.length > 2 && headings[1].textContent.trim() === 'Diagnóstico' && !tables[0].querySelector('table');
+  }
+
   function layout(main) {
     const marks = new Map();
     if (!main) return marks;
@@ -122,7 +147,8 @@
     const handoff = surface(main, '#shiftChangeEntrySection');
     if (!note || !handoff) return marks;
     const vitals = surface(main, '#vitalSignsEntry'), alerts = surface(main, '#alertEntrySection');
-    const rest = surface(main, '#restEntrySection'), diet = surface(main, '#nutritionOrderEntrySection');
+    // Without an order, Reposo is its card alone: Eloísa adds the section once there is one.
+    const rest = surface(main, '#restEntrySection') || surface(main, '#rest.MuiCard-root'), diet = surface(main, '#nutritionOrderEntrySection');
     const requests = ['exam','surgery'].map(kind => surface(main, '[data-hhr-empty-request="' + kind + '"]')).filter(Boolean);
     const nodes = [note, handoff, vitals, alerts, rest, diet, ...requests].filter(Boolean);
     // Find the smallest shared native grid that can expose these cards. An
@@ -178,6 +204,13 @@
       if (slot) markSlot(slot, 'empty-request');
     }
     if (signs || notices) {
+      // The diagnosis says why the patient is here. Its card opens the ones under the round when it
+      // is the table Eloísa draws: a heading and one table whose second column is «Diagnóstico».
+      const diagnosis = surface(main, '#diagnosisEntrySection');
+      const reason = diagnosis && frame.contains(diagnosis) && diagnosisTable(diagnosis) && placement(diagnosis, frame, hidden);
+      if (reason && !reason.bridges.length && !marks.has(reason.item)) markSlot(reason, 'diagnosis');
+      const printing = printLine(frame, marks);
+      if (printing) marks.set(printing, 'print');
       // These are the actual CSS grid items after display:contents. Preserve
       // unrelated MUI columns, including controls next to a promoted section.
       let leading = true;

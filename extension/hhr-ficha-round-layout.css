@@ -63,6 +63,9 @@
     &[data-hhr-round-columns] {
       grid-template-columns:repeat(12,minmax(0,1fr));
       column-gap:1px !important;
+      /* Eloísa hangs this grid one gutter to the start and gives each item that gutter back. The round
+         takes the whole width, so the cards under it give the gutter up too and start on its edge. */
+      [data-hhr-round="peer"] { padding-block-start:0 !important; padding-inline-start:0 !important; }
       :is([data-hhr-round="bridge"],[data-hhr-round="inner"]) { display:contents !important; }
       :is([data-hhr-round="before"],[data-hhr-round="peer"]) {
         grid-column:span var(--hhr-round-span,12);
@@ -113,6 +116,53 @@
           [data-hhr-reading="vital-label"] { overflow-wrap:normal; word-break:normal; min-width:min-content; }
           :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-label"]) {
             grid-template-columns:minmax(min-content,1fr) auto; padding-inline:4px !important;
+          }
+        }
+      }
+      /* The diagnosis opens the cards under the round. Its name and its byline take a column at the
+         start, as Reposo and Régimen do, and each diagnosis is one line of its table. */
+      > [data-hhr-round="diagnosis"] {
+        order:-1; grid-column:1 / -1; box-sizing:border-box; min-width:0; width:100% !important; max-width:100% !important; padding:0 !important;
+        #diagnosisEntrySection > .MuiCard-root {
+          display:grid; grid-template-columns:fit-content(18rem) minmax(0,1fr); align-items:start;
+          > .MuiCardHeader-root { grid-column:1; }
+          > .MuiCardHeader-root > .MuiCardHeader-content { flex-direction:column; align-items:start; gap:0; }
+          > .MuiCardContent-root { grid-column:2; padding:0 !important; }
+          /* The card is named beside its table: the column of the same name does not repeat it. */
+          thead th:nth-child(2) > * { font-size:0; }
+          td > .MuiStack-root:has(> .MuiBox-root + .MuiTypography-root) { flex-flow:row wrap; align-items:baseline; gap:0 8px; }
+          td > .MuiStack-root > .MuiBox-root > .MuiTypography-root { color:var(--hhr-ficha-muted); }
+          td > svg { display:block; inline-size:18px; block-size:18px; font-size:1.125rem; }
+          td .MuiIconButton-root { inline-size:24px; block-size:24px; padding:3px !important; }
+          td .MuiIconButton-root > svg { inline-size:18px; block-size:18px; font-size:1.125rem; }
+        }
+      }
+      /* «Imprimir indicaciones» rides on the heading of Fármacos, after its title: the action of the
+         block beside the name of the block, and before the tools of the card for the Tab key. */
+      @supports (anchor-name:--hhr-round-print) {
+        &:has(> [data-hhr-round="print"]) {
+          position:relative;
+          #medicationEntrySection > .MuiCard-root > .MuiCardHeader-root .MuiCardHeader-title { inline-size:fit-content; anchor-name:--hhr-round-print; }
+        }
+        /* Out of the flow, the line takes no row of the grid and is the last stop of the round for the
+           Tab key. The cards that follow it in the page are read after it, as they are seen. */
+        > [data-hhr-round="print"] ~ [data-hhr-round="peer"] { reading-order:1; }
+        > [data-hhr-round="print"] {
+          position:absolute; position-anchor:--hhr-round-print; z-index:1;
+          inset-block-start:anchor(center); inset-inline-start:calc(anchor(end) + 14px); translate:0 -50%;
+          display:block !important; box-sizing:border-box; inline-size:max-content !important; max-inline-size:none !important;
+          min-block-size:0 !important; margin:0 !important; padding:0 !important;
+          > button {
+            box-sizing:border-box; inline-size:auto; block-size:26px; margin:0; padding:0 8px 0 6px !important;
+            border-radius:var(--hhr-ficha-radius); background:transparent; color:var(--hhr-ficha-action); white-space:nowrap;
+            &::after {
+              content:'Imprimir indicaciones' / ''; margin-inline-start:5px;
+              font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1 var(--hhr-ficha-sans);
+            }
+            &:hover { background:var(--hhr-ficha-action-hover); }
+            &:active { background:var(--hhr-ficha-action-pressed); }
+            &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+            > svg { inline-size:16px; block-size:16px; font-size:1rem; }
           }
         }
       }
@@ -200,6 +250,11 @@
           /* Typography children of a Stack are block elements, even for a single word. */
           :is([data-hhr-round="care-value"],[data-hhr-round="care-observation"]) > :is(.MuiTypography-root,p,span):not([data-hhr-round],.MuiChip-root) {
             display:inline !important; margin:0 !important; padding:0; font:inherit;
+          }
+          /* Eloísa wraps the text of a value or of an observation in a Box. */
+          :is([data-hhr-round="care-value"],[data-hhr-round="care-observation"]) > .MuiBox-root:has(> .MuiTypography-root:only-child) {
+            display:inline !important;
+            > .MuiTypography-root { display:inline !important; margin:0 !important; padding:0; font:inherit; }
           }
           :is([data-hhr-round="care-label"],[data-hhr-round="care-placeholder"]) { display:none !important; }
           [data-hhr-round="care-observation"]::before { content:' · ' / ''; color:#687c76; }

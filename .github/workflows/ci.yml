@@ -42,6 +42,8 @@ jobs:
         run: node scripts/capture-history.mjs WORKTREE "$RUNNER_TEMP/ficha-historial"
       - name: Verify the compact treatment plan keeps hours, states and native names
         run: node scripts/capture-care-plan.mjs WORKTREE "$RUNNER_TEMP/ficha-plan"
+      - name: Verify the compact summary on the shapes Eloísa draws
+        run: node scripts/capture-summary.mjs WORKTREE "$RUNNER_TEMP/ficha-resumen"
       - run: npm run test:dau
       - run: npm run build
       - uses: actions/upload-artifact@v7
