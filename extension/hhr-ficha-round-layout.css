@@ -75,6 +75,10 @@
       [data-hhr-round="peer"] > section > .MuiCard-root { margin-block:0 !important; }
       [data-hhr-round="peer"] > section > .MuiCard-root,
       [data-hhr-round="peer"] > .MuiCard-root { border-radius:var(--hhr-ficha-radius) !important; }
+      /* And one title, whatever Eloísa draws inside the card. An empty section keeps the line of its status. */
+      [data-hhr-round="peer"] .MuiCard-root:not([data-hhr-reading="status-card"]) > .MuiCardHeader-root .MuiCardHeader-title {
+        color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans);
+      }
       :is([data-hhr-round="bridge"],[data-hhr-round="inner"]) { display:contents !important; }
       :is([data-hhr-round="before"],[data-hhr-round="peer"]) {
         grid-column:span var(--hhr-round-span,12);
@@ -156,7 +160,7 @@
       @supports (anchor-name:--hhr-round-print) {
         &:has(> [data-hhr-round="print"]) {
           position:relative;
-          #medicationEntrySection > .MuiCard-root > .MuiCardHeader-root .MuiCardHeader-title { inline-size:fit-content; anchor-name:--hhr-round-print; }
+          :is(#medicationEntrySection,#medicationEntrySection > #dilutionEntrySection) > .MuiCard-root > .MuiCardHeader-root .MuiCardHeader-title { inline-size:fit-content; anchor-name:--hhr-round-print; }
         }
         /* Out of the flow, the line takes no row of the grid and is the last stop of the round for the
            Tab key. The cards that follow it in the page are read after it, as they are seen. */

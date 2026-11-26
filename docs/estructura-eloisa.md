@@ -5,6 +5,7 @@ Lo que sigue se observó el 25-11-2026 en la ficha médica real (`/dashboard/enc
 ## Marco común
 
 - `main` deja 32 px a cada lado. El fondo de la página es `#f1f1f1`; las tarjetas son blancas, sin sombra, con esquinas de 12 px. Toda la página usa Inter («Inter, "Inter Fallback"»). Medido el 26-11-2026 en una ventana de 1990 px.
+- La cabecera de una tarjeta deja 16 px arriba y a los lados y nada abajo; su contenido, 16 px y 24 abajo. Medido el 26-11-2026 en Balance Hídrico y Examen Gíneco Obstétrico.
 - Cada tabla del Resumen va dentro de un `Paper`: `.MuiCardContent-root > div.MuiPaper-root > div.MuiTableContainer-root > table` en Fármacos, Indicaciones Libres, Procedimientos, Diagnóstico, Solicitud interconsulta, Órdenes de atención y Solicitud de examen (en esta última el `TableContainer` tiene un hermano).
 
 - Cabecera fija `header.MuiAppBar-root#menu-app-bar-element` con los datos del paciente.
@@ -60,11 +61,14 @@ No hay `input[type=date]`. La fila tiene cuatro controles.
 
 ### Alertas
 
+Al abrir el Resumen, **Eloísa da el foco al campo vacío de la nueva alerta**, sin que nadie lo pulse: medido el 26-11-2026 a los 0,5, 1,5, 3, 6 y 9 s de cargar la ficha. Quitarle ese foco no muestra ningún error.
+
 `div#alertEntries`: `.MuiCardContent-root` con `div.MuiBox-root` (alto máximo de 250 px con desplazamiento propio; una `div.MuiStack-root` por alerta: una pila con `p` «Cargo Nombre» y `div > span` mensaje; otra con `span.MuiTypography-caption` antigüedad y `div.MuiStack-root > button[aria-label="Archivar"] > svg[data-testid=ArchiveRoundedIcon]`) y un `form.MuiStack-root` con los interruptores «No reanimación» y «Gestión de Visitas» y el campo «Observaciones» con «Agregar». Una ficha tenía quince alertas.
 
 ### Fármacos
 
 - Cabecera con título «Fármacos» y subtítulo vacío: la tarjeta no lleva firma. Acciones en un `div.MuiStack-root`: `button.MuiButton-contained.MuiButton-containedSecondary` «validar tratamiento» (el texto está en minúsculas y se muestra en mayúsculas; 195 × 38 px), interruptor «Mostrar Suspendidos», botón de icono `LocalPrintshopRoundedIcon` con nombre en su `svg`.
+- **La tarjeta puede ir dentro de una segunda sección** (26-11-2026): `section#medicationEntrySection > section#dilutionEntrySection > div.MuiCard-root#medicationEntry`. Su contenido abre entonces con `div.MuiBox-root` de dos `span.MuiTypography-caption`: «Medico Validador:», sin tilde, y su valor, vacío en esa ficha. Le sigue la tabla.
 - Columnas (`th` fijas): Tiempo, Indication, Posología, Indicaciones específicas, Solicitante, Acciones.
 - Celdas: tiempo en `div.MuiBox-root` con `svg[data-testid=ChangeHistoryRoundedIcon]` y un número de una o dos cifras, que son los días de tratamiento (lo confirmó el responsable clínico el 25-11-2026); el fármaco en un `div.MuiStack-root` con su `span.MuiTypography-caption` y otra pila con sus chips (por ejemplo «SOS»); posología e indicaciones específicas en `div.MuiBox-root > span.MuiTypography-caption`; el solicitante en un `span.MuiTypography-caption`.
 - **Un texto largo llega cortado.** Posología e indicaciones específicas se cortan hacia los 48 caracteres con «...» y llevan debajo un `div.MuiBox-root > button.MuiButton-text` «Leer más», en su propia línea: 10 de 14 posologías en la lista leída.
@@ -79,6 +83,17 @@ No hay `input[type=date]`. La fila tiene cuatro controles.
 - `.MuiCardContent-root > div.MuiPaper-root > div.MuiTableContainer-root > table` con siete columnas: una sin rótulo, Diagnóstico, Estado, Fecha, GES, Eno, Acciones.
 - Fila: `svg[data-testid=StarRoundedIcon]` en el diagnóstico principal; un `div.MuiStack-root` con una etiqueta de dos palabras (`div.MuiBox-root > span.MuiTypography-caption`) y el texto «código: descripción» en otro `span.MuiTypography-caption`; el estado en un selector de MUI (`div[role=combobox]#select-diagnosis-status`, 196 × 40 px, habilitado); la fecha; GES y Eno vacíos; y dos botones pequeños, `SpeakerNotesIcon` («Ver notas», deshabilitado) y `NoteAddIcon` («Agregar notas»).
 
+Sin diagnósticos (26-11-2026), la tarjeta no tiene tabla ni firma: `.MuiCardContent-root > p.MuiTypography-body2` «No se presentan diagnosticos registrados para este paciente», sin tilde.
+
+### Secciones vacías o sin permiso
+
+Medido el 26-11-2026 en un paciente de estadía corta:
+
+- Órdenes de atención sin órdenes: `p.MuiTypography-body2` «No se presenta orden de atención solicitada para este paciente», sin tabla ni firma.
+- Solicitudes de intervención quirúrgica: `p.MuiTypography-body2` con **tres nodos de texto**, «No se presentan», «Solicitudes de intervención quirúrgica» y «registradas para este paciente».
+- Eventos Adversos y Examen Gíneco Obstétrico: `p.MuiTypography-body2` «No tiene permiso para visualizar».
+- Balance Hídrico: en la cabecera, un interruptor «Balance Hídrico Indicado» y un botón de icono de impresión deshabilitado; en el contenido, un `div.MuiStack-root` en fila con cuatro campos pequeños de 200 × 40 px (selector «Tipo de Registro», selector «Item» deshabilitado, dos campos de fecha y hora `DD/MM/YYYY hh:mm` con su calendario) y un `button[type=submit]` «Filtrar»; debajo, un `p.MuiTypography-body2`. La tarjeta mide 164 px.
+
 ### Otras tablas
 
 | Tarjeta | Columnas |
@@ -89,7 +104,7 @@ No hay `input[type=date]`. La fila tiene cuatro controles.
 | Órdenes de atención | Profesional, Estado, Fecha solicitud, Asignado, Motivo, Indicaciones, Acciones |
 | Solicitud de examen | Grupo de exámenes, Nro. Orden, Estado Orden, Fecha solicitud, Examen(es), Observaciones, Estado, Acciones |
 
-Las filas de Indicaciones Libres llevan las mismas tres acciones que las de Fármacos. Una ficha tenía 20 botones «Leer más» en sus tablas.
+Las filas de Indicaciones Libres llevan las mismas tres acciones que las de Fármacos. Su texto llega cortado como una posología, con «Leer más» bajo él, en la columna «Indication», en inglés (26-11-2026). Una ficha tenía 20 botones «Leer más» en sus tablas.
 
 ### Línea de secciones
 
@@ -146,3 +161,4 @@ Cada evento es un `div.MuiCard-root`:
 - El lápiz de Evolución es «Enmendar», no «Editar».
 - No había ficha ficticia de Plan de tratamiento. La de `scripts/care-plan-visual-fixture.mjs` se escribió desde esta descripción.
 - Las fichas ficticias del Resumen dibujaban Fármacos con tres o cuatro columnas, un menú por fila y una firma de tarjeta; «Imprimir indicaciones» como un botón con texto; Reposo vacío dentro de una sección; y los interruptores y botones de Eloísa a un tamaño que no tienen. Con la forma real, la 0.48.192 dejaba Reposo vacío como una tarjeta a todo el ancho y Régimen en tres líneas. `scripts/summary-visual-fixture.mjs` sigue esta descripción bloque por bloque.
+- La del Resumen dibujaba Fármacos sin su segunda sección ni la línea de su validador, el campo de alerta sin el foco que Eloísa le da, la frase de Cirugía en un solo nodo, y no tenía Balance Hídrico, Eventos Adversos ni Examen Gíneco Obstétrico. Con esas formas, la 0.48.196 dejaba Fármacos 10 px más adentro con su título y su botón nativos, «Imprimir indicaciones» en una línea propia, el formulario de alertas abierto, y Cirugía, Balance y Gíneco a su tamaño nativo: lo que el responsable vio en su pantalla el 26-11-2026.

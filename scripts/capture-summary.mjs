@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
-import { summaryDiagnoses, summaryMedications, summaryPage } from './summary-visual-fixture.mjs';
+import { summaryDiagnoses, summaryFree, summaryMedications, summaryPage } from './summary-visual-fixture.mjs';
 
 const refresh = async page => {
   // The readers materialize each cut text with Eloísa's own disclosure: one refresh per commit of the host.
@@ -44,7 +44,8 @@ const read = page => page.evaluate(() => {
     rest:{...care('rest'), empty:getComputedStyle(one('#rest .MuiCardContent-root > p'), '::after').content, native:one('#rest .MuiCardContent-root > p').textContent},
     diet:{...care('nutritionOrder'), text:shown(one('#nutritionOrder .care > .MuiStack-root + .MuiStack-root span'))},
     diagnosis:{card:box(one('#diagnosisEntry')), rows:diagnoses, title:box(diagnosis.querySelector('.MuiCardHeader-title')), byline:box(diagnosis.querySelector('.MuiCardHeader-subheader')),
-      repeated:getComputedStyle(diagnosis.querySelector('thead th:nth-child(2) p')).fontSize, heading:diagnosis.querySelector('thead th:nth-child(2)').textContent.trim()},
+      // Without diagnoses Eloísa writes a sentence in place of the table.
+      repeated:diagnosis.querySelector('thead') && getComputedStyle(diagnosis.querySelector('thead th:nth-child(2) p')).fontSize, heading:diagnosis.querySelector('thead th:nth-child(2)')?.textContent.trim()},
     medication:{card:box(one('#medicationEntry')), head:box(medicationHead), title:box(medicationHead.querySelector('.MuiCardHeader-title')), rows,
       validate:{...box(validate), text:validate.textContent, transform:getComputedStyle(validate).textTransform, initial:getComputedStyle(validate, '::first-letter').textTransform,
         display:getComputedStyle(validate).display},
@@ -53,6 +54,27 @@ const read = page => page.evaluate(() => {
     print:{...box(print), position:getComputedStyle(print.parentElement).position, caption:getComputedStyle(print, '::after').content, name:print.querySelector('svg').getAttribute('aria-label'),
       named:print.hasAttribute('aria-label') || print.hasAttribute('title'), colour:getComputedStyle(print).color},
     switches:[...document.querySelectorAll('#alertEntries .MuiSwitch-root')].map(el => Math.round(box(el).height)),
+    // Eloísa focuses the empty alert field when the summary opens.
+    alertForm:(row => ({folded:row?.hasAttribute('data-hhr-entry-folded') ?? null, shown:shown(one('#fixture-alert')), focused:document.activeElement === one('#fixture-alert'),
+      opener:Boolean(one('#alertEntrySection [data-hhr-entry-open]') && shown(one('#alertEntrySection [data-hhr-entry-open]')))}))(one('#alertEntrySection [data-hhr-entry-prompt]')),
+    free:(card => ({disclosures:[...card.querySelectorAll('tbody .MuiButton-text')].filter(shown).length, last:card.querySelector('tbody tr:last-child td').textContent.trim(),
+      widths:[...card.querySelectorAll('thead th')].map(th => Math.round(box(th).width))}))(one('#freeIndicationEntry')),
+    balance:(card => ({...box(card), controls:[...card.querySelectorAll('.MuiCardContent-root :is(.MuiInputBase-root,.MuiButton-root)')].map(el => Math.round(box(el).height)),
+      edge:Math.round(card.querySelector('.MuiCardHeader-title').getBoundingClientRect().left - box(card).left),
+      filter:shown(card.querySelector('button[type="submit"]')), calendars:[...card.querySelectorAll('.MuiInputAdornment-root button')].filter(shown).length}))(one('#inputOutputHydricBalanceEntry')),
+    // A section without permission, or empty, is one line: its name and Eloísa's sentence.
+    lines:Object.fromEntries(['adverseEventEntry', 'obstetricGynecologicalExaminationEntry', 'operationTheaterRequestEntry', 'diagnosisEntry', 'procedureOrderEntry'].map(id => {
+      const card = one('#' + id), title = card.querySelector('.MuiCardHeader-title'), text = card.querySelector('.MuiCardContent-root > p');
+      const middle = el => (el.getBoundingClientRect().top + el.getBoundingClientRect().bottom) / 2;
+      return [id, {mark:card.getAttribute('data-hhr-reading'), round:card.closest('.frame > .MuiGrid-item')?.getAttribute('data-hhr-round'), height:Math.round(box(card).height),
+        title:getComputedStyle(title).fontSize + ' ' + getComputedStyle(title).fontWeight,
+        left:Math.round(box(card).left), right:Math.round(innerWidth - box(card).right), oneLine:Boolean(text) && Math.abs(middle(title) - middle(text)) < 6}];
+    })),
+    // Who validated the treatment, the first line of Fármacos.
+    validator:(line => line && {mark:line.getAttribute('data-hhr-reading'), says:getComputedStyle(line.firstElementChild, '::after').content,
+      edge:Math.round(box(line).left + parseFloat(getComputedStyle(line).paddingLeft)), size:getComputedStyle(line).fontSize, colour:getComputedStyle(line).color,
+      afterTitle:Math.round(box(line).top - box(one('#medicationEntry .MuiCardHeader-title')).bottom), beforeTable:Math.round(box(one('#medicationEntry thead')).top - box(line).bottom)})(
+      one('#medicationEntry > .MuiCardContent-root > .MuiBox-root:first-child:not(:only-child)')),
     archive:[...document.querySelectorAll('#alertEntries .alert-row button')].map(button => [Math.round(box(button.querySelector('svg')).width), Math.round(box(button).height), button.getAttribute('aria-label')]),
     tabs:getComputedStyle(one('[role="tab"]')).textTransform,
     // What good order asks of the whole page: its edges, its gaps, its type and its surfaces. Only in the compact view.
@@ -60,12 +82,12 @@ const read = page => page.evaluate(() => {
       const rail = one('[data-hhr-ficha-sections]').getBoundingClientRect();
       const cards = [...document.querySelectorAll('.frame section[id] > .MuiCard-root, .frame #rest.MuiCard-root')].filter(shown);
       const peers = [...document.querySelectorAll('.frame > [data-hhr-round="peer"], .frame > [data-hhr-round="diagnosis"]')].filter(shown)
-        .map(item => item.querySelector(':scope > section > .MuiCard-root')).filter(Boolean).sort((a, b) => box(a).top - box(b).top);
+        // Eloísa can wrap a card in a second section, as it does with Fármacos.
+        .map(item => item.querySelector(':scope > section > .MuiCard-root, :scope > section > section:only-child > .MuiCard-root')).filter(Boolean).sort((a, b) => box(a).top - box(b).top);
       const texts = [...document.querySelectorAll('.frame *, [data-hhr-ficha-sections] *')].filter(el => shown(el) &&
         [...el.childNodes].some(node => node.nodeType === 3 && node.textContent.trim()) && getComputedStyle(el).fontSize !== '0px');
       const firstText = el => { const range = document.createRange(); range.selectNodeContents(el); return range.getClientRects()[0]?.left; };
-      const tables = ['medicationEntrySection', 'freeIndicationEntrySection', 'procedureOrderEntrySection'].map(id => {
-        const section = document.getElementById(id);
+      const tables = ['medicationEntrySection', 'freeIndicationEntrySection', 'procedureOrderEntrySection'].map(id => document.getElementById(id)).filter(section => section.querySelector('thead')).map(section => {
         // The reading edge of a cell is where its content box starts: «Tiempo» aligns its days to the right on purpose.
         const edge = cell => cell.getBoundingClientRect().left + parseFloat(getComputedStyle(cell).paddingLeft);
         return [firstText(section.querySelector('.MuiCardHeader-title')), edge(section.querySelector('thead th')), edge(section.querySelector('tbody td'))].map(Math.round);
@@ -81,6 +103,10 @@ const read = page => page.evaluate(() => {
         lefts:[...new Set(cards.map(card => Math.round(card.getBoundingClientRect().left)))].sort((a, b) => a - b),
         rights:[...new Set(cards.map(card => Math.round(innerWidth - card.getBoundingClientRect().right)))].sort((a, b) => a - b),
         gaps:peers.slice(1).map((card, at) => Math.round(box(card).top - box(peers[at]).bottom)),
+        edges:[...new Set(peers.map(card => Math.round(card.getBoundingClientRect().left) + '/' + Math.round(innerWidth - card.getBoundingClientRect().right)))],
+        // The daily row docked on the section links takes the colour of that line.
+        dock:one('[data-hhr-ficha-dock]') && [getComputedStyle(one('[data-hhr-ficha-dock]')).backgroundColor, getComputedStyle(one('[data-hhr-ficha-sections]')).backgroundColor],
+        statusTitle:(title => getComputedStyle(title).fontSize + ' ' + getComputedStyle(title).fontWeight)(one('#ramEntry .MuiCardHeader-title')),
         families:[...new Set(texts.map(el => getComputedStyle(el).fontFamily.split(',')[0].trim()))],
         weights:[...new Set(texts.map(el => getComputedStyle(el).fontWeight))].sort(),
         sizes:[...new Set(texts.map(el => parseFloat(getComputedStyle(el).fontSize)))].sort((a, b) => a - b),
@@ -137,6 +163,7 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(look.lefts[0] === look.rail[0] && look.rights[0] === look.rail[1], `Las tarjetas empiezan y terminan en los bordes de la línea de secciones: ${look.lefts[0]}/${look.rights[0]} frente a ${look.rail}`);
   // One gap between blocks, one typeface, two weights, four sizes, one title, one surface.
   assert.ok(look.gaps.length >= 6 && look.gaps.every(gap => gap === 8), 'Los bloques bajo la ronda se separan siempre 8 px: ' + look.gaps);
+  assert.deepEqual(look.edges, [look.rail.join('/')], 'Cada tarjeta bajo la ronda, Fármacos en su segunda sección incluida, termina en los bordes de la línea de secciones: ' + look.edges);
   // The wide pass swaps only the view's family, to measure another platform: there two are expected.
   if (!sans) assert.equal(look.families.length, 1, 'Una sola tipografía en toda la ficha: ' + look.families);
   assert.deepEqual(look.weights, ['400', '600'], 'Dos pesos de letra');
@@ -154,6 +181,26 @@ async function verifySummary(page, width, native, off, sans) {
   const {marker} = look;
   assert.ok(marker.lines === 2 && ((marker.onLast && marker.gap >= 4 && marker.gap <= 10) || (marker.below && marker.start >= 0 && marker.start <= 10)),
     'La etiqueta sigue al nombre como una palabra: ' + JSON.stringify(marker));
+
+  // Shapes read in Eloísa on 26-11-2026. Fármacos opens with who validated the treatment, under its title and on its edge.
+  const {validator, alertForm, free, balance, lines} = shown;
+  assert.ok(validator?.mark === 'order-validator' && validator.edge === look.tables[0][0] && validator.afterTitle >= 0 && validator.afterTitle <= 8 &&
+    validator.beforeTable >= 0 && validator.beforeTable <= 6, 'Quién valida el tratamiento se lee bajo el título de Fármacos, en su borde y junto a su tabla: ' + JSON.stringify(validator));
+  assert.deepEqual([validator.says, validator.size, validator.colour], ['"Tratamiento sin validar" / ""', '12px', 'rgb(102, 102, 102)'], 'Sin validar, la línea lo dice en el gris de lo que explica');
+  // Eloísa gives the empty alert field the focus when the summary opens. The form still folds, and the next key does not go into an alert.
+  assert.deepEqual(alertForm, {folded:true, shown:false, focused:false, opener:true}, 'El formulario de alertas se pliega aunque Eloísa le dé el foco: ' + JSON.stringify(alertForm));
+  assert.ok(free.disclosures === 0 && free.last.startsWith(summaryFree.at(-1)[0]) && free.widths[0] === Math.max(...free.widths),
+    'Una indicación libre se lee entera, en la columna más ancha: ' + JSON.stringify(free));
+  assert.ok(balance.height <= native.balance.height - 40 && balance.controls.length === 5 && balance.controls.every(height => height <= 30) && balance.filter && balance.calendars === 2 && balance.edge === 10,
+    `Balance Hídrico filtra en una línea, con sus campos, su calendario y «Filtrar»: ${native.balance.height} → ${balance.height}, ${balance.controls}`);
+  for (const id of ['adverseEventEntry', 'obstetricGynecologicalExaminationEntry']) {
+    const line = lines[id];
+    assert.ok(line.mark === 'status-card' && line.height <= 30 && line.oneLine && line.left === look.rail[0] && line.right === look.rail[1] && line.title === look.statusTitle,
+      `Una sección sin permiso es una línea, como RAM: ${id} ${JSON.stringify(line)}`);
+  }
+  if (look.dock) assert.equal(look.dock[0], look.dock[1], 'La fila diaria sobre la línea de secciones tiene su mismo fondo');
+  // Its sentence is three text nodes. Read whole, it is an empty request like Exámenes, beside it on the last line of the round.
+  assert.deepEqual([lines.operationTheaterRequestEntry.mark, lines.operationTheaterRequestEntry.round], ['status-card', 'empty-request'], 'Cirugía sin solicitudes acompaña a Exámenes');
 
   // The round: note, signs and care on the left; handoff and alerts on the right, on shared edges.
   assert.ok(near(shown.note.left, shown.signs.left) && near(shown.note.right, shown.signs.right) && near(shown.signs.top, shown.note.bottom), 'Signos sigue a la nota con sus bordes');
@@ -262,6 +309,20 @@ async function verifySummary(page, width, native, off, sans) {
   await page.locator('#fixture-print').press('Enter');
   assert.equal(await page.locator('#fixture-print').getAttribute('data-fixture-print'), 'clicked', 'El botón sigue imprimiendo');
   await page.evaluate(() => document.activeElement.blur());
+  // «Agregar alerta» opens the field that was folded and gives it the focus; leaving it empty folds it again.
+  await page.locator('#alertEntrySection [data-hhr-entry-open]').click();
+  assert.deepEqual((await read(page)).alertForm, {folded:false, shown:true, focused:true, opener:false}, '«Agregar alerta» abre el campo con el foco');
+  await page.evaluate(() => document.activeElement.blur());
+  await refresh(page);
+  assert.equal((await read(page)).alertForm.folded, true, 'Vacío y sin foco, vuelve a plegarse');
+
+  // A section that Eloísa fills with something unknown keeps its content and takes the title of every card.
+  await page.evaluate(() => { document.querySelector('#adverseEventEntry .MuiCardContent-root > p').textContent = 'Evento de prueba registrado el 14-04-2026'; });
+  await refresh(page);
+  assert.deepEqual(await page.evaluate(() => { const title = getComputedStyle(document.querySelector('#adverseEventEntry .MuiCardHeader-title'));
+    return [document.getElementById('adverseEventEntry').hasAttribute('data-hhr-reading'), title.fontSize + ' ' + title.fontWeight]; }), [false, '15px 600'], 'Una tarjeta con registros se titula como las demás');
+  await page.evaluate(() => { document.querySelector('#adverseEventEntry .MuiCardContent-root > p').textContent = 'No tiene permiso para visualizar'; });
+  await refresh(page);
 
   // What has another shape stays where Eloísa put it.
   const roles = async () => (await read(page)).roles;
@@ -321,6 +382,42 @@ async function verifySummary(page, width, native, off, sans) {
   assert.deepEqual([again.roles, Math.round(again.medication.card.top)], [shown.roles, Math.round(shown.medication.card.top)], 'Al volver a la vista compacta el resumen queda igual');
 }
 
+// The other shapes Eloísa draws, each in a page of its own at 1440 px.
+async function verifyShapes(browser, assets) {
+  const open = async options => {
+    const page = await browser.newPage({viewport:{width:1440, height:900}, deviceScaleFactor:1, locale:'es-CL', timezoneId:'Pacific/Easter'});
+    await page.setContent(summaryPage(options));
+    await settle(page);
+    await mountFicha(page, assets, {theme:'compact'});
+    await refresh(page);
+    return page;
+  };
+  // A patient without diagnoses nor care orders, as the one read on 26-11-2026: both are lines like RAM, kept in view.
+  let page = await open({diagnoses:[], careOrders:[]});
+  let shown = await read(page);
+  for (const id of ['diagnosisEntry', 'procedureOrderEntry']) {
+    const line = shown.lines[id];
+    assert.ok(line.mark === 'status-card' && line.round === 'peer' && line.height <= 30 && line.oneLine && line.left === shown.look.rail[0] && line.right === shown.look.rail[1] &&
+      line.title === shown.look.statusTitle,
+      `Una sección vacía con tabla se lee como las demás vacías: ${id} ${JSON.stringify(line)}`);
+  }
+  assert.ok(shown.look.gaps.every(gap => gap === 8) && shown.look.edges.length === 1, 'Los bloques conservan su separación y sus bordes: ' + shown.look.gaps + ' ' + shown.look.edges);
+  assert.equal(await page.locator('[data-hhr-ficha-folded] #diagnosisEntry, [data-hhr-ficha-folded]#diagnosisEntry').count(), 0, 'Un diagnóstico ausente no se pliega con las secciones vacías');
+  await page.close();
+  // The older shape of Fármacos, its card straight in its section, without the line of its validator.
+  page = await open({nested:false});
+  shown = await read(page);
+  assert.ok(shown.roles['fixture-print'] === 'print' && shown.validator === null && shown.look.edges.length === 1 && shown.look.tables.every(([title, heading, cell]) => title === heading && heading === cell),
+    'Fármacos sin su segunda sección conserva su forma: ' + JSON.stringify([shown.roles['fixture-print'], shown.look.edges, shown.look.tables]));
+  await page.close();
+  // Validated: the line names who did it, in the ink of what is read.
+  page = await open({validator:'Tomás Ejemplo 15-04-2026 08:40'});
+  shown = await read(page);
+  const value = await page.evaluate(() => getComputedStyle(document.querySelector('[data-hhr-reading="order-validator"] > :last-child')).color);
+  assert.deepEqual([shown.validator.says, value], ['"Médico validador:" / ""', 'rgb(74, 74, 74)'], 'Con un validador, la línea lo nombra');
+  await page.close();
+}
+
 const [revision, directory] = process.argv.slice(2);
 if (!revision || !directory) throw Error('Uso: node scripts/capture-summary.mjs <ref|WORKTREE> <directorio>');
 const assets = await fichaAssets(revision);
@@ -354,6 +451,7 @@ try {
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
   }
+  if (revision === 'WORKTREE') await verifyShapes(browser, assets);
 } finally {
   await browser.close();
 }

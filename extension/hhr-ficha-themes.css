@@ -169,10 +169,13 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     --hhr-round-inset:10px;
     --hhr-round-heading:.9375rem;
-    > .MuiGrid-item:has(> :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection):only-child) {
+    > .MuiGrid-item:has(> :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#inputOutputHydricBalanceEntrySection):only-child) {
       padding-block-start:0 !important;
     }
-    :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection):has(> .MuiCard-root:only-child) {
+    /* Eloísa can wrap the card of Fármacos in a second section (measured 26-11-2026). The outer one then only holds it. */
+    #medicationEntrySection:has(> #dilutionEntrySection:only-child > .MuiCard-root:only-child) { padding:0 !important; margin-block:0 !important; }
+    /* An empty section is a line like the other empty ones: its card keeps the status style. */
+    :is(#vitalSignsEntry,#alertEntrySection,#medicationEntrySection,#dilutionEntrySection,#freeIndicationEntrySection,#diagnosisEntrySection,#procedureOrderEntrySection,#inputOutputHydricBalanceEntrySection):has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) {
       padding:0 !important; margin-block:0 !important;
       > .MuiCard-root {
         margin-block:0 !important; padding-inline:0 !important; border-radius:var(--hhr-ficha-radius) !important;
@@ -185,16 +188,44 @@
     }
     /* A table that fills its card shares the card's reading edges: the heading,
        the column names and every first cell start on the same line. */
-    :is(#medicationEntrySection,#freeIndicationEntrySection,#procedureOrderEntrySection):has(> .MuiCard-root:only-child)
-      /* Eloísa wraps the table in a Paper. :has() cannot hold another :has(), so the chain is spelt out. */
-      > .MuiCard-root > .MuiCardContent-root:is(:has(> :is(table,.MuiTableContainer-root):only-child), :has(> .MuiPaper-root:only-child > .MuiTableContainer-root:only-child > table)) {
+    :is(#medicationEntrySection,#dilutionEntrySection,#freeIndicationEntrySection,#procedureOrderEntrySection):has(> .MuiCard-root:only-child)
+      /* Eloísa wraps the table in a Paper, and Fármacos can open with the line of its validator.
+         :has() cannot hold another :has(), so each chain is spelt out. */
+      > .MuiCard-root > .MuiCardContent-root:is(:has(> :is(table,.MuiTableContainer-root):only-child), :has(> .MuiPaper-root:only-child > .MuiTableContainer-root:only-child > table),
+        :has(> [data-hhr-reading="order-validator"]:first-child + :is(table,.MuiTableContainer-root):last-child),
+        :has(> [data-hhr-reading="order-validator"]:first-child + .MuiPaper-root:last-child > .MuiTableContainer-root:only-child > table)) {
       padding-inline:0 !important;
+      > [data-hhr-reading="order-validator"] { padding-inline:var(--hhr-round-inset) !important; }
       :is(th,td):first-child:not(:is(dialog,[role=dialog],td) *) { padding-inline-start:var(--hhr-round-inset) !important; }
       :is(th,td):last-child:not(:is(dialog,[role=dialog],td) *) { padding-inline-end:var(--hhr-round-inset) !important; }
+    }
+    /* Balance Hídrico: its filter at the height of a line, like the daily form. Each field keeps its
+       label, its menu and its calendar; the switch and the print icon keep their place. */
+    #inputOutputHydricBalanceEntrySection:has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) > .MuiCard-root {
+      > .MuiCardHeader-root { min-height:0 !important; padding-block:3px !important; }
+      > .MuiCardHeader-root > .MuiCardHeader-action { margin:0 !important; align-self:center; }
+      > .MuiCardHeader-root .MuiFormControlLabel-root { margin-block:0; }
+      > .MuiCardHeader-root .MuiSwitch-root { zoom:.75; }
+      > .MuiCardHeader-root .MuiFormControlLabel-label { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans); }
+      .MuiIconButton-root { padding:4px !important; svg { inline-size:18px; block-size:18px; } }
+      /* The label of a field rides on its upper border: the content keeps room for it. */
+      > .MuiCardContent-root { padding-block:10px 8px !important; }
+      .MuiInputBase-root { block-size:30px; font-size:var(--hhr-ficha-text-body); }
+      :is(.MuiInputBase-input,.MuiSelect-select) { box-sizing:border-box; block-size:30px; min-height:0 !important; padding-block:0 !important; font-size:inherit; line-height:30px; }
+      .MuiButton-root {
+        min-block-size:0; block-size:30px; padding-block:0 !important; box-shadow:none;
+        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/30px var(--hhr-ficha-sans); text-transform:none;
+      }
+      > .MuiCardContent-root > p { margin-block:6px 0 !important; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans); }
     }
     /* Care orders keep the vertical rhythm of the prescription tables above them. */
     #procedureOrderEntrySection:has(> .MuiCard-root:only-child) > .MuiCard-root > :is(.MuiCardHeader-root,.MuiCardContent-root) {
       min-height:0 !important; padding-block:2px !important;
+    }
+    /* Empty, Diagnóstico and Órdenes de atención are a status line like RAM: no inset of their own. */
+    :is(#diagnosisEntrySection,#procedureOrderEntrySection):has(> [data-hhr-reading="status-card"]:only-child) {
+      padding:0 !important; margin-block:0 !important;
+      > [data-hhr-reading="status-card"] > :is(.MuiCardHeader-root,.MuiCardContent-root) { min-height:0 !important; margin:0 !important; padding:0 !important; }
     }
     /* Reserve the trailing hit target even when the author wraps onto another line. */
     #vitalSignsEntry > .MuiCard-root:has([data-hhr-reading="vital-history"]) > .MuiCardHeader-root {
@@ -262,7 +293,7 @@
     [data-hhr-reading-toggle] .MuiSwitch-root { zoom:.75; }
     /* MUI leaves 16 px after a switch's label. Closing a heading, the label ends on the reading edge like any other action. */
     .MuiCardHeader-action .MuiFormControlLabel-root:last-child { margin-inline-end:0 !important; }
-    :is(#medicationEntrySection,#noPharmaEntrySection,#freeIndicationEntrySection) > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-action .MuiButton-root,
+    :is(#medicationEntrySection,#dilutionEntrySection,#noPharmaEntrySection,#freeIndicationEntrySection) > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-action .MuiButton-root,
     > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root {
       /* A block, so that its first letter can be a capital: Eloísa writes «validar tratamiento» and shows it in capitals. */
       display:inline-block; min-inline-size:0; min-block-size:26px; padding:2px 10px; border-radius:var(--hhr-ficha-radius); box-shadow:none;
@@ -285,6 +316,15 @@
     }
     /* Who asked for a prescription situates it: one line, in the ink of what explains. */
     [data-hhr-reading="order-requester"] { color:var(--hhr-ficha-muted); white-space:nowrap; }
+    /* Who validated the treatment reads as a byline under the title, as Eloísa's «Última actualización»
+       does, close to the table it signs. Not yet validated, it says so, beside «Validar tratamiento». */
+    [data-hhr-reading="order-validator"] {
+      margin:0 0 4px !important; padding:0; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans);
+      > .MuiTypography-root { margin:0; color:inherit; font:inherit; }
+      > .MuiTypography-root:first-child { font-size:0; &::after { content:'Médico validador:' / ''; font-size:var(--hhr-ficha-text-meta); } }
+      > .MuiTypography-root + .MuiTypography-root { margin-inline-start:4px; color:var(--hhr-ficha-ink-soft); }
+      &:has(> .MuiTypography-root:last-child:empty) > .MuiTypography-root:first-child::after { content:'Tratamiento sin validar' / ''; }
+    }
     /* The state of a diagnosis is a native select. It keeps its arrow and its menu. */
     #diagnosisEntrySection td .MuiInputBase-root:has([role="combobox"]) {
       block-size:auto !important; min-block-size:26px; font-size:var(--hhr-ficha-text-body);

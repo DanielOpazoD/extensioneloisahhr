@@ -139,3 +139,66 @@ it('las órdenes de atención conservan controles, nombres, foco y órdenes de v
   expect(main.querySelector('[data-hhr-reading="care-orders"],[data-hhr-reading="narrow"],[data-hhr-reading="order-instructions"]')).toBeNull();
   reader.clear();
 });
+
+it('lee como una línea las secciones vacías o sin permiso que Eloísa dibuja con otra forma', () => {
+  document.body.innerHTML = '<main><nav></nav><section id="diagnosisEntrySection">' +
+    makeCard('diagnosisEntry','Diagnóstico','No se presentan diagnosticos registrados para este paciente') + '</section>' +
+    '<section id="procedureOrderEntrySection">' + makeCard('procedureOrderEntry','Órdenes de atención','No se presenta orden de atención solicitada para este paciente') + '</section>' +
+    makeCard('gyneco','Examen Gíneco Obstétrico','No tiene permiso para visualizar') +
+    '<section id="operationTheaterRequestEntrySection">' + makeCard('surgery','Solicitudes de intervención quirúrgica','') + '</section>' +
+    makeCard('unknown','Otra sección','No se presentan registros de prueba para este paciente') + '</main>';
+  // React writes this sentence in three text nodes around the name of the section.
+  document.querySelector('#surgery p').append('No se presentan ', 'Solicitudes de intervención quirúrgica', ' registradas para este paciente');
+  const main = document.querySelector('main'), reader = globalThis.HhrFichaReadingSurfaces.create();
+  const density = globalThis.HhrFichaSummaryDensity.create([]);
+  reader.refresh(main,true); density.refresh('episode',main.querySelector('nav'));
+  for (const id of ['diagnosisEntry','procedureOrderEntry','gyneco','surgery']) expect(document.getElementById(id).dataset.hhrReading).toBe('status-card');
+  // Their sections no longer read as the tables they hold when there are records.
+  expect(document.querySelector('#diagnosisEntrySection').hasAttribute('data-hhr-reading')).toBe(false);
+  expect(document.querySelector('#procedureOrderEntrySection').hasAttribute('data-hhr-reading')).toBe(false);
+  expect(document.querySelector('#operationTheaterRequestEntrySection').dataset.hhrEmptyRequest).toBe('surgery');
+  // Kept in view: an empty diagnosis is worth reading, and a section without permission is never folded.
+  for (const id of ['diagnosisEntry','procedureOrderEntry','gyneco']) expect(document.getElementById(id).closest('[data-hhr-ficha-folded]')).toBeNull();
+  expect(document.getElementById('unknown').hasAttribute('data-hhr-reading')).toBe(false);
+  // With a record the diagnosis is its table again.
+  document.querySelector('#diagnosisEntry .MuiCardContent-root').innerHTML = '<table><thead><tr><th>Diagnóstico</th></tr></thead><tbody><tr><td>Z00</td></tr></tbody></table>';
+  reader.refresh(main,true);
+  expect([document.querySelector('#diagnosisEntrySection').dataset.hhrReading, document.getElementById('diagnosisEntry').dataset.hhrReading]).toEqual(['diagnosis','diagnosis']);
+  // Two sentences in two elements are not one message.
+  document.querySelector('#gyneco p').insertAdjacentHTML('afterend','<p>Solicitar acceso</p>');
+  reader.refresh(main,true);
+  expect(document.getElementById('gyneco').hasAttribute('data-hhr-reading')).toBe(false);
+  // Outside the compact view no section is a status line.
+  reader.refresh(main,false);
+  expect(main.querySelector('[data-hhr-reading="status-card"],[data-hhr-reading="status-message"],[data-hhr-empty-request]')).toBeNull();
+  density.clear(); reader.clear();
+});
+
+it('marca quién validó el tratamiento de Fármacos solo con su forma exacta', () => {
+  const line = value => '<div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">Medico Validador:</span>' +
+    '<span class="MuiTypography-root MuiTypography-caption">' + value + '</span></div>';
+  const table = '<table><thead><tr><th>Indication</th></tr></thead><tbody><tr><td>Preparación</td></tr></tbody></table>';
+  document.body.innerHTML = '<main><section id="medicationEntrySection"><section id="dilutionEntrySection">' +
+    makeCard('medicationEntry','Fármacos','').replace('<p></p>', line('') + table) + '</section></section></main>';
+  const main = document.querySelector('main'), reader = globalThis.HhrFichaReadingSurfaces.create();
+  const validator = () => main.querySelector('#medicationEntry .MuiCardContent-root > .MuiBox-root');
+  reader.refresh(main,true);
+  expect(validator().dataset.hhrReading).toBe('order-validator');
+  validator().outerHTML = line('Tomás Ejemplo 15-04-2026');
+  reader.refresh(main,true);
+  expect(validator().dataset.hhrReading).toBe('order-validator');
+  // Another label, a control or a third piece is not that line.
+  for (const change of [el => { el.firstElementChild.textContent = 'Observación:'; }, el => el.append(document.createElement('button')),
+    el => el.lastElementChild.append(document.createElement('b'))]) {
+    validator().outerHTML = line('');
+    change(validator());
+    reader.refresh(main,true);
+    expect(validator().hasAttribute('data-hhr-reading')).toBe(false);
+  }
+  validator().outerHTML = line('');
+  reader.refresh(main,true);
+  // Outside the compact view the line is Eloísa's again.
+  reader.refresh(main,false);
+  expect(validator().hasAttribute('data-hhr-reading')).toBe(false);
+  reader.clear();
+});

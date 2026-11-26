@@ -1,5 +1,15 @@
 # Cambios
 
+## 0.48.197
+
+- En el Resumen de la vista Compacta, Fármacos vuelve a alinearse con las demás tarjetas, con su título, su botón «Validar tratamiento» e «Imprimir indicaciones» junto al título. Eloísa había puesto la tarjeta dentro de una segunda sección, y la vista dejó de reconocerla: quedaba 10 px más adentro y a su tamaño nativo, y el icono de impresión ocupaba una línea propia.
+- La línea «Medico Validador:» de Fármacos se lee bajo el título, en gris y pegada a la tabla. Si nadie ha validado el tratamiento, dice «Tratamiento sin validar».
+- El formulario de nueva alerta se pliega aunque Eloísa le dé el foco al abrir la ficha, y suelta ese foco: la siguiente tecla ya no puede escribir una alerta por descuido. «Agregar alerta» lo abre como antes.
+- Las secciones vacías o sin permiso se leen todas en una línea: Diagnóstico y Órdenes de atención sin registros, Solicitudes de intervención quirúrgica (que pasa junto a Exámenes en la ronda), Eventos Adversos y Examen Gíneco Obstétrico. Diagnóstico vacío sigue a la vista: no se pliega con las demás secciones vacías.
+- Balance Hídrico ocupa 115 px en lugar de 166: su título como el de las demás tarjetas y su filtro a la altura de una línea, con sus campos, sus calendarios y «Filtrar».
+- Una indicación libre larga se lee entera, sin «Leer más», como la posología de un fármaco.
+- Todas las tarjetas bajo la ronda se titulan igual, aunque Eloísa dibuje dentro algo que la vista no conoce.
+
 ## 0.48.196
 
 - En la vista Compacta, la ficha deja el mismo margen a cada lado, y algo más amplio: 35 px a 1280, 42 a 1440, 56 desde 1800. En una pantalla ancha el contenido se detiene en 1600 px y queda centrado. Las tarjetas del Resumen empezaban 16 px más a la izquierda que la línea de secciones. Pestañas, línea de secciones y tarjetas comparten ahora un borde.

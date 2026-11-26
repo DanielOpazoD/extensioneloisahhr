@@ -381,6 +381,19 @@ it('reads an empty rest without its section, brings the diagnosis under the roun
   expect(main.innerHTML).toBe(original);
 });
 
+it('docks the print icon on Fármacos also when Eloísa wraps its card in a second section', () => {
+  const main = realSummary({folded:' hidden'});
+  const section = document.getElementById('medicationEntrySection');
+  section.innerHTML = '<section class="MuiBox-root" id="dilutionEntrySection">' + section.innerHTML + '</section>';
+  layout.refresh(main);
+  expect([role('#medicationEntrySection'), document.getElementById('print-line').dataset.hhrRound]).toEqual(['peer', 'print']);
+  // Anything else beside the card in that section is not the shape that was read.
+  document.getElementById('dilutionEntrySection').after(document.createElement('div'));
+  layout.refresh(main);
+  expect(document.getElementById('print-line').dataset.hhrRound).toBe('peer');
+  layout.clear();
+});
+
 it('leaves a table of another kind, an icon of another name and a line followed by another card where they are', () => {
   layout.refresh(realSummary({second:'Problema', folded:' hidden'}));
   expect([role('#diagnosisEntrySection'), document.getElementById('print-line').dataset.hhrRound]).toEqual(['peer', 'print']);

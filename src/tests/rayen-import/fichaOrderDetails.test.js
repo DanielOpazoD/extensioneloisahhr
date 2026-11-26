@@ -176,3 +176,15 @@ it('marca los días de tratamiento y distingue un solo día', () => {
   reader.clear();
   expect(main.querySelector('[data-hhr-reading]')).toBeNull();
 });
+
+it('materializa el texto de una indicación libre bajo el encabezado «Indication» de Eloísa', () => {
+  const {main, refresh, clear} = summary();
+  main.querySelector('section.MuiCard-root th').textContent = 'Indication';
+  const clicks = nativeDetails(main);
+  refresh();
+  expect(clicks).toContainEqual(['Instrucción C', true]);
+  expect(main.querySelector('section.MuiCard-root td').textContent).toContain('Instrucción C final ficticio.');
+  refresh(false);
+  expect(main.querySelector('section.MuiCard-root td').textContent).toContain('Instrucción C…');
+  clear();
+});

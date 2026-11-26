@@ -291,6 +291,28 @@ describe('acción breve de los formularios de escritorio', () => {
     expect(section.querySelector('input[type=checkbox]').checked).toBe(true);
   });
 
+  it('pliega el campo de alerta aunque Eloísa le dé el foco al abrir el resumen y suelta ese foco', async () => {
+    field.focus();
+    labels.refresh(main, 'a');
+    expect(row.hasAttribute(folded)).toBe(true);
+    expect(document.activeElement).not.toBe(field);
+    // Through the opener the field opens with the focus, and stays open while it has it.
+    section.querySelector(selector).click();
+    expect([row.hasAttribute(folded), document.activeElement]).toEqual([false, field]);
+    labels.refresh(main, 'a');
+    expect([row.hasAttribute(folded), document.activeElement]).toEqual([false, field]);
+    outside.focus();
+    await Promise.resolve();
+    expect(row.hasAttribute(folded)).toBe(true);
+    // A focus the page gives again to the folded field is let go as well.
+    field.focus();
+    expect([row.hasAttribute(folded), document.activeElement === field]).toEqual([true, false]);
+    // A draft Eloísa restores opens the editor, wherever the focus is.
+    field.value = 'Borrador';
+    labels.refresh(main, 'a');
+    expect(row.hasAttribute(folded)).toBe(false);
+  });
+
   it('conserva borrador y foco al cambiar tamaño, modo o paciente y limpia los controles anteriores', () => {
     labels.refresh(main, 'a');
     const opener = section.querySelector(selector);

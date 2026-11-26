@@ -76,24 +76,36 @@
     opener.textContent = entry.open;
     const generatedId = 'hhr-' + entry.id + '-editor';
     let createdId = false;
+    // Focus opens the editor only when it came through the editor: the opener, or a field the
+    // person could already see. Eloísa focuses the empty alert field by itself when the summary
+    // opens (measured 26-11-2026); that focus would hold the editor open and take the next keys.
+    let wanted = false;
     const update = () => {
-      const folded = action.disabled && field.value === '' && !row.contains(document.activeElement);
+      const inside = row.contains(document.activeElement);
+      if (!inside) wanted = false;
+      const folded = action.disabled && field.value === '' && !wanted;
       row.toggleAttribute('data-hhr-entry-folded', folded);
+      if (folded && inside) document.activeElement.blur();
       const expanded = String(!folded);
       if (opener.getAttribute('aria-expanded') !== expanded) opener.setAttribute('aria-expanded', expanded);
       // Rayen may restore a draft into the editor while its opener has keyboard focus.
       if (!folded && opener === document.activeElement) field.focus({preventScroll:true});
     };
     const afterBlur = () => queueMicrotask(() => { if (opener.isConnected) update(); });
+    const enter = () => {
+      if (!row.hasAttribute('data-hhr-entry-folded')) wanted = true;
+      update();
+    };
     function open(event) {
       event.preventDefault();
       event.stopPropagation();
+      wanted = true;
       row.removeAttribute('data-hhr-entry-folded');
       field.focus();
       update();
     }
     opener.addEventListener('click', open);
-    row.addEventListener('focusin', update);
+    row.addEventListener('focusin', enter);
     row.addEventListener('focusout', afterBlur);
     row.addEventListener('input', update);
     function refresh() {
@@ -107,7 +119,7 @@
     }
     function clear(restoreFocus) {
       opener.removeEventListener('click', open);
-      row.removeEventListener('focusin', update);
+      row.removeEventListener('focusin', enter);
       row.removeEventListener('focusout', afterBlur);
       row.removeEventListener('input', update);
       row.removeAttribute('data-hhr-entry-folded');
