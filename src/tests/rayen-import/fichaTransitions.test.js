@@ -14,8 +14,10 @@ const trusted = target => {
   target.dispatchEvent(event);
   return event;
 };
-const create = () => globalThis.HhrFichaTransitions.create({trusted:event => person.has(event)});
-afterEach(() => { vi.useRealTimers(); document.body.innerHTML = ''; document.documentElement.removeAttribute('data-hhr-ficha-settling'); document.documentElement.removeAttribute('data-hhr-ficha-revealing'); });
+// Each test's transitions listen on the one document of the file: they are taken down after it.
+const made = [];
+const create = () => { const transitions = globalThis.HhrFichaTransitions.create({trusted:event => person.has(event)}); made.push(transitions); return transitions; };
+afterEach(() => { made.splice(0).forEach(transitions => transitions.dispose()); vi.useRealTimers(); document.body.innerHTML = ''; document.documentElement.removeAttribute('data-hhr-ficha-settling'); document.documentElement.removeAttribute('data-hhr-ficha-revealing'); });
 
 it('vela el módulo nuevo hasta que la vista lo presenta, sin tocar el clic de Eloísa', () => {
   vi.useFakeTimers();
