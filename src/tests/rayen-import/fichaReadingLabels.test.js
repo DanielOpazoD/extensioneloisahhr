@@ -127,6 +127,8 @@ it('mantiene los interruptores de cada alerta con el mismo foco, orden y estado'
   expect(main.querySelector('input:disabled').checked).toBe(false);
   expect(visit.checked).toBe(true);
   expect(visit.closest('label').hasAttribute('data-hhr-reading-toggle')).toBe(true);
+  // The owner asked for the summary without «Gestión de Visitas»: it is marked to be left out of sight.
+  expect([...main.querySelectorAll('[data-hhr-visits-toggle]')].map(label => label.textContent)).toEqual(['Gestión de Visitas']);
   labels.clear();
   expect(main.querySelector('[data-hhr-reading-toggle="alert"]')).toBeNull();
   main.remove();
@@ -477,6 +479,25 @@ it('guarda tras un icono el filtro de Balance Hídrico sin registros y lo devuel
     labels.refresh(main);
     expect(content.querySelector('[data-hhr-balance-filter]')).toBeNull();
     expect([filters.hasAttribute('data-hhr-balance-folded'), filters.hasAttribute('id')]).toEqual([false, false]);
+  } finally {
+    labels.clear();
+    main.remove();
+  }
+});
+
+it('lee la PAM como número entero y el autor de una alerta sin su cargo', () => {
+  const main = document.createElement('main');
+  main.innerHTML = '<div data-hhr-reading="vital-pam"><p>PAM:</p><p>87.50</p></div><div data-hhr-reading="vital-pam"><p>PAM:</p><p>90</p></div>' +
+    '<section id="alertEntrySection"><div class="MuiCardContent-root"><div class="MuiBox-root"><div class="MuiStack-root"><div class="MuiStack-root">' +
+    '<p class="MuiTypography-body2">Enfermera(o) Elena  Ejemplo Prueba</p></div></div></div></div></section>';
+  document.body.append(main);
+  const labels = globalThis.HhrFichaReadingLabels.create();
+  try {
+    labels.refresh(main);
+    expect([...main.querySelectorAll('[data-hhr-reading="vital-pam"] p:last-child')].map(p => p.getAttribute('data-hhr-vital-rounded'))).toEqual(['88', null]);
+    expect(main.querySelector('#alertEntrySection p').getAttribute('data-hhr-author')).toBe('Elena Ejemplo');
+    labels.clear();
+    expect(main.querySelectorAll('[data-hhr-vital-rounded],[data-hhr-author]')).toHaveLength(0);
   } finally {
     labels.clear();
     main.remove();

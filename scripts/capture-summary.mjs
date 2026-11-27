@@ -296,8 +296,8 @@ async function verifySummary(page, width, native, off, sans) {
   assert.deepEqual([naming.diagnosis, naming.note, naming.diet], ['15-04-2026 · Tomás Ejemplo', '15-04-2026 · 09:12 · Tomás Ejemplo', '15-04-2026 · 10:45 · Tomás Ejemplo'],
     'Cada firma dice un nombre y un apellido, y la del diagnóstico no lleva hora');
   assert.match(naming.native, /09:05:10, Médico Tomás {2}Ejemplo Prueba$/, 'La firma de Eloísa sigue entera en la página');
-  assert.deepEqual([naming.alert, naming.asked], [['Enfermera(o) Elena  Ejemplo Prueba', '"Enfermera(o) Elena Ejemplo" / ""', '0px'], ['Tomás Ejemplo Prueba', '"Tomás Ejemplo" / ""']],
-    'Quien escribió una alerta y quien pidió un fármaco se leen con un nombre y un apellido');
+  assert.deepEqual([naming.alert, naming.asked], [['Enfermera(o) Elena  Ejemplo Prueba', '"Elena Ejemplo" / ""', '0px'], ['Tomás Ejemplo Prueba', '"Tomás Ejemplo" / ""']],
+    'Quien escribió una alerta y quien pidió un fármaco se leen con un nombre y un apellido, sin el cargo (pedido el 27-11-2026)');
   assert.deepEqual(naming.heading, ['Indication', '"Indicación" / ""', '0px'], 'La columna «Indication» de Eloísa se lee «Indicación»');
   // Balance Hídrico without records: one line, with its filter whole and two words for its state.
   const idle = await page.evaluate(() => { const card = document.querySelector('#inputOutputHydricBalanceEntry'), box = el => el.getBoundingClientRect(), state = card.querySelector('[data-hhr-balance="empty"]');

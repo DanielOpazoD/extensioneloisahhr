@@ -25,6 +25,15 @@
     return brief === raw.trim().replace(/\s+/g, ' ') ? null : brief;
   }
 
+  // «Enfermera(o) Ana  Rojas Soto» reads «Ana Rojas».
+  function personOnly(text) {
+    const raw = text.replace(/^\s+/, '').replace(/[^\S ]\s*$/, ''), title = role.exec(raw)?.[0] || '';
+    const name = raw.slice(title.length);
+    if (!name.trim() || /[\d:,;·]/.test(name)) return null;
+    const brief = shortName(name).trim();
+    return brief === raw.trim().replace(/\s+/g, ' ') ? null : brief;
+  }
+
   // Hidden inside the summary. A menu or a window of Eloísa hides the whole page from a screen reader
   // while it is open: that is not a reason to give the summary behind it another shape.
   const outsideSummary = 'dialog,[role=dialog],#hhr-prescription-print-modal,main [aria-hidden=true],[hidden]';
@@ -289,6 +298,8 @@
           }
           else if (control.closest('#alertEntrySection') && /^(?:no reanimación|gestión de visitas)$/i.test(name)) {
             label(control, 'data-hhr-reading-toggle', 'alert');
+            // The owner asked for the summary without «Gestión de Visitas» (27-11-2026).
+            if (/^gestión de visitas$/i.test(name)) label(control, 'data-hhr-visits-toggle', '');
             if (/^no reanimación$/i.test(name) && control.querySelectorAll('input[type="checkbox"]').length === 1) {
               label(control, 'data-hhr-resuscitation-toggle', '');
             }
@@ -328,8 +339,18 @@
         }
         for (const el of authors) {
           if (el.closest('dialog,[role=dialog],#hhr-prescription-print-modal') || el.children.length) continue;
-          const brief = shortAuthor(el.textContent);
+          // An alert reads who wrote it, without the role: the owner asked for a name and a surname.
+          const brief = el.closest('#alertEntrySection') ? personOnly(el.textContent) : shortAuthor(el.textContent);
           if (brief) label(el, 'data-hhr-author', brief);
+        }
+        // PAM is a mean: Eloísa writes it with two decimals (read on the page 27-11-2026). It reads as a
+        // whole number, as the pressure beside it; Eloísa's figure stays in the page.
+        for (const pam of main.querySelectorAll('[data-hhr-reading="vital-pam"]')) {
+          const value = [...pam.querySelectorAll('p,span')].filter(el => !el.children.length).at(-1) || (!pam.children.length ? pam : null);
+          const figure = /^\s*(?:pam\s*:\s*)?(\d+)[.,](\d+)\s*$/i.exec(value?.textContent || '');
+          if (!figure) continue;
+          const whole = String(Math.round(Number(figure[1] + '.' + figure[2])));
+          label(value, 'data-hhr-vital-rounded', /^\s*pam/i.test(value.textContent) ? 'PAM: ' + whole : whole);
         }
         // Balance Hídrico without records says so in two words. Its filter stays for another period.
         const idle = main.querySelector('#inputOutputHydricBalanceEntrySection > .MuiCard-root > .MuiCardContent-root > p.MuiTypography-root:last-child');

@@ -219,6 +219,12 @@ Pendiente de confirmar en la página real:
 - **Cómo fija Eloísa el ancho de la columna de horas** y cuánto mide en una ventana de 1280 px. La ficha ficticia supone 1000 px fijos.
 - **Cuándo se pliega el `.MuiCollapse-root`** de las herramientas.
 
+## Barra verde de la ficha
+
+Leído el 27-11-2026: `header.MuiAppBar-root#menu-app-bar-element` (fondo `rgb(21,149,136)`) `> .MuiToolbar-root` con un botón de menú y un `div.MuiStack-root` cuyo primer hijo es el paciente: un icono de sexo y `p.MuiTypography-body1.MuiTypography-noWrap` con el nombre, sin control. Siguen pares `span` rótulo y `span` valor en `div.MuiStack-root`, entre ellos «Diagnóstico» y su valor, y los botones de aislamiento y del gestor documental.
+
+En Signos vitales, la PAM es `p` «PAM:» y `p` con el valor con dos decimales.
+
 ## Alta (ficha médica)
 
 Leído el 27-11-2026: `main > div.MuiStack-root > div.MuiBox-root` con `h6.MuiTypography-root` «Alta» (20 px, peso 500), un `form.MuiPaper-root.MuiCard-root` con `.MuiStepper-root` de tres pasos (Destino, Tratamiento, Próximo control) y un `div.MuiPaper-root.MuiCard-root` (esquinas de 12 px, relleno 64 px 32 px) con `form.MuiBox-root`: una `MuiGrid-container` con dos selectores MUI («Motivo de alta *», «Destino *»), un `label.MuiFormLabel-root` y un interruptor de 38 px «Traslado en ambulancia*», y `button.MuiButton-containedSecondary` «Continuar» (mayúsculas, deshabilitado hasta completar el paso).

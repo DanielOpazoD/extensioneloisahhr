@@ -63,6 +63,9 @@
     readNotes: (encId, lookbackDays) => sendMessage({ type: runtimeMessages.EVOLUTION_NOTES_REQUEST, encId, lookbackDays }),
   });
   const nativePresentation = globalThis.HhrNativeFichaPresentation?.create();
+  const patientSwitcher = globalThis.HhrFichaPatientSwitcher?.create({
+    readRoster: () => sendMessage({ type: runtimeMessages.HOSPITALIZED_ROSTER_REQUEST }),
+  });
   const worklistPresentation = globalThis.HhrNativeWorklistPresentation?.create({
     returnContext: message => chrome.runtime.sendMessage({ ...message, type: runtimeMessages.WORKLIST_RETURN_CONTEXT }),
     fetchWeather: () => chrome.runtime.sendMessage({ type: runtimeMessages.RAPA_NUI_WEATHER }),
@@ -814,6 +817,7 @@
     if (fichaTheme !== null) nativePresentation?.refresh(encId, fichaTheme);
     historyNavigation?.refresh(encId);
     evolutionAuthors.refresh(fichaTheme === 'compact' ? encId : null);
+    patientSwitcher?.refresh(encId, fichaTheme === 'compact' && Boolean(encId));
     worklistPresentation?.refresh(window.location.pathname, resized ? undefined : []);
     resized = false;
   };
@@ -962,6 +966,7 @@
       try { chrome.runtime.onMessage?.removeListener?.(onRuntimeMessage); } catch (_error) {}
       connectionCenterRuntime.dispose();
       evolutionAuthors.clear();
+      patientSwitcher?.clear();
       historyNavigation?.dispose();
       stopTheme();
       nativePresentation?.dispose();

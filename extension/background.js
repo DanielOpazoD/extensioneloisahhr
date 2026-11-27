@@ -1178,7 +1178,21 @@ const clinicalChecklists = self.HhrClinicalChecklistBroker.create({ chrome, reso
 // The reader on the Evolución card: the evolutions of the episode its own tab has open, read only.
 const evolutionNotes = self.HhrFichaEvolutionNotes.create({ resolveSession: resolveFichaClinicalSession, readJson: fichaMedicoClinicalClient.readJson, encounterOf: self.HhrPrescriptionPrint.resolveEncounterId,
   authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); } });
+// The patients of the switcher on the ficha's green bar: one read of the active census, without a
+// header per patient, answered only to the ficha's own page. Who, where; nothing clinical.
+const handleHospitalizedRosterRequest = async (_message, sender) => {
+  if (sender?.frameId !== 0 || !/^https:\/\/fichamedico\.rayensalud\.cl\/dashboard\//.test(sender?.url || '')) return { error: 'Lista de hospitalizados no disponible.' };
+  const infoResult = await getFichaFetchInfo(sender);
+  if (infoResult.error) return infoResult;
+  const rowResult = await fetchActiveEncounterRows(infoResult.info);
+  if (rowResult.error) return rowResult;
+  const patients = self.HhrPrescriptionPrint.activeHospitalizedEncounters({
+    encounters: rowResult.rows.map(row => fichaMedicoPatientContext.normalizeHospitalizedEncounter(row, null)),
+  }).map(({ encounterId, name, service, room, bed }) => ({ encounterId, name, service, room, bed }));
+  return { ok: true, patients };
+};
 const runtimeMessageRoutes = Object.freeze({
+  [RUNTIME_MESSAGES.HOSPITALIZED_ROSTER_REQUEST]: runtimeRoute(handleHospitalizedRosterRequest, 'No se pudo leer la lista de hospitalizados.'),
   [RUNTIME_MESSAGES.EVOLUTION_NOTES_REQUEST]: runtimeRoute(evolutionNotes.handle, 'No se pudieron leer las evoluciones.'),
   [RUNTIME_MESSAGES.CLINICAL_CHECKLIST]: runtimeRoute(clinicalChecklists.handle, 'No se pudo conectar la pauta con HHR.'),
   [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),

@@ -70,8 +70,9 @@ try {
       overflow:getComputedStyle(feed).overflowY, size:getComputedStyle(note).fontSize, wrap:getComputedStyle(note).whiteSpace,
       muted:getComputedStyle(dialog.querySelector('[data-state="void"] p')).color !== getComputedStyle(note).color, modal:dialog.matches(':modal')};
   });
-  // The window takes most of the screen and its text is the size of a line read at a desk (26-11-2026: the owner asked for more room to read).
-  assert.deepEqual(look, {width:1216, height:846, inside:true, overflow:'auto', size:'16px', wrap:'pre-wrap', muted:true, modal:true},
+  // The window takes most of the screen (26-11-2026: the owner asked for more room to read); its text, a step
+  // smaller than a line of the desk (27-11-2026: the owner asked for it a little smaller).
+  assert.deepEqual(look, {width:1216, height:846, inside:true, overflow:'auto', size:'14px', wrap:'pre-wrap', muted:true, modal:true},
     'El lector ocupa la ventana de la nota completa, se desplaza dentro y atenúa la nota tachada: ' + JSON.stringify(look));
   await page.screenshot({path:path.join(directory, '1440-evoluciones-todas.png')});
 
