@@ -541,6 +541,21 @@
         #hhr-prescription-print-modal .hhr-rx-search { flex-basis: 100%; }
         #hhr-prescription-print-modal .hhr-rx-header, #hhr-prescription-print-modal .hhr-rx-body, #hhr-prescription-print-modal .hhr-rx-footer { padding-left: 16px; padding-right: 16px; }
       }
+      /* Centro HHR in the language of the ficha (27-11-2026): the corner and the quiet shadow of a card, a title of
+         15 px, controls of 30 px, the action asked for with a line around its words and the way back in words
+         only, tags at the size of a tag. Its structure, words and actions do not change. */
+      #hhr-prescription-print-modal .hhr-rx-backdrop { background: rgba(17,38,34,.32); backdrop-filter: none; -webkit-backdrop-filter: none; }
+      #hhr-prescription-print-modal .hhr-rx-dialog { border-radius: 8px; box-shadow: 0 16px 40px rgba(7,27,49,.22); }
+      #hhr-prescription-print-modal .hhr-rx-title { font-size: 15px; font-weight: 600; letter-spacing: 0; color: #212121; }
+      #hhr-prescription-print-modal .hhr-rx-subtitle { color: #4a4a4a; }
+      #hhr-prescription-print-modal .hhr-rx-footer { background: #fff; }
+      #hhr-prescription-print-modal .hhr-rx-action { min-height: 30px; padding: 0 12px; border-radius: 6px; border-color: transparent; background: transparent; color: #4a4a4a; font-size: 12px; font-weight: 600; }
+      #hhr-prescription-print-modal .hhr-rx-action:hover { border-color: transparent; background: #edf5f2; color: #285f59; }
+      #hhr-prescription-print-modal .hhr-rx-action-primary, #hhr-prescription-print-modal .hhr-rx-action-primary:hover { border-color: #c4d8d1; background: transparent; color: #285f59; }
+      #hhr-prescription-print-modal .hhr-rx-action-primary:hover { background: #edf5f2; }
+      #hhr-prescription-print-modal .hhr-rx-action:disabled { border-color: #e1e9e6; background: transparent; color: #98a39f; }
+      #hhr-prescription-print-modal .hhr-rx-tab[aria-selected="true"] { box-shadow: none; }
+      #hhr-prescription-print-modal :is(.hhr-rx-badge, .hhr-rx-med-count) { border-radius: 4px; padding: 0 5px; background: #f2f6f4; color: #4a4a4a; font-size: 11px; font-weight: 600; line-height: 16px; }
       @media (forced-colors: active) {
         #hhr-prescription-print-modal .hhr-rx-dialog { border: 1px solid CanvasText; }
         #hhr-prescription-print-modal button:focus-visible, #hhr-prescription-print-modal input:focus-visible,

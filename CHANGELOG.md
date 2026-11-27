@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.227
+
+- Las listas de trabajo (médica y de Gestión de cuidados) usan las tintas y tamaños de la ficha. Medido en la página con el estilo aplicado a mano (27-11-2026): la lista médica pasa de 9 tintas de texto a 4 y de 4 tamaños a 2; la de cuidados, de 11 tintas a 6 y de 6 tamaños a 3; ninguna conserva texto de bajo contraste (había un gris de 3,9:1) y el alto de las filas no cambia. Encabezados en 12 px y tinta suave, celdas en 13 px, nombre y cama en peso 600, el filtro elegido en el verde de acción. «Nuevo» conserva su verde, el mismo en ambas listas.
+- Centro HHR (recetas, documentos y sus ventanas) se lee como la ficha: esquina de 8 px y sombra suave, títulos de 15 px, botones de 30 px (lo que se pide con una línea, la vuelta en palabras), etiquetas de 11 px.
+- Corregido: en una ventana angosta (menos de 1100 px) el Resumen abría desplazado hasta el campo de alertas, que Eloísa enfoca al cargar; ahora abre arriba, como en escritorio. Y el nombre «Reposo» de «Sin datos» ya no aparece suelto en esa ventana.
+- En CI: cada cambio compara sus capturas con las de la versión base y deja las diferencias en magenta como artefacto («capturas-diferencias»), con una tabla en el resumen del trabajo. Es informativo: no detiene un cambio. Y el Resumen se comprueba también a 1024 px: sin desborde lateral, con contraste y controles suficientes, y abierto arriba.
+
 ## 0.48.226
 
 - Un solo juego de controles. Los iconos de «Mostrar suspendidos» miden 26 px, como los de Plan (antes 28). Los botones de lectura comparten la esquina de los demás botones.

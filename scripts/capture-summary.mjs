@@ -836,6 +836,23 @@ try {
     await page.close();
   }
   if (revision === 'WORKTREE') await verifyShapes(browser, assets);
+  // A narrow window, as a small notebook or a tablet at the bedside: the summary keeps Eloísa's order, with no
+  // sideways scroll, and reads and is pressed as on the desk.
+  if (revision === 'WORKTREE') {
+    const page = await browser.newPage({viewport:{width:1024, height:768}, deviceScaleFactor:1, locale:'es-CL', timezoneId:'Pacific/Easter'});
+    await page.setContent(summaryPage());
+    await settle(page);
+    await mountFicha(page, assets, {});
+    await refresh(page);
+    const narrow = await page.evaluate(() => ({page:document.documentElement.scrollWidth, window:innerWidth, top:Math.round(document.scrollingElement.scrollTop),
+      cards:[...document.querySelectorAll('main .MuiCard-root')].filter(card => card.getClientRects().length).every(card => card.getBoundingClientRect().right <= innerWidth + 1),
+      proxy:[...document.querySelectorAll('[data-hhr-round-proxy]')].filter(el => el.getClientRects().length).length}));
+    assert.ok(narrow.page <= narrow.window + 1 && narrow.cards && narrow.proxy === 0, 'A 1024 px el resumen no se desborda a lo ancho: ' + JSON.stringify(narrow));
+    assert.equal(narrow.top, 0, 'A 1024 px el resumen se abre arriba aunque Eloísa dé el foco al campo de alertas');
+    await assertQuality(page, 'Resumen a 1024 px', assert);
+    await page.screenshot({path:path.join(directory, '1024-resumen.png')});
+    await page.close();
+  }
 } finally {
   await browser.close();
 }

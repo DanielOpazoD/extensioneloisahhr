@@ -96,6 +96,8 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.setContent(html);
+    // The worklist pages load the ficha's tokens too (manifest), and the lists read in them.
+    if (revision === 'WORKTREE') await page.addStyleTag({content:await source('hhr-ficha-tokens.css')});
     await page.addScriptTag({content:adapter});
     await page.addScriptTag({content:presentation});
     await page.evaluate(`(${draw})(${JSON.stringify(patients)}, '/dashboard/encounter-list')`);

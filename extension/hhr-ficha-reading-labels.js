@@ -266,7 +266,7 @@
 
   function create() {
     // The forms already seen in this patient's summary: only their first appearance can carry Eloísa's own focus.
-    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set(), fold = null;
+    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set(), fold = null, openedAt = performance.now();
     const observer = new MutationObserver(() => refresh(watchedMain, episode));
     const refresh = (main, encounter) => {
       observer.disconnect();
@@ -406,7 +406,18 @@
         editor.clear(!main || episode === encounter);
         editors.delete(row);
       }
-      if (episode !== encounter) arrived = new Set();
+      if (episode !== encounter) { arrived = new Set(); openedAt = performance.now(); }
+      // Below the desk the alert field is not folded, and Eloísa still focuses it as the summary opens: the
+      // page followed it far down (seen at 1024 px, 27-11-2026). Nobody has scrolled, pressed or typed yet:
+      // the summary opens at its top, as on the desk.
+      if (main && !desktop && lastInput < openedAt) {
+        const field = document.activeElement;
+        if (field?.matches('textarea,input:not([type="checkbox"])') && field.closest('#alertEntrySection,#shiftChangeEntrySection') && main.contains(field)) {
+          field.blur();
+          const scroller = pageScroller(field);
+          if (scroller?.scrollTop) scroller.scrollTop = 0;
+        }
+      }
       for (const [row, {field, action, entry}] of nextEditors) {
         if (!editors.has(row)) {
           editors.set(row, createEntry(row, field, action, entry, !arrived.has(entry.id)));
