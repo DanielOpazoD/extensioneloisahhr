@@ -66,10 +66,14 @@
         > [data-hhr-reading-toggle="alert"] { width:fit-content; margin:0; min-height:24px; }
         > :not([data-hhr-reading-toggle="alert"]) { width:100%; }
       }
+      /* «No reanimación» reads like the switch beside it until it is on: then it is the flag of the card.
+         Its box is the same in both states, so nothing moves when it is pressed. */
       [data-hhr-resuscitation-toggle] {
-        border-inline-start:2px solid #91a59e; padding-inline-start:4px;
-        .MuiFormControlLabel-label { font-weight:600; }
-        &:has(input:checked) { border-inline-start-color:#965924; background:#fff4e7; }
+        padding-inline:6px 8px; border-radius:var(--hhr-ficha-button-radius,6px);
+        &:has(input:checked) {
+          background:#fff4e7; box-shadow:inset 2px 0 #965924;
+          .MuiFormControlLabel-label { font-weight:600; color:#6f3f12; }
+        }
       }
       [data-hhr-resuscitation-toggle]::after {
         content:'Sin marcar' / ''; margin-inline-start:.35em; color:var(--hhr-ficha-ink-soft);
@@ -135,18 +139,21 @@
     grid-template-columns:fit-content(60%) minmax(0,1fr) auto;
     grid-template-areas:"message message action" "author time action";
     gap:1px 6px !important;
-    /* The same marginal rule that flags SOS and «No reanimación» marks each active alert. */
-    border-inline-start:2px solid #b5793f; padding-inline-start:7px !important;
+    /* An alert reads like a row of the tables of the summary: its text in the ink and weight of what is
+       read, who wrote it and when in the ink of what situates, a line between two rows. The flag of the
+       card is one mark beside its title, not a rule on every row. */
+    padding-block:5px !important;
     > .MuiStack-root { display:contents; }
     > :first-child > :last-child {
-      grid-area:message; font-size:.8125rem; line-height:1.35; overflow-wrap:anywhere;
-      > .MuiTypography-body2 { font-weight:600; }
+      grid-area:message; margin:0 !important; font-size:.8125rem; line-height:1.35; overflow-wrap:anywhere;
+      > .MuiTypography-body2 { color:var(--hhr-ficha-ink); font-weight:400; }
     }
     > :first-child > p.MuiTypography-body2 {
-      grid-area:author; align-self:baseline; font-size:.75rem; line-height:1.3; overflow-wrap:anywhere;
+      grid-area:author; align-self:baseline; color:var(--hhr-ficha-muted); font-size:.75rem; line-height:1.3; overflow-wrap:anywhere;
+      &::after { color:inherit; }
     }
     > :last-child > .MuiTypography-caption {
-      grid-area:time; align-self:baseline; text-align:start; overflow-wrap:anywhere;
+      grid-area:time; align-self:baseline; color:var(--hhr-ficha-muted); text-align:start; overflow-wrap:anywhere;
       &::before { content:'· ' / ''; }
     }
     > :last-child > .MuiStack-root {
@@ -156,6 +163,10 @@
       button:enabled:is(:hover,:focus-visible) { background-color:#edf4f1; }
       button:focus-visible { outline:2px solid #0b6e66; outline-offset:1px; }
     }
+  }
+  /* With alerts, the title carries the flag of the card. */
+  html[data-hhr-ficha-theme="compact"] #alertEntrySection > .MuiCard-root:has(> .MuiCardContent-root > .MuiBox-root:first-child > .MuiStack-root .MuiIconButton-sizeSmall) > .MuiCardHeader-root .MuiCardHeader-title::before {
+    content:''; display:inline-block; inline-size:7px; block-size:7px; margin-inline-end:7px; border-radius:2px; background:var(--hhr-ficha-flag); vertical-align:1px;
   }
   @container hhr-alerts (min-width:48rem) {
     html[data-hhr-ficha-theme="compact"] #alertEntrySection > .MuiCard-root > .MuiCardContent-root:has(> .MuiBox-root:first-child + :last-child [data-hhr-reading-toggle="alert"]) {

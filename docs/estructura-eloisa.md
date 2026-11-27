@@ -104,6 +104,8 @@ Al abrir el Resumen, **Eloísa da el foco al campo vacío de la nueva alerta**, 
 
 `div#alertEntries`: `.MuiCardContent-root` con `div.MuiBox-root` (alto máximo de 250 px con desplazamiento propio; una `div.MuiStack-root` por alerta: una pila con `p` «Cargo Nombre» y `div > span` mensaje; otra con `span.MuiTypography-caption` antigüedad y `div.MuiStack-root > button[aria-label="Archivar"] > svg[data-testid=ArchiveRoundedIcon]`) y un `form.MuiStack-root` con los interruptores «No reanimación» y «Gestión de Visitas» y el campo «Observaciones» con «Agregar». Una ficha tenía quince alertas.
 
+- Una alerta (26-11-2026, las dos fichas): `div.MuiStack-root` con dos `div.MuiStack-root`. El primero lleva `p.MuiTypography-body2` (quien la escribió) y un `div > span.MuiTypography-body2` (el texto, con 8 px de margen superior); el segundo, `span.MuiTypography-caption.MuiTypography-alignRight` (hace cuánto) y un `div.MuiStack-root > button.MuiIconButton-sizeSmall` (archivar).
+- Bajo la lista, un `form.MuiStack-root` con dos `label.MuiFormControlLabel-root` (No reanimación, Gestión de Visitas), cada uno con su `span.MuiSwitch-root`.
 ### Secciones con registros que aún no se han exportado
 
 Procedimientos, Solicitud interconsulta, Solicitud de examen y Solicitudes de intervención quirúrgica **con registros** se leyeron el 26-11-2026 en capturas de pantalla, no con el exportador. Se conocen sus columnas y controles, no sus nodos:

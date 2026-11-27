@@ -263,10 +263,11 @@
       /* A brief note, without Eloísa's «Leer más», has no lines to keep: its card still ends where the
          cards beside it end, one lower edge for the block. The script gives the least those cards need. */
       > [data-hhr-round="note"] #evolution.MuiCard-root { box-sizing:border-box; min-block-size:var(--hhr-round-floor,0px) !important; align-content:start; }
-      /* The alerts take the height the handoff leaves beside the note. Their list scrolls inside it
-         and their switches stay in view at the end. */
+      /* The alerts take the height the handoff leaves beside the note, and never less than their own list
+         needs, up to some six alerts: a brief note does not cut the list in the middle of an alert. Beyond
+         that the list scrolls inside, and their switches stay in view at the end. */
       [data-hhr-round="alerts"] {
-        block-size:var(--hhr-round-fill,auto) !important; min-block-size:9rem !important;
+        block-size:var(--hhr-round-fill,auto) !important; min-block-size:clamp(9rem, var(--hhr-round-need,9rem), 21rem) !important;
         #alertEntrySection { block-size:100%; }
         /* Should Eloísa draw the list in another shape, the card scrolls as a whole: nothing spills over the signs. */
         #alertEntrySection > .MuiCard-root { box-sizing:border-box; block-size:100% !important; display:flex; flex-direction:column; overflow-y:auto; scrollbar-width:thin; }

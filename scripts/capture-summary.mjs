@@ -317,6 +317,24 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(near(shown.handoff.left, shown.alerts.left) && near(shown.alerts.top, shown.handoff.bottom) && shown.handoff.left >= shown.note.right - 1, 'Alertas sigue a la entrega de turno');
   assert.ok(near(shown.note.top, shown.handoff.top) && near(shown.alerts.bottom, shown.note.bottom, 1), `La nota y las tarjetas a su lado empiezan y terminan en la misma línea: ${shown.note.bottom} y ${shown.alerts.bottom}`);
   assert.ok(shown.alertList.overflow === 'auto' && shown.alertList.scroll <= shown.alertList.height + 1, 'Tres alertas caben en su lista sin desplazarla: ' + JSON.stringify(shown.alertList));
+  // Alertas reads like the rest of the summary: a row is its text in the ink and weight of what is read, with who
+  // wrote it and when in the ink of what situates, and no rule of its own. One mark beside the title flags the card.
+  const alertLook = await page.evaluate(() => { const card = document.querySelector('#alertEntries'), look = (el, pseudo) => getComputedStyle(el, pseudo);
+    const rows = [...card.querySelectorAll('.alerts-list > .alert-row')], toggle = card.querySelector('[data-hhr-resuscitation-toggle]');
+    const flag = () => [look(toggle).backgroundColor, look(toggle).boxShadow === 'none', look(toggle.querySelector('.MuiFormControlLabel-label')).fontWeight, Math.round(toggle.getBoundingClientRect().left), Math.round(toggle.getBoundingClientRect().width)];
+    const idle = flag();
+    toggle.querySelector('input').click();
+    const on = flag();
+    toggle.querySelector('input').click();
+    return {rows:rows.map(row => { const message = row.querySelector(':scope > .MuiStack-root > div > .MuiTypography-body2'), author = row.querySelector('[data-hhr-author]'), time = row.querySelector('.MuiTypography-caption');
+        // A name already short is read as Eloísa writes it; a longer one, by its short form.
+        const signed = author || row.querySelector(':scope > .MuiStack-root > p');
+        return [look(row).borderInlineStartWidth, look(message).fontWeight, look(message).color, author ? look(author, '::after').color : look(signed).color, look(time).color].join(' | '); }),
+      heights:rows.map(row => Math.round(row.getBoundingClientRect().height)), mark:[look(card.querySelector('.MuiCardHeader-title'), '::before').backgroundColor, look(card.querySelector('.MuiCardHeader-title'), '::before').width], idle, on}; });
+  assert.deepEqual([...new Set(alertLook.rows)], ['0px | 400 | rgb(33, 33, 33) | rgb(102, 102, 102) | rgb(102, 102, 102)'], 'Una alerta se lee como una fila del resumen, sin su propia regla: ' + JSON.stringify(alertLook.rows));
+  assert.ok(alertLook.heights.every(height => height <= 64) && alertLook.mark.join() === 'rgb(181, 121, 63),7px', 'y la tarjeta lleva una sola marca, junto a su título: ' + JSON.stringify([alertLook.heights, alertLook.mark]));
+  assert.ok(alertLook.idle[0] === 'rgba(0, 0, 0, 0)' && alertLook.idle[1] && alertLook.idle[2] === '400' && alertLook.on[0] !== alertLook.idle[0] && !alertLook.on[1] && alertLook.on[2] === '600' &&
+    alertLook.on[3] === alertLook.idle[3], '«No reanimación» se lee como un interruptor más hasta que se marca, y no se mueve al marcarla: ' + JSON.stringify([alertLook.idle, alertLook.on]));
   assert.equal(shown.noteLines, 14, 'La nota muestra catorce líneas a la vez');
   // Under the note, the signs take the first half of the line and the care instructions follow under them: what has no
   // data sits beside both. The owner saw the signs stretched to the height of that column, with a blank band under

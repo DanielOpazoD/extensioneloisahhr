@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.214
+
+- Alertas se lee como el resto del Resumen. Cada alerta es una fila: su texto en la tinta y el peso de lo que se lee (antes en negrita), quién la escribió y cuándo en gris, y una línea entre dos filas. La barra ámbar que llevaba cada fila pasa a ser una sola marca junto al título «Alertas», que aparece cuando hay alertas. En la página, con el estilo aplicado a mano, una fila pasa de 49–50 a 45–46 px en las dos fichas.
+- «No reanimación» se lee como el interruptor de al lado mientras no está marcada: sin su barra ni su negrita. Marcada, lleva el fondo y la marca de una alerta. No se mueve al marcarla.
+- La tarjeta de Alertas mide al menos lo que su lista necesita, hasta unas seis alertas: con una evolución breve, la lista ya no se corta a mitad de una alerta. Más allá, se desplaza dentro. La nota sigue terminando en el mismo borde.
+- Vale igual para la ficha abierta desde la lista de trabajo médico y desde Gestión de cuidados.
+
 ## 0.48.213
 
 - Un solo botón en el Resumen de la vista Compacta. Eloísa dibuja «Imprimir» y «Filtrar» con relleno verde y «Validar tratamiento» con relleno naranja, y la vista agregaba «Agregar» y «Agregar alerta» con contorno: cuatro aspectos. Ahora todos son una línea alrededor de sus palabras, en la tinta de lo que se puede pulsar, con la misma esquina y la misma letra. Miden 26 px de alto; «Filtrar» mide los 30 de los campos de su fila.
