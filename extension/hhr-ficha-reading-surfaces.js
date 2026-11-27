@@ -162,12 +162,12 @@
         next.set(pressure,'vital-value');
         next.set(pam,'vital-pam');
       } else next.set(value,'vital-value');
-      // Eloísa paints a value out of its range in pure red, which reads at 3.7:1 on its tile. The value is
-      // flagged so that the view draws it in a red that reads, at the weight it has. Its own red, or the
-      // one this view already gave it, says it is flagged.
+      // Eloísa paints a value out of its range in pure red. The value is flagged so that the view draws it in
+      // the ink of every value (the owner asked for the signs without red, 27-11-2026). Its own red says it
+      // is flagged; once flagged, the ink this view gave it no longer shows that red, so the mark stays.
       if (compact) for (const reading of value.childElementCount === 2 && next.get(value) === 'vital-pressure-group' ? [value.firstElementChild] : [value]) {
         const [r, g, b] = (getComputedStyle(reading).color.match(/\d+/g) || []).map(Number);
-        if (r >= 180 && g <= 90 && b <= 90) flagged.add(reading);
+        if ((r >= 180 && g <= 90 && b <= 90) || reading.hasAttribute('data-hhr-vital-flag')) flagged.add(reading);
       }
       const tileAges = [];
       for (const detail of details) {
