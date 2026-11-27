@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.213
+
+- Un solo botón en el Resumen de la vista Compacta. Eloísa dibuja «Imprimir» y «Filtrar» con relleno verde y «Validar tratamiento» con relleno naranja, y la vista agregaba «Agregar» y «Agregar alerta» con contorno: cuatro aspectos. Ahora todos son una línea alrededor de sus palabras, en la tinta de lo que se puede pulsar, con la misma esquina y la misma letra. Miden 26 px de alto; «Filtrar» mide los 30 de los campos de su fila.
+- Un botón deshabilitado se lee en una tinta más clara. Los botones que solo abren una lectura («Ver evoluciones», «Nota completa», «Historial») siguen sin línea.
+- No cambian las palabras ni lo que hace cada botón, ni los botones de las filas de una tabla o de las ventanas de Eloísa.
+- Vale igual para la ficha abierta desde la lista de trabajo médico y desde Gestión de cuidados: se aplicó a mano en las dos, en la página.
+
 ## 0.48.212
 
 - Revisión de la carga de las dos fichas con la 0.48.211 instalada, cuadro por cuadro en la página. La ronda ya se armaba desde el primer cuadro; quedaban tres saltos de un instante, y se corrigen:

@@ -48,6 +48,15 @@ Leído en la página el 26-11-2026, al pasar de la lista a una ficha (los tiempo
 - Eloísa también cambia la página dentro del cuadro, en sus propios `requestAnimationFrame`: un apartado puede aparecer después del turno de un script que espera al cuadro.
 - Un apartado ya cargado puede llevar una barra propia mientras termina (Diagnóstico y Balance Hídrico tenían una): no es un marcador, y tiene otros hijos en su contenido.
 
+### Botones
+
+Leídos en la página el 26-11-2026, en las dos fichas:
+
+- «Imprimir» de la fila diaria y «Filtrar» de Balance Hídrico: `button.MuiButton-contained.MuiButton-containedPrimary`, fondo `rgb(21,149,136)` y texto blanco.
+- «validar tratamiento» de Fármacos (solo en la ficha médica): `button.MuiButton-contained.MuiButton-containedSecondary`, fondo `rgb(230,74,25)`, naranja.
+- Todos llevan `transition` de 0,25 s en fondo y color: un valor leído justo después de cambiar un estilo es intermedio.
+- Un botón redondo naranja de 40 px, sin texto, abre un menú de acciones rápidas; sus opciones miden 0 px mientras está cerrado.
+
 ### Fila diaria
 
 `div.MuiGrid-item` (flex) con dos hijos:

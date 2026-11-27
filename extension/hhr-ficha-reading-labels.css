@@ -184,16 +184,16 @@
     }
     [data-hhr-entry-open]:has(+ [data-hhr-entry-folded]:not(:focus-within) [data-hhr-entry-field]:placeholder-shown):has(+ [data-hhr-entry-folded] button:disabled) {
       display:inline-flex !important; align-items:center; justify-content:center; align-self:start;
-      width:fit-content !important; min-height:26px; padding:2px 8px; margin:0;
-      border:1px solid #c4d8d1; border-radius:4px; background:transparent; color:var(--hhr-ficha-action);
+      width:fit-content !important; min-height:var(--hhr-ficha-button,26px); padding:0 10px; margin:0;
+      border:1px solid var(--hhr-ficha-button-line,#c4d8d1); border-radius:var(--hhr-ficha-button-radius,6px); background:transparent; color:var(--hhr-ficha-action);
       font:600 .75rem/1.35 var(--hhr-ficha-sans); cursor:pointer;
       &::before {
         content:''; flex:none; inline-size:11px; block-size:11px; margin-inline-end:5px; background:currentColor;
         mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M12 4v16M4 12h16'/%3E%3C/svg%3E") center / contain no-repeat;
       }
       @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
-      &:hover { background:#edf4f1; }
-      &:focus-visible { outline:2px solid #0b6e66; outline-offset:2px; }
+      &:hover { background:var(--hhr-ficha-action-hover); border-color:#9dbfb5; }
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
     }
   }
   /* The handoff heading names the destination, so its action sits on the same line. */

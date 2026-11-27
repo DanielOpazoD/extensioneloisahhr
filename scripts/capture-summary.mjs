@@ -599,6 +599,17 @@ async function verifyShapes(browser, assets) {
   const printTests = await page.evaluate(() => { const button = document.getElementById('fixture-print-tests'), card = button.closest('.MuiCard-root');
     return [button.getClientRects().length, button.parentElement.getClientRects().length, card.querySelectorAll('tbody svg[aria-label="Imprimir"]').length, card.querySelectorAll('tbody tr').length]; });
   assert.ok(printTests[0] === 0 && printTests[1] === 0 && printTests[2] === printTests[3] && printTests[3] > 0, '«Imprimir selección» no se dibuja y cada orden conserva su «Imprimir»: ' + printTests);
+  // One button: Eloísa fills «Imprimir» and «Filtrar» in green and «Validar tratamiento» in orange, and the view
+  // adds outlined ones. The owner asked for a single look: a line around the words, in the ink of what is pressed.
+  const buttons = await page.evaluate(() => [['Imprimir', '.frame > .daily form .MuiButton-root'], ['Validar tratamiento', '#medicationEntrySection .MuiCardHeader-action .MuiButton-root'],
+    ['Filtrar', '#inputOutputHydricBalanceEntrySection .MuiButton-root'], ['Agregar', '#shiftChangeObservation [data-hhr-entry-open]'], ['Agregar alerta', '#alertEntrySection [data-hhr-entry-open]']].map(([name, selector]) => {
+    const button = document.querySelector(selector), look = getComputedStyle(button), box = button.getBoundingClientRect();
+    // A button whose words are shortened is read by the words it draws.
+    const type = look.fontSize === '0px' ? getComputedStyle(button, '::after') : look;
+    return [name, [look.backgroundColor, look.color, look.borderTopWidth + ' ' + look.borderTopColor, look.borderTopLeftRadius, type.fontSize + '/' + type.fontWeight, look.boxShadow, look.textTransform].join(' | '), Math.round(box.height), button.scrollWidth <= button.clientWidth + 1]; }));
+  assert.deepEqual([...new Set(buttons.map(([, look]) => look))], ['rgba(0, 0, 0, 0) | rgb(40, 95, 89) | 1px rgb(196, 216, 209) | 6px | 12px/600 | none | none'],
+    'Los botones del Resumen comparten un solo aspecto: ' + JSON.stringify(buttons));
+  assert.ok(buttons.every(([name, , height, whole]) => whole && height === (name === 'Filtrar' ? 30 : 26)), 'y una altura, salvo «Filtrar», que mide lo que los campos de su fila: ' + JSON.stringify(buttons.map(([name, , height]) => [name, height])));
   // The filter of what is suspended answers a click and the keyboard, and reads pressed while it is on.
   const filter = page.locator('#medicationEntrySection .MuiCardHeader-action label[data-hhr-reading-toggle="suspended"]');
   const pressed = () => filter.evaluate(label => [label.querySelector('input').checked, getComputedStyle(label.querySelector('input')).backgroundColor]);

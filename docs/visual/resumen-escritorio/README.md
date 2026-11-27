@@ -1,5 +1,22 @@
 # Resumen compacto en escritorio
 
+## Un solo botón, en 0.48.213
+
+El responsable aceptó unificar los botones del Resumen. Se leyeron en la página, en las dos fichas (26-11-2026).
+
+| Botón | Antes | Ahora (con el estilo aplicado en la página) |
+| --- | --- | --- |
+| «Imprimir» (fila diaria) | relleno verde `rgb(21,149,136)`, texto blanco, esquina 8 px, 26 px | sin relleno, tinta `rgb(40,95,89)`, línea `rgb(196,216,209)`, esquina 6 px, 26 px |
+| «Validar tratamiento» | relleno naranja `rgb(230,74,25)`, texto blanco, esquina 8 px, 28 px | lo mismo, 26 px |
+| «Filtrar» (Balance Hídrico) | relleno verde, texto blanco, 13 px, 30 px | lo mismo, 12 px, 30 px como los campos de su fila |
+| «Agregar» y «Agregar alerta» | contorno, esquina 4 px, 26 px | lo mismo, esquina 6 px |
+
+| Captura, 1440 × 900 | 0.48.212 | 0.48.213 |
+| --- | --- | --- |
+| Primera pantalla | [Antes](0.48.213/antes/1440-resumen.png) | [Después](0.48.213/despues/1440-resumen.png) |
+
+En la ficha ficticia «Validar tratamiento» pasa a tener el naranja de la página en la captura de «antes»: hasta ahora se dibujaba en morado.
+
 ## La carga sin saltos, medida con la versión instalada, en 0.48.212
 
 Con la 0.48.211 instalada se midió la carga de la ficha médica y de la de Gestión de cuidados, cuadro por cuadro y sin datos clínicos (26-11-2026, 1500 × 950 px). Las dos se comportan igual.
