@@ -65,6 +65,17 @@ async function verifyPlan(page, width, native) {
   // One row under what this machine measures (6 and 9 or 10): a wider font of another platform wraps one name more.
   assert.ok(shown.summary.visibleRows >= (width < 1400 ? 5 : 8), 'La primera pantalla muestra la mayoría de las indicaciones: ' + shown.summary.visibleRows);
 
+  // The hours take the width of the table, each over its own box, and a scheduled hour reads in the band
+  // of the headings: not 100 px each with the right half of the card empty, nor Eloísa's salmon (27-11-2026).
+  const spread = await page.evaluate(() => [...document.querySelectorAll('[data-hhr-plan="card"]')].filter(card => card.querySelector('[data-hhr-plan-slot]')).map(card => {
+    const at = el => el.getBoundingClientRect(), hours = [...card.querySelectorAll('[data-hhr-plan-hour]')], slots = [...card.querySelector('tbody tr').querySelectorAll('[data-hhr-plan-slot]')];
+    const marks = [...card.querySelectorAll('[data-hhr-plan-mark]')].map(mark => getComputedStyle(mark).backgroundColor);
+    return {gap:Math.round(at(card.querySelector('thead th:last-child')).right - at(hours.at(-1)).right), padding:getComputedStyle(card).paddingLeft,
+      aligned:hours.every((hour, i) => Math.abs(at(hour).left - at(slots[i]).left) <= 1 && Math.abs(at(hour).width - at(slots[i]).width) <= 1), marks:[...new Set(marks)]};
+  }));
+  assert.ok(spread.length >= 3 && spread.every(card => card.gap <= 40 && card.padding === '0px' && card.aligned && card.marks.join() === 'rgb(242, 246, 244)'),
+    'Las horas ocupan el ancho de la tabla, cada una sobre su casilla, y una hora programada va en la banda: ' + JSON.stringify(spread));
+
   shown.cards.forEach((card, index) => {
     const before = native.cards[index];
     // Title, switch and tools share the first line of the card.

@@ -756,6 +756,10 @@
   html[data-hhr-ficha-theme="compact"] #hhr-clinical-operations-bar {
     box-shadow:none !important; border-color:var(--hhr-ficha-line) !important; border-radius:8px !important;
   }
+  /* Docked on the white line of tabs, it is the end of that line: no edge, no corner, no shadow. */
+  html[data-hhr-ficha-theme="compact"] #hhr-clinical-operations-bar[data-hhr-ops-docked] {
+    border:0 !important; border-radius:0 !important; background:transparent !important; padding-block:0 !important;
+  }
 }
 
 /* Asked by the owner (27-11-2026): PAM as a whole number, the summary without «Gestión de Visitas», and
@@ -881,5 +885,16 @@
       column-gap:var(--hhr-ficha-block-gap); flex-wrap:nowrap; margin:0 !important; inline-size:100% !important;
       > .MuiGrid-item { flex:1 1 0 !important; max-inline-size:none !important; min-inline-size:0; padding:0 !important; }
     }
+  }
+}
+
+/* Indicaciones libres reads its indication where Fármacos reads its own, after the days of treatment
+   (27-11-2026, the owner asked for the tables in line). «Tiempo» has one width, and the first column of
+   Indicaciones libres starts after that same width. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] {
+    :is(#medicationEntrySection,#dilutionEntrySection) table td:first-child:has([data-hhr-reading^="time-symbol"]) { box-sizing:border-box; inline-size:3.75rem; }
+    /* Named twice for the weight of the rules that give every first cell the reading edge. */
+    #freeIndicationEntrySection#freeIndicationEntrySection table:not(:is(dialog,[role=dialog]) *) :is(th,td):first-child:not(#hhr-a) { padding-inline-start:calc(3.75rem + 7px) !important; }
   }
 }

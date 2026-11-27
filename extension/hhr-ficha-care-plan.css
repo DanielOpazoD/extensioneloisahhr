@@ -26,6 +26,9 @@
     /* The tools close the line of the title only when they were recognized. Otherwise they keep their row. */
     &:has(> [data-hhr-plan="tools"]) { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; }
     container:hhr-plan / inline-size;
+    /* Eloísa gives the card a padding of its own (16 × 32 px, read 27-11-2026): its header and its table
+       carry the reading edge, as every card of the view. */
+    padding:0 !important;
     border:1px solid var(--hhr-ficha-line); border-radius:var(--hhr-ficha-radius);
     background:var(--hhr-ficha-surface); box-shadow:none; color:var(--hhr-ficha-ink);
 
@@ -121,6 +124,23 @@
       &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
     }
     table[data-hhr-plan-empty] td { padding-block:5px !important; color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
+    /* Without rows, the hours of the heading have nothing to situate: the heading keeps «Indicación» and its pages. */
+    table[data-hhr-plan-empty] thead th:last-child > * { display:none !important; }
+    /* The hours share the width of the table: each day as wide as its hours, each hour as wide as the
+       reader measured (--hhr-plan-hour). A scheduled hour is a box in the band of the headings with a
+       hairline after it, not Eloísa's salmon with an orange edge. */
+    &[style*="--hhr-plan-hour"] {
+      [data-hhr-plan-days] { inline-size:auto !important; }
+      [data-hhr-plan-day] { flex:none !important; inline-size:auto !important; min-inline-size:0 !important; }
+      :is([data-hhr-plan-hour],[data-hhr-plan-slot]) { flex:none !important; inline-size:var(--hhr-plan-hour) !important; min-inline-size:0 !important; max-inline-size:none !important; }
+      [data-hhr-plan-slot] > [data-hhr-plan-mark] { inline-size:100% !important; }
+      /* Eloísa's 49 px box set the height of every row: it is as tall as its mark, the row as its text. */
+      :is([data-hhr-plan-slot], [data-hhr-plan-slot] > .MuiBox-root) { block-size:auto !important; min-block-size:0 !important; }
+    }
+    [data-hhr-plan-mark] {
+      background:var(--hhr-ficha-band) !important; border-color:var(--hhr-ficha-line) !important;
+    }
+    [data-hhr-plan-day] .MuiTypography-caption { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans); }
     /* The native foot has no content. It keeps its place only when it says something. */
     table tfoot:not(:has(td:not(:empty), th:not(:empty))) { display:none; }
   }

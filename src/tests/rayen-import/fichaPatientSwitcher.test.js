@@ -35,6 +35,8 @@ it('abre con el nombre del paciente la lista de hospitalizados, la filtra y la c
   name.click();
   await vi.waitFor(() => expect(document.querySelectorAll('[data-hhr-patient-switcher] a')).toHaveLength(2));
   const links = [...document.querySelectorAll('[data-hhr-patient-switcher] a')];
+  // The bed alone places a patient: its code already names the room.
+  expect(links.map(link => link.querySelector('.hhr-switch-place').textContent)).toEqual(['Cama 1', 'Cama 4']);
   expect(links.map(link => [link.getAttribute('href'), link.getAttribute('aria-current')])).toEqual([
     ['/dashboard/encounter-list-nurse/101', 'page'], ['/dashboard/encounter-list-nurse/102', null]]);
   const search = document.querySelector('[data-hhr-patient-switcher] input');

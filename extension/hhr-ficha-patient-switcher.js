@@ -15,7 +15,10 @@
   };
   // The address of the same view for another episode: the last number of the path is the episode.
   const hrefFor = (encounterId, path = location.pathname) => /\/\d+\/?$/.test(path) ? path.replace(/\/\d+(\/?)$/, '/' + encounterId + '$1') : null;
-  const placeOf = patient => [patient.room, patient.bed].map(part => String(part || '').trim()).filter(Boolean).join(' · ');
+  // A patient is placed by the code of the bed, which already names its room (H1C1 in room H1): the owner
+  // asked for that code alone (27-11-2026). Without a bed, the room.
+  const placeOf = patient => String(patient.bed || '').trim() || String(patient.room || '').trim();
+  const searchable = patient => [patient.name, patient.room, patient.bed].map(part => String(part || '')).join(' ');
 
   function create({ readRoster } = {}) {
     let name = null, popover = null, roster = null, readAt = 0, reading = null, current = '', opener = null;
@@ -51,7 +54,7 @@
 
     function render(list, status, query) {
       const words = plain(query).split(' ').filter(Boolean);
-      const shown = (roster || []).filter(patient => words.every(word => plain(patient.name + ' ' + placeOf(patient)).includes(word)));
+      const shown = (roster || []).filter(patient => words.every(word => plain(searchable(patient)).includes(word)));
       list.replaceChildren(...shown.map(patient => {
         const href = hrefFor(patient.encounterId);
         const link = el('a', { href: href || '#', 'data-hhr-switch-patient': '' });

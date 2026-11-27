@@ -66,13 +66,9 @@
         margin:2px 0 0 -6px; padding:2px 7px 2px 6px;
         min-height:26px; border:0; border-radius:4px; background:transparent;
         color:var(--hhr-ficha-action); font:600 .75rem/1.4 var(--hhr-ficha-sans); cursor:pointer;
-        &::before {
-          content:''; flex:none; inline-size:13px; block-size:13px; background:currentColor;
-          mask:var(--hhr-icon-expand) center / contain no-repeat;
-        }
+        /* Its words, without the arrow: the owner asked to drop the icon (27-11-2026). */
         &:hover { background:#edf5f2; }
         &:focus-visible { outline:2px solid #087269; }
-        @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
       }
       > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; margin-block-start:2px; }
     }
@@ -97,7 +93,7 @@
       display:inline-flex; flex:none; align-items:center; justify-content:center; gap:6px; box-sizing:border-box;
       min-height:28px; margin:0; padding:3px 8px; border:1px solid transparent; border-radius:5px; background:transparent;
       color:var(--hhr-ficha-action); font:600 .75rem/1.35 var(--hhr-ficha-sans); white-space:nowrap; cursor:pointer;
-      &::before { content:''; flex:none; inline-size:15px; block-size:15px; background:currentColor; mask:var(--hhr-icon-expand) center / contain no-repeat; }
+      /* Its words, without the arrow: the owner asked to drop the icon (27-11-2026). */
       &:hover { background:var(--hhr-ficha-action-hover); }
       &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
       @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }

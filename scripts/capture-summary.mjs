@@ -7,6 +7,9 @@ import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harne
 import { assertFigures, assertPalette, assertQuality } from './visual-quality.mjs';
 import { summaryAlerts, summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
 
+// Each table starts on the edge of its title, but Indicaciones libres, which starts where Fármacos reads its
+// indication, after the days of treatment (27-11-2026); its own check compares the two.
+const edged = ([title, heading, cell, id]) => heading === cell && (title === heading || id === 'freeIndicationEntrySection');
 const refresh = async page => {
   // The readers materialize each cut text with Eloísa's own disclosure: one refresh per commit of the host.
   for (let turn = 0; turn < 4; turn++) { await page.evaluate(() => document.dispatchEvent(new Event('fixture-refresh'))); await settle(page); }
@@ -108,7 +111,7 @@ const read = page => page.evaluate(() => {
       const tables = tabled.map(section => {
         // The reading edge of a cell is where its content box starts: «Tiempo» aligns its days to the right on purpose.
         const edge = cell => cell.getBoundingClientRect().left + parseFloat(getComputedStyle(cell).paddingLeft);
-        return [firstText(section.querySelector('.MuiCardHeader-title')), edge(section.querySelector('thead th')), edge(section.querySelector('tbody td'))].map(Math.round);
+        return [...[firstText(section.querySelector('.MuiCardHeader-title')), edge(section.querySelector('thead th')), edge(section.querySelector('tbody td'))].map(Math.round), section.id];
       });
       const empty = ['ramEntry', 'allergyEntry', 'noPharmaEntry'].map(id => {
         const card = document.getElementById(id);
@@ -237,7 +240,7 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(look.sizes.every(size => [11, 12, 13, 15, 16].includes(size)), 'Los tamaños de letra de la vista: ' + look.sizes);
   assert.deepEqual(look.titles, ['15px 600'], 'Cada tarjeta se titula igual');
   assert.deepEqual(look.surfaces, ['8px none'], 'Diagnóstico y las tarjetas bajo la ronda tienen la misma superficie');
-  assert.ok(look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(look.tables));
+  assert.ok(look.tables.every(edged), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(look.tables));
   // Under «Sin datos» a section is its name alone: the state is said once by its group.
   void look.empty;
   assert.deepEqual(look.inks, ['rgb(33, 33, 33)', 'rgb(74, 74, 74)', 'rgb(102, 102, 102)'], 'El texto usa las tintas neutras de Eloísa');
@@ -348,12 +351,17 @@ async function verifySummary(page, width, native, off, sans) {
     const starts = [...new Set([...document.querySelectorAll('td[data-hhr-reading="order-requester"]')].map(td => td.closest('table'))
       .map(table => Math.round(at(table.querySelector('td[data-hhr-reading="order-requester"]')).left)))];
     const resuscitation = at(document.querySelector('#alertEntrySection [data-hhr-resuscitation-toggle]')), add = at(document.querySelector('#alertEntrySection [data-hhr-entry-open]'));
+    // Where the indication of each table starts to be read: the content box of its first heading, or of the one after «Tiempo».
+    const indication = id => { const th = [...(document.querySelector('#' + id + ' table')?.tHead?.rows[0]?.cells || [])].find(cell => /^indicaci[oó]n|^indication/i.test(cell.textContent.trim()));
+      return th ? Math.round(th.getBoundingClientRect().left + parseFloat(getComputedStyle(th).paddingLeft)) : null; };
+    const indications = ['medicationEntrySection', 'freeIndicationEntrySection'].map(indication);
     const alerts = document.querySelector('#alertEntrySection');
-    return {starts, footer:resuscitation && add ? Math.abs((resuscitation.top + resuscitation.bottom) / 2 - (add.top + add.bottom) / 2) : null,
+    return {starts, indications, footer:resuscitation && add ? Math.abs((resuscitation.top + resuscitation.bottom) / 2 - (add.top + add.bottom) / 2) : null,
       whole:alerts.textContent.includes('con su pauta de seguimiento completa.'),
       disclosures:[...alerts.querySelectorAll('button')].filter(button => /leer (más|menos)/i.test(button.textContent) && button.getClientRects().length).length};
   });
   assert.ok(lined.whole && lined.disclosures === 0, 'Una alerta se lee entera, sin «Ver más» ni flecha: ' + JSON.stringify(lined));
+  assert.ok(lined.indications.every(Number.isFinite) && Math.abs(lined.indications[0] - lined.indications[1]) <= 2, 'La indicación de Indicaciones libres empieza donde la de Fármacos: ' + lined.indications);
   assert.equal(lined.starts.length, 1, '«Solicitante» empieza en el mismo lugar en Fármacos e Indicaciones libres: ' + lined.starts);
   assert.ok(lined.footer !== null && lined.footer <= 3, '«No reanimación» y «Agregar alerta» comparten una línea: ' + lined.footer);
   const share = shown.handoff.width / (shown.handoff.width + shown.note.width);
@@ -676,7 +684,7 @@ async function verifyShapes(browser, assets) {
   page = await open({procedureList:summaryProcedures, referralList:summaryReferrals, testList:summaryTests, surgeryList:summarySurgeries});
   shown = await read(page);
   assert.equal(shown.look.tables.length, 7, 'Las cuatro secciones dibujan su tabla: ' + shown.look.tables.length);
-  assert.ok(shown.look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(shown.look.tables));
+  assert.ok(shown.look.tables.every(edged), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(shown.look.tables));
   assert.ok(shown.look.rhythm.every(([heading, band, cell]) => heading === '12px' && band === shown.look.rhythm[0][1] && cell === shown.look.rhythm[0][2]),
     'Las tablas comparten el tamaño de sus cabeceras y de sus celdas y su banda: ' + JSON.stringify(shown.look.rhythm));
   // The owner asked for Procedimientos as dense as the rest: these sections read at the rhythm of Fármacos. A row is one
@@ -826,7 +834,7 @@ async function verifyShapes(browser, assets) {
   // The older shape of Fármacos, its card straight in its section, without the line of its validator.
   page = await open({nested:false});
   shown = await read(page);
-  assert.ok(shown.roles['fixture-print'] === 'print' && shown.validator === null && shown.look.edges.length === 1 && shown.look.tables.every(([title, heading, cell]) => title === heading && heading === cell),
+  assert.ok(shown.roles['fixture-print'] === 'print' && shown.validator === null && shown.look.edges.length === 1 && shown.look.tables.every(edged),
     'Fármacos sin su segunda sección conserva su forma: ' + JSON.stringify([shown.roles['fixture-print'], shown.look.edges, shown.look.tables]));
   await page.close();
   // Validated: the line names who did it, in the ink of what is read.
