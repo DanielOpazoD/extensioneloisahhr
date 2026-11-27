@@ -1,5 +1,24 @@
 # Resumen compacto en escritorio
 
+## Lector de evoluciones desde la lista, icono de suspendidos y nota breve con el alto de su bloque, en 0.48.211
+
+El responsable avisó que «Ver evoluciones» respondía «Las evoluciones no fueron autorizadas para el episodio de esta pestaña», y pidió quitar «Imprimir selección» de las órdenes de examen, un icono para ver lo suspendido en lugar del interruptor con su texto, que una evolución breve tenga el alto de Entrega y Alertas, y una interfaz más limpia.
+
+| Qué | 0.48.210 | 0.48.211 |
+| --- | --- | --- |
+| Página completa, 1440 × 900 | [Antes](0.48.211/antes/1440-resumen-completo.png) | [Después](0.48.211/despues/1440-resumen-completo.png) |
+| Evolución breve, 1488 × 910 | [Antes](0.48.211/antes/1488-nota-breve.png) | [Después](0.48.211/despues/1488-nota-breve.png) |
+
+| Medida | 0.48.210 | 0.48.211 |
+| --- | ---: | ---: |
+| «Ver evoluciones» al entrar desde la lista (en la página) | rechazado siempre | lee con la dirección de la pestaña |
+| Borde inferior de una nota de tres líneas respecto de Alertas (ficha ficticia) | 63 px más arriba | el mismo |
+| «Mostrar suspendidos» en un encabezado (en la página, con el estilo aplicado a mano) | 167 × 29 px, interruptor y texto | 28 × 28 px, icono |
+| «Mostrar suspendidos» en una línea de «Sin datos» | 167 × 29 px | 20 × 20 px, tras el estado |
+| «Imprimir selección (n órdenes)» | a la vista | no se dibuja |
+
+Lo que no se ha visto sobre Eloísa: el lector abriendo desde la lista con la versión nueva (el arreglo está en el servicio de la extensión, que no puedo cambiar en la pestaña), y «Imprimir selección» oculto, porque el paciente leído no tiene solicitudes de examen.
+
 ## La ronda armada desde la carga, sin plegado de vacías ni flecha en la nota, en 0.48.210
 
 El responsable instaló la 0.48.209 y avisó que aún se veía el aspecto antiguo al cargar y actualizar. Pidió además quitar la flecha que contraía la evolución, que toda sección vacía esté siempre en «Sin datos» (sin «Ver vacías» ni «Ocultar vacías») y alinear mejor Fármacos e Indicaciones libres.

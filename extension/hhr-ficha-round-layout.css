@@ -231,13 +231,8 @@
           [data-hhr-reading="empty-section-title"]::after { font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans); }
           [data-hhr-reading="status-message"]::after { font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
         }
-        /* A section with a filter of its own takes the whole line: the filter starts where the second column of names does. */
-        > [data-hhr-round-tile="whole"] [data-hhr-reading="status-card"]:has(> .MuiCardHeader-root > .MuiCardHeader-action label) {
-          /* Half the line for the filter while its name and its state keep one line; less than half before they wrap. */
-          display:grid; grid-template-columns:auto minmax(max-content,1fr) minmax(max-content,50%); align-items:center; column-gap:10px;
-          > .MuiCardHeader-root > .MuiCardHeader-action { justify-self:start; margin:0 !important; padding-inline-start:calc(var(--hhr-ficha-inset) - 4px); }
-          .MuiFormControlLabel-root { margin-inline:0 !important; }
-        }
+        /* The filter of what is suspended is an icon right after the state of its section. */
+        [data-hhr-reading="status-card"] > .MuiCardHeader-root > .MuiCardHeader-action:has([data-hhr-reading-toggle="suspended"]) { margin:0 !important; }
       }
       /* The note and the cards beside it are one block: its corners are the outer ones. */
       [data-hhr-round="note"] #evolution { border-radius:var(--hhr-ficha-radius) 0 0 var(--hhr-ficha-radius) !important; }
@@ -265,6 +260,9 @@
         &:has(> .hhr-note-open) > [data-hhr-note-text] { border-block-end:1px solid var(--hhr-ficha-line-soft); }
         > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; margin-block-start:2px; }
       }
+      /* A brief note, without Eloísa's «Leer más», has no lines to keep: its card still ends where the
+         cards beside it end, one lower edge for the block. The script gives the least those cards need. */
+      > [data-hhr-round="note"] #evolution.MuiCard-root { box-sizing:border-box; min-block-size:var(--hhr-round-floor,0px) !important; align-content:start; }
       /* The alerts take the height the handoff leaves beside the note. Their list scrolls inside it
          and their switches stay in view at the end. */
       [data-hhr-round="alerts"] {

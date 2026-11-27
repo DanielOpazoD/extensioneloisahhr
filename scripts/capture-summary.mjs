@@ -173,7 +173,12 @@ const read = page => page.evaluate(() => {
           // Beside it in the group, a section in the second column: the filter starts where its name does.
           const second = [...document.querySelectorAll('[data-hhr-round-tile="end"] :is(.MuiCardHeader-title,[data-hhr-reading="empty-section-title"])')][0]?.getBoundingClientRect();
           const track = one('#noPharmaEntry .MuiCardHeader-action .MuiSwitch-root').getBoundingClientRect();
-          return {end:Math.round(card.right - label.right), column:second ? Math.round(track.left - second.left) : null, freeEnd:Math.round(free.right - freeLabel.right), afterMessage:label.left > message.right,
+          void second; void track;
+          // «Mostrar suspendidos» is drawn as an icon: its box, the room it leaves after the state, its words and its hint.
+          const filter = one('#noPharmaEntry .MuiCardHeader-action label'), words = filter.querySelector('.MuiFormControlLabel-label, .MuiTypography-root') || filter.lastElementChild;
+          return {end:Math.round(card.right - label.right), gap:Math.round(label.left - message.right), box:[Math.round(label.width), Math.round(label.height)], icon:getComputedStyle(filter, '::before').maskImage !== 'none',
+            words:Math.round(words.getBoundingClientRect().width), name:filter.textContent.trim(), hint:filter.title, head:(el => [Math.round(el.width), Math.round(el.height)])(freeLabel),
+            freeEnd:Math.round(free.right - freeLabel.right), afterMessage:label.left > message.right,
             oneLine:Math.abs((label.top + label.bottom) / 2 - (message.top + message.bottom) / 2) < 6};
         })(),
         // The name of the diagnosis card starts at the top, beside the headings of its table.
@@ -225,8 +230,10 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(look.empty.every(gap => gap >= 8 && gap <= 12), 'Una sección vacía separa su nombre de su mensaje: ' + look.empty);
   assert.deepEqual(look.inks, ['rgb(33, 33, 33)', 'rgb(74, 74, 74)', 'rgb(102, 102, 102)'], 'El texto usa las tintas neutras de Eloísa');
   assert.ok(look.emptyEdges.every(edge => edge === inset), 'Una sección vacía empieza en el borde de lectura: ' + look.emptyEdges);
-  assert.ok(look.filter.afterMessage && look.filter.oneLine && look.filter.end >= inset && (look.filter.column === null || Math.abs(look.filter.column) <= 12),
-    'El filtro de una sección vacía sigue a su estado en la misma línea y empieza con la segunda columna del grupo: ' + JSON.stringify(look.filter));
+  // The owner asked for an icon in place of the switch and its words, wherever a section shows what is suspended.
+  assert.ok(look.filter.afterMessage && look.filter.oneLine && look.filter.gap >= 4 && look.filter.gap <= 16 && look.filter.box.join() === '20,20' && look.filter.head.join() === '28,28' &&
+    look.filter.icon && look.filter.words <= 1 && /^Mostrar Suspendidos$/i.test(look.filter.name) && look.filter.hint === look.filter.name,
+    '«Mostrar suspendidos» es un icono tras el estado de su sección, con sus palabras como nombre y como ayuda: ' + JSON.stringify(look.filter));
   assert.equal(look.filter.freeEnd, inset, 'Un filtro que cierra la cabecera termina en el borde de lectura');
   assert.ok(look.diagnosisTop <= 10, 'El nombre de Diagnóstico queda arriba: ' + look.diagnosisTop);
   // Like a word: after the last word of the name, or, when that line is full, at the start of the next one. Never in a column of its own.
@@ -587,9 +594,19 @@ async function verifyShapes(browser, assets) {
   assert.deepEqual(opened, {whole:true, less:true, inside:true}, 'Al abrir un fundamento se lee entero dentro de su celda, con «Ver menos»: ' + JSON.stringify(opened));
   assert.deepEqual([shown.look.titles, shown.look.surfaces, shown.look.edges], [['15px 600'], ['8px none'], [shown.look.rail.join('/')]], 'Sus tarjetas se titulan y terminan como las demás');
   assert.ok(shown.look.gaps.length >= 7 && shown.look.gaps.every(gap => gap === 12), 'y se separan como las demás: ' + shown.look.gaps);
-  const printTests = await page.evaluate(() => { const button = document.getElementById('fixture-print-tests'), look = getComputedStyle(button);
-    return [Math.round(button.getBoundingClientRect().height), look.textTransform, look.fontSize, Math.round(button.closest('.MuiCard-root').getBoundingClientRect().right - button.getBoundingClientRect().right)]; });
-  assert.deepEqual(printTests, [26, 'none', '12px', 16], 'El botón de una sección se lee como «Validar tratamiento», en el borde de lectura');
+  // The owner asked for the exam requests without «Imprimir selección»: the button is not drawn, nor the line
+  // that only held it, and each order keeps the print action of its row.
+  const printTests = await page.evaluate(() => { const button = document.getElementById('fixture-print-tests'), card = button.closest('.MuiCard-root');
+    return [button.getClientRects().length, button.parentElement.getClientRects().length, card.querySelectorAll('tbody svg[aria-label="Imprimir"]').length, card.querySelectorAll('tbody tr').length]; });
+  assert.ok(printTests[0] === 0 && printTests[1] === 0 && printTests[2] === printTests[3] && printTests[3] > 0, '«Imprimir selección» no se dibuja y cada orden conserva su «Imprimir»: ' + printTests);
+  // The filter of what is suspended answers a click and the keyboard, and reads pressed while it is on.
+  const filter = page.locator('#medicationEntrySection .MuiCardHeader-action label[data-hhr-reading-toggle="suspended"]');
+  const pressed = () => filter.evaluate(label => [label.querySelector('input').checked, getComputedStyle(label.querySelector('input')).backgroundColor]);
+  const idle = await pressed();
+  await filter.click();
+  const on = await pressed();
+  await filter.locator('input').press('Space');
+  assert.ok(!idle[0] && on[0] && on[1] !== idle[1] && !(await pressed())[0], 'El icono de suspendidos se activa con un clic, se lee pulsado y se apaga con el teclado: ' + JSON.stringify([idle, on]));
   await page.close();
   // In a narrower window the row keeps the line of tabs and gives up the name of its field.
   page = await open();

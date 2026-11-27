@@ -1,5 +1,14 @@
 # Cambios
 
+## 0.48.211
+
+- «Ver evoluciones» vuelve a funcionar al entrar a la ficha desde la lista. Decía «Las evoluciones no fueron autorizadas para el episodio de esta pestaña»: Eloísa pasa de la lista a la ficha sin cargar una página, y la extensión comparaba el episodio con la dirección de la lista. Ahora usa la dirección de la pestaña, que el navegador mantiene. Comprobado en la página: desde la lista fallaba siempre y con la ficha cargada directamente leía sus notas.
+- Se quita «Imprimir selección (n órdenes)» de Solicitud de examen en la vista Compacta, como pidió el responsable. Cada orden conserva la impresión de su fila.
+- «Mostrar suspendidos» es un icono (un círculo con una pausa) en lugar del interruptor con su texto, en Fármacos, Indicaciones libres, Producto no farmacológico y Procedimientos. Es la misma casilla de Eloísa: se lee pulsado mientras muestra lo suspendido, responde al teclado y conserva sus palabras como nombre y como ayuda al pasar el puntero.
+- Una evolución breve ya no termina antes que Entrega de turno y Alertas: su tarjeta mide al menos lo que ellas, y el bloque tiene un solo borde inferior.
+- Las herramientas de cada fila (suspender, notas, menú, archivar una alerta) esperan en una tinta más tenue y toman su color al apuntar la fila o al llegar con el teclado: una lista se lee primero como su texto.
+- Vale igual para la ficha abierta desde la lista de trabajo médico y desde Gestión de cuidados.
+
 ## 0.48.210
 
 - La ronda del Resumen se arma desde el primer cuadro de la carga, con los marcadores que Eloísa dibuja mientras llegan los datos: Diagnóstico arriba, Evolución (o Valoración) con Entrega y Alertas a su lado, y Signos vitales debajo, cada uno con el espacio de lo que lo reemplaza. Cada apartado aparece donde se lee. Con la 0.48.209 instalada, medido en la página, la nota, Alertas y Reposo se veían unos 200 ms en la cuadrícula de Eloísa hasta que llegaba la entrega de turno, y Diagnóstico empujaba todo al llegar.

@@ -93,8 +93,12 @@
     const handle = async (message, sender) => {
       const encId = text(message && message.encId);
       if (!/^[1-9]\d{0,15}$/.test(encId)) return { error: 'El episodio clínico no es válido.' };
-      // Only the tab that has this episode open reads its notes.
-      if (!sender || sender.frameId !== 0 || encounterOf(sender.url || (sender.tab && sender.tab.url)) !== encId ||
+      // Only the tab that has this episode open reads its notes. The address is the tab's own, which the
+      // browser keeps: Eloísa goes from the list to a ficha without loading a page, and the address of the
+      // script that asks stays the one of the list (read on the page 26-11-2026: every reader opened that
+      // way was refused).
+      const open = sender && encounterOf((sender.tab && sender.tab.url) || sender.url);
+      if (!sender || sender.frameId !== 0 || open !== encId ||
           !(await authorize(sender, encId))) {
         return { error: 'Las evoluciones no fueron autorizadas para el episodio de esta pestaña.', errorCode: 'episode_not_authorized' };
       }
