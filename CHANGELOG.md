@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.218
+
+- Cada impresión del Resumen dice qué imprime, con un solo aspecto: el icono y sus palabras en la tinta de una acción, como «Imprimir indicaciones». El icono de la fila diaria, que Eloísa llama solo «Imprimir», se lee «Evolución»: imprime el reporte de evolución (leído en la página el 27-11-2026). El icono al final de Fármacos se lee «Imprimir recetón». Sus nombres para el lector de pantalla siguen siendo los de Eloísa.
+- Balance Hídrico sin registros guarda su filtro tras un icono, después de «Sin registros». El icono lo abre y lo cierra, y al abrirlo el foco pasa al filtro. Con registros, el filtro vuelve a ser el de Eloísa.
+- Los signos vitales ya no van en cajas grises: cada medición se lee sobre la tarjeta, separada por una línea fina.
+- Vale igual para la ficha de lista de trabajo médico y la de Gestión de cuidados; en esta última Eloísa no dibuja el icono de evolución ni Fármacos.
+- Verificado en la página real, con el estilo aplicado a mano: con «Evolución», la fila diaria sigue en la línea de pestañas con 130 px libres antes de la barra de Centro HHR, y la cabecera de Fármacos no crece.
+
 ## 0.48.217
 
 - Plan de tratamiento e Historial hablan el idioma del Resumen. En Plan, el interruptor de cada tarjeta es un icono de 26 px con su nombre al apuntarlo: el de pausa para «Mostrar Suspendidos» (el mismo del Resumen) y un ojo para «Mostrar realizados, no realizados, archivados y suspendidos» y «Mostrar Finalizados». «Mostrar todos los ocultos», arriba de las tarjetas, queda como una nota pequeña. Las etiquetas «SOS» y «Externo» van al tamaño de etiqueta de la vista (11 px).

@@ -68,7 +68,10 @@ const read = page => page.evaluate(() => {
       widths:[...card.querySelectorAll('thead th')].map(th => Math.round(box(th).width))}))(one('#freeIndicationEntry')),
     balance:(card => ({...box(card), controls:[...card.querySelectorAll('.MuiCardContent-root :is(.MuiInputBase-root,.MuiButton-root)')].map(el => Math.round(box(el).height)),
       edge:Math.round(card.querySelector('.MuiCardHeader-title').getBoundingClientRect().left - box(card).left),
-      filter:shown(card.querySelector('button[type="submit"]')), calendars:[...card.querySelectorAll('.MuiInputAdornment-root button')].filter(shown).length}))(one('#inputOutputHydricBalanceEntry')),
+      filter:shown(card.querySelector('button[type="submit"]')), calendars:[...card.querySelectorAll('.MuiInputAdornment-root button')].filter(shown).length,
+      fold:(opener => opener && {shown:shown(opener), expanded:opener.getAttribute('aria-expanded'), name:opener.getAttribute('aria-label'), size:[box(opener).width, box(opener).height],
+        controls:opener.getAttribute('aria-controls') === opener.parentElement.querySelector(':scope > .MuiStack-root')?.id,
+        icon:getComputedStyle(opener, '::before').maskImage !== 'none', afterState:box(opener).left > box(card.querySelector('[data-hhr-balance="empty"]')).left})(card.querySelector('[data-hhr-balance-filter]'))}))(one('#inputOutputHydricBalanceEntry')),
     // A section without permission, or empty, is one line: its name and Eloísa's sentence.
     lines:Object.fromEntries(['adverseEventEntry', 'obstetricGynecologicalExaminationEntry', 'operationTheaterRequestEntry', 'diagnosisEntry', 'procedureOrderEntry'].map(id => {
       const card = one('#' + id), title = card.querySelector('.MuiCardHeader-title'), text = card.querySelector('.MuiCardContent-root > p');
@@ -256,6 +259,16 @@ async function verifySummary(page, width, native, off, sans) {
   assert.deepEqual(alertForm, {folded:true, shown:false, focused:false, opener:true}, 'El formulario de alertas se pliega aunque Eloísa le dé el foco: ' + JSON.stringify(alertForm));
   assert.ok(free.disclosures === 0 && free.last.startsWith(summaryFree.at(-1)[0]) && free.widths[0] === Math.max(...free.widths),
     'Una indicación libre se lee entera, en la columna más ancha: ' + JSON.stringify(free));
+  // Without records its filter for another period waits behind an icon, after «Sin registros». The icon opens it.
+  assert.ok(balance.fold?.shown && balance.fold.expanded === 'false' && balance.fold.name === 'Filtrar otro periodo' && balance.fold.icon && balance.fold.controls &&
+    balance.fold.afterState && balance.fold.size.every(side => side === 26) && !balance.filter && balance.calendars === 0,
+    'Balance Hídrico sin registros guarda su filtro tras un icono: ' + JSON.stringify(balance));
+  await page.click('[data-hhr-balance-filter]');
+  await page.waitForFunction(() => document.querySelector('[data-hhr-balance-filter]')?.getAttribute('aria-expanded') === 'true');
+  const opened = (await read(page)).balance;
+  assert.ok(opened.fold.shown && opened.fold.expanded === 'true', 'El icono queda junto al filtro abierto: ' + JSON.stringify(opened.fold));
+  assert.equal(await page.evaluate(() => document.activeElement?.closest('#inputOutputHydricBalanceEntry .MuiCardContent-root > .MuiStack-root') !== null), true, 'Abierto, el foco pasa al filtro');
+  Object.assign(balance, opened);
   assert.ok(balance.height <= native.balance.height - 40 && balance.controls.length === 5 && balance.controls.every(height => height <= 30) && balance.filter && balance.calendars === 2 && balance.edge === inset,
     `Balance Hídrico filtra en una línea, con sus campos, su calendario y «Filtrar»: ${native.balance.height} → ${balance.height}, ${balance.controls}`);
   for (const id of ['adverseEventEntry', 'obstetricGynecologicalExaminationEntry']) {
@@ -640,6 +653,21 @@ async function verifyShapes(browser, assets) {
   assert.ok(printTests[0] === 0 && printTests[1] === 0 && printTests[2] === printTests[3] && printTests[3] > 0, '«Imprimir selección» no se dibuja y cada orden conserva su «Imprimir»: ' + printTests);
   // One button: Eloísa fills «Imprimir» and «Filtrar» in green and «Validar tratamiento» in orange, and the view
   // adds outlined ones. The owner asked for a single look: a line around the words, in the ink of what is pressed.
+  // Each print says what it prints, in the look of «Imprimir indicaciones»: the icon of the daily row prints the
+  // evolution and the one at the end of Fármacos the recetón (read on the page 27-11-2026).
+  const prints = await page.evaluate(() => [['.frame > .daily hr + button', 'Imprimir'], ['#medicationEntrySection .MuiCardHeader-action > .MuiStack-root > button.MuiIconButton-root', 'Imprimir recetón'],
+    ['#fixture-print', 'Imprimir indicaciones']].map(([selector, name]) => {
+    const button = document.querySelector(selector);
+    if (!button) return {missing:selector};
+    const box = button.getBoundingClientRect(), look = getComputedStyle(button);
+    return {says:getComputedStyle(button, '::after').content, name:button.querySelector('svg').getAttribute('aria-label'), own:button.hasAttribute('aria-label'),
+      height:Math.round(box.height), colour:look.color, size:getComputedStyle(button, '::after').fontSize, whole:button.scrollWidth <= button.clientWidth + 1};
+  }));
+  assert.deepEqual(prints.map(({says, name, own}) => [says, name, own]), [['"Evolución" / ""', 'Imprimir', false], ['"Imprimir recetón" / ""', 'Imprimir recetón', false],
+    ['"Imprimir indicaciones" / ""', 'Imprimir indicaciones', false]], 'Cada impresión dice qué imprime, y su nombre sigue siendo el de Eloísa: ' + JSON.stringify(prints));
+  assert.equal(new Set(prints.map(({height, colour, size, whole}) => [height, colour, size, whole].join())).size, 1, 'y todas se leen igual: ' + JSON.stringify(prints));
+  // «Filtrar» of Balance Hídrico is measured with its filter open.
+  if (await page.getAttribute('[data-hhr-balance-filter]', 'aria-expanded') === 'false') await page.click('[data-hhr-balance-filter]');
   const buttons = await page.evaluate(() => [['Imprimir', '.frame > .daily form .MuiButton-root'], ['Validar tratamiento', '#medicationEntrySection .MuiCardHeader-action .MuiButton-root'],
     ['Filtrar', '#inputOutputHydricBalanceEntrySection .MuiButton-root'], ['Agregar', '#shiftChangeObservation [data-hhr-entry-open]'], ['Agregar alerta', '#alertEntrySection [data-hhr-entry-open]']].map(([name, selector]) => {
     const button = document.querySelector(selector), look = getComputedStyle(button), box = button.getBoundingClientRect();

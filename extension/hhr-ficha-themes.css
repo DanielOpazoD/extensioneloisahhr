@@ -94,9 +94,10 @@
       padding:2px 5px !important; align-items:center; row-gap:0 !important;
       > [data-hhr-reading] { margin-block:0 !important; }
     }
+    /* A measurement is not a box: the numbers stand on the card, apart by a hairline. */
     [data-hhr-reading="vital-tile"] {
-      border:0 !important; border-inline-start:2px solid #bfd8d1 !important; border-radius:0 !important;
-      background:#f3f7f5; box-shadow:none !important;
+      border:0 !important; border-inline-start:1px solid var(--hhr-ficha-line) !important; border-radius:0 !important;
+      background:transparent; box-shadow:none !important;
     }
     [data-hhr-reading="vital-inner"] { background:transparent; }
     [data-hhr-reading="vital-pressure-group"] { display:contents !important; }
@@ -134,11 +135,7 @@
     }
     /* Only rearrange recognised cells. Extra clinical details keep their native layout. */
     @container hhr-vital-band (min-width:50rem) {
-      [data-hhr-reading="vital-tile"] {
-        background:#f4f7f6; border-inline-start:1px solid #cfddd8 !important;
-        &:first-child { border-start-start-radius:4px !important; border-end-start-radius:4px !important; }
-        &:last-child { border-start-end-radius:4px !important; border-end-end-radius:4px !important; }
-      }
+      [data-hhr-reading="vital-tile"] { background:transparent; border-inline-start:1px solid var(--hhr-ficha-line) !important; }
       :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-inner"]) {
         display:grid; align-items:stretch;
       }
@@ -541,8 +538,9 @@
     font-size:0 !important;
     &::after { content:'Indicación' / ''; font-size:.75rem; }
   }
-  /* Balance Hídrico without records is one line: its name, its filter for another period, «Sin
-     registros», and its switch and print icon at the end. */
+  /* Balance Hídrico without records is one line: its name, «Sin registros», the icon that opens its
+     filter for another period, and its switch and print icon at the end. Open, the filter is read after
+     the name, as Eloísa draws it. */
   html[data-hhr-ficha-theme="compact"] #inputOutputHydricBalanceEntrySection:has(> .MuiCard-root:only-child > .MuiCardContent-root > [data-hhr-balance="empty"]) > .MuiCard-root {
     display:flex; flex-flow:row wrap; align-items:center; gap:6px 12px;
     padding:9px var(--hhr-ficha-inset) 6px !important;
@@ -560,7 +558,17 @@
       order:3; flex:none; margin:0 !important; font-size:0 !important; line-height:1 !important;
       &::after { content:'Sin registros' / ''; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
     }
-    > .MuiCardHeader-root > .MuiCardHeader-action { order:4; flex:none; margin:0 0 0 auto !important; align-self:center; }
+    > .MuiCardContent-root > [data-hhr-balance-folded] { display:none !important; }
+    > .MuiCardContent-root > button[data-hhr-balance-filter] {
+      order:4; position:relative; flex:none; box-sizing:border-box; inline-size:26px; block-size:26px; margin:0; padding:0;
+      border:0; border-radius:var(--hhr-ficha-button-radius); background:transparent; color:var(--hhr-ficha-ink-soft); cursor:pointer;
+      &::before { content:''; position:absolute; inset:0; margin:auto; inline-size:16px; block-size:16px; background:currentColor; mask:var(--hhr-icon-filter) center / contain no-repeat; }
+      &:hover { background:var(--hhr-ficha-action-hover); color:var(--hhr-ficha-action); }
+      &[aria-expanded="true"] { background:var(--hhr-ficha-action-pressed); color:var(--hhr-ficha-action); }
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+      @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
+    }
+    > .MuiCardHeader-root > .MuiCardHeader-action { order:5; flex:none; margin:0 0 0 auto !important; align-self:center; }
   }
 }
 
@@ -684,4 +692,20 @@
 /* A value out of its range keeps Eloísa's flag in a red that reads (5.6:1 instead of 3.7:1). */
 @media screen {
   html[data-hhr-ficha-theme="compact"] [data-hhr-vital-flag] { color:var(--hhr-ficha-alarm) !important; }
+}
+
+/* A print says what it prints, as «Imprimir indicaciones» does beside the title of Fármacos: its icon
+   and its words, in the ink of an action, without a line. Eloísa's icon keeps its name and what it does.
+   The id in :is() gives the rule the weight of the sizes the presentation sets per section. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] :is(button, #hhr-print-caption)[data-hhr-print-caption]:not(:is(dialog,[role=dialog],td,th) *) {
+    box-sizing:border-box; display:inline-flex; align-items:center; gap:5px;
+    inline-size:auto !important; block-size:26px !important; padding:0 8px 0 6px !important;
+    border-radius:var(--hhr-ficha-radius); background:transparent; color:var(--hhr-ficha-action) !important; white-space:nowrap;
+    > svg { inline-size:16px !important; block-size:16px !important; font-size:1rem; }
+    &::after { content:attr(data-hhr-print-caption) / ''; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1 var(--hhr-ficha-sans); }
+    &:hover { background:var(--hhr-ficha-action-hover); }
+    &:active { background:var(--hhr-ficha-action-pressed); }
+    &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+  }
 }

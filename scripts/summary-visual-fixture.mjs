@@ -179,7 +179,7 @@ const medication = ({nested = true, validator = ''} = {}) => {
     (nested ? '<form class="MuiStack-root"></form>' : '');
   const content = card('medicationEntry', 'Fármacos', body, '',
     `<button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedSecondary">validar tratamiento</button>${toggle('Mostrar Suspendidos')}` +
-    iconButton('LocalPrintshopRoundedIcon', 'Imprimir fármacos', 'Medium'));
+    iconButton('LocalPrintshopRoundedIcon', 'Imprimir recetón', 'Medium'));
   return `<section class="MuiBox-root" id="medicationEntrySection">${nested ? `<section class="MuiBox-root" id="dilutionEntrySection">${content}</section>` : content}</section>`;
 };
 const noPharma = section('noPharmaEntrySection', 'noPharmaEntry', 'Producto no Farmacológico', message('No presenta productos no farmacológicos registrados'), '', toggle('Mostrar Suspendidos'));

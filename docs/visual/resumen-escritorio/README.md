@@ -1,5 +1,20 @@
 # Resumen compacto en escritorio
 
+## Impresiones con nombre, Balance Hídrico plegado y signos vitales sin cajas, en 0.48.218
+
+Segunda parte de las mejoras aceptadas de la auditoría visual.
+
+| Captura, 1440 × 900 | 0.48.217 | 0.48.218 |
+| --- | --- | --- |
+| Resumen completo | [Antes](0.48.218/antes/1440-resumen-completo.png) | [Después](0.48.218/despues/1440-resumen-completo.png) |
+
+| Lugar | 0.48.217 | 0.48.218 |
+| --- | --- | --- |
+| Fila diaria | «Imprimir» y un icono sin nombre | «Imprimir» y «🖨 Evolución» |
+| Fármacos | «Imprimir indicaciones» y un icono sin nombre | «Imprimir indicaciones» e «Imprimir recetón» |
+| Balance Hídrico sin registros | filtro completo a la vista | «Sin registros» y un icono que abre el filtro |
+| Signos vitales | cada medición en una caja gris | sobre la tarjeta, separadas por una línea fina |
+
 ## Plan e Historial con el idioma del Resumen, en 0.48.217
 
 El responsable aceptó las mejoras de la auditoría visual. Primera parte: Plan de tratamiento e Historial usan los iconos, botones, tamaños y tintas del Resumen.
