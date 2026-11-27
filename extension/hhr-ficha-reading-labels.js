@@ -277,7 +277,7 @@
         // Say a byline once. The daily row repeats the note's own, and the three
         // prescription cards often carry the byline of the card just above.
         // «Above» means painted above: a copy hidden by its own styles is not a card the reader can see.
-        const shown = el => Boolean(el) && !el.closest('[data-hhr-ficha-folded],[hidden],main [aria-hidden=true],dialog,[role=dialog]') &&
+        const shown = el => Boolean(el) && !el.closest('[hidden],main [aria-hidden=true],dialog,[role=dialog]') &&
           (typeof el.checkVisibility === 'function' ? el.checkVisibility({visibilityProperty:true}) : el.getClientRects().length > 0);
         const daily = [...candidates].find(el => !el.matches('.MuiCardHeader-subheader') && next.get(el)?.has('data-hhr-update-label') &&
           el.parentElement.querySelector('form input'));

@@ -23,6 +23,15 @@
   .hhr-evo-entry:hover,.hhr-evo-author:hover,.hhr-evo-back:hover { background:#edf5f2; }
   .hhr-evo-entry:focus-visible,.hhr-evo-back:focus-visible,.hhr-evo-author:focus-visible { outline:2px solid #086b63; }
 }
+@media screen {
+  /* The note is read whole and the view opens it by itself: the owner asked for the summary without the
+     control that folds it again, in the ficha opened from either worklist. Eloísa's «Leer menos» stays in
+     the page, out of sight and out of the way of the keyboard. Its «Leer más» is shown whenever the note
+     is cut: it is the way to read the rest. */
+  html[data-hhr-ficha-theme="compact"] #evolution [data-hhr-evolution-block] > .MuiBox-root:has(> button[data-hhr-note-disclosure="less"]:only-child) {
+    position:absolute !important; inline-size:1px !important; block-size:1px !important; margin:0 !important; overflow:hidden; visibility:hidden !important;
+  }
+}
 @media screen and (min-width:64rem) {
   html[data-hhr-ficha-theme="compact"] #evolution {
     [data-hhr-evolution-block] > [data-hhr-note-text] {
@@ -128,8 +137,8 @@
         > .MuiCardContent-root > .MuiStack-root {
           > :first-child { grid-column:1 / -1; min-width:0; margin:0 !important; }
           /* One note with Eloísa's «Leer más / Leer menos»: the text takes the lines under the heading and
-             that control rides with the other actions, after the writing tools. Nothing is drawn under the
-             text. The control keeps its place in Eloísa's tree, and its handler. */
+             nothing is drawn under it. A note still cut shows «Leer más» with the other actions, after the
+             writing tools, in its place of Eloísa's tree and with its handler. */
           > :first-child:has(> [data-hhr-evolution-block]:only-child > [data-hhr-note-text]):has(> [data-hhr-evolution-block] > .MuiBox-root > button[data-hhr-note-disclosure]:only-child) {
             display:contents;
             > [data-hhr-evolution-block] {

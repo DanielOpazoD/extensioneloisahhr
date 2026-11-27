@@ -101,12 +101,10 @@
       /* What has no records, or cannot be seen, closes the summary together: under one heading, three to
          a row, each section its name and its state in two words. Eloísa's own sentence stays in the page
          for a screen reader, search and print, and a filter of the section stays beside its name. */
-      &:is(:has(> [data-hhr-round="peer"] [data-hhr-reading="status-card"]:not([data-hhr-ficha-folded])), [data-hhr-round-side~="tiles"])::before {
+      &:is(:has(> [data-hhr-round="peer"] [data-hhr-reading="status-card"]), [data-hhr-round-side~="tiles"])::before {
         content:'Sin datos'; order:1; grid-column:1 / -1; margin-block-start:4px; padding-inline-start:var(--hhr-ficha-inset);
         color:var(--hhr-ficha-muted); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans);
       }
-      /* Folded behind «Ver vacías», a section takes no room among the others. */
-      > [data-hhr-round="peer"]:has(> section > [data-hhr-reading="status-card"][data-hhr-ficha-folded]:only-child, > [data-hhr-reading="status-card"][data-hhr-ficha-folded]:only-child) { display:none !important; }
       > [data-hhr-round="peer"]:has(> section > [data-hhr-reading="status-card"]:only-child, > [data-hhr-reading="status-card"]:only-child) {
         order:1; grid-column:span 4; margin-block-start:calc(4px - var(--hhr-round-row-gap));
         /* With a filter of its own, such as «Mostrar Suspendidos», a section takes half the row: its name, its state and its filter keep one line. */
@@ -120,7 +118,6 @@
         [data-hhr-reading="status-message"]::after { content:'Sin registros' / ''; }
         [data-hhr-reading="status-denied"]::after { content:'Sin permiso' / ''; }
       }
-      > .hhr-ficha-empty-toggle { grid-column:1 / -1; justify-self:end; }
       :is([data-hhr-round="bridge"],[data-hhr-round="inner"]) { display:contents !important; }
       :is([data-hhr-round="before"],[data-hhr-round="peer"]) {
         grid-column:span var(--hhr-round-span,12);
@@ -221,18 +218,26 @@
           &[data-hhr-round-tile="whole"] { grid-column:7 / span 6; }
         }
         [data-hhr-round="empty-request"] { display:block !important; }
-        /* «Ver vacías» ends the line of «Sin datos»: it unfolds more of the same. */
-        &[data-hhr-round-side~="tiles"] > .hhr-ficha-empty-toggle {
-          grid-row:var(--hhr-round-signs); grid-column:10 / -1; align-self:start; justify-self:end; z-index:1;
-        }
         /* In half the line the nine measurements read as five and four, never with one left alone on a third row. */
         @container hhr-round-signs (min-width:36rem) {
           [data-hhr-round="vitals"] #vitalSignsEntry [data-hhr-reading="vital-grid"]:has(> [data-hhr-reading="vital-tile"]:nth-child(9)) {
             grid-template-columns:repeat(5,minmax(0,1fr)) !important;
           }
         }
-        /* A request without records reads on the line of its neighbours. */
-        [data-hhr-round="empty-request"] [data-hhr-reading="status-card"] { padding-block:2px !important; background:transparent !important; }
+        /* A request without records reads on the line of its neighbours, and like them: its name and, right after, its state. */
+        [data-hhr-round="empty-request"] [data-hhr-reading="status-card"], [data-hhr-round="empty-request"][data-hhr-reading="status-card"] {
+          justify-content:flex-start !important; gap:2px 10px !important; padding-block:1px !important; background:transparent !important;
+          [data-hhr-reading="empty-section-title"] { margin-block:1px !important; }
+          [data-hhr-reading="empty-section-title"]::after { font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans); }
+          [data-hhr-reading="status-message"]::after { font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
+        }
+        /* A section with a filter of its own takes the whole line: the filter starts where the second column of names does. */
+        > [data-hhr-round-tile="whole"] [data-hhr-reading="status-card"]:has(> .MuiCardHeader-root > .MuiCardHeader-action label) {
+          /* Half the line for the filter while its name and its state keep one line; less than half before they wrap. */
+          display:grid; grid-template-columns:auto minmax(max-content,1fr) minmax(max-content,50%); align-items:center; column-gap:10px;
+          > .MuiCardHeader-root > .MuiCardHeader-action { justify-self:start; margin:0 !important; padding-inline-start:calc(var(--hhr-ficha-inset) - 4px); }
+          .MuiFormControlLabel-root { margin-inline:0 !important; }
+        }
       }
       /* The note and the cards beside it are one block: its corners are the outer ones. */
       [data-hhr-round="note"] #evolution { border-radius:var(--hhr-ficha-radius) 0 0 var(--hhr-ficha-radius) !important; }

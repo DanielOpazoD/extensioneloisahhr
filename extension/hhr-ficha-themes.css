@@ -1,7 +1,9 @@
 /* Balanced uses the base reader. Overrides apply only inside an active clinical view. */
 @media screen {
   html[data-hhr-ficha-theme="compact"] {
-    --hhr-ficha-gap:4px; --hhr-ficha-cell-y:1px; --hhr-ficha-tile-y:2px;
+    --hhr-ficha-gap:4px; --hhr-ficha-tile-y:2px;
+    /* A row of a table: its text and its 24 px tools in the middle of 31 px, the same in every table. */
+    --hhr-ficha-cell-y:3px;
     [data-hhr-ficha-primary], .MuiAppBar-root:has(> [data-hhr-ficha-primary]:only-child) { min-height:32px !important; }
     [data-hhr-ficha-primary] [role="tab"] { min-height:28px !important; }
     [data-hhr-ficha-sections] { padding-block:1px !important; }
@@ -193,7 +195,11 @@
          :has() cannot hold another :has(), so each chain is spelt out. */
       > .MuiCard-root > .MuiCardContent-root:is(:has(> :is(table,.MuiTableContainer-root):only-child), :has(> .MuiPaper-root:only-child > .MuiTableContainer-root:only-child > table),
         :has(> [data-hhr-reading="order-validator"]:first-child + :is(table,.MuiTableContainer-root):last-child),
-        :has(> [data-hhr-reading="order-validator"]:first-child + .MuiPaper-root:last-child > .MuiTableContainer-root:only-child > table)) {
+        :has(> [data-hhr-reading="order-validator"]:first-child + .MuiPaper-root:last-child > .MuiTableContainer-root:only-child > table),
+        /* Fármacos closes with a form that draws nothing (read 26-11-2026): it does not stand between the table and its edges. */
+        :has(> [data-hhr-reading="order-validator"]:first-child + :is(table,.MuiTableContainer-root):nth-child(2) + form:last-child),
+        :has(> [data-hhr-reading="order-validator"]:first-child + .MuiPaper-root:nth-child(2) + form:last-child):has(> .MuiPaper-root > .MuiTableContainer-root:only-child > table),
+        :has(> .MuiPaper-root:first-child + form:last-child):has(> .MuiPaper-root > .MuiTableContainer-root:only-child > table)) {
       padding-inline:0 !important;
       > [data-hhr-reading="order-validator"] { padding-inline:var(--hhr-round-inset) !important; }
       /* The reading edge is paid by the room between an edge column and its neighbour, which keeps its own
@@ -351,6 +357,10 @@
     [data-hhr-reading^="time-symbol"] {
       /* On the trailing edge of its column, so that the units of one list fall in line. */
       zoom:1; display:flex; align-items:baseline; justify-content:flex-end; color:var(--hhr-ficha-ink-soft); white-space:nowrap;
+      /* Eloísa keeps 36 px for the triangle and pushes the number 14 px down under it (read 26-11-2026):
+         without the triangle the number reads on the line of the medication. */
+      block-size:auto !important; min-block-size:0 !important;
+      > * { margin:0 !important; }
       font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans); font-variant-numeric:tabular-nums;
       svg { display:none; }
       .MuiTypography-root { color:inherit; font:inherit; }
@@ -400,24 +410,6 @@
       box-sizing:border-box; padding-block:2px; border-radius:6px; line-height:20px !important;
       &[aria-current="location"] { border-color:#a8cfc5; background:#e5f2ee; color:var(--hhr-ficha-focus) !important; }
     }
-    /* Keep this utility with the links, clear of the floating extension toolbar. */
-    .hhr-ficha-empty-toggle {
-      display:inline-flex; align-items:center; gap:6px;
-      position:relative; margin-inline-start:9px; padding:2px 7px;
-      min-height:24px; background:transparent; border:1px solid transparent;
-      border-radius:5px; color:var(--hhr-ficha-ink-soft); line-height:18px;
-      &::before {
-        content:''; position:absolute; inset-inline-start:-7px;
-        inset-block:4px; border-inline-start:1px solid #b6c8c2;
-      }
-      &::after {
-        content:''; inline-size:5px; block-size:5px; margin-block-start:-3px;
-        border:solid currentColor; border-width:0 1.5px 1.5px 0; transform:rotate(45deg);
-      }
-      &[aria-expanded="true"]::after { transform:rotate(225deg); margin-block-start:3px; }
-      &:hover { background:#e7efec; color:var(--hhr-ficha-action); }
-      &:focus-visible { outline:2px solid #176f63; outline-offset:-2px; }
-    }
   }
 
   /* Guide the eye across the active order without painting over native status colours. */
@@ -460,26 +452,11 @@
 }
 
 /* With the round laid out, the line of section links is not shown: the owner asked for the summary
-   without it, in the ficha opened from either worklist. Its place closes, and the button that unfolds
-   the empty sections moves to the round. Eloísa's line stays in the page. */
+   without it, in the ficha opened from either worklist. Its place closes. Eloísa's line stays in the page. */
 @media screen {
   html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-section-slot]:has(+ [data-hhr-round="frame"]) {
     min-height:0 !important;
     > [data-hhr-ficha-sections] { display:none !important; }
-  }
-  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] > .hhr-ficha-empty-toggle {
-    display:inline-flex; align-items:center; gap:6px; flex:none; order:3; box-sizing:border-box;
-    inline-size:fit-content; min-height:1.25rem; margin:0 0 0 auto; padding:0 6px;
-    border:0; border-radius:var(--hhr-ficha-radius-small); background:transparent; color:var(--hhr-ficha-action);
-    font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.25rem var(--hhr-ficha-sans); cursor:pointer;
-    &::before { content:none; }
-    &::after {
-      content:''; inline-size:5px; block-size:5px; margin-block-start:-3px;
-      border:solid currentColor; border-width:0 1.5px 1.5px 0; transform:rotate(45deg);
-    }
-    &[aria-expanded="true"]::after { transform:rotate(225deg); margin-block-start:3px; }
-    &:hover { background:var(--hhr-ficha-action-hover); }
-    &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:-2px; }
   }
   /* Who wrote an alert, or asked for a prescription: a first name and a first surname. The whole name
      stays in the page. */

@@ -13,7 +13,7 @@ const makeCard = (id,title,body,action='') => `<div class="MuiGrid-item"><div cl
 
 afterEach(() => document.body.replaceChildren());
 
-it('pliega los estados nativos de solo lectura y recupera sus envoltorios al expandir o al llegar información', () => {
+it('deja a la vista los estados nativos de solo lectura: ninguno se pliega ni hay botón para verlos', () => {
   document.body.innerHTML = '<main><nav><span data-hhr-ficha-link="exam"></span></nav>'+
     makeCard('encounterFormEntry','Instrumentos de evaluación','No presentan instrumentos de evaluación registrados')+
     '<div class="MuiGrid-item"><section id="exam" class="MuiBox-root">'+makeCard('','Examen físico','No presenta exámenes físicos registrados')+'</section></div>'+
@@ -31,25 +31,18 @@ it('pliega los estados nativos de solo lectura y recupera sus envoltorios al exp
   const refresh = (compact=true) => { reader.refresh(main,compact); density.refresh('episode',nav); };
   const folded = '[data-hhr-ficha-folded]';
   refresh();
-  expect(nav.textContent).toBe('Ver vacías (3)');
+  // The owner asked for every section without records under «Sin datos», with no control to fold them.
+  expect(main.querySelector(folded)).toBeNull();
+  expect(nav.querySelector('button')).toBeNull();
   const card = document.getElementById('encounterFormEntry');
-  const outer = card.parentElement.parentElement;
-  expect(outer.matches(folded)).toBe(true);
-  expect(nav.querySelector('span').matches(folded)).toBe(true);
-  expect(document.getElementById('exam').parentElement.matches(folded)).toBe(true);
-  for (const id of ['ram','allergy','denied','procedure','other']) {
-    expect(document.getElementById(id).closest(folded)).toBeNull();
-  }
+  expect(card.dataset.hhrReading).toBe('status-card');
   expect(document.getElementById('procedure').dataset.hhrReading).toBe('status-card');
   expect(document.getElementById('denied').dataset.hhrReading).toBe('status-card');
   expect(document.getElementById('other').hasAttribute('data-hhr-reading')).toBe(false);
-  nav.querySelector('button').click();
-  expect(main.querySelector(folded)).toBeNull();
-  nav.querySelector('button').click();
   card.querySelector('.MuiCardContent-root p').textContent = 'Evaluación registrada';
   refresh();
-  expect(nav.textContent).toBe('Ver vacías (2)');
-  expect(outer.matches(folded)).toBe(false);
+  expect(card.dataset.hhrReading).not.toBe('status-card');
+  expect(main.querySelector(folded)).toBeNull();
   refresh(false);
   expect(main.querySelector(folded)).toBeNull();
   expect(nav.querySelector('button')).toBeNull();

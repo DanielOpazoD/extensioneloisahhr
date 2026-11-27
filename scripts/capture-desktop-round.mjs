@@ -8,16 +8,19 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
   if (round) {
     if (verifyLayout) await page.waitForFunction(() =>
       document.querySelector('#evolution button[data-hhr-note-disclosure]')?.getAttribute('aria-expanded') === 'true');
-    else if (await disclosure.getAttribute('aria-expanded') === 'false') await disclosure.click();
+    else if (await disclosure.getAttribute('aria-expanded') === 'false') await disclosure.evaluate(button => button.click());
+    // The owner asked for the note without the control that folds it: Eloísa's «Leer menos» stays in the page, not drawn.
+    assert.ok(await disclosure.evaluate(button => getComputedStyle(button).visibility === 'hidden' && button.parentElement.getBoundingClientRect().width <= 1),
+      'Con la nota desplegada no se dibuja el control que la contrae');
   }
   const original = await text.innerText();
   if (round) assert.match(original,/Reevaluar movilidad en la próxima visita/, 'La nota inicial debe estar completa');
   const heights = [];
   for (const expanded of [false, true]) {
-    await disclosure.press('Enter');
+    // Eloísa can still draw the note cut. Its control is pressed as the host would press it.
+    await disclosure.evaluate(button => button.click());
     await page.waitForFunction(isExpanded =>
       document.querySelector('#evolution [data-hhr-note-disclosure]')?.getAttribute('aria-expanded') === String(isExpanded), expanded);
-    assert.equal(await disclosure.evaluate(el => document.activeElement === el), true);
     assert.equal((await text.innerText()) === original, expanded);
     await page.evaluate(async () => {
       window.scrollTo(0, 0);
@@ -117,9 +120,10 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
         if (Math.abs(fit.needed - fit.available) > 2) {
           assert.equal(sharedLine, fit.needed < fit.available, 'Reposo y Régimen comparten línea siempre que caben, y solo entonces');
         }
-        assert.ok(Math.abs(band.surgery.top - band.exam.top) < 2 && Math.abs(band.surgery.left - band.exam.right) <= 2 && Math.abs(band.exam.left - side.left) <= 2 &&
-          Math.abs(band.surgery.right - side.right) <= 1 && band.exam.top >= band.signs.top && band.exam.top <= band.signs.top + 32 && Math.abs(band.exam.height - band.surgery.height) < 1,
-          'Las dos solicitudes vacías comparten una línea junto a Signos, bajo su rótulo');
+        // Every section without records is read in that group now, two to a row in Eloísa's order: a request takes the half that comes to it.
+        assert.ok([band.exam, band.surgery].every(request => request.top >= band.signs.top && (Math.abs(request.left - side.left) <= 2 || Math.abs(request.right - side.right) <= 1)) &&
+          Math.abs(band.exam.height - band.surgery.height) < 1,
+          'Las dos solicitudes vacías se leen junto a Signos, bajo el rótulo «Sin datos», cada una en una mitad de su línea');
         for (const request of [band.exam,band.surgery]) assert.ok(request.left >= side.left - 1 && request.right <= side.right + 1 && request.height > 0, 'Las solicitudes explícitamente vacías deben quedar visibles junto a Signos');
         assert.equal(band.pressureLines,1,'La sistólica, la barra y la diastólica deben leerse en la misma línea');
         assert.equal(band.pressureClearOfTime,true,'El tiempo no debe tapar los dígitos de la presión');
@@ -185,7 +189,7 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
     assert.deepEqual(await Promise.all(tools.slice(1).map(tool => tool.getAttribute('title'))), ['Más opciones','Enmendar','Ver enmendados'],
       'Con el cursor encima, cada botón muestra el nombre que Eloísa solo da a su icono');
     await tools[0].focus();
-    for (const next of [...tools.slice(1),disclosure]) {
+    for (const next of tools.slice(1)) {
       await page.keyboard.press('Tab');
       assert.ok(await next.evaluate(el => el === document.activeElement), 'El foco debe seguir la lectura de la nota');
     }
@@ -312,7 +316,7 @@ async function checkFocusedEntryRefresh(page) {
   const section = page.locator('#shiftChangeObservation');
   const open = section.locator('[data-hhr-entry-open]');
   const field = section.locator('input');
-  const outside = page.locator('#evolution button[data-hhr-note-disclosure]');
+  const outside = page.locator('#evolution .hhr-evo-entry');
   const refresh = () => page.evaluate(() => document.dispatchEvent(new Event('fixture-refresh')));
   const assertPendingFocus = async () => {
     // The media query and :placeholder-shown have already painted when the delayed host refresh arrives.
@@ -399,15 +403,12 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
     const shown = [...el.querySelectorAll('[data-hhr-ficha-link]')].filter(link => link.offsetWidth);
     const railBox = el.getBoundingClientRect();
     const lastBox = shown.at(-1).getBoundingClientRect();
-    const toggle = el.querySelector('.hhr-ficha-empty-toggle');
-    const toggleBox = toggle.getBoundingClientRect();
     return {
       links:shown.length, visible:shown.filter(link => {
         const box = link.getBoundingClientRect();
         return box.left >= railBox.left - 1 && box.right <= railBox.right + 1;
       }).length, railHeight:railBox.height, railWidth:railBox.width, scrollWidth:el.scrollWidth,
-      toggleAfterLast:toggleBox.left - lastBox.right, toggleHeight:toggleBox.height,
-      separator:getComputedStyle(toggle,'::before').borderInlineStartWidth,
+      lastEnd:lastBox.right,
     };
   });
   const vitals = await page.locator('.vitals-grid').evaluate(grid => {
@@ -460,34 +461,19 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
   console.log(JSON.stringify({width,nav,vitals,care}));
   if (railShown) assert.ok(nav.links >= 7 && nav.visible > 0);
   assert.equal(vitals.pam,'PAM:87');
-  const toggle = page.getByRole('button',{name:/ver vacías/i});
-  if (!railShown) {
-    assert.ok(await toggle.evaluate(el => Boolean(el.closest('[data-hhr-round="frame"]')) && el.getClientRects().length > 0),
-      'Sin la línea de secciones, «Ver vacías» queda en la ronda, con lo que despliega');
-  } else {
-    const lastLink = rail.locator('[data-hhr-ficha-link]:visible').last();
-    await lastLink.press('Tab');
-    assert.ok(await toggle.evaluate(el => el === document.activeElement));
-  }
+  // Every section without records is read under «Sin datos»: nothing folds them and nothing unfolds them.
+  assert.equal(await page.getByRole('button',{name:/vacías/i}).count(), 0, 'No queda un botón para ver u ocultar secciones vacías');
   if (verifyLayout && railShown) {
     // Docked or in its native place, the date is the next stop after the section links.
-    await toggle.press('Tab');
+    await rail.locator('[data-hhr-ficha-link]:visible').last().press('Tab');
     assert.ok(await page.getByLabel('Resumen diario paciente').evaluate(el => el === document.activeElement),
       'Después de los enlaces, Tab llega a la fecha del resumen' + (dailyDocked ? ' acoplada en la misma línea' : ''));
-    await toggle.focus();
   }
-  await toggle.press('Space');
-  const hide = page.getByRole('button',{name:/ocultar vacías/i});
-  assert.equal(await hide.getAttribute('aria-expanded'),'true');
-  await hide.click();
-  assert.equal(await toggle.getAttribute('aria-expanded'),'false');
   if (railShown) {
     const navOrders = rail.getByRole('link',{name:'Órdenes de atención'});
     await navOrders.press('Enter');
     await rail.locator('[data-hhr-ficha-link="procedureOrderEntrySection"][aria-current="location"]').waitFor();
     assert.equal(await rail.locator('[aria-current="location"]').count(),1);
-    assert.ok(nav.toggleAfterLast >= 0);
-    if (verifyLayout) assert.ok(parseFloat(nav.separator) >= 1 && nav.toggleAfterLast >= 6);
   }
 
   const orders = page.locator('#procedureOrder');
@@ -544,7 +530,7 @@ async function checkReadingRound(page, directory, width, verifyLayout) {
     assert.deepEqual(await paint(rows.first()),idle, 'El ratón sobre otra orden debe respetar la fila que tiene el foco');
     assert.deepEqual(await paint(rows.last()),focus);
     await page.mouse.move(0,0);
-    await (railShown ? rail.getByRole('link',{name:'Órdenes de atención'}) : toggle).focus();
+    await (railShown ? rail.getByRole('link',{name:'Órdenes de atención'}) : page.locator('#evolution .hhr-evo-entry')).focus();
     assert.deepEqual(await paint(rows.last()),idleLast, 'Al salir el foco desaparece la guía de la segunda fila');
     assert.ok(parseFloat(vitals.elapsedFont) >= 12 && parseFloat(vitals.pamFont) >= 12);
   }

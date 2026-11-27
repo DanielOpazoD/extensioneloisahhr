@@ -1,5 +1,15 @@
 # Cambios
 
+## 0.48.210
+
+- La ronda del Resumen se arma desde el primer cuadro de la carga, con los marcadores que Eloísa dibuja mientras llegan los datos: Diagnóstico arriba, Evolución (o Valoración) con Entrega y Alertas a su lado, y Signos vitales debajo, cada uno con el espacio de lo que lo reemplaza. Cada apartado aparece donde se lee. Con la 0.48.209 instalada, medido en la página, la nota, Alertas y Reposo se veían unos 200 ms en la cuadrícula de Eloísa hasta que llegaba la entrega de turno, y Diagnóstico empujaba todo al llegar.
+- La fecha del resumen diario se acopla en la línea de pestañas en el mismo pase que arma la ronda; antes esperaba a la línea de enlaces y se veía un instante en su propia línea. El icono «Imprimir indicaciones» no se dibuja solo en su línea mientras Fármacos carga.
+- Evolución y Valoración ya no muestran la flecha que contraía la nota, en la ficha abierta desde la lista de trabajo médico y desde Gestión de cuidados. La nota se lee entera. Si Eloísa la entrega cortada y la vista no puede desplegarla, «Leer más» aparece con las demás acciones.
+- Toda sección sin registros o sin permiso se lee siempre bajo «Sin datos». Se quitan «Ver vacías» y «Ocultar vacías»: nada se pliega.
+- En «Sin datos», una solicitud sin registros (Exámenes, Cirugía) se lee como las demás: su nombre y, enseguida, su estado, en la misma línea que su vecina. El filtro «Mostrar suspendidos» de una sección vacía empieza donde empieza la segunda columna.
+- Fármacos e Indicaciones libres comparten bordes y ritmo: la tabla de Fármacos llega al borde de su tarjeta como la de Indicaciones libres y sus columnas empiezan bajo el título (antes 7 px más adentro); el número de días se lee en la línea del medicamento (Eloísa lo dejaba 4 px más abajo); y una fila mide 31 px en las dos tablas (antes 39 en Fármacos y 27 en Indicaciones libres). El mismo ritmo vale para las demás tablas del Resumen.
+- Todo vale igual para la ficha abierta desde la lista de trabajo médico y desde Gestión de cuidados.
+
 ## 0.48.209
 
 - La ficha ya no se ve pasar del aspecto de Eloísa al de la vista Compacta al abrirse, al recargarse o al actualizarse una tarjeta. Lo que Eloísa dibuja toma la presentación de la vista en el mismo cuadro en que se pinta; antes la tomaba 80 ms después, y cada tarjeta se alcanzaba a ver en su forma original.

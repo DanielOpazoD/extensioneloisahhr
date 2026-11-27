@@ -85,7 +85,8 @@ export const summaryMedications = [
   [1, 'Preparación de prueba N 1 mg', [], '1 comprimido cada 24 horas con la comida principal - oral', 'Registrar en la hoja de prueba.'],
 ];
 const medicationRow = ([days, name, markers, posology, instructions]) => [
-  `<div class="MuiBox-root" style="display:flex">${icon('ChangeHistoryRoundedIcon')}<div class="MuiBox-root">${caption(days)}</div></div>`,
+  // Eloísa keeps 36 px for the triangle and hangs the number 14.4 px under its top (read 26-11-2026).
+  `<div class="MuiBox-root" style="display:flex;align-items:baseline;height:36px">${icon('ChangeHistoryRoundedIcon')}<div class="MuiBox-root" style="margin-top:14.4px">${caption(days)}</div></div>`,
   `<div class="MuiStack-root">${caption(name)}<div class="MuiStack-root markers">${markers.map(chip).join('')}</div></div>`,
   readable(posology), instructions ? readable(instructions) : `<div class="MuiBox-root">${caption('', true)}</div>`, caption(requester + ' Prueba'), rowActions(),
 ];
@@ -170,7 +171,9 @@ const diet = section('nutritionOrderEntrySection', 'nutritionOrder', 'Régimen',
 // two captions, the second empty while nobody has. The older shape, without both, is `nested:false`.
 const medication = ({nested = true, validator = ''} = {}) => {
   const body = (nested ? `<div class="MuiBox-root">${caption('Medico Validador:')}${caption(validator)}</div>` : '') +
-    table(['Tiempo', 'Indication', 'Posología', 'Indicaciones específicas', 'Solicitante', 'Acciones'], summaryMedications.map(medicationRow));
+    table(['Tiempo', 'Indication', 'Posología', 'Indicaciones específicas', 'Solicitante', 'Acciones'], summaryMedications.map(medicationRow)) +
+    // The card closes with a form that draws nothing (read 26-11-2026).
+    (nested ? '<form class="MuiStack-root"></form>' : '');
   const content = card('medicationEntry', 'Fármacos', body, '',
     `<button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedSecondary">validar tratamiento</button>${toggle('Mostrar Suspendidos')}` +
     iconButton('LocalPrintshopRoundedIcon', 'Imprimir fármacos', 'Medium'));

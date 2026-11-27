@@ -33,10 +33,6 @@
     @media screen {
       [data-hhr-ficha-sections] { padding-block:3px !important; gap:3px; }
       [data-hhr-ficha-link] { padding:3px 8px; }
-      .hhr-ficha-empty-toggle { flex:none; align-self:center; min-height:26px; padding:2px 9px; border:1px solid #cdded8;
-        border-radius:6px; background:white; color:var(--hhr-ficha-action); font:inherit; font-size:12px; cursor:pointer; }
-      .hhr-ficha-empty-toggle:focus-visible { outline:2px solid #0b6e66; }
-      [data-hhr-ficha-folded],.MuiGrid-item:has(> [data-hhr-ficha-folded]:only-child) { display:none !important; }
       .MuiAppBar-root:has(> [data-hhr-ficha-primary]:only-child) { height:auto !important; min-height:40px !important; }
       [data-hhr-ficha-summary-grid] { display:flex !important; flex-flow:row wrap !important; container-type:inline-size;
         align-items:start; gap:var(--hhr-ficha-gap,8px) !important; width:100%; margin:0 !important; box-sizing:border-box; }
@@ -235,7 +231,7 @@
         border-top:1px solid #dce5e2; padding-block-start:4px; }
       #evolution [data-hhr-evolution-block] > .MuiTypography-caption { display:inline; margin-inline-end:6px; }
     }
-    @media print { .hhr-ficha-vitals,.hhr-ficha-empty-toggle { display:none; } }
+    @media print { .hhr-ficha-vitals { display:none; } }
     @media(max-width:600px) { [data-hhr-ficha-primary] { padding:2px 4px !important; } [data-hhr-ficha-primary] [role="tab"] { padding:4px 9px !important; font-size:12px; } }
   `;
   const create = () => {
@@ -310,9 +306,8 @@
     }
     // Only the recognized daily row: a byline and the form «Resumen diario paciente» with its date
     // field and «Imprimir». Eloísa adds a calendar button inside the field and a second print icon.
-    function findDailyRow() {
-      const round = slot?.nextElementSibling;
-      const item = round?.matches('[data-hhr-round="frame"]') ? round.firstElementChild : null;
+    function findDailyRow(main) {
+      const item = main.querySelector('[data-hhr-round="frame"]')?.firstElementChild;
       if (!item?.matches('.MuiGrid-item[data-hhr-round="before"]') || !item.querySelector(':scope > [data-hhr-update-label]')) return null;
       const controls = [...item.querySelectorAll('input,select,textarea,button,a[href],[role="button"],[contenteditable]')];
       const fields = controls.filter(el => el.matches('input')), buttons = controls.filter(el => el.matches('button'));
@@ -329,7 +324,7 @@
     // its native place: the section links it once rode on are not shown with the round.
     function positionDailyRow() {
       const fits = () => {
-        if (!dailyRow?.isConnected || !slot?.isConnected || !desktop?.matches || tabsCovered) return null;
+        if (!dailyRow?.isConnected || !desktop?.matches || tabsCovered) return null;
         const parts = [...dailyRow.children].filter(el => el.getClientRects().length);
         if (!parts.length) return null;
         const width = parts.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) + 8 * (parts.length - 1);
@@ -339,8 +334,9 @@
         const named = name && dailyRow.getAttribute('data-hhr-ficha-dock') !== 'short';
         const nameWidth = name ? (named ? name.getBoundingClientRect().width : name.scrollWidth) + 6 : 0;
         const whole = named || !name ? width : width + nameWidth;
-        // The column of the ficha: the row ends where its cards end.
-        const column = slot.getBoundingClientRect();
+        // The column of the ficha: the row ends where its cards end. Eloísa draws the line of section
+        // links after the round, so the column is read from what holds the round.
+        const column = (slot?.isConnected ? slot : dailyRow.parentElement.parentElement).getBoundingClientRect();
         // The floating Centro HHR bar hangs over the end of the line. Stop short of it.
         const bar = document.getElementById('hhr-clinical-operations-bar');
         const cover = bar?.getClientRects().length ? bar.getBoundingClientRect() : null;
@@ -397,9 +393,11 @@
     };
     const update = () => {
       frame = 0;
-      if (!row?.isConnected || !primary?.isConnected) return;
-      positionRow();
+      if (!primary?.isConnected) return;
+      const rail = Boolean(row?.isConnected && slot?.isConnected);
+      if (rail) positionRow();
       positionDailyRow();
+      if (!rail) return;
       const boundary = row.getBoundingClientRect().bottom + 14;
       const targets = [...links.entries()].flatMap(([element, item]) => {
         const target = document.getElementById(item.id);
@@ -422,7 +420,6 @@
     const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
     const jump = id => {
       const target = document.getElementById(id);
-      summaryDensity.reveal(target);
       if (!target?.getClientRects().length || !row?.isConnected || !primary?.isConnected) return;
       // A route or viewport change may have moved the header before the pending frame.
       positionRow();
@@ -502,14 +499,22 @@
         slot?.style.removeProperty('--hhr-section-height'); lastTarget = null;
       }
       row = nextRow || null; slot = row?.parentElement || null;
-      if (!row || !slot) { summaryDensity.refresh(encounterId, null, isSummary); return; }
-      resizeObserver?.observe(slot);
-      mark(row, 'data-hhr-ficha-sections'); mark(slot, 'data-hhr-ficha-section-slot');
-      const nextDaily = compact ? findDailyRow() : null;
+      // The daily row belongs to the round, which is laid out while the ficha still loads: it does not
+      // wait for the line of section links.
+      const nextDaily = compact ? findDailyRow(compact) : null;
       if (nextDaily !== dailyRow) { undock(); dailyRow = nextDaily; tabsChecked = tabsCovered = false; }
       // Collapsing or expanding the floating bar changes the room on this line.
       const floating = dailyRow && document.getElementById('hhr-clinical-operations-bar');
       if (floating) resizeObserver?.observe(floating);
+      if (dailyRow) resizeObserver?.observe(dailyRow.parentElement);
+      if (!row || !slot) {
+        summaryDensity.refresh(encounterId, null, isSummary);
+        cancelAnimationFrame(frame);
+        update();
+        return;
+      }
+      resizeObserver?.observe(slot);
+      mark(row, 'data-hhr-ficha-sections'); mark(slot, 'data-hhr-ficha-section-slot');
       [...links.entries()].filter(([element]) => !row.contains(element)).forEach(([element, item]) => removeLink(element, item));
       row.querySelectorAll('.MuiTypography-caption').forEach(element => {
         const id = SECTIONS[normalize(element.textContent)];

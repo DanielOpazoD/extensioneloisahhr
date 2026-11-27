@@ -40,6 +40,9 @@ Leído en la página el 26-11-2026, al pasar de la lista a una ficha (los tiempo
 - La fila diaria ya está en ese marco, con su formulario; en lugar de la firma lleva una barra `span.MuiSkeleton-root` de 300 × 14 px.
 - Las pestañas aparecen un cuadro después que el marco.
 - Cada apartado reemplaza a su marcador cuando llegan sus datos: la nota a los ~1,5 s, la mayoría antes de los 2,2 s y algunos (seis barras en esa lectura) recién a los 5 s.
+- Los títulos de los marcadores son los de sus apartados. En la ficha médica, en este orden: Evolución, Observaciones de entrega de turno, Instrumentos de evaluación, Examen físico, Signos vitales, Reposo, Régimen, Alertas, Fármacos, Producto no Farmacológico, Indicaciones Libres, Procedimientos, Diagnóstico, Solicitud interconsulta, Órdenes de atención, Solicitud de examen, RAM, Alergias, Solicitudes de intervención quirúrgica, Balance Hídrico y Examen Gíneco Obstétrico. En la ficha de Gestión de cuidados: Diagnóstico, Signos vitales, Valoración, Alertas, Instrumentos de evaluación, Reposo, Régimen, Observaciones de entrega de turno, Fármacos, Producto no Farmacológico, Indicaciones Libres, Procedimientos, Dispositivos invasivos, Solicitud de examen, Solicitud interconsulta, Órdenes de atención, Prestaciones, RAM, Alergias, Balance Hídrico y Examen Gíneco Obstétrico.
+- En la ficha médica el marcador de Evolución comparte su columna con un ítem vacío, sin hijos: el lugar de la fecha estimada de alta, que no tiene marcador. Reposo y Régimen van en dos ítems de una misma cuadrícula anidada. Los demás marcadores son hijo directo de su ítem.
+- Con la extensión lista antes que los datos (0,4 s en esa lectura), la nota llegó 60 ms antes que Reposo y Alertas y 210 ms antes que la entrega de turno; Diagnóstico y Signos vitales llegaron después.
 - Un apartado ya cargado puede llevar una barra propia mientras termina (Diagnóstico y Balance Hídrico tenían una): no es un marcador, y tiene otros hijos en su contenido.
 
 ### Fila diaria
@@ -109,6 +112,8 @@ La ficha ficticia las dibuja con la tabla que Eloísa usa en las demás seccione
 - **Un texto largo llega cortado.** Posología e indicaciones específicas se cortan hacia los 48 caracteres con «...» y llevan debajo un `div.MuiBox-root > button.MuiButton-text` «Leer más», en su propia línea: 10 de 14 posologías en la lista leída.
 - En una lista de 14: nombres de 24 a 113 caracteres (mediana 35), solicitantes de 12 a 17.
 - Acciones por fila: `CancelIcon` («Suspender») y `SpeakerNotesIcon` («Ver notas», deshabilitado sin notas), de tamaño pequeño, y `MoreVertIcon`, de tamaño mediano y con `aria-haspopup`; el nombre está en el `svg`.
+- El contenido de la tarjeta tiene tres hijos: la línea del validador, el `Paper` con la tabla y un `form.MuiStack-root` que no dibuja nada (0 px).
+- El número de días va en un `div.MuiBox-root` de 36 px (`display:flex; align-items:baseline`) cuyo hijo tiene 14,4 px de margen superior, bajo el triángulo: sin el triángulo, el número quedaba 4 px bajo la línea del medicamento.
 
 ### Diagnóstico
 

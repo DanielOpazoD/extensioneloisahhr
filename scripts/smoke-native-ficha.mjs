@@ -87,30 +87,26 @@ export const verifyNativeFicha = async (page, worker) => {
     await page.locator('[data-hhr-ficha-sections]').waitFor();
     const link=page.locator('[data-hhr-ficha-link]').filter({hasText:'Evolución'});
     if (width === 1280) {
-      const optional = page.locator('#procedureEntrySection');
-      // What Eloísa draws takes this view in the frame that paints it: the section is never seen first as
+      // What Eloísa draws takes this view in the frame that paints it: a section is never seen first as
       // Eloísa drew it. Read once that frame is over, long before the slower pass of the bar would run.
-      const presented = await optional.evaluate(el => new Promise(done => {
-        el.lastChild.textContent = 'Sin registros';
+      const presented = await page.locator('#procedureEntrySection').evaluate(el => new Promise(done => {
+        const drawn = el.cloneNode(true);
+        drawn.removeAttribute('data-hhr-ficha-summary-card');
+        el.replaceWith(drawn);
         requestAnimationFrame(() => {
           const after = new MessageChannel();
-          after.port1.onmessage = () => done(el.getClientRects().length === 0 && Boolean(document.querySelector('.hhr-ficha-empty-toggle')));
+          after.port1.onmessage = () => done(drawn.hasAttribute('data-hhr-ficha-summary-card'));
           after.port2.postMessage(0);
         });
       }));
-      assert.equal(presented, true, 'Un apartado que queda vacío se pliega en el mismo cuadro en que cambia');
-      const showEmpty = page.getByRole('button', { name:'Ver vacías (1)' });
-      await showEmpty.waitFor();
-      assert.equal(await optional.isVisible(), false);
-      const procedureLink = page.locator('[data-hhr-ficha-link="procedureEntrySection"]');
-      assert.equal(await procedureLink.isVisible(), false);
-      await showEmpty.press('Enter');
+      assert.equal(presented, true, 'Un apartado recién dibujado toma la forma de la vista en el mismo cuadro');
+      // A section left without records stays in view: nothing folds it and no button unfolds it.
+      const optional = page.locator('#procedureEntrySection');
+      await optional.evaluate(el => el.lastChild.textContent = 'Sin registros');
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       assert.equal(await optional.isVisible(), true);
-      assert.equal(await procedureLink.isVisible(), true);
-      await page.getByRole('button', { name:'Ocultar vacías (1)' }).click();
+      assert.equal(await page.getByRole('button', { name:/vacías/i }).count(), 0);
       await optional.evaluate(el => el.lastChild.textContent = 'Procedimiento de prueba');
-      await optional.waitFor();
-      await showEmpty.waitFor({state:'detached'});
     }
     const summaryLayout = await page.evaluate(() => {
       const grid = document.querySelector('[data-hhr-ficha-summary-grid]');
@@ -375,9 +371,10 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.ok((await noteBody.textContent()).includes(longNote), 'La nota íntegra debe quedar visible al entrar');
     let closed;
     for (const expanded of [false,true]) {
-      await disclosure.press('Enter');
+      // The view does not draw the control that folds the note. Eloísa's own is pressed as the host would.
+      if (!expanded) await medical.waitForFunction(() => getComputedStyle(document.querySelector('#evolution button[data-hhr-note-disclosure]')).visibility === 'hidden');
+      await disclosure.evaluate(el => el.click());
       await medical.waitForFunction(open => document.querySelector('#evolution [data-hhr-note-disclosure]')?.getAttribute('aria-expanded') === String(open),expanded);
-      assert.equal(await disclosure.evaluate(el => document.activeElement === el),true);
       assert.equal((await noteBody.textContent()).includes(longNote),expanded);
       const boxes = await medical.evaluate(async () => {
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
