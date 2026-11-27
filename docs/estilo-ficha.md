@@ -2,6 +2,8 @@
 
 Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el Historial y el Plan de tratamiento, para que la siguiente mejora empiece donde terminó la anterior. La forma de cada vista en la página real está en [`estructura-eloisa.md`](estructura-eloisa.md).
 
+La [guía visual](guia-visual.html) muestra en una página las tintas, tamaños, botones, iconos, etiquetas, la tarjeta y la confirmación, con los valores de `extension/hhr-ficha-tokens.css`.
+
 ## Reglas de diseño
 
 1. **Eloísa conserva sus nodos.** La extensión marca lo que reconoce con atributos `data-hhr-*` y lo presenta con CSS. No mueve, clona ni recrea controles de React.
