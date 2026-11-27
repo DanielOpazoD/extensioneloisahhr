@@ -87,21 +87,32 @@
       });
       search.focus({ preventScroll: true });
       const shownFor = popover;
-      try {
-        await load();
-        if (popover !== shownFor) return;
-        render(list, status, search.value);
-      } catch (error) {
-        if (popover === shownFor) status.textContent = String(error?.message || error);
-      }
+      const show = async () => {
+        try {
+          await load();
+          if (popover !== shownFor) return;
+          render(list, status, search.value);
+        } catch (error) {
+          if (popover !== shownFor) return;
+          // A failed read is said, and can be asked again without closing.
+          const again = el('button', { type: 'button', class: 'hhr-switch-retry', 'data-hhr-switch-retry': '' }, 'Reintentar');
+          again.addEventListener('click', () => { status.textContent = 'Cargando pacientes hospitalizados…'; show(); });
+          status.replaceChildren(String(error?.message || error) + ' ', again);
+        }
+      };
+      await show();
     }
 
     const onClick = event => { event.preventDefault(); event.stopPropagation(); open(); };
+    // Pointing at the name already reads the list, so it is there when the name is pressed.
+    const warm = () => { load().catch(() => {}); };
     const onKey = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } };
     const release = () => {
       if (!name) return;
       name.removeEventListener('click', onClick);
       name.removeEventListener('keydown', onKey);
+      name.removeEventListener('pointerenter', warm);
+      name.removeEventListener('focus', warm);
       for (const attribute of ['role', 'tabindex', 'aria-haspopup', 'aria-expanded', 'title', 'data-hhr-patient-switch']) name.removeAttribute(attribute);
       name = null;
     };
@@ -122,6 +133,8 @@
           name.setAttribute('title', 'Cambiar de paciente');
           name.addEventListener('click', onClick);
           name.addEventListener('keydown', onKey);
+          name.addEventListener('pointerenter', warm);
+          name.addEventListener('focus', warm);
         }
       }
     }

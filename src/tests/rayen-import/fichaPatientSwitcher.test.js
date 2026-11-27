@@ -29,6 +29,9 @@ it('abre con el nombre del paciente la lista de hospitalizados, la filtra y la c
   const name = document.querySelector('[data-hhr-patient-switch]');
   expect(name.textContent).toBe('Paciente Actual');
   expect([name.getAttribute('role'), name.getAttribute('aria-haspopup'), name.getAttribute('aria-expanded')]).toEqual(['button', 'dialog', 'false']);
+  // Pointing at the name reads the list before it is pressed.
+  name.dispatchEvent(new Event('pointerenter'));
+  expect(readRoster).toHaveBeenCalledTimes(1);
   name.click();
   await vi.waitFor(() => expect(document.querySelectorAll('[data-hhr-patient-switcher] a')).toHaveLength(2));
   const links = [...document.querySelectorAll('[data-hhr-patient-switcher] a')];
@@ -53,10 +56,14 @@ it('abre con el nombre del paciente la lista de hospitalizados, la filtra y la c
 it('dice cuando la lista no está disponible y no toma el nombre fuera de una ficha', async () => {
   window.history.replaceState(null, '', '/dashboard/encounter-list/101');
   document.body.innerHTML = bar;
-  const switcher = globalThis.HhrFichaPatientSwitcher.create({ readRoster: async () => ({error:'Sin sesión de Eloísa.'}) });
+  const readRoster = vi.fn(async () => ({error:'Sin sesión de Eloísa.'}));
+  const switcher = globalThis.HhrFichaPatientSwitcher.create({ readRoster });
   switcher.refresh('101', true);
   document.querySelector('[data-hhr-patient-switch]').click();
-  await vi.waitFor(() => expect(document.querySelector('.hhr-switch-status').textContent).toBe('Sin sesión de Eloísa.'));
+  await vi.waitFor(() => expect(document.querySelector('.hhr-switch-status').textContent).toBe('Sin sesión de Eloísa. Reintentar'));
+  document.querySelector('[data-hhr-switch-retry]').click();
+  await vi.waitFor(() => expect(document.querySelector('[data-hhr-switch-retry]')).not.toBeNull());
+  expect(readRoster).toHaveBeenCalledTimes(2);
   switcher.clear();
   window.history.replaceState(null, '', '/dashboard/encounter-list');
   switcher.refresh('', true);

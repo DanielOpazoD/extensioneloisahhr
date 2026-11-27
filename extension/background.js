@@ -1179,7 +1179,7 @@ const clinicalChecklists = self.HhrClinicalChecklistBroker.create({ chrome, reso
 const evolutionNotes = self.HhrFichaEvolutionNotes.create({ resolveSession: resolveFichaClinicalSession, readJson: fichaMedicoClinicalClient.readJson, encounterOf: self.HhrPrescriptionPrint.resolveEncounterId,
   authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); } });
 const runtimeMessageRoutes = Object.freeze({
-  [RUNTIME_MESSAGES.HOSPITALIZED_ROSTER_REQUEST]: runtimeRoute(self.HhrHospitalizedRosterRuntime.create({ getFetchInfo: getFichaFetchInfo, fetchActiveEncounterRows, normalizeHospitalizedEncounter: fichaMedicoPatientContext.normalizeHospitalizedEncounter, activeHospitalizedEncounters: self.HhrPrescriptionPrint.activeHospitalizedEncounters }), 'No se pudo leer la lista de hospitalizados.'),
+  [RUNTIME_MESSAGES.HOSPITALIZED_ROSTER_REQUEST]: runtimeRoute(self.HhrHospitalizedRosterRuntime.create({ resolveSession: resolveFichaClinicalSession, fetchActiveEncounterRows, normalizeHospitalizedEncounter: fichaMedicoPatientContext.normalizeHospitalizedEncounter, activeHospitalizedEncounters: self.HhrPrescriptionPrint.activeHospitalizedEncounters }), 'No se pudo leer la lista de hospitalizados.'),
   [RUNTIME_MESSAGES.EVOLUTION_NOTES_REQUEST]: runtimeRoute(evolutionNotes.handle, 'No se pudieron leer las evoluciones.'),
   [RUNTIME_MESSAGES.CLINICAL_CHECKLIST]: runtimeRoute(clinicalChecklists.handle, 'No se pudo conectar la pauta con HHR.'),
   [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),

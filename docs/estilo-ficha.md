@@ -44,57 +44,5 @@ La [guía visual](guia-visual.html) muestra en una página las tintas, tamaños,
 36. **Lo vacío se lee junto, sin desarmar a Eloísa.** Una sección vacía que vive dentro de un bloque de Eloísa (Reposo, con Régimen) queda en su lugar fuera de la vista, con su frase para un lector de pantalla, y su nombre se lee bajo «Sin datos» como un elemento de la vista (`data-hhr-round-proxy`). Una acción va en la tarjeta de lo que hace: la impresión de la evolución, junto a «Ver evoluciones».
 37. **Un juego de controles, dos tintas de icono, cinco de texto.** Un icono es verde si se pulsa (`--hhr-ficha-action`) o gris tenue si es una herramienta de fila (`--hhr-ficha-tool`). El texto usa tinta, tinta suave, apagado, acción y alarma, más el deshabilitado y las marcas de una indicación: `assertPalette` lo comprueba en CI. Un control que no hace nada (un comentario deshabilitado) no se dibuja y deja su lugar.
 38. **Todo lo que la extensión dibuja habla el mismo idioma.** Las listas de trabajo leen los tokens de la ficha (`hhr-ficha-tokens.css` vale también donde hay `data-hhr-worklist-layout`) y Centro HHR usa sus mismas medidas. Cada cambio deja en CI sus capturas comparadas con la base (`scripts/capture-diff.mjs`), para mirar antes de aceptar.
-
-## Dónde vive cada cosa
-
-| Archivo | Contenido |
-| --- | --- |
-| [`hhr-ficha-tokens.css`](../extension/hhr-ficha-tokens.css) | Colores por función, tamaños, pesos, márgenes e iconos. Es el único lugar donde se definen. |
-| [`hhr-ficha-themes.css`](../extension/hhr-ficha-themes.css) | Densidad por vista y reglas comunes del Resumen. |
-| [`hhr-ficha-loading.css`](../extension/hhr-ficha-loading.css) | La ficha mientras carga: los marcadores de Eloísa en una línea y la espera de la fila del resumen diario. Solo estilos. |
-| [`hhr-ficha-round-layout.css`](../extension/hhr-ficha-round-layout.css) y [`.js`](../extension/hhr-ficha-round-layout.js) | Las dos columnas de la ronda de escritorio. |
-| [`hhr-ficha-evolution-authors.css`](../extension/hhr-ficha-evolution-authors.css) y [`.js`](../extension/hhr-ficha-evolution-authors.js) | Acciones de Evolución y filtro de evoluciones por profesional. |
-| [`hhr-ficha-reading-labels.css`](../extension/hhr-ficha-reading-labels.css) y [`.js`](../extension/hhr-ficha-reading-labels.js) | Firmas, campos de entrega y alerta, interruptores. |
-| [`hhr-ficha-history.css`](../extension/hhr-ficha-history.css) y [`hhr-history-date-navigation.js`](../extension/hhr-history-date-navigation.js) | Historial compacto y navegación por fechas. |
-| [`hhr-ficha-patient-switcher.js`](../extension/hhr-ficha-patient-switcher.js) y [`.css`](../extension/hhr-ficha-patient-switcher.css) | Lista de hospitalizados al pulsar el nombre del paciente en la barra verde. |
-| [`hhr-ficha-views.css`](../extension/hhr-ficha-views.css) | Alta y Ejecución de cuidados con el estilo del Resumen. |
-| [`hhr-ficha-care-plan.css`](../extension/hhr-ficha-care-plan.css) y [`.js`](../extension/hhr-ficha-care-plan.js) | Tarjetas de programación de Plan de tratamiento. |
-
-Un lector nuevo sigue la forma de [`hhr-ficha-care-plan.js`](../extension/hhr-ficha-care-plan.js): `create()` devuelve `refresh(raíz)` y `clear()`, reconoce por estructura y texto nativo, lleva la cuenta de cada atributo que pone y lo retira cuando deja de aplicar. [`hhr-native-ficha-presentation.js`](../extension/hhr-native-ficha-presentation.js) lo crea y le pasa `main` solo en su pestaña y en la vista Compacta.
-
-Una regla nueva toma sus valores de los tokens. Desde 0.48.196 ningún color de texto ni ninguna tipografía de las vistas de la ficha se escribe a mano. Quedan algunos bordes y fondos escritos a mano; pasan a tokens cuando se vuelvan a editar.
-
-`capture-summary.mjs` comprueba estas reglas en la página: márgenes, separación, tipografía, pesos, tamaños, títulos, superficies y bordes de tabla. Una regla de estilo nueva que las rompa hace fallar la captura.
-
-Un detalle de CSS que ya costó una regla entera: `:has()` no admite otro `:has()` dentro. El navegador descarta la regla sin avisar; dos condiciones se escriben como `:is(:has(…), :has(…))`.
-
-## Cómo cambiar o añadir una vista
-
-1. **Ficha ficticia.** Cada vista tiene la suya en `scripts/*-visual-fixture.mjs`, con datos inventados y la estructura descrita en [`estructura-eloisa.md`](estructura-eloisa.md). Una ficha ficticia hecha de memoria ya ocultó tres fallos: se escribe a partir de la estructura observada. Y una sola ficha real no basta: Eloísa dibuja otra forma según el paciente (Fármacos en una segunda sección, Diagnóstico sin tabla). Antes de dar un cambio por bueno conviene leer un paciente distinto del último. Primero se reproduce con la versión publicada lo que se ve mal en la pantalla real, y solo después se corrige.
-2. **Captura con el arnés común.** [`scripts/ficha-capture-harness.mjs`](../scripts/ficha-capture-harness.mjs) monta la ficha con los estilos y lectores que declara el manifiesto de una revisión o del árbol de trabajo. Así el «antes» y el «después» usan la misma página.
-3. **Comprobaciones como invariantes.** Lo que promete el diseño se mide en la página: alineaciones, orden de lectura, foco de teclado, que nada tape un control. Un fallo se explica con una frase, no con una diferencia de píxeles. Cuántas líneas ocupa un texto depende de la letra de cada sistema: una medida que cambia con eso se comprueba también con `wideSans`, la familia ancha del arnés, como hace `capture-care-plan.mjs`.
-4. **Prueba unitaria de marcas y limpieza.** Cada atributo que el lector pone debe retirarse al cambiar de vista, de episodio o de pestaña, y no reescribirse en un refresco idéntico.
-5. **Mutaciones de control.** Romper a propósito la regla nueva y comprobar que alguna prueba falla.
-6. **Antes y después.** Capturas a 1280 × 800 y 1440 × 900 en `docs/visual/`, con las medidas que cambian.
-
-El Resumen tiene dos generaciones de fichas ficticias. `summary-visual-fixture.mjs` sigue la estructura leída en Eloísa y es la que decide cómo se ve la página real. `medical-round-visual-fixture.mjs` y `admission-round-visual-fixture.mjs` son anteriores y más simples: conservan las comprobaciones de la nota, el lector y la fila diaria, y no deben usarse para juzgar una tabla o un control de Eloísa.
-
-```sh
-node scripts/capture-summary.mjs WORKTREE /tmp/resumen-real
-node scripts/capture-medical-round.mjs WORKTREE /tmp/resumen lectura
-node scripts/capture-medical-round.mjs WORKTREE /tmp/ingreso ingreso
-node scripts/capture-history.mjs WORKTREE /tmp/historial
-node scripts/capture-care-plan.mjs WORKTREE /tmp/plan
-```
-
-## Calibrar con la página real
-
-Las fichas ficticias reproducen lo que se sabe de Eloísa. Para una pantalla de la que no hay modelo, o para comprobar uno existente, [`scripts/export-ficha-structure.snippet.js`](../scripts/export-ficha-structure.snippet.js) describe la estructura de la pestaña abierta sin datos clínicos:
-
-1. Abrir en Eloísa la pestaña que interesa.
-2. F12 → Consola. Pegar el archivo completo y pulsar Enter. Chrome puede pedir escribir `allow pasting` la primera vez.
-3. La estructura queda en el portapapeles. Revisarla antes de compartirla.
-
-El exportador conserva etiquetas, clases de componentes, roles, estados y las palabras de interfaz de una lista cerrada. Enmascara cualquier otra palabra como `xxxx` y todos los dígitos como `0`, en textos y en atributos, y nunca lee el valor de un campo. Un identificador, una marca `data-hhr-*` o un tramo de la ruta conserva sus letras solo si cada palabra suya está en una segunda lista cerrada, la de palabras de programador. Las clases `Mui…` y `hhr-…` y el nombre de un icono de la biblioteca salen como están, dígitos incluidos: los escribe la biblioteca, no los datos. Una prueba lo verifica con nombres, RUN, dosis y texto libre inventados, también dentro de identificadores, clases, estados y la ruta.
-
-Con esa estructura se actualiza [`estructura-eloisa.md`](estructura-eloisa.md) en prosa, sin copiar la exportación al repositorio, se escribe la ficha ficticia de la vista, y a partir de ahí se sigue el procedimiento anterior.
+39. **Una medición se lee de arriba abajo; las cifras, en columna.** Cada medición de Signos vitales es su nombre (tinta suave), debajo su valor (16 px, peso 600) al comienzo de su celda y bajo el valor, en una línea, lo que lo detalla: la PAM y la hora. La medición mide menos de 52 px. Los valores de una fila empiezan en el mismo lugar y quedan en la misma línea. Todo número de la vista usa cifras de ancho fijo (`font-variant-numeric:tabular-nums`). CI lo mide (`assertFigures` y las posiciones de la PAM en `capture-summary.mjs`).
+40. **La ventana angosta es una columna, en el orden de escritorio.** Entre 600 y 1099 px el Resumen es una sola columna: Diagnóstico, Evolución, Observaciones de entrega, Alertas, Signos vitales, Reposo y Régimen, y al final lo que no tiene datos. Las tarjetas conservan su aspecto de escritorio. En escritorio, desde 1360 px la entrega de turno y Alertas toman cinco doceavos de la línea (siete la nota); más angosto, cuatro, para que la nota tenga su título, su firma y sus acciones en una línea. Una tarjeta vacía va bajo «Sin datos» aunque Eloísa la dibuje antes de la nota (Instrumentos de evaluación).

@@ -23,7 +23,7 @@ export const readQuality = (page, scope = 'main') => page.evaluate(scope => {
   const name = el => (el.getAttribute('aria-label') || el.title || el.closest('label')?.title || el.textContent || el.closest('label')?.textContent ||
     el.querySelector('svg[aria-label]')?.getAttribute('aria-label') || el.tagName).replace(/\s+/g, ' ').trim().slice(0, 40);
 
-  const contrast = [], palette = new Map();
+  const contrast = [], palette = new Map(), figures = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const seen = new Set();
   while (walker.nextNode()) {
@@ -37,6 +37,7 @@ export const readQuality = (page, scope = 'main') => page.evaluate(scope => {
     const [light, dark] = [luminance(front), luminance(back)].sort((x, y) => y - x);
     const ratio = (light + .05) / (dark + .05);
     const ink = 'rgb(' + front.map(Math.round).join(', ') + ')';
+    if (/\d/.test(el.textContent) && !look.fontVariantNumeric.includes('tabular-nums')) figures.push(name(el));
     palette.set(ink, (palette.get(ink) || []).concat(name(el)));
     const large = size >= 24 || (size >= 18.66 && Number(look.fontWeight) >= 700);
     if (ratio < (large ? 3 : 4.5)) contrast.push(`${name(el)} ${ratio.toFixed(2)}:1 ${look.color} sobre rgb(${back.map(Math.round).join(', ')})`);
@@ -62,7 +63,7 @@ export const readQuality = (page, scope = 'main') => page.evaluate(scope => {
       other.left < x + 12 && other.right > x - 12 && other.top < y + 12 && other.bottom > y - 12);
     if (crowded) small.push(`${name(box.target.matches('label') ? box.target.querySelector('input') || box.target : box.target)} ${Math.round(width)}×${Math.round(height)}`);
   }
-  return {contrast:[...new Set(contrast)], small:[...new Set(small)], palette:Object.fromEntries([...palette].map(([ink, names]) => [ink, names.slice(0, 3)]))};
+  return {contrast:[...new Set(contrast)], small:[...new Set(small)], figures:[...new Set(figures)], palette:Object.fromEntries([...palette].map(([ink, names]) => [ink, names.slice(0, 3)]))};
 }, scope);
 
 // Every view reads at 4.5:1 and keeps its targets at 24 px, or 24 px apart.
@@ -80,4 +81,10 @@ export async function assertPalette(page, view, assert, scope = 'main', allowed 
   const {palette} = await readQuality(page, scope);
   const stray = Object.entries(palette).filter(([ink]) => !allowed.includes(ink));
   assert.ok(!stray.length, `${view}: todo texto usa una tinta de la vista: ` + JSON.stringify(stray));
+}
+
+// Every figure of the view takes the same width, so numbers line up from row to row.
+export async function assertFigures(page, view, assert, scope = 'main') {
+  const {figures} = await readQuality(page, scope);
+  assert.ok(!figures.length, `${view}: todo número se lee en columna: ` + JSON.stringify(figures.slice(0, 8)));
 }

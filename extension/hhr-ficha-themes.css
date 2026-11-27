@@ -133,20 +133,35 @@
       content:attr(data-hhr-vital-source); grid-column:1 / -1; font-size:.75rem;
       line-height:1.2; overflow-wrap:anywhere;
     }
-    /* Only rearrange recognised cells. Extra clinical details keep their native layout. */
+    /* Every measurement reads the same way (27-11-2026, the owner asked for the values in line and the PAM
+       under the pressure): its name, under it its value at the start, and under the value what details it,
+       the PAM or the time. The values of a row start at the same place and stand on the same line.
+       Only recognised cells; extra clinical details keep their native layout. */
+    :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-label"]):not(:has(> :not([data-hhr-reading]))) {
+      display:grid !important; grid-template-columns:auto minmax(0,1fr) !important; grid-template-rows:auto auto 1fr;
+      justify-items:start; align-items:baseline; align-content:start; gap:0 6px !important;
+      > [data-hhr-reading="vital-label"] { grid-area:1 / 1 / 2 / -1; color:var(--hhr-ficha-ink-soft); }
+      > [data-hhr-reading="vital-value"], > [data-hhr-reading="vital-pressure-group"] > [data-hhr-reading="vital-value"] {
+        grid-area:2 / 1 / 3 / -1; justify-self:start; line-height:1.15 !important;
+        /* On a phone the value keeps the size Eloísa's narrow band gives it. */
+        @media (min-width:600px) { font-size:var(--hhr-ficha-text-lead) !important; }
+        &, :is(h5,h6,p,span,.MuiTypography-root) { font-weight:var(--hhr-ficha-weight-strong) !important; }
+      }
+      /* The PAM and the time share the line under the value: the PAM at its start, the time after it. */
+      > [data-hhr-reading="vital-pam"], > [data-hhr-reading="vital-pressure-group"] > [data-hhr-reading="vital-pam"] { grid-area:3 / 1; justify-self:start; }
+      > [data-hhr-reading="vital-time"] { grid-area:3 / 1 / 4 / -1; justify-self:start; }
+      &:has([data-hhr-reading="vital-pam"]) > [data-hhr-reading="vital-time"] { grid-area:3 / 2; }
+      > :is([data-hhr-reading="vital-pam"],[data-hhr-reading="vital-time"],[data-hhr-reading="vital-pressure-group"] > [data-hhr-reading="vital-pam"]) {
+        color:var(--hhr-ficha-ink-soft); line-height:1.15 !important;
+      }
+    }
     @container hhr-vital-band (min-width:50rem) {
       [data-hhr-reading="vital-tile"] { background:transparent; border-inline-start:1px solid var(--hhr-ficha-line) !important; }
       :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-inner"]) {
         display:grid; align-items:stretch;
       }
       :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-label"]):not(:has(> :not([data-hhr-reading]))) {
-        grid-template-columns:minmax(0,1fr) auto; grid-template-rows:1fr auto;
-        padding:3px 8px !important; gap:1px 4px !important; align-items:baseline; align-content:stretch;
-        [data-hhr-reading="vital-label"] { grid-area:1 / 1 / 2 / -1; }
-        &:has([data-hhr-reading="vital-pam"]) > [data-hhr-reading="vital-label"] { grid-column-end:2; }
-        [data-hhr-reading="vital-value"] { grid-area:2 / 1; font-size:var(--hhr-ficha-text-lead) !important; font-weight:600; }
-        [data-hhr-reading="vital-pam"] { grid-area:1 / 2; justify-self:end; }
-        [data-hhr-reading="vital-time"] { grid-area:2 / 2; justify-self:end; }
+        padding:2px 8px !important;
       }
       @media (min-width:1100px) {
         /* A measurement's own timestamp or author can add a third row. Share
@@ -164,7 +179,8 @@
 
 /* Native cards can have both a section inset and a content inset. Use one
    shared left edge for the section title, clinical data and observations. */
-@media screen and (min-width:1100px) {
+/* The look of the cards holds from a tablet up (27-11-2026): only the round itself is a part of the desk. */
+@media screen and (min-width:600px) {
   html[data-hhr-ficha-theme="compact"] .hhr-ficha-vitals small { font-size:.75rem; line-height:1.05; }
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     --hhr-round-inset:var(--hhr-ficha-inset);
@@ -805,6 +821,56 @@
       block-size:16px !important; border-radius:4px; background:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft);
       font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-tag)/1 var(--hhr-ficha-sans);
       > .MuiChip-label { padding-inline:5px; font:inherit; }
+    }
+  }
+}
+
+/* Figures read in columns (27-11-2026): every digit of the compact ficha takes the same width, so doses,
+   hours, dates and measurements line up from row to row and compare at a glance. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] :is(main, #menu-app-bar-element, [data-hhr-patient-switcher]) { font-variant-numeric:tabular-nums; }
+}
+
+/* Below the desk (a small notebook, a tablet at the bedside) the summary is one column read in the order of
+   the desk: the diagnosis, the note, its handoff and alerts, the measurements and the care instructions, what
+   has no data, then the treatment. Each card takes the whole line; Eloísa's order in the page is kept. */
+@media screen and (min-width:600px) and (max-width:1099.98px) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
+    row-gap:var(--hhr-ficha-block-gap) !important;
+    > .MuiGrid-item:is([data-hhr-round]) { flex:0 0 100% !important; max-inline-size:100% !important; inline-size:100% !important; margin-block:0 !important; padding-block:0 !important; }
+    /* Eloísa's order is kept in the page; these orders only draw it as the desk reads. */
+    > [data-hhr-round="before"] { order:-9 !important; }
+    > [data-hhr-round="diagnosis"] { order:-8 !important; }
+    > [data-hhr-round="note"] { order:-7 !important; }
+    > [data-hhr-round="handoff"] { order:-6 !important; }
+    > [data-hhr-round="alerts"] { order:-5 !important; }
+    > [data-hhr-round="vitals"] { order:-4 !important; }
+    > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) { order:-3 !important; }
+    > :is([data-hhr-round="peer"],[data-hhr-round="empty-request"]):has(> section > [data-hhr-reading="status-card"]:only-child, > [data-hhr-reading="status-card"]:only-child) {
+      order:-2 !important;
+      /* What has no data reads as a list: one line each, close together, without a surface of its own. */
+      margin-block-start:calc(2px - var(--hhr-ficha-block-gap)) !important;
+      [data-hhr-reading="status-card"] { background:transparent !important; border-radius:0 !important; }
+    }
+    > :is([data-hhr-round="peer"],[data-hhr-round="print"]) { order:-1; }
+    /* Inside the item of the note, the note takes the line; the date of discharge keeps its own. */
+    > [data-hhr-round="note"] .MuiGrid-item:has(#observationEntrySection) { flex:0 0 100% !important; max-inline-size:100% !important; }
+    /* The name of a form and the label on the border of its field do not overlap. */
+    :is(#alertEntrySection,#shiftChangeEntrySection) [data-hhr-entry-prompt]:not(#hhr-a):not(#hhr-b) { row-gap:16px !important; }
+    /* The daily row does not repeat the byline the note below carries, as on the desk. */
+    [data-hhr-update-repeat="note"] { position:absolute !important; inline-size:1px; block-size:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    /* Reposo and Régimen read at the size of the summary: their name, their value and their byline. */
+    > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
+      .MuiCard-root { box-shadow:none !important; border-radius:var(--hhr-ficha-radius) !important; }
+      .MuiCardHeader-root { padding:6px var(--hhr-ficha-inset) 0 !important; }
+      .MuiCardHeader-title { color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans) !important; }
+      .MuiCardContent-root { padding:2px var(--hhr-ficha-inset) 6px !important; }
+      .MuiCardContent-root :is(p,span,strong,b,.MuiTypography-root):not(.MuiChip-label) { margin:0; font-size:var(--hhr-ficha-text-body) !important; line-height:1.4; }
+    }
+    /* Reposo and Régimen share their line, half each. */
+    > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) > .MuiGrid-container {
+      column-gap:var(--hhr-ficha-block-gap); flex-wrap:nowrap; margin:0 !important; inline-size:100% !important;
+      > .MuiGrid-item { flex:1 1 0 !important; max-inline-size:none !important; min-inline-size:0; padding:0 !important; }
     }
   }
 }
