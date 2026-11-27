@@ -2,6 +2,10 @@
 
 ## 0.48.229
 
+- Alertas y Observaciones de entrega de turno se leen enteras: la vista abre una vez el «Leer más» de Eloísa en cada texto que corta y no dibuja la flecha para volver a cortarlo. Sin la vista compacta, los textos vuelven a como los dibuja Eloísa.
+- «No reanimación» se lee como los demás interruptores: interruptor pequeño, nombre en 12 px y su estado después. Marcada, su nombre va en la tinta de alarma y en peso 600, sin la caja ámbar.
+- Signos vitales sin rojo: un valor fuera de rango se lee en la tinta de todo valor.
+- «Sin datos»: ningún nombre dibuja una caja blanca, sea cual sea la forma en que Eloísa lo trae (se vio en Examen físico).
 - «No reanimación» y «Agregar alerta» vuelven a compartir una línea: al ocultar «Gestión de visitas» habían quedado en dos.
 - «Solicitante» empieza en el mismo lugar en Fármacos y en Indicaciones libres (antes 60 px de diferencia); un nombre más largo ensancha su columna.
 - Ventana angosta (600 a 1099 px): «Resumen diario paciente» es el campo compacto de escritorio (antes el campo grande de Eloísa) y las fechas, estados y acciones de Diagnóstico no se parten en dos líneas.

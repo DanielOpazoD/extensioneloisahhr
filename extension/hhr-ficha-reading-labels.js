@@ -266,6 +266,9 @@
 
   function create() {
     // The forms already seen in this patient's summary: only their first appearance can carry Eloísa's own focus.
+    // The alerts and handoffs this view opened, each with the text it had when it was opened. Without the
+    // view, those still open are cut again, as Eloísa drew them.
+    const opened = new Map();
     let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set(), fold = null, openedAt = performance.now(), seenFields = new WeakSet();
     const observer = new MutationObserver(() => refresh(watchedMain, episode));
     const refresh = (main, encounter) => {
@@ -286,6 +289,10 @@
         if (value === null) element.removeAttribute(name);
         else element.setAttribute(name, value);
       };
+      if (!main) {
+        for (const button of opened.keys()) if (button.isConnected && !button.disabled && /^leer menos$/i.test(button.textContent.trim())) button.click();
+      }
+      for (const button of opened.keys()) if (!button.isConnected || !main) opened.delete(button);
       if (main) {
         entryFields(main, label, source, desktop ? nextEditors : null);
         for (const control of main.querySelectorAll('label:has(input[type="checkbox"])')) {
@@ -386,7 +393,17 @@
           if (button.closest('dialog,[role=dialog],#hhr-prescription-print-modal')) continue;
           const text = button.textContent.trim().toLowerCase();
           if (text === 'leer más' || text === 'leer menos') {
-            label(button, 'data-hhr-note-disclosure', text === 'leer más' ? 'more' : 'less');
+            // An alert and a handoff are read whole (the owner asked, 27-11-2026): Eloísa's own «Leer más»
+            // opens each once, for the text it cuts, and its way back is not drawn.
+            const whole = button.closest('#alertEntrySection,#shiftChangeEntrySection');
+            const cut = button.parentElement?.parentElement?.textContent.trim();
+            if (whole && text === 'leer más' && !button.disabled && opened.get(button) !== cut) {
+              opened.set(button, cut);
+              button.click();
+            }
+            // Once open, should Eloísa cut it again (a new read of the list), it is opened again.
+            if (whole && text === 'leer menos' && opened.has(button)) opened.set(button, null);
+            label(button, 'data-hhr-note-disclosure', text === 'leer más' ? 'more' : whole ? 'whole' : 'less');
           }
         }
       }

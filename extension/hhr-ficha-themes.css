@@ -711,9 +711,10 @@
   }
 }
 
-/* A value out of its range keeps Eloísa's flag in a red that reads (5.6:1 instead of 3.7:1). */
+/* A vital sign reads in the ink of every value, also out of its range: the owner asked for the signs
+   without red (27-11-2026). Eloísa's flag stays in the page, recognised and undone by the view. */
 @media screen {
-  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-flag] { color:var(--hhr-ficha-alarm) !important; }
+  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-flag] { color:var(--hhr-ficha-ink) !important; }
 }
 
 /* A print says what it prints, as «Imprimir indicaciones» does beside the title of Fármacos: its icon

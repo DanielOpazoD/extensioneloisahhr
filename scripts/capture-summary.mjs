@@ -5,7 +5,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
 import { assertFigures, assertPalette, assertQuality } from './visual-quality.mjs';
-import { summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
+import { summaryAlerts, summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
 
 const refresh = async page => {
   // The readers materialize each cut text with Eloísa's own disclosure: one refresh per commit of the host.
@@ -87,7 +87,7 @@ const read = page => page.evaluate(() => {
       edge:Math.round(box(line).left + parseFloat(getComputedStyle(line).paddingLeft)), size:getComputedStyle(line).fontSize, colour:getComputedStyle(line).color,
       afterTitle:Math.round(box(line).top - box(one('#medicationEntry .MuiCardHeader-title')).bottom), beforeTable:Math.round(box(one('#medicationEntry thead')).top - box(line).bottom)})(
       one('#medicationEntry > .MuiCardContent-root > .MuiBox-root:first-child:not(:only-child)')),
-    archive:[...document.querySelectorAll('#alertEntries .alert-row button')].map(button => [Math.round(box(button.querySelector('svg')).width), Math.round(box(button).height), button.getAttribute('aria-label')]),
+    archive:[...document.querySelectorAll('#alertEntries .alert-row button:has(svg)')].map(button => [Math.round(box(button.querySelector('svg')).width), Math.round(box(button).height), button.getAttribute('aria-label')]),
     tabs:getComputedStyle(one('[role="tab"]')).textTransform,
     // What good order asks of the whole page: its edges, its gaps, its type and its surfaces. Only in the compact view.
     look:!one('[data-hhr-ficha-sections] [data-hhr-ficha-link]') || !one('[data-hhr-round="frame"]') ? null : (() => {
@@ -158,7 +158,8 @@ const read = page => page.evaluate(() => {
           top:Math.min(...tiles.map(tile => box(tile).top)), bottom:Math.max(...tiles.map(tile => box(tile).bottom)), left:Math.min(...tiles.map(tile => tile.getBoundingClientRect().left)),
           rows:new Set(tiles.map(tile => Math.round(box(tile).top))).size,
           inside:tiles.every(tile => tile.getBoundingClientRect().left >= rail.left - 1 && tile.getBoundingClientRect().right <= rail.right + 1), heights:tiles.map(tile => Math.round(box(tile).height)),
-          surfaces:[...new Set(tiles.map(tile => getComputedStyle(tile).backgroundColor))],
+          // No box inside a name paints either: the group stands on the page.
+          surfaces:[...new Set(tiles.flatMap(tile => [tile, ...tile.querySelectorAll('*')]).filter(el => !el.closest('button, label, .MuiSwitch-root')).map(el => getComputedStyle(el).backgroundColor))],
           says:tiles.map(tile => (message => message && getComputedStyle(message, '::after').content)(tile.querySelector('[data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]'))),
           // A group per state: its state once, then the names one after the other.
           leads:tiles.map(tile => tile.closest('[data-hhr-round-tile]')).filter(tile => tile?.getAttribute('data-hhr-round-tile') === 'lead').map(tile => [tile.getAttribute('data-hhr-round-state'), Math.round(box(tile).top)]),
@@ -347,10 +348,14 @@ async function verifySummary(page, width, native, off, sans) {
     const starts = [...new Set([...document.querySelectorAll('td[data-hhr-reading="order-requester"]')].map(td => td.closest('table'))
       .map(table => Math.round(at(table.querySelector('td[data-hhr-reading="order-requester"]')).left)))];
     const resuscitation = at(document.querySelector('#alertEntrySection [data-hhr-resuscitation-toggle]')), add = at(document.querySelector('#alertEntrySection [data-hhr-entry-open]'));
-    return {starts, footer:resuscitation && add ? Math.abs((resuscitation.top + resuscitation.bottom) / 2 - (add.top + add.bottom) / 2) : null};
+    const alerts = document.querySelector('#alertEntrySection');
+    return {starts, footer:resuscitation && add ? Math.abs((resuscitation.top + resuscitation.bottom) / 2 - (add.top + add.bottom) / 2) : null,
+      whole:alerts.textContent.includes('con su pauta de seguimiento completa.'),
+      disclosures:[...alerts.querySelectorAll('button')].filter(button => /leer (más|menos)/i.test(button.textContent) && button.getClientRects().length).length};
   });
+  assert.ok(lined.whole && lined.disclosures === 0, 'Una alerta se lee entera, sin «Ver más» ni flecha: ' + JSON.stringify(lined));
   assert.equal(lined.starts.length, 1, '«Solicitante» empieza en el mismo lugar en Fármacos e Indicaciones libres: ' + lined.starts);
-  assert.ok(lined.footer !== null && lined.footer <= 2, '«No reanimación» y «Agregar alerta» comparten una línea: ' + lined.footer);
+  assert.ok(lined.footer !== null && lined.footer <= 3, '«No reanimación» y «Agregar alerta» comparten una línea: ' + lined.footer);
   const share = shown.handoff.width / (shown.handoff.width + shown.note.width);
   assert.ok(Math.abs(share - (page.viewportSize().width >= 1360 ? 5 / 12 : 4 / 12)) < .02, 'La entrega de turno y Alertas tienen su ancho: ' + share.toFixed(3));
   assert.ok(near(shown.note.top, shown.handoff.top) && near(shown.alerts.bottom, shown.note.bottom, 1), `La nota y las tarjetas a su lado empiezan y terminan en la misma línea: ${shown.note.bottom} y ${shown.alerts.bottom}`);
@@ -359,7 +364,8 @@ async function verifySummary(page, width, native, off, sans) {
   // wrote it and when in the ink of what situates, and no rule of its own. One mark beside the title flags the card.
   const alertLook = await page.evaluate(() => { const card = document.querySelector('#alertEntries'), look = (el, pseudo) => getComputedStyle(el, pseudo);
     const rows = [...card.querySelectorAll('.alerts-list > .alert-row')], toggle = card.querySelector('[data-hhr-resuscitation-toggle]');
-    const flag = () => [look(toggle).backgroundColor, look(toggle).boxShadow === 'none', look(toggle.querySelector('.MuiFormControlLabel-label')).fontWeight, Math.round(toggle.getBoundingClientRect().left), Math.round(toggle.getBoundingClientRect().width)];
+    const flag = () => [look(toggle).backgroundColor, look(toggle).boxShadow === 'none', look(toggle.querySelector('.MuiFormControlLabel-label')).fontWeight, Math.round(toggle.getBoundingClientRect().left), Math.round(toggle.getBoundingClientRect().width),
+      look(toggle.querySelector('.MuiFormControlLabel-label')).color];
     const idle = flag();
     toggle.querySelector('input').click();
     const on = flag();
@@ -370,9 +376,12 @@ async function verifySummary(page, width, native, off, sans) {
         return [look(row).borderInlineStartWidth, look(message).fontWeight, look(message).color, author ? look(author, '::after').color : look(signed).color, look(time).color].join(' | '); }),
       heights:rows.map(row => Math.round(row.getBoundingClientRect().height)), mark:[look(card.querySelector('.MuiCardHeader-title'), '::before').backgroundColor, look(card.querySelector('.MuiCardHeader-title'), '::before').width], idle, on}; });
   assert.deepEqual([...new Set(alertLook.rows)], ['0px | 400 | rgb(33, 33, 33) | rgb(102, 102, 102) | rgb(102, 102, 102)'], 'Una alerta se lee como una fila del resumen, sin su propia regla: ' + JSON.stringify(alertLook.rows));
-  assert.ok(alertLook.heights.every(height => height <= 64) && alertLook.mark.join() === 'rgb(181, 121, 63),7px', 'y la tarjeta lleva una sola marca, junto a su título: ' + JSON.stringify([alertLook.heights, alertLook.mark]));
-  assert.ok(alertLook.idle[0] === 'rgba(0, 0, 0, 0)' && alertLook.idle[1] && alertLook.idle[2] === '400' && alertLook.on[0] !== alertLook.idle[0] && !alertLook.on[1] && alertLook.on[2] === '600' &&
-    alertLook.on[3] === alertLook.idle[3], '«No reanimación» se lee como un interruptor más hasta que se marca, y no se mueve al marcarla: ' + JSON.stringify([alertLook.idle, alertLook.on]));
+  // A short alert is one row; the long one, read whole, adds its second line and no more.
+  assert.ok(alertLook.heights.every((height, at) => height <= (summaryAlerts[at]?.[1].length > 60 ? 84 : 64)) && alertLook.mark.join() === 'rgb(181, 121, 63),7px', 'y la tarjeta lleva una sola marca, junto a su título: ' + JSON.stringify([alertLook.heights, alertLook.mark]));
+  // Marked, it has no box of its own: its name takes the alarm ink and the weight of a title (27-11-2026).
+  assert.ok(alertLook.idle[0] === 'rgba(0, 0, 0, 0)' && alertLook.idle[1] && alertLook.idle[2] === '400' && alertLook.on[0] === 'rgba(0, 0, 0, 0)' && alertLook.on[1] &&
+    alertLook.on[2] === '600' && alertLook.on[5] === 'rgb(198, 40, 40)' && alertLook.on[3] === alertLook.idle[3],
+    '«No reanimación» se lee como un interruptor más; marcada, su nombre en la tinta de alarma, sin caja, y no se mueve: ' + JSON.stringify([alertLook.idle, alertLook.on]));
   assert.equal(shown.noteLines, 14, 'La nota muestra catorce líneas a la vez');
   // Under the note, the signs take the first half of the line and the care instructions follow under them: what has no
   // data sits beside both. The owner saw the signs stretched to the height of that column, with a blank band under

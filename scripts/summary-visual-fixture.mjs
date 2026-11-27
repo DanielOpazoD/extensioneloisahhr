@@ -150,13 +150,17 @@ const vitals = section('vitalSignsEntry', 'vitalSignsEntry', 'Signos vitales', `
   <button type="submit" class="MuiButtonBase-root MuiButton-root MuiButton-text">VER HISTORIAL COMPLETO</button>`,
   signature('Paramédico', 'Luis Ejemplo', '8:15:02', ''));
 
+// A long alert reaches the page cut, with «Leer más» under it, as Eloísa draws it (seen 27-11-2026).
+const cutAlert = text => text.length > 60
+  ? `<span class="MuiTypography-root MuiTypography-body2" data-fixture-full="${text}">${text.slice(0, 60).trimEnd()}…</span><div class="MuiBox-root"><button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-text">Leer más</button></div>`
+  : `<span class="MuiTypography-root MuiTypography-body2" style="display:inline-flex">${text}</span>`;
 const alertRow = ([author, text, age]) => `<div class="MuiStack-root alert-row"><div class="MuiStack-root"><p class="MuiTypography-root MuiTypography-body2">${author}</p>
-  <div><span class="MuiTypography-root MuiTypography-body2" style="display:inline-flex">${text}</span></div></div>
+  <div>${cutAlert(text)}</div></div>
   <div class="MuiStack-root">${caption(age)}<div class="MuiStack-root">${iconButton('ArchiveRoundedIcon', '', 'Small', ' aria-label="Archivar"')}</div></div></div>`;
 export const summaryAlerts = [
   ['Enfermera(o) Elena  Ejemplo Prueba', 'Pauta de seguimiento pendiente para el próximo turno.', '2 horas'],
   ['Médico Tomás  Ejemplo ', 'Se acordó una visita con la familia.', '4 horas'],
-  ['Enfermera(o) Elena  Ejemplo Prueba', 'Evaluación de riesgo de prueba 12/04 ---- repetir la evaluación de la simulación.', '3 días'],
+  ['Enfermera(o) Elena  Ejemplo Prueba', 'Evaluación de riesgo de prueba 12/04 ---- repetir la evaluación de la simulación con su pauta de seguimiento completa.', '3 días'],
 ];
 const alerts = list => section('alertEntrySection', 'alertEntries', 'Alertas', `<div class="MuiBox-root alerts-list">${list.map(alertRow).join('')}</div>
   <form class="MuiStack-root" onsubmit="return false">${toggle('No reanimación')}${toggle('Gestión de Visitas', true)}

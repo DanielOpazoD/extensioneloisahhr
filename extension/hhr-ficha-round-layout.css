@@ -222,6 +222,11 @@
           inline-size:max-content !important; max-inline-size:100%; min-inline-size:0;
           margin:var(--hhr-round-tile,1.25rem) 0 0 var(--hhr-round-tile-x,0px) !important;
           border-radius:0; background:transparent;
+          /* Every name of the group stands on the page, whatever box Eloísa draws it in: a white card behind
+             Examen físico and its state was seen on the page (27-11-2026). */
+          &, section, .MuiPaper-root, .MuiCard-root, .MuiCardHeader-root, .MuiCardContent-root, [data-hhr-reading="status-card"] {
+            background:transparent !important; box-shadow:none !important; border-color:transparent !important;
+          }
           /* Beside the signs they belong to the round: the Tab key reaches them before the cards under it. */
           reading-order:0;
           [data-hhr-reading="status-card"], &[data-hhr-reading="status-card"] {
