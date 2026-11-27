@@ -376,8 +376,8 @@ async function verifySummary(page, width, native, off, sans) {
     return Math.round(card.getBoundingClientRect().bottom - last); });
   assert.ok(blank >= 0 && blank <= 12, 'La tarjeta de Signos termina con sus mediciones, sin una franja en blanco: ' + blank);
   assert.ok(new Set(shown.tiles.map(tile => Math.round(tile.top))).size <= 3, 'Las nueve mediciones ocupan tres filas a lo más en su mitad de la línea');
-  // Name, value and what details it (the PAM, the time): three lines, never a fourth left empty.
-  assert.ok(shown.tiles.every(tile => tile.height <= 56), 'Una medición sin unidad no deja una línea vacía: ' + shown.tiles.map(tile => Math.round(tile.height)));
+  // Name, value and what details it (the PAM and the time share a line): three lines, as compact as before.
+  assert.ok(shown.tiles.every(tile => tile.height < 52), 'Una medición sin unidad no deja una línea vacía: ' + shown.tiles.map(tile => Math.round(tile.height)));
   const reading = await page.evaluate(() => {
     const tiles = [...document.querySelectorAll('#vitalSignsEntry [data-hhr-reading="vital-tile"]')].filter(tile => tile.querySelector('[data-hhr-reading="vital-value"]'));
     const at = (tile, role) => tile.querySelector('[data-hhr-reading="' + role + '"]')?.getBoundingClientRect();
