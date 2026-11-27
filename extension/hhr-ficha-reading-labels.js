@@ -266,7 +266,7 @@
 
   function create() {
     // The forms already seen in this patient's summary: only their first appearance can carry Eloísa's own focus.
-    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set(), fold = null, openedAt = performance.now();
+    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set(), fold = null, openedAt = performance.now(), seenFields = new WeakSet();
     const observer = new MutationObserver(() => refresh(watchedMain, episode));
     const refresh = (main, encounter) => {
       observer.disconnect();
@@ -406,18 +406,18 @@
         editor.clear(!main || episode === encounter);
         editors.delete(row);
       }
-      if (episode !== encounter) { arrived = new Set(); openedAt = performance.now(); }
+      if (episode !== encounter) { arrived = new Set(); openedAt = performance.now(); seenFields = new WeakSet(); }
       // Below the desk the alert field is not folded, and Eloísa still focuses it as the summary opens: the
-      // page followed it far down (seen at 1024 px, 27-11-2026). Nobody has scrolled, pressed or typed yet:
-      // the summary opens at its top, as on the desk.
-      // Only where the window says it is narrow: without that answer nothing is changed.
-      if (main && globalThis.matchMedia?.('(max-width:1099.98px)').matches === true && lastInput < openedAt) {
-        const field = document.activeElement;
-        if (field?.matches('textarea,input:not([type="checkbox"])') && field.closest('#alertEntrySection,#shiftChangeEntrySection') && main.contains(field)) {
-          field.blur();
-          const scroller = pageScroller(field);
-          if (scroller?.scrollTop) scroller.scrollTop = 0;
-        }
+      // page followed it far down (seen at 1024 px, 27-11-2026). On a field's first appearance for this patient,
+      // with nobody having scrolled, pressed or typed, the summary opens at its top, as on the desk. A field
+      // seen before keeps the focus of whoever had it.
+      for (const field of main?.querySelectorAll('#alertEntrySection :is(textarea,input:not([type="checkbox"])), #shiftChangeEntrySection :is(textarea,input:not([type="checkbox"]))') || []) {
+        const first = !seenFields.has(field);
+        seenFields.add(field);
+        if (!first || desktop !== false || field !== document.activeElement || lastInput >= openedAt) continue;
+        field.blur();
+        const scroller = pageScroller(field);
+        if (scroller?.scrollTop) scroller.scrollTop = 0;
       }
       for (const [row, {field, action, entry}] of nextEditors) {
         if (!editors.has(row)) {
