@@ -1,5 +1,20 @@
 # Resumen compacto en escritorio
 
+## Una familia de iconos y la barra en la línea de pestañas, en 0.48.219
+
+Tercera y cuarta parte de las mejoras aceptadas de la auditoría visual.
+
+| Captura, 1440 × 900 | 0.48.218 | 0.48.219 |
+| --- | --- | --- |
+| Primera pantalla | [Antes](0.48.219/antes/1440-resumen.png) | [Después](0.48.219/despues/1440-resumen.png) |
+
+| Medida en las fichas ficticias | Resumen (ambas fichas) | Plan | Historial |
+| --- | ---: | ---: | ---: |
+| Textos bajo 4,5:1 | 0 | 0 | 0 |
+| Controles bajo 24 px sin espacio libre | 0 | 0 | 0 |
+
+La comprobación vive en `scripts/visual-quality.mjs` y corre en cada captura de CI.
+
 ## Impresiones con nombre, Balance Hídrico plegado y signos vitales sin cajas, en 0.48.218
 
 Segunda parte de las mejoras aceptadas de la auditoría visual.

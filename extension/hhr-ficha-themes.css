@@ -709,3 +709,28 @@
     &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
   }
 }
+
+/* One family of icons. Eloísa draws its print, archive, suspend and note icons filled; the view's own
+   (Evolución, «Mostrar suspendidos», the filter of Balance Hídrico) are outlines of stroke 1.8. Eloísa's
+   svg keeps its place, its size and its name: only its drawing is the outline, in its own ink. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] main :is(
+    svg[data-testid="LocalPrintshopRoundedIcon"], svg[data-testid="ArchiveRoundedIcon"], svg[data-testid="CancelIcon"],
+    svg[data-testid="SpeakerNotesIcon"], svg[data-testid="NoteAddIcon"]):not(:is(dialog,[role=dialog]) *) {
+    background:currentColor; mask:var(--hhr-family-icon) center / contain no-repeat;
+    > * { visibility:hidden; }
+    &[data-testid="LocalPrintshopRoundedIcon"] { --hhr-family-icon:var(--hhr-icon-print); }
+    &[data-testid="ArchiveRoundedIcon"] { --hhr-family-icon:var(--hhr-icon-archive); }
+    &[data-testid="CancelIcon"] { --hhr-family-icon:var(--hhr-icon-cancel); }
+    &[data-testid="SpeakerNotesIcon"] { --hhr-family-icon:var(--hhr-icon-notes); }
+    &[data-testid="NoteAddIcon"] { --hhr-family-icon:var(--hhr-icon-note-add); }
+    @media (forced-colors:active) { forced-color-adjust:none; background:ButtonText; }
+  }
+}
+
+/* Centro HHR rides on the line of tabs as part of it: a hairline, no floating shadow. */
+@media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] #hhr-clinical-operations-bar {
+    box-shadow:none !important; border-color:var(--hhr-ficha-line) !important; border-radius:8px !important;
+  }
+}

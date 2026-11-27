@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.219
+
+- Una sola familia de iconos. Los iconos rellenos de Eloísa (imprimir, archivar, suspender, comentarios y agregar nota) se dibujan con el contorno de los de la vista (trazo de 1,8 y puntas redondeadas), como Enmendar, Pautas o «Mostrar suspendidos». Conservan su lugar, su tamaño y su nombre.
+- La barra de Centro HHR va en la línea de pestañas como parte de ella: una línea fina y sin la sombra que la hacía flotar.
+- Nueva comprobación en CI: en el Resumen de ambas fichas, en Plan y en Historial, todo texto debe leerse a 4,5:1 o más (3:1 si es grande) y todo control debe medir 24 px o dejar 24 px libres a su alrededor (WCAG 2.2, 1.4.3 y 2.5.8). Hoy las tres vistas la cumplen.
+
 ## 0.48.218
 
 - Cada impresión del Resumen dice qué imprime, con un solo aspecto: el icono y sus palabras en la tinta de una acción, como «Imprimir indicaciones». El icono de la fila diaria, que Eloísa llama solo «Imprimir», se lee «Evolución»: imprime el reporte de evolución (leído en la página el 27-11-2026). El icono al final de Fármacos se lee «Imprimir recetón». Sus nombres para el lector de pantalla siguen siendo los de Eloísa.
