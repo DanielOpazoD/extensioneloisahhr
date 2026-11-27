@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.232
+
+- CUDYR de Gestión de Camas: identifica el rol de Matrona (`healthCarePractitionerRoleId: 8`) en los registros de categorización y marca `metadataStatus` como `partial` cuando la captura informa advertencias de formularios no reconocidos (`snapshotWarnings`).
+
 ## 0.48.231
 
 - «Ver evoluciones → Scores» muestra las valoraciones válidas `#EscalaBraden` del episodio con su fecha, puntaje, riesgo y próxima valoración en hora de Rapa Nui. El nombre de la escala abre la nota original. Las notas que aparecen en Scores se apartan de la lista de Evoluciones.

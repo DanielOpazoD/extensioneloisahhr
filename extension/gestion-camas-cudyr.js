@@ -7,6 +7,7 @@
   const roleLabel = roleId => {
     if (Number(roleId) === 1) return 'Médico';
     if (Number(roleId) === 2) return 'Enfermería';
+    if (Number(roleId) === 8) return 'Matrona';
     return '';
   };
 

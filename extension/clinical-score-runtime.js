@@ -265,7 +265,7 @@
         historyAvailable: true,
         captureContract: 1,
         observedEpisodeIds: items.map(item => item.encId),
-        metadataStatus: metadataWarnings.length ? 'partial' : 'complete',
+        metadataStatus: metadataWarnings.length || snapshotWarnings.length ? 'partial' : 'complete',
         warning: [...metadataWarnings, ...snapshotWarnings].join(' '),
       };
     };
