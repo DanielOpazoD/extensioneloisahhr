@@ -106,10 +106,12 @@ export const verifyNativeFicha = async (page, worker) => {
         requestAnimationFrame(() => {
           const drawn = el.cloneNode(true);
           drawn.removeAttribute('data-hhr-ficha-summary-card');
-          drawn.append(Object.assign(document.createElement('p'), {textContent:'Registro de prueba que llega dentro del cuadro.'}));
+          const record = Object.assign(document.createElement('p'), {textContent:'Registro de prueba que llega dentro del cuadro.'});
+          drawn.append(record);
           el.replaceWith(drawn);
           const after = new MessageChannel();
-          after.port1.onmessage = () => done(drawn.hasAttribute('data-hhr-ficha-summary-card'));
+          // The section goes back to the content the checks below read.
+          after.port1.onmessage = () => { const presented = drawn.hasAttribute('data-hhr-ficha-summary-card'); record.remove(); done(presented); };
           after.port2.postMessage(0);
         });
       }));
@@ -121,6 +123,7 @@ export const verifyNativeFicha = async (page, worker) => {
       assert.equal(await optional.isVisible(), true);
       assert.equal(await page.getByRole('button', { name:/vacías/i }).count(), 0);
       await optional.evaluate(el => el.lastChild.textContent = 'Procedimiento de prueba');
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     }
     const summaryLayout = await page.evaluate(() => {
       const grid = document.querySelector('[data-hhr-ficha-summary-grid]');
