@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.217
+
+- Plan de tratamiento e Historial hablan el idioma del Resumen. En Plan, el interruptor de cada tarjeta es un icono de 26 px con su nombre al apuntarlo: el de pausa para «Mostrar Suspendidos» (el mismo del Resumen) y un ojo para «Mostrar realizados, no realizados, archivados y suspendidos» y «Mostrar Finalizados». «Mostrar todos los ocultos», arriba de las tarjetas, queda como una nota pequeña. Las etiquetas «SOS» y «Externo» van al tamaño de etiqueta de la vista (11 px).
+- Programación de procedimientos ahora se reconoce: Eloísa deja vacía la primera columna de su tabla (leído en la página el 27-11-2026), y la tarjeta quedaba con su aspecto original. La reconoce su título.
+- En Historial, el panel de Filtros se lee como una tarjeta de la vista: título de 15 px, campos a la altura de una línea y «Filtrar» como el botón único del Resumen (línea, sin relleno). Los valores que Eloísa escribe en peso 300 junto a su rótulo («Posología», «Dosis»…) se leen con el peso del texto; los rótulos conservan el suyo. Los detalles en el gris de Eloísa (3,9:1) pasan a la tinta suave de la vista, y «Nuevo» y las demás etiquetas van a 11 px (antes 10 px).
+- Un signo vital que Eloísa marca en rojo fuera de rango se lee en el rojo de alarma de la vista (`#c62828`, 5,2:1 sobre blanco), también en la presión.
+- Verificado en la página, con el estilo aplicado a mano: las cuatro tarjetas de Plan reconocidas; en Historial, 130 valores y detalles ajustados, 80 rótulos con su peso, ningún texto en el gris de 3,9:1.
+
 ## 0.48.216
 
 - El estado de un diagnóstico, de un procedimiento o de una orden de examen se lee como el texto de su columna: sin caja ni flecha, y alineado con las demás celdas (antes 14 px más adentro). Al apuntar su fila o llegar a ella con el teclado aparecen su caja y su flecha, sin que la palabra se mueva; abierto, las conserva. El selector de Eloísa, su menú y lo que escribe no cambian.

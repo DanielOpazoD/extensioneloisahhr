@@ -75,7 +75,17 @@
     let horizontalScroll = null;
     let timelineRoot = null;
     let newBadges = new Set();
-    let inlineEvents = new Set(), names = new Map();
+    let inlineEvents = new Set(), names = new Map(), quietLines = new Map();
+    // What Eloísa draws in its own grey or light weight is read once per node: the view's own style must not make it forget.
+    const nativeLook = new WeakMap();
+    const lookOf = line => {
+      if (!nativeLook.has(line)) {
+        const style = getComputedStyle(line);
+        nativeLook.set(line, line.matches('p.MuiTypography-body2') && /^rgba?\(128, 128, 128(?:, 1)?\)$/.test(style.color) ? 'quiet' :
+          line.matches('span.MuiTypography-body1') && style.fontWeight === '300' ? 'light' : '');
+      }
+      return nativeLook.get(line);
+    };
     let flatStacks = new Set();
     let dayEdges = new Map();
     let dayLabels = new Map();
@@ -116,6 +126,8 @@
       inlineEvents.clear();
       for (const line of names.keys()) line.removeAttribute('data-hhr-author');
       names = new Map();
+      quietLines.forEach((look, line) => line.removeAttribute('data-hhr-history-' + look));
+      quietLines = new Map();
       flatStacks.forEach(stack => stack.removeAttribute('data-hhr-history-flat'));
       flatStacks.clear();
       dayEdges.forEach((_edge, box) => box.removeAttribute('data-hhr-history-edge'));
@@ -292,7 +304,7 @@
       // Eloísa opens each day with a dated box and gives most later events a box of their own.
       // Every card of the timeline is an event, whichever box holds it.
       const boxes = [...timeline.children].filter(el => el.matches('.MuiBox-root'));
-      const nextInline = new Map(), nextFlat = new Set(), nextNames = new Map();
+      const nextInline = new Map(), nextFlat = new Set(), nextNames = new Map(), nextQuiet = new Map();
       for (const box of boxes) {
         for (const card of box.querySelectorAll(':scope > .MuiCard-root')) {
           const header = card.querySelector(':scope > .MuiCardHeader-root');
@@ -308,6 +320,12 @@
               !header.querySelector('button,a,input,[tabindex]') && !category.children.length) {
             nextInline.set(card, category.textContent.trim());
             if (flat) nextFlat.add(flat);
+            // Eloísa writes some details in a grey that reads at 3.9:1 and some values in a light weight (300)
+            // beside their label (500). The grey takes the soft ink of the view; the value, the weight of the text.
+            for (const line of (flat || body).querySelectorAll('p.MuiTypography-body2, span.MuiTypography-body1')) {
+              const look = lookOf(line);
+              if (look) nextQuiet.set(line, look);
+            }
             // Who signs the event reads as a first name and a first surname, as in the summary. One of
             // the two lines of the header is the role; the other, with no element inside, is the name.
             const naming = globalThis.HhrFichaProfessionalName;
@@ -336,6 +354,9 @@
         if (kind) { if (card.getAttribute('data-hhr-history-kind') !== kind) card.setAttribute('data-hhr-history-kind', kind); }
         else card.removeAttribute('data-hhr-history-kind');
       }
+      for (const [line, look] of quietLines) if (nextQuiet.get(line) !== look) line.removeAttribute('data-hhr-history-' + look);
+      for (const [line, look] of nextQuiet) if (!line.hasAttribute('data-hhr-history-' + look)) line.setAttribute('data-hhr-history-' + look, '');
+      quietLines = nextQuiet;
       for (const stack of flatStacks) if (!nextFlat.has(stack)) stack.removeAttribute('data-hhr-history-flat');
       for (const stack of nextFlat) if (!flatStacks.has(stack)) stack.setAttribute('data-hhr-history-flat', '');
       flatStacks = nextFlat;

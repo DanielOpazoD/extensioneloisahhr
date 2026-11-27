@@ -20,7 +20,10 @@
     const content = card.querySelector(':scope > .MuiCardContent-root');
     const table = content?.querySelector(':scope > .MuiTableContainer-root > table');
     const headings = table?.tHead?.rows[0]?.cells;
-    if (!header || headings?.length !== 2 || plain(headings[0].querySelector('p')?.textContent) !== 'indicacion') return null;
+    // Programación de procedimientos leaves its first heading empty (read on the page 27-11-2026): its title says what it is.
+    const titled = /^programacion de /.test(plain(header?.querySelector('.MuiCardHeader-title')?.textContent));
+    const first = plain(headings?.[0]?.textContent);
+    if (!header || headings?.length !== 2 || !(first.startsWith('indicacion') || (titled && !first))) return null;
     // The tools sit between the header and the table: icon buttons and nothing else.
     const tools = [...card.children].find(el => el !== header && el !== content);
     const buttons = tools ? [...tools.querySelectorAll('button')] : [];
@@ -47,10 +50,24 @@
       const rest = view ? [...view.children].filter(child => !found.some(([card]) => card === child)) : [];
       if (view && found.every(([card]) => card.parentElement === view) && rest.every(isFilter)) {
         set(next, view, attribute, 'view');
-        rest.forEach(filter => set(next, filter, attribute, 'filter'));
+        rest.forEach(filter => {
+          set(next, filter, attribute, 'filter');
+          const label = filter.querySelector('label');
+          if (label) set(next, label, attribute + '-filter', 'all');
+        });
       }
+      // A switch that shows what a card hides is drawn as an icon, as in the Resumen; its words stay its name.
+      const filterOf = label => {
+        const words = label.textContent.replace(/\s+/g, ' ').trim();
+        set(next, label, attribute + '-filter', /^mostrar suspendidos$/i.test(words) ? 'suspended' : /^mostrar /i.test(words) ? 'hidden' : 'other');
+        if (label.title !== words) label.title = words;
+        named.add(label);
+      };
       for (const [card, plan] of found) {
         set(next, card, attribute, 'card');
+        for (const label of card.querySelectorAll(':scope > .MuiCardHeader-root > .MuiCardHeader-action label')) {
+          if (label.querySelector('input[type="checkbox"]')) filterOf(label);
+        }
         if (plan.empty) set(next, plan.table, attribute + '-empty');
         if (plan.tools) set(next, plan.tools, attribute, 'tools');
         for (const button of plan.tools ? plan.buttons : []) {

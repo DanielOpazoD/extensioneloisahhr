@@ -113,7 +113,7 @@
     const instant = new Date(iso);
     return Number.isFinite(instant.getTime()) ? [hospitalClock.format(instant), author].filter(Boolean).join(' · ') : author;
   }
-  function markTiles(card, next, compact, elapsed, older, sources, labelsToShorten, shared) {
+  function markTiles(card, next, compact, elapsed, older, sources, labelsToShorten, shared, flagged) {
     const labels = [...card.querySelectorAll('span,p,dt,h4,h5,h6,div')].filter(el =>
       !el.closest('table,dialog,[role=dialog],.hhr-ficha-vitals') && vitalLabel(el, compact));
     if (labels.length < 2) return;
@@ -160,6 +160,13 @@
         next.set(pressure,'vital-value');
         next.set(pam,'vital-pam');
       } else next.set(value,'vital-value');
+      // Eloísa paints a value out of its range in pure red, which reads at 3.7:1 on its tile. The value is
+      // flagged so that the view draws it in a red that reads, at the weight it has. Its own red, or the
+      // one this view already gave it, says it is flagged.
+      if (compact) for (const reading of value.childElementCount === 2 && next.get(value) === 'vital-pressure-group' ? [value.firstElementChild] : [value]) {
+        const [r, g, b] = (getComputedStyle(reading).color.match(/\d+/g) || []).map(Number);
+        if (r >= 180 && g <= 90 && b <= 90) flagged.add(reading);
+      }
       const tileAges = [];
       for (const detail of details) {
         if (/^pam\s*:/i.test(detail.textContent.trim())) next.set(detail,'vital-pam');
@@ -216,10 +223,10 @@
   function create() {
     const orderDetails = globalThis.HhrFichaOrderDetails.create();
     let previous = new Map(), previousRequests = new Map(), previousLabels = new Map();
-    let previousShared = new Map(), previousActions = new Set();
+    let previousShared = new Map(), previousActions = new Set(), previousFlagged = new Set();
     function refresh(main, compact) {
       const next = new Map(), cards = new Map(), elapsed = new Map();
-      const older = new Set(), sources = new Map(), requests = new Map(), labelsToShorten = new Map();
+      const older = new Set(), sources = new Map(), requests = new Map(), labelsToShorten = new Map(), flagged = new Set();
       const orderCells = new Map(), shared = new Map(), actions = new Set();
       if (main) {
         for (const [id,kind] of Object.entries(anchors)) {
@@ -241,7 +248,7 @@
           if (statusCards.some(el => el === card || (card.contains(el) && !card.querySelector('table')))) continue;
           next.set(card,kind);
           if (kind === 'vitals') {
-            markTiles(card,next,compact,elapsed,older,sources,labelsToShorten,shared);
+            markTiles(card,next,compact,elapsed,older,sources,labelsToShorten,shared,flagged);
             if (compact) for (const button of card.querySelectorAll('button')) {
               if (label(button) === 'ver historial completo' && !button.closest('dialog,[role=dialog]')) next.set(button,'vital-history');
             }
@@ -308,6 +315,9 @@
         if (!next.has(el)) el.removeAttribute('data-hhr-reading');
       }
       for (const time of older) time.toggleAttribute('data-hhr-vital-older', true);
+      for (const el of previousFlagged) if (!flagged.has(el)) el.removeAttribute('data-hhr-vital-flag');
+      for (const el of flagged) el.toggleAttribute('data-hhr-vital-flag', true);
+      previousFlagged = flagged;
       for (const [el,source] of sources) {
         if (el.dataset.hhrVitalSource !== source) el.dataset.hhrVitalSource = source;
       }

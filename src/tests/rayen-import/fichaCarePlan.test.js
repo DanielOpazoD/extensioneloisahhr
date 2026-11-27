@@ -102,6 +102,27 @@ it('respeta el título propio de un botón y retira solo los suyos', () => {
   expect(document.querySelectorAll('[data-hhr-plan],[data-hhr-plan-caption],[data-hhr-plan-empty]')).toHaveLength(0);
 });
 
+it('dibuja como icono los interruptores de una tarjeta y deja el de la vista como nota', () => {
+  const header = label => `<div class="MuiCardHeader-root"><span class="MuiCardHeader-title">Programación de procedimientos</span>
+    <div class="MuiCardHeader-action"><label><input type="checkbox"> ${label}</label></div></div>`;
+  const withSwitch = label => card().replace(/<div class="MuiCardHeader-root">[\s\S]*?<\/div>/, header(label));
+  const main = mount(filter + withSwitch('Mostrar Suspendidos') + withSwitch('Mostrar realizados, no realizados, archivados y suspendidos'));
+  plan.refresh(main);
+  const labels = [...document.querySelectorAll('.MuiCardHeader-action label')];
+  expect(labels.map(label => [label.getAttribute('data-hhr-plan-filter'), label.title]))
+    .toEqual([['suspended', 'Mostrar Suspendidos'], ['hidden', 'Mostrar realizados, no realizados, archivados y suspendidos']]);
+  expect(document.querySelector('#filter label').getAttribute('data-hhr-plan-filter')).toBe('all');
+  plan.clear();
+  expect(document.querySelectorAll('[data-hhr-plan-filter]')).toHaveLength(0);
+  expect(labels.map(label => label.hasAttribute('title'))).toEqual([false, false]);
+});
+
+it('reconoce Programación de procedimientos, que deja vacía su primera columna', () => {
+  const main = mount(card({heading:''}).replace('Programación de prueba', 'Programación de procedimientos'));
+  plan.refresh(main);
+  expect(marks('.MuiCard-root')).toEqual(['card']);
+});
+
 it('no escribe en la página cuando nada cambió', async () => {
   const main = mount(card() + card({body:emptyBody}));
   plan.refresh(main);

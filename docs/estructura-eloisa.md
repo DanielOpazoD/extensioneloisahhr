@@ -209,6 +209,8 @@ Cada tarjeta:
   - Sin registros: una fila con `td[colspan=3] > p` «No se registra un plan de tratamiento.».
   - `tfoot` con tres celdas vacías.
 
+Leído en la página el 27-11-2026: en Programación de procedimientos la primera columna de la tabla no tiene texto (ni «Indicación»); la vista la reconoce por el título «Programación de …». Los interruptores de cabecera son `label.MuiFormControlLabel-root` con un `MuiSwitch` (pista y botón como `span`).
+
 Pendiente de confirmar en la página real:
 
 - **Qué significa cada icono de estado.** Hasta saberlo, la vista Compacta no les da nombre ni color.
@@ -230,6 +232,7 @@ Cada evento es un `div.MuiCard-root`:
 - Evolución: `div.MuiStack-root` con una fila (`p` texto, chips «Nuevo» y otro) y un `p`.
 - Administrador de medicamentos: una fila por fármaco (de 1 a 12), cada una con `p` y pares `span > span` rótulo y valor («Hora de administración», «Posología», «Dosis»…). Un evento llegó a 1508 px de alto.
 - 110 de 314 eventos llevaban el chip «Nuevo».
+- Leído el 27-11-2026: los pares rótulo y valor son `span.MuiTypography-body1`, el rótulo en peso 500 y el valor en peso 300. Algunos detalles son `p.MuiTypography-body2` en `rgb(128,128,128)` (3,9:1 sobre blanco). Los chips escriben a 10 px. Un signo vital fuera de rango se escribe en rojo puro.
 
 ## Lo que esto corrige en las fichas ficticias
 

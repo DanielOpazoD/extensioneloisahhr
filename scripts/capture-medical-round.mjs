@@ -78,7 +78,7 @@ try {
         };
       });
       assert.equal(vitals.count, 9, 'Deben estar las nueve lecturas nativas');
-      assert.equal(vitals.flagged, 'rgb(204, 36, 36)', 'Se debe conservar el color de la temperatura');
+      assert.equal(vitals.flagged, 'rgb(198, 40, 40)', 'La temperatura fuera de rango conserva su marca, en un rojo que se lee (5,6:1)');
       assert.match(vitals.label, /"2h"/, 'La antigüedad debe abreviarse sin perderse');
       assert.equal(metrics.vitalsRows, width === 1366 ? 1 : 3);
     }

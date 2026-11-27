@@ -16,7 +16,7 @@ const paths = {
 // Eloísa names a tool on its icon, never on the button.
 const icon = (id, name = '') => `<svg class="MuiSvgIcon-root" data-testid="${id}" viewBox="0 0 24 24" focusable="false"${name ? ` aria-label="${name}"` : ' aria-hidden="true"'}>${paths[id]}</svg>`;
 const iconButton = (id, name, size = 'Medium') => `<button type="button" class="MuiButtonBase-root MuiIconButton-root MuiIconButton-size${size}">${icon(id, name)}</button>`;
-const toggle = label => `<label class="MuiFormControlLabel-root"><span class="MuiSwitch-root"><span class="MuiSwitch-switchBase"><input class="MuiSwitch-input" type="checkbox"></span></span><span class="MuiTypography-root MuiFormControlLabel-label">${label}</span></label>`;
+const toggle = label => `<label class="MuiFormControlLabel-root"><span class="MuiSwitch-root"><span class="MuiSwitch-switchBase PrivateSwitchBase-root"><input class="MuiSwitch-input" type="checkbox"><span class="MuiSwitch-thumb"></span></span><span class="MuiSwitch-track"></span></span><span class="MuiTypography-root MuiFormControlLabel-label">${label}</span></label>`;
 const chip = label => `<div class="MuiChip-root MuiChip-sizeSmall"><span class="MuiChip-label">${label}</span></div>`;
 
 // Seven hours per page, split by day as Eloísa does.
@@ -73,10 +73,10 @@ export const carePlanPage = (cards = planCards) => `<!doctype html><html lang="e
   .MuiTabs-root [role=tablist]{display:flex;gap:8px;align-items:center}.MuiTabs-root button{background:none;border:0;font:inherit;font-size:13px;padding:10px 12px;cursor:pointer}
   main{padding:16px 24px}.MuiStack-root{display:flex;flex-direction:column}.plan>*+*{margin-top:16px}
   .MuiFormControlLabel-root{display:inline-flex;align-items:center;margin:0 16px 0 -11px;cursor:pointer}
-  .MuiSwitch-root{position:relative;display:inline-flex;flex:none;width:58px;height:38px;padding:12px}.MuiSwitch-root::before{content:'';flex:1;border-radius:7px;background:#a7afac}
-  .MuiSwitch-switchBase{position:absolute;inset:0;padding:9px}.MuiSwitch-switchBase::before{content:'';display:block;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.4)}
-  .MuiSwitch-input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
-  .MuiSwitch-switchBase:has(:checked)::before{margin-left:20px;background:#247d71}
+  .MuiSwitch-root{position:relative;display:inline-flex;flex:none;width:58px;height:38px;padding:12px}.MuiSwitch-track{flex:1;border-radius:7px;background:#a7afac}
+  .MuiSwitch-switchBase{position:absolute;top:0;left:0;padding:9px}.MuiSwitch-thumb{display:block;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  .MuiSwitch-input{position:absolute;top:0;left:-100%;width:300%;height:100%;margin:0;opacity:0;cursor:pointer}
+  .MuiSwitch-switchBase:has(:checked){transform:translateX(20px)}.MuiSwitch-switchBase:has(:checked) .MuiSwitch-thumb{background:#247d71}
   .MuiCard-root{overflow:hidden;border-radius:8px;background:white;box-shadow:0 1px 3px rgba(0,0,0,.12)}
   .MuiCardHeader-root{display:flex;align-items:center;padding:24px 16px}.MuiCardHeader-content{flex:1 1 auto;min-width:0}
   .MuiCardHeader-title{display:block;font-size:24px;line-height:1.334}.MuiCardHeader-action{flex:none;align-self:flex-start;margin:-4px -8px -4px 0}

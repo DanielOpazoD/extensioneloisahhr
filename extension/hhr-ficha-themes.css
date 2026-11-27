@@ -339,7 +339,7 @@
    switch and its words. It is Eloísa's own checkbox, in its place: the icon covers it, takes its click and
    its focus, and reads pressed while the suspended ones are shown. Its words stay as its name. */
 @media screen {
-  html[data-hhr-ficha-theme="compact"] label[data-hhr-reading-toggle="suspended"] {
+  html[data-hhr-ficha-theme="compact"] :is(label[data-hhr-reading-toggle="suspended"], label[data-hhr-plan-filter="suspended"], label[data-hhr-plan-filter="hidden"]) {
     position:relative; display:inline-flex !important; flex:none; box-sizing:border-box;
     inline-size:28px; block-size:28px; margin:0 !important; padding:0 !important; border-radius:5px;
     color:var(--hhr-ficha-ink-soft); font-size:0 !important; line-height:0 !important; cursor:pointer;
@@ -361,7 +361,8 @@
         @media (forced-colors:active) { &:checked { outline:2px solid Highlight; } }
       }
     }
-    &::before { content:''; position:absolute; inset:0; z-index:1; margin:auto; inline-size:16px; block-size:16px; background:currentColor; mask:var(--hhr-icon-suspended) center / contain no-repeat; pointer-events:none; }
+    &::before { content:''; position:absolute; inset:0; z-index:1; margin:auto; inline-size:16px; block-size:16px; background:currentColor; mask:var(--hhr-filter-icon, var(--hhr-icon-suspended)) center / contain no-repeat; pointer-events:none; }
+    &[data-hhr-plan-filter="hidden"] { --hhr-filter-icon:var(--hhr-icon-hidden); }
     &:hover { background:var(--hhr-ficha-action-hover); color:var(--hhr-ficha-action); }
     @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
     /* On the line of a section without records it is as high as that line. */
@@ -678,4 +679,9 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root:not(:has(svg)) {
     display:inline-block; block-size:var(--hhr-ficha-button) !important; line-height:calc(var(--hhr-ficha-button) - 2px) !important;
   }
+}
+
+/* A value out of its range keeps Eloísa's flag in a red that reads (5.6:1 instead of 3.7:1). */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-flag] { color:var(--hhr-ficha-alarm) !important; }
 }
