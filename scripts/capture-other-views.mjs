@@ -68,6 +68,41 @@ try {
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
   }
+  // Eloísa's confirmations, with the structure read in its code (27-11-2026): one MUI dialog with a title, a
+  // sentence and its actions, the action contained and «SALIR» in words. A dialog with a field is a form.
+  if (revision === 'WORKTREE') {
+    const page = await browser.newPage({viewport:{width:1440, height:900}, deviceScaleFactor:1, locale:'es-CL', timezoneId:'Pacific/Easter'});
+    await page.setContent(otherViewPage('discharge'));
+    await settle(page);
+    await mountFicha(page, assets, {});
+    await page.evaluate(() => {
+      const dialog = (id, body, actions) => `<div class="MuiDialog-root MuiModal-root" role="presentation" id="${id}"><div class="MuiBackdrop-root" style="position:fixed;inset:0;background:rgba(0,0,0,.5)"></div>
+        <div class="MuiDialog-container" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center"><div class="MuiPaper-root MuiDialog-paper" role="dialog" aria-labelledby="${id}-title"
+          style="max-width:600px;margin:32px;border-radius:16px;background:#fff;box-shadow:0 11px 15px rgba(0,0,0,.2)">
+          <h2 class="MuiTypography-root MuiDialogTitle-root" id="${id}-title" style="margin:0;padding:16px 24px;font:500 20px/1.6 Arial"><p class="MuiTypography-root" style="margin:0">Validar tratamiento</p></h2>
+          <div class="MuiDialogContent-root" style="padding:20px 24px">${body}</div>
+          <div class="MuiDialogActions-root" style="display:flex;justify-content:flex-end;padding:8px">${actions}</div></div></div></div>`;
+      const button = (text, kind) => `<button type="${kind === 'contained' ? 'submit' : 'button'}" class="MuiButtonBase-root MuiButton-root MuiButton-${kind}" style="padding:6px 16px;border:0;border-radius:6px;font:500 14px Arial;${kind === 'contained' ? 'background:#3f9184;color:#fff' : 'background:none;color:#3f9184'}">${text}</button>`;
+      document.body.insertAdjacentHTML('beforeend', dialog('confirm', '<p class="MuiTypography-root MuiDialogContentText-root" style="margin:0;font:16px/1.5 Arial;color:rgba(0,0,0,.6)">Declaro haber revisado el tratamiento de prueba.</p>',
+        button('CONTINUAR', 'contained') + button('SALIR', 'text')) + dialog('form', '<label>Motivo <input type="text"></label>', button('GUARDAR', 'contained') + button('CANCELAR', 'text')));
+    });
+    await settle(page);
+    const look = await page.evaluate(() => [...document.querySelectorAll('.MuiDialog-paper')].map(paper => {
+      const style = el => getComputedStyle(el), title = paper.querySelector('.MuiDialogTitle-root'), text = paper.querySelector('.MuiDialogContentText-root,label');
+      return {corner:style(paper).borderTopLeftRadius, width:Math.round(paper.getBoundingClientRect().width), title:style(title).fontSize + '/' + style(title).fontWeight, text:style(text).fontSize,
+        buttons:[...paper.querySelectorAll('.MuiButton-root')].map(button => [style(button).textTransform, style(button).backgroundColor, style(button).borderTopColor, style(button).color].join(' | '))};
+    }));
+    const [confirm, form] = look;
+    assert.deepEqual([confirm.corner, confirm.title, confirm.text], ['8px', '15px/600', '13px'], 'Una confirmación de Eloísa se lee como el Resumen: ' + JSON.stringify(confirm));
+    assert.ok(confirm.width <= 480, 'y no ocupa más que su pregunta: ' + confirm.width);
+    assert.deepEqual(confirm.buttons, ['lowercase | rgba(0, 0, 0, 0) | rgb(196, 216, 209) | rgb(40, 95, 89)', 'lowercase | rgba(0, 0, 0, 0) | rgba(0, 0, 0, 0) | rgb(74, 74, 74)'],
+      'Lo que pide lleva una línea; volver, solo sus palabras; ninguna en mayúsculas: ' + JSON.stringify(confirm.buttons));
+    assert.deepEqual([form.corner, form.title], ['16px', '20px/500'], 'Un diálogo con un campo es un formulario y conserva su aspecto: ' + JSON.stringify(form));
+    await assertQuality(page, 'Confirmación de Eloísa', assert, '#confirm .MuiDialog-paper');
+    await page.evaluate(() => document.getElementById('form').remove());
+    await page.screenshot({path:path.join(directory, '1440-confirmacion.png')});
+    await page.close();
+  }
 } finally {
   await browser.close();
 }

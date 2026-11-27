@@ -219,6 +219,10 @@ Pendiente de confirmar en la página real:
 - **Cómo fija Eloísa el ancho de la columna de horas** y cuánto mide en una ventana de 1280 px. La ficha ficticia supone 1000 px fijos.
 - **Cuándo se pliega el `.MuiCollapse-root`** de las herramientas.
 
+## Confirmaciones
+
+Leído en el código de Eloísa el 27-11-2026: sus confirmaciones son un `Dialog` de MUI con `aria-labelledby="alert-dialog-title"`: `DialogTitle` (con un `Typography`), `DialogContent > DialogContentText` y `DialogActions` con su botón propio (`text:"CONTINUAR"`, en mayúsculas en el texto) y uno de texto («SALIR», «Volver», «Cancelar»). Entre ellas: «Validar tratamiento», «¿Descartar Evolución?», «¿Descartar Agregar Cuidados?», «¿Descartar Redactar Informe Interconsulta?», «¿Descartar alta medica?», «¿Deseas renovar tu sesión?», «¿Quitar aislamiento del paciente?», «¿Confirmar aislamiento del paciente?», «¿Cancelar registro?», «¿Desea confirmar los cambios ingresados?», «¿Reemplazar segmento?» e «Imprimir Consentimiento Informado».
+
 ## Barra verde de la ficha
 
 Leído el 27-11-2026: `header.MuiAppBar-root#menu-app-bar-element` (fondo `rgb(21,149,136)`) `> .MuiToolbar-root` con un botón de menú y un `div.MuiStack-root` cuyo primer hijo es el paciente: un icono de sexo y `p.MuiTypography-body1.MuiTypography-noWrap` con el nombre, sin control. Siguen pares `span` rótulo y `span` valor en `div.MuiStack-root`, entre ellos «Diagnóstico» y su valor, y los botones de aislamiento y del gestor documental.

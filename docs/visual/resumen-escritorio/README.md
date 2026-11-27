@@ -1,5 +1,19 @@
 # Resumen compacto en escritorio
 
+## Confirmaciones con un solo estilo, en 0.48.224
+
+| Captura, 1440 × 900 | 0.48.224 |
+| --- | --- |
+| Confirmación de Eloísa (estructura leída en su código) | [Después](0.48.224/despues/1440-confirmacion.png) |
+
+| Confirmación | Antes | Después |
+| --- | --- | --- |
+| Título | 20 px / 500 | 15 px / 600 |
+| Frase | 16 px | 13 px, tinta suave |
+| Acción | relleno verde, mayúsculas | línea alrededor de sus palabras |
+| Volver | verde en mayúsculas | solo palabras, tinta suave |
+| Esquina | 16 px | 8 px |
+
 ## Alta y Ejecución de cuidados con el estilo del Resumen, en 0.48.222
 
 | Captura, 1440 × 900 | 0.48.221 | 0.48.222 |

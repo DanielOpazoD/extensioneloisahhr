@@ -83,3 +83,10 @@
 .hhr-braden-copy-inline{padding:3px 9px!important;font-size:12px!important}
 
 .hhr-checklist-action-menu [hidden]{display:none}
+/* Changing the template with answers asks first, in the window: a question, the way back in words only and
+   the action with a line around its words, as Eloísa's confirmations read in the compact view. */
+.hhr-checklist-dialog .hhr-checklist-confirm{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:8px 0;padding:10px 12px;border:1px solid #dce5e2;border-radius:8px;background:#f7faf9}
+.hhr-checklist-dialog .hhr-checklist-confirm p{flex:1 1 14rem;margin:0;color:#212121;font:400 13px/1.45 system-ui}
+.hhr-checklist-dialog .hhr-checklist-confirm button{min-height:28px;padding:0 12px;border-color:transparent;background:transparent;color:#4a4a4a;font-size:12px}
+.hhr-checklist-dialog .hhr-checklist-confirm button.is-confirm{border-color:#c4d8d1;color:#285f59}
+.hhr-checklist-dialog .hhr-checklist-confirm button:hover{background:#edf5f2}
