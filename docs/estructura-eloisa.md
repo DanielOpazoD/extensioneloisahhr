@@ -64,7 +64,7 @@ Leídos en la página el 26-11-2026, en las dos fichas:
 1. `p.MuiTypography-root`: «Última actualización: dd-mm-aaaa, hh:mm - Nombre».
 2. `div.MuiStack-root` con: un `form.MuiStack-root` (campo MUI «Resumen diario paciente» con `input[type=text]` de marcador `dd/mm/aaaa`, un botón de calendario dentro del campo y un `button[type=submit]` «Imprimir»), un `hr.MuiDivider-vertical` y un botón de icono `LocalPrintshopRoundedIcon`.
 
-No hay `input[type=date]`. La fila tiene cuatro controles. El `div.MuiFormControl-root` del campo mide 180 px de ancho (26-11-2026).
+No hay `input[type=date]`. La fila tiene cuatro controles. El icono, que Eloísa llama solo «Imprimir», genera `Reporte_Evolucion_Paciente.pdf`; «Imprimir indicaciones», `Reporte_Indicaciones_Paciente.pdf`; el icono al final de Fármacos («Imprimir recetón», en `.MuiCardHeader-action > .MuiStack-root`), `Reporte_Receta_Medica.pdf`; y el de Balance Hídrico, `Reporte_Ingresos_Egresos.pdf` (leído el 27-11-2026). La ficha de Gestión de cuidados solo tiene «Imprimir» del resumen diario y el de Balance Hídrico. El `div.MuiFormControl-root` del campo mide 180 px de ancho (26-11-2026).
 
 ### Nombres de profesionales
 

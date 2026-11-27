@@ -424,3 +424,61 @@ describe('acción breve de los formularios de escritorio', () => {
     expect(action.form).toBe(field.form);
   });
 });
+
+it('dice qué imprime el icono de la fila diaria y el del recetón, sin cambiar su nombre', () => {
+  const printer = name => `<button class="MuiIconButton-root"><svg data-testid="LocalPrintshopRoundedIcon" aria-label="${name}"></svg></button>`;
+  const main = document.createElement('main');
+  main.innerHTML = '<div class="MuiGrid-item"><p class="MuiTypography-body2">Última actualización: 15-04-2026, 09:12 - Tomás Ejemplo</p>' +
+    `<div class="MuiStack-root"><form><input type="text"><button type="submit">Imprimir</button></form><hr class="MuiDivider-vertical">${printer('Imprimir')}</div></div>` +
+    `<section id="medicationEntrySection"><div class="MuiCard-root"><div class="MuiCardHeader-root"><div class="MuiCardHeader-action"><div class="MuiStack-root">${printer('Imprimir recetón')}</div></div></div></div></section>` +
+    `<section id="freeIndicationEntrySection"><div class="MuiCardHeader-action"><div class="MuiStack-root">${printer('Imprimir recetón')}</div></div></section>`;
+  document.body.append(main);
+  const labels = globalThis.HhrFichaReadingLabels.create();
+  try {
+    labels.refresh(main);
+    const buttons = [...main.querySelectorAll('.MuiIconButton-root')];
+    expect(buttons.map(button => button.getAttribute('data-hhr-print-caption'))).toEqual(['Evolución', 'Imprimir recetón', null]);
+    expect(buttons.map(button => button.hasAttribute('aria-label') || button.hasAttribute('title'))).toEqual([false, false, false]);
+    labels.clear();
+    expect(main.querySelectorAll('[data-hhr-print-caption]')).toHaveLength(0);
+  } finally {
+    labels.clear();
+    main.remove();
+  }
+});
+
+it('guarda tras un icono el filtro de Balance Hídrico sin registros y lo devuelve al haber registros', () => {
+  const main = document.createElement('main');
+  const sentence = '<p class="MuiTypography-root">No se presentan registros de balance hídrico para este paciente</p>';
+  main.innerHTML = '<section id="inputOutputHydricBalanceEntrySection"><div class="MuiCard-root"><div class="MuiCardHeader-root"></div>' +
+    `<div class="MuiCardContent-root"><div class="MuiStack-root"><input type="text"><button type="button">Filtrar</button></div>${sentence}</div></div></section>`;
+  document.body.append(main);
+  const labels = globalThis.HhrFichaReadingLabels.create();
+  try {
+    labels.refresh(main);
+    const content = main.querySelector('.MuiCardContent-root'), filters = content.querySelector('.MuiStack-root');
+    const opener = content.querySelector('button[data-hhr-balance-filter]');
+    // Before the sentence: Eloísa's sentence stays the last child of its card.
+    expect([...content.children].map(el => el.tagName)).toEqual(['DIV', 'BUTTON', 'P']);
+    expect([opener.getAttribute('aria-label'), opener.getAttribute('aria-expanded'), opener.getAttribute('aria-controls')]).toEqual(['Filtrar otro periodo', 'false', filters.id]);
+    expect(filters.hasAttribute('data-hhr-balance-folded')).toBe(true);
+    opener.click();
+    expect([opener.getAttribute('aria-expanded'), filters.hasAttribute('data-hhr-balance-folded'), document.activeElement]).toEqual(['true', false, filters.querySelector('input')]);
+    // A refresh keeps it open and writes nothing.
+    const mutations = new MutationObserver(() => {});
+    mutations.observe(main, {childList:true, subtree:true, attributes:true});
+    labels.refresh(main);
+    expect(mutations.takeRecords()).toHaveLength(0);
+    mutations.disconnect();
+    opener.click();
+    expect(filters.hasAttribute('data-hhr-balance-folded')).toBe(true);
+    // With records, the filter is Eloísa's again.
+    content.querySelector('p').textContent = 'Ingresos 1200 mL';
+    labels.refresh(main);
+    expect(content.querySelector('[data-hhr-balance-filter]')).toBeNull();
+    expect([filters.hasAttribute('data-hhr-balance-folded'), filters.hasAttribute('id')]).toEqual([false, false]);
+  } finally {
+    labels.clear();
+    main.remove();
+  }
+});

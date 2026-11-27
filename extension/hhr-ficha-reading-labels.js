@@ -216,15 +216,55 @@
     }
   }
 
+  // Balance Hídrico without records keeps its filter for another period behind an icon. The icon opens
+  // and closes it; with records, or once the section is gone, the filter is Eloísa's again.
+  function createFold(stack) {
+    const opener = document.createElement('button');
+    opener.type = 'button';
+    opener.setAttribute('data-hhr-balance-filter', '');
+    opener.setAttribute('aria-label', 'Filtrar otro periodo');
+    opener.title = 'Filtrar otro periodo';
+    const generatedId = 'hhr-balance-filters';
+    let open = false, createdId = false;
+    const update = () => {
+      if (stack.hasAttribute('data-hhr-balance-folded') === open) stack.toggleAttribute('data-hhr-balance-folded', !open);
+      if (opener.getAttribute('aria-expanded') !== String(open)) opener.setAttribute('aria-expanded', String(open));
+    };
+    const toggle = event => {
+      event.preventDefault();
+      open = !open;
+      update();
+      if (open) stack.querySelector('input:not([type=hidden]),[role=combobox],button')?.focus();
+    };
+    opener.addEventListener('click', toggle);
+    return {
+      stack,
+      // Before the sentence: Eloísa's sentence stays the last child of its card, as it is read.
+      refresh(sentence) {
+        if (!stack.id && !document.getElementById(generatedId)) { stack.id = generatedId; createdId = true; }
+        if (stack.id && opener.getAttribute('aria-controls') !== stack.id) opener.setAttribute('aria-controls', stack.id);
+        if (opener.nextElementSibling !== sentence) sentence.before(opener);
+        update();
+      },
+      clear() {
+        opener.removeEventListener('click', toggle);
+        stack.removeAttribute('data-hhr-balance-folded');
+        if (createdId && stack.id === generatedId) stack.removeAttribute('id');
+        opener.remove();
+      },
+    };
+  }
+
   function create() {
     // The forms already seen in this patient's summary: only their first appearance can carry Eloísa's own focus.
-    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set();
+    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set(), fold = null;
     const observer = new MutationObserver(() => refresh(watchedMain, episode));
     const refresh = (main, encounter) => {
       observer.disconnect();
       const desktop = main && globalThis.matchMedia?.('(min-width:1100px)').matches;
       const nextEditors = new Map();
       const next = new Map();
+      let nextFold = null;
       const source = (element, name) => {
         const current = element.getAttribute(name);
         const prior = previous.get(element)?.get(name);
@@ -259,6 +299,17 @@
         for (const button of main.querySelectorAll('#diagnosisTestEntrySection .MuiCardContent-root button')) {
           if (!button.closest('table,dialog,[role=dialog]') && /^imprimir selecci[oó]n\b/i.test(button.textContent.trim())) label(button, 'data-hhr-print-selection', '');
         }
+        // Each print says what it prints, in one look: an icon and its words (read on the page 27-11-2026).
+        // Eloísa names the icon of the daily row only «Imprimir»: it prints the report of the evolution.
+        // The one at the end of Fármacos prints the recetón. Their own names stay theirs.
+        const iconName = button => (button.getAttribute('aria-label') || button.querySelector(':scope > svg[aria-label]')?.getAttribute('aria-label') || '').trim();
+        const printed = button => button?.matches('button.MuiIconButton-root') && !button.textContent.trim() &&
+          button.querySelector(':scope > svg[data-testid="LocalPrintshopRoundedIcon"]');
+        const dailyPrint = main.querySelector('.MuiGrid-item > .MuiStack-root:has(> form input) > hr.MuiDivider-vertical + button:last-child');
+        if (printed(dailyPrint) && /^imprimir$/i.test(iconName(dailyPrint))) label(dailyPrint, 'data-hhr-print-caption', 'Evolución');
+        for (const button of main.querySelectorAll('#medicationEntrySection .MuiCardHeader-action > .MuiStack-root > button')) {
+          if (printed(button) && /^imprimir recet[oó]n$/i.test(iconName(button))) label(button, 'data-hhr-print-caption', 'Imprimir recetón');
+        }
         const candidates = main.querySelectorAll('.MuiCardHeader-subheader,.MuiGrid-item > p.MuiTypography-body2');
         for (const el of candidates) {
           if (el.closest('dialog,[role=dialog],#hhr-prescription-print-modal') ||
@@ -282,7 +333,11 @@
         }
         // Balance Hídrico without records says so in two words. Its filter stays for another period.
         const idle = main.querySelector('#inputOutputHydricBalanceEntrySection > .MuiCard-root > .MuiCardContent-root > p.MuiTypography-root:last-child');
-        if (idle && !idle.children.length && /^no se presentan registros de balance h[ií]drico\b/i.test(idle.textContent.trim())) label(idle, 'data-hhr-balance', 'empty');
+        if (idle && !idle.children.length && /^no se presentan registros de balance h[ií]drico\b/i.test(idle.textContent.trim())) {
+          label(idle, 'data-hhr-balance', 'empty');
+          const filters = idle.parentElement.querySelector(':scope > .MuiStack-root');
+          if (filters?.querySelector('button')) nextFold = {stack:filters, sentence:idle};
+        }
         // Say a byline once. The daily row repeats the note's own, and the three
         // prescription cards often carry the byline of the card just above.
         // «Above» means painted above: a copy hidden by its own styles is not a card the reader can see.
@@ -322,6 +377,8 @@
         }
       }
       previous = next;
+      if (fold && fold.stack !== nextFold?.stack) { fold.clear(); fold = null; }
+      if (nextFold) { fold ||= createFold(nextFold.stack); fold.refresh(nextFold.sentence); }
       for (const [row, editor] of editors) {
         const nextEditor = nextEditors.get(row);
         if (episode === encounter && editor.field === nextEditor?.field && editor.action === nextEditor.action) continue;
