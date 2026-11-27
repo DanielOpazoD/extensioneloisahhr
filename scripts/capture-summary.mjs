@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
+import { assertQuality } from './visual-quality.mjs';
 import { summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
 
 const refresh = async page => {
@@ -752,6 +753,7 @@ async function verifyShapes(browser, assets) {
   assert.ok(devices.rows.every(height => height <= devices.orders + 2) && devices.head <= 24 && devices.headings.every(count => count === 1) && devices.date === 1 && devices.fits && devices.edge === 0,
     'Dispositivos invasivos se lee como Fármacos: una línea por fila y por encabezado, la fecha con su hora en una línea y la tabla dentro de su tarjeta: ' + JSON.stringify(devices));
   assert.deepEqual(devices.size, ['12px', true], 'con la letra de las demás tablas');
+  await assertQuality(page, 'Resumen de la ficha de cuidados', assert);
   await page.screenshot({path:path.join(directory, '1440-ficha-de-cuidados.png')});
   await page.close();
   // The older shape of Fármacos, its card straight in its section, without the line of its validator.
@@ -798,6 +800,7 @@ try {
       await page.screenshot({path:path.join(directory, width + '-resumen-completo.png'), fullPage:true});
     }
     if (revision === 'WORKTREE') await verifySummary(page, width, native, off, sans);
+    if (revision === 'WORKTREE' && !sans) await assertQuality(page, `Resumen ${width}`, assert);
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
   }
