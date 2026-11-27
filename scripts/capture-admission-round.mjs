@@ -189,8 +189,9 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   for (const request of [exam,surgery]) {
     assert.ok(request.x >= right(signs) - 1 && right(request) <= right(alerts) + 1 && request.height > 0 && request.height <= 36, 'La solicitud vacía se lee en una fila junto a Signos');
   }
-  assert.ok(Math.abs(exam.x - right(signs)) <= 2 && Math.abs(right(surgery) - right(alerts)) < 2 && Math.abs(surgery.x - right(exam)) <= 2 && Math.abs(exam.y - surgery.y) < 2 &&
-    exam.y >= signs.y && exam.y <= signs.y + 32 && Math.abs(exam.height - surgery.height) < 1, 'Las dos solicitudes comparten una línea junto a Signos, bajo su rótulo');
+  // Every section without records is read in that group, two to a row in Eloísa's order: a request takes the half that comes to it.
+  assert.ok([exam, surgery].every(request => request.y >= signs.y && (Math.abs(request.x - right(signs)) <= 2 || Math.abs(right(request) - right(alerts)) < 2)) &&
+    Math.abs(exam.height - surgery.height) < 1, 'Las dos solicitudes se leen junto a Signos, bajo el rótulo «Sin datos», cada una en una mitad de su línea');
   // Without a rest order, both instructions share a line under the measurements, or the diet takes the next one.
   assert.ok(Math.abs(rest.x - signs.x) < 2 && Math.abs(right(diet) - right(signs)) <= 2 && Math.abs(Math.min(rest.y, diet.y) - bottom(signs) - gap) < 2 &&
     (Math.abs(diet.x - right(rest)) < 2 ? Math.abs(middle(diet) - middle(rest)) <= 3 || Math.abs(diet.y - rest.y) < 2 : Math.abs(diet.y - bottom(rest)) < 2), 'Reposo y Régimen se leen bajo Signos');
@@ -233,8 +234,11 @@ export async function captureAdmissionRound(page, directory, width, verify) {
     return {top:box.top, bottom:box.bottom, clipped:card.scrollWidth - card.clientWidth};
   }));
   assert.ok(halves.every(half => half.clipped <= 0), 'Con letra más grande, ninguna solicitud vacía queda recortada');
-  assert.ok(Math.abs(halves[0].top - halves[1].top) < 1 && Math.abs(halves[0].bottom - halves[1].bottom) < 1,
-    'Las dos mitades empiezan y terminan en la misma línea aunque solo una salte de renglón');
+  // With every empty section in the group, a request shares its row with whatever comes beside it: no row runs into the next.
+  const rows = await page.evaluate(() => { const tiles = [...document.querySelectorAll('[data-hhr-round-tile]')].map(tile => tile.getBoundingClientRect()).filter(box => box.height);
+    return tiles.some((a, i) => tiles.some((b, j) => j > i && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1)); });
+  assert.equal(rows, false, 'Con letra más grande, ninguna sección de «Sin datos» pisa a otra aunque salte de renglón');
+  void halves;
   await page.evaluate(() => { document.documentElement.style.removeProperty('font-size'); });
   await page.setViewportSize(viewport);
   await settle();

@@ -1,5 +1,42 @@
 # Resumen compacto en escritorio
 
+## La ronda armada desde la carga, sin plegado de vacías ni flecha en la nota, en 0.48.210
+
+El responsable instaló la 0.48.209 y avisó que aún se veía el aspecto antiguo al cargar y actualizar. Pidió además quitar la flecha que contraía la evolución, que toda sección vacía esté siempre en «Sin datos» (sin «Ver vacías» ni «Ocultar vacías») y alinear mejor Fármacos e Indicaciones libres.
+
+Lo que se midió en la página con la 0.48.209 instalada (26-11-2026, cuadro por cuadro, sin datos clínicos):
+
+| Qué se veía | Por qué | Ahora |
+| --- | --- | --- |
+| La nota a media anchura y Alertas y Reposo bajo ella, unos 200 ms | la ronda no se armaba hasta que llegaban la nota **y** la entrega de turno | la ronda se arma con los marcadores de carga: cada apartado llega a su lugar |
+| Evolución bajaba de 114 a 200 px al llegar Diagnóstico | Diagnóstico entra arriba de la ronda | su marcador ya está arriba, con el alto de dos diagnósticos |
+| La fila del resumen diario un instante en su línea, antes de acoplarse | esperaba a la línea de enlaces, que Eloísa dibuja después | se acopla en el pase que arma la ronda |
+
+| Carga, 1440 × 900 | 0.48.209 | 0.48.210 |
+| --- | --- | --- |
+| Todo en carga | [Antes](0.48.210/antes/1440-cargando.png) | [Después](0.48.210/despues/1440-cargando.png) |
+| Con la nota, la entrega, los signos y las alertas | [Antes](0.48.210/antes/1440-cargando-parcial.png) | [Después](0.48.210/despues/1440-cargando-parcial.png) |
+| Página completa | [Antes](0.48.210/antes/1440-resumen-completo.png) | [Después](0.48.210/despues/1440-resumen-completo.png) |
+
+| Medida, ficha ficticia a 1440 × 900 | 0.48.209 | 0.48.210 |
+| --- | ---: | ---: |
+| Lugar de la nota con todo en carga → con todo cargado | sin lugar → 224 px | 190 → 236 px, misma columna y tamaño |
+| Alto del marcador de Evolución | 50 px | 311 px, el de la nota |
+| Botones «Ver vacías» / «Ocultar vacías» | 1 | 0 |
+| Secciones bajo «Sin datos» | 5 a la vista, 4 plegadas | 9 a la vista |
+| Flecha que contrae la nota | a la vista | no se dibuja |
+
+| Medida en la página, con las reglas aplicadas a mano (ficha médica, 1672 × 910 px) | 0.48.209 | 0.48.210 |
+| --- | ---: | ---: |
+| Borde de la tabla de Fármacos respecto de su tarjeta | 16 px adentro | al borde, como Indicaciones libres |
+| Primera columna de Fármacos respecto del título | 7 px adentro | en el mismo borde |
+| Alto de una fila de Fármacos | 39 px | 31 px |
+| Alto de una fila de Indicaciones libres | 27 px | 31 px |
+
+Los 46 px que aún baja la nota en la ficha ficticia son la fila del resumen diario, que en esa página no se acopla (30 px), y un Diagnóstico de dos filas, más alto que su marcador. En la página la fila se acopla en la línea de pestañas.
+
+Lo que no se ha visto sobre Eloísa: la ronda armada con los marcadores. La página carga la extensión instalada; los estilos sí se aplicaron a mano allí. Lo comprueban [`capture-loading.mjs`](../../../scripts/capture-loading.mjs) y la extensión instalada en la prueba del CI.
+
 ## La ficha llega en la vista, y Evolución con una sola línea de acciones, en 0.48.209
 
 El responsable grabó la carga de la ficha: se veía pasar del aspecto de Eloísa al de la vista. Pidió que la carga y la actualización fueran fluidas, «que parezca que el entorno nuevo es el original y no una maqueta», y que Evolución y Valoración fueran más minimalistas, con los botones unificados y más espacio para leer la evolución completa.

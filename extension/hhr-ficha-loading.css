@@ -22,16 +22,33 @@
     > .MuiCardContent-root > .MuiSkeleton-root ~ .MuiSkeleton-root { display:none; }
   }
 
-  /* Two lines of Eloísa have no place in the round: the date of the daily summary with its «Imprimir»,
-     which rides on the line of tabs, and the line of section links, which the round does not show.
-     Until the round is recognized, and the row has its byline, neither is drawn where Eloísa puts it,
-     from where it would be seen to jump or to vanish. The wait ends by itself: if the round never
-     forms, both are drawn where Eloísa put them, with every one of their controls. */
+  /* The round is laid out from the placeholders (`hhr-ficha-round-layout.js` knows each by its title), so
+     each section arrives where it is read. There, a placeholder holds the room of what replaces it:
+     the note its lines, the signs their two rows, the alerts what the handoff leaves beside the note, and the
+     diagnosis two of its rows. */
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] > :is([data-hhr-round="note"],[data-hhr-round="vitals"],[data-hhr-round="alerts"],[data-hhr-round="diagnosis"])
+    .MuiCard-root:has(> .MuiCardContent-root > .MuiSkeleton-root:first-child):not(:has(> .MuiCardContent-root > :not(.MuiSkeleton-root))) {
+    box-sizing:border-box;
+    [data-hhr-round="note"] & { min-block-size:calc(var(--hhr-ficha-note-lines) * 1.45 * var(--hhr-ficha-text-body) + 2.9375rem) !important; border-inline-start:3px solid var(--hhr-ficha-line); }
+    [data-hhr-round="vitals"] & { min-block-size:8.375rem !important; }
+    [data-hhr-round="alerts"] & { block-size:100%; }
+    /* A diagnosis and a second one, the most common list. */
+    [data-hhr-round="diagnosis"] & { min-block-size:4.5rem !important; }
+  }
+
+  /* Three lines of Eloísa have no place in the round: the date of the daily summary with its «Imprimir»,
+     which rides on the line of tabs, the line of section links, which the round does not show, and the
+     icon that prints the orders. Until the round is recognized, and the row has its byline, none is
+     drawn where Eloísa puts it, from where it would be seen to jump or to vanish. The wait ends by
+     itself: if what it waits for never comes, each is drawn where Eloísa put it, with its controls. */
   html[data-hhr-ficha-theme="compact"] main .MuiGrid-container > .MuiGrid-item:first-child:has(> .MuiStack-root > form):is(
       :has(> .MuiSkeleton-root),
       .MuiGrid-container:not([data-hhr-round]) > :has(~ .MuiGrid-item .MuiCard-root > .MuiCardContent-root > .MuiSkeleton-root:first-child)),
   html[data-hhr-ficha-theme="compact"] main .MuiGrid-item:has(> .MuiGrid-container .MuiTypography-caption):has(
-      + .MuiGrid-container:not([data-hhr-round]) > .MuiGrid-item .MuiCard-root > .MuiCardContent-root > .MuiSkeleton-root:first-child) {
+      + .MuiGrid-container:not([data-hhr-round]) > .MuiGrid-item .MuiCard-root > .MuiCardContent-root > .MuiSkeleton-root:first-child),
+  /* The icon that prints the orders rides beside the title of Fármacos. Alone on its line, it waits for that card. */
+  html[data-hhr-ficha-theme="compact"] main .MuiGrid-container > .MuiGrid-item:has(> button.MuiIconButton-root:only-child):has(
+      + .MuiGrid-item > .MuiCard-root > .MuiCardContent-root > .MuiSkeleton-root:first-child) {
     animation:hhr-ficha-arrival 1.2s step-end;
   }
 }

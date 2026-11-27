@@ -297,7 +297,7 @@ describe('Native ficha presentation', () => {
   });
 });
 
-it('pliega solo vacíos explícitos, permite revelarlos y recupera los datos que llegan después', () => {
+it('deja a la vista las secciones vacías: no pliega ninguna ni dibuja un botón para verlas', () => {
   const ids = ['procedureEntrySection', 'diagnosisTestEntrySection', 'referralRequestEntrySection',
     'operationTheaterRequestEntrySection', 'alertEntrySection', 'procedureOrderEntrySection'];
   const bodies = ['Sin registros', 'Sin registros<button>Solicitar</button>', '<div class="MuiSkeleton-root"></div>',
@@ -308,17 +308,12 @@ it('pliega solo vacíos explícitos, permite revelarlos y recupera los datos que
   const row = document.querySelector('nav'), section = document.getElementById(ids[0]);
   const refresh = () => density.refresh('1', row);
   refresh(); refresh();
-  expect(document.querySelectorAll('[data-hhr-ficha-folded]')).toHaveLength(1);
-  expect(section.hasAttribute('data-hhr-ficha-folded')).toBe(true);
-  expect(row.children).toHaveLength(1);
-  row.firstChild.click();
-  expect(row.firstChild.getAttribute('aria-expanded')).toBe('true');
-  expect(section.hasAttribute('data-hhr-ficha-folded')).toBe(false);
+  expect(document.querySelectorAll('[data-hhr-ficha-folded]')).toHaveLength(0);
+  expect(row.children).toHaveLength(0);
   density.refresh('2', row);
-  expect(section.hasAttribute('data-hhr-ficha-folded')).toBe(true);
   section.lastChild.textContent = 'Nuevo procedimiento';
   refresh();
-  expect(section.hasAttribute('data-hhr-ficha-folded')).toBe(false);
+  expect(document.querySelectorAll('[data-hhr-ficha-folded]')).toHaveLength(0);
   expect(row.children).toHaveLength(0);
   expect(document.querySelector('#grid').hasAttribute('data-hhr-ficha-summary-grid')).toBe(true);
   density.clear();
@@ -349,7 +344,7 @@ it('reclasifica cuadros al editar o agregar registros y solo cuenta filas visibl
   expect(diagnosis.hasAttribute('data-hhr-ficha-summary-card')).toBe(false);
 });
 
-it('recupera la etiqueta de dispositivos al recibir datos y conserva las acciones junto a una tabla vacía', () => {
+it('no pliega dispositivos invasivos ni su enlace, con la tabla vacía o con datos', () => {
   document.body.innerHTML = '<main><nav><div class="MuiGrid-item"><span data-hhr-ficha-link="invasiveDeviceEntry">Dispositivos invasivos</span></div></nav>' +
     '<section id="invasiveDeviceEntry"><h2>Dispositivos invasivos</h2><table><thead><tr><th>Tipo</th></tr></thead>' +
     '<tbody><tr><td>Sin dispositivos invasivos</td></tr></tbody></table></section></main>';
@@ -357,7 +352,7 @@ it('recupera la etiqueta de dispositivos al recibir datos y conserva las accione
   const nav = document.querySelector('nav'), section = document.querySelector('section');
   const folded = () => [section, nav.firstElementChild].map(el => el.hasAttribute('data-hhr-ficha-folded'));
   density.refresh('1', nav);
-  expect(folded()).toEqual([true,true]);
+  expect(folded()).toEqual([false,false]);
   section.insertAdjacentHTML('beforeend','<button>Registrar</button>');
   density.refresh('1', nav);
   expect(folded()).toEqual([false,false]);

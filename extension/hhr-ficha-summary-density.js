@@ -1,35 +1,8 @@
-/** Present existing summary sections. Only explicit, read-only empty states may be folded. */
+/** Present existing summary sections. A section without records stays in view: the round groups it under «Sin datos». */
 (() => {
   'use strict';
-  const optional = new Set(['diagnosisTestEntrySection', 'procedureEntrySection',
-    'procedureOrderEntrySection', 'referralRequestEntrySection', 'invasiveDeviceEntry', 'operationTheaterRequestEntrySection']);
-  const emptyMessage = /^(?:sin|no hay|no existen|no se encontraron|no se han registrado) (?:registros|datos|procedimientos|solicitudes(?: de interconsulta)?|dispositivos invasivos|[óo]rdenes de atenci[óo]n|interconsultas)(?: disponibles| para mostrar| registrad[oa]s)?\.?$/i;
   const protectedContent = 'button,a,input,select,textarea,[tabindex],[contenteditable],[role],[aria-label],[aria-labelledby],[aria-busy="true"],[title],svg,img,canvas,iframe,video,details,.MuiAlert-root,.MuiSkeleton-root,.MuiCircularProgress-root,.MuiLinearProgress-root';
   const normalize = text => text.replace(/\s+/g, ' ').trim();
-
-  function explicitlyEmpty(section) {
-    if (section.closest('[aria-busy="true"],[role="alert"],[role="dialog"]')) return false;
-    if (section.matches(protectedContent) || section.querySelector(protectedContent)) return false;
-    const heading = section.querySelector('h1,h2,h3,h4,h5,h6,.MuiCardHeader-title');
-    const title = normalize(heading?.textContent || '');
-    const table = section.querySelector('table');
-    if (table) {
-      // Headers can remain in an empty native table. Require its only body cell to say so.
-      const body = table.tBodies[0];
-      const cell = body?.rows[0]?.cells[0];
-      if (section.querySelectorAll('table').length !== 1 || table.tBodies.length !== 1 ||
-          body.rows.length !== 1 || body.rows[0].cells.length !== 1 || !cell || !emptyMessage.test(normalize(cell.textContent)) ||
-          table.caption || table.tFoot || !title) return false;
-      const walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT);
-      while (walker.nextNode()) {
-        const node = walker.currentNode;
-        if (node.textContent.trim() && !heading.contains(node) && !cell.contains(node) && !table.tHead?.contains(node)) return false;
-      }
-      return true;
-    }
-    const text = normalize(section.textContent);
-    return Boolean(title && text.startsWith(title) && emptyMessage.test(text.slice(title.length).trim()));
-  }
 
   // Only lay out a heading beside a single read-only value. Rich or unfamiliar content keeps its native flow.
   function shortReading(section) {
@@ -88,9 +61,7 @@
   }
 
   function create(sectionIds) {
-    let episode, expanded = false;
-    let previous = new Set();
-    let navItems = new Set();
+    let episode;
     let grids = new Set();
     let activeSections = new Set();
 
@@ -141,25 +112,9 @@
       grids = next;
     }
 
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'hhr-ficha-empty-toggle';
-    function display() {
-      for (const el of previous) el.toggleAttribute('data-hhr-ficha-folded', !expanded);
-      for (const item of navItems) item.toggleAttribute('data-hhr-ficha-folded', !expanded);
-      const count = previous.size;
-      const label = (expanded ? 'Ocultar vacías' : 'Ver vacías') + ' (' + count + ')';
-      if (toggle.textContent !== label) toggle.textContent = label;
-      toggle.setAttribute('aria-expanded', String(expanded));
-    }
-    toggle.addEventListener('click', () => { expanded = !expanded; display(); });
     function clear() {
-      for (const el of previous) el.removeAttribute('data-hhr-ficha-folded');
-      previous.clear();
       vitals.clear();
       alert?.removeAttribute('data-hhr-brief-alert'); alert = null;
-      for (const item of navItems) item.removeAttribute('data-hhr-ficha-folded');
-      navItems.clear();
       pair?.removeAttribute('data-hhr-ficha-reading-pair');
       pair = null;
       updateCount(null);
@@ -167,8 +122,6 @@
       grids.clear();
       for (const el of activeSections) el.removeAttribute('data-hhr-ficha-summary-card');
       activeSections.clear();
-      toggle.remove();
-      expanded = false;
       episode = null;
     }
     function refresh(encounter, row, isSummary = Boolean(row)) {
@@ -176,53 +129,8 @@
       if (!isSummary) return;
       episode = encounter;
       updateGrids();
-      const next = new Set();
-      for (const section of activeSections) {
-        if (row && optional.has(section.id) && !section.closest('[data-hhr-round="empty-request"]') &&
-            explicitlyEmpty(section) && !section.contains(document.activeElement)) next.add(section);
-      }
-      if (row) {
-        // These marks exist only in Compacto and only for an exact, read-only native empty state.
-        for (const title of row.closest('main')?.querySelectorAll('[data-hhr-reading="empty-section-title"]') || []) {
-          const card = title.closest('[data-hhr-reading="status-card"]');
-          if (!card || card.closest('[data-hhr-round="empty-request"]') || card.contains(document.activeElement)) continue;
-          next.add(card);
-        }
-      }
-      for (const el of previous) if (!next.has(el)) el.removeAttribute('data-hhr-ficha-folded');
-      const nextNav = new Set();
-      // MUI spacing sits on each nested grid item. Hide the empty wrappers with the card
-      // only while each contains nothing else, without affecting its native ID or link.
-      for (const card of next) {
-        for (let item = card.parentElement; item?.matches('.MuiGrid-item,section.MuiBox-root') && item.children.length === 1 &&
-            !item.matches(protectedContent) && ![...item.childNodes].some(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim()); item = item.parentElement) {
-          nextNav.add(item);
-        }
-      }
-      for (const link of (row?.querySelectorAll('[data-hhr-ficha-link]') || [])) {
-        const target = document.getElementById(link.dataset.hhrFichaLink);
-        if (!next.has(target) && !nextNav.has(target)) continue;
-        const item = link.closest('.MuiGrid-item');
-        nextNav.add(item?.parentElement === row && item.querySelectorAll('[data-hhr-ficha-link],button,a,input,select').length === 1 ? item : link);
-      }
-      for (const item of navItems) if (!nextNav.has(item)) item.removeAttribute('data-hhr-ficha-folded');
-      navItems = nextNav;
-      previous = next;
-      if (!next.size) { toggle.remove(); return; }
-      const ids = [...next].map(el => el.id).filter(Boolean);
-      if (ids.length) toggle.setAttribute('aria-controls', ids.join(' '));
-      else toggle.removeAttribute('aria-controls');
-      display();
-      // With the round laid out the section links are not shown: the button stays with what it unfolds,
-      // on the line of «Sin datos».
-      const frame = row.parentElement?.nextElementSibling;
-      const host = frame?.matches('[data-hhr-round="frame"]') ? frame : row;
-      if (toggle.parentElement !== host) host.append(toggle);
     }
-    function reveal(target) {
-      if ((previous.has(target) || navItems.has(target)) && !expanded) { expanded = true; display(); }
-    }
-    return { refresh, clear, reveal };
+    return { refresh, clear };
   }
   globalThis.HhrFichaSummaryDensity = Object.freeze({ create });
 })();

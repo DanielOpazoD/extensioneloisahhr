@@ -42,16 +42,7 @@ it('dice una sola vez la firma de la fila diaria y la de las tarjetas de indicac
     // A different second is a different act, even when the visible label is the same.
     expect(orders.dataset.hhrUpdateLabel).toBe(free.dataset.hhrUpdateLabel);
 
-    // A folded card is not the card above. The next one is compared with the last card on screen.
-    free.closest('section').setAttribute('data-hhr-ficha-folded', '');
-    orders.textContent = stamp;
-    labels.refresh(main);
-    expect([free, orders].map(repeat)).toEqual([null, 'above']);
-    expect(free.hasAttribute('title')).toBe(false);
-    expect(orders.title).toBe('Nombre nativo');
-    free.closest('section').removeAttribute('data-hhr-ficha-folded');
-
-    // A copy hidden by its own styles is not the card above either: its byline must not stand in
+    // A copy hidden by its own styles is not the card above: its byline must not stand in
     // for the one the reader sees.
     const other = stamp.replace('Tomás', 'Elena');
     free.textContent = other;

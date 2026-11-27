@@ -16,10 +16,25 @@
     // its wrapper takes part in the grid. A folded HHR request may be reopened.
     return matches.find(node => {
       for (let el = node; el !== main; el = el.parentElement) {
-        if (!el.matches('[data-hhr-ficha-folded],[data-hhr-round="date"]') && getComputedStyle(el).display === 'none') return false;
+        if (!el.matches('[data-hhr-round="date"]') && getComputedStyle(el).display === 'none') return false;
       }
       return true;
     });
+  }
+
+  // While a section loads, Eloísa draws a card in its place: its title and grey bars (read 26-11-2026).
+  // It stands for the section in the round, so the page is laid out before its data arrives and
+  // each section then appears where it is read.
+  const plain = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  function stand(main, ...titles) {
+    for (const bar of main.querySelectorAll('.MuiCard-root > .MuiCardContent-root > .MuiSkeleton-root:first-child')) {
+      const body = bar.parentElement, card = body.parentElement;
+      if ([...body.children].some(el => !el.matches('.MuiSkeleton-root')) || !card.getClientRects().length ||
+          card.closest('dialog,[role=dialog],[hidden],main [inert],main [aria-hidden=true]')) continue;
+      const title = card.querySelector(':scope > .MuiCardHeader-root .MuiCardHeader-title');
+      if (title && titles.includes(plain(title.textContent))) return card;
+    }
+    return null;
   }
 
   // A wrapper is disposable for layout only if every other child is the hidden
@@ -148,14 +163,18 @@
     if (!main) return marks;
     // The discharge card also occurs on its own or before the note finishes loading.
     const date = surface(main, '#estimatedDischargeSection') || surface(main, '#estimatedDischarge');
-    const hidden = date && branchOf(date, main).at(-1);
+    const note = surface(main, '#observationEntrySection') || stand(main, 'evolucion', 'valoracion');
+    let hidden = date && branchOf(date, main).at(-1);
+    // The discharge card shares the column of the note. Until it loads its place is an empty item.
+    const vacant = !hidden && note?.closest('.MuiGrid-item')?.previousElementSibling;
+    if (vacant && vacant.matches('.MuiGrid-item') && !vacant.childElementCount && !vacant.textContent.trim()) hidden = vacant;
     if (hidden) marks.set(hidden, 'date');
-    const note = surface(main, '#observationEntrySection');
-    const handoff = surface(main, '#shiftChangeEntrySection');
+    const handoff = surface(main, '#shiftChangeEntrySection') || stand(main, 'observaciones de entrega de turno');
     if (!note || !handoff) return marks;
-    const vitals = surface(main, '#vitalSignsEntry'), alerts = surface(main, '#alertEntrySection');
+    const vitals = surface(main, '#vitalSignsEntry') || stand(main, 'signos vitales'), alerts = surface(main, '#alertEntrySection') || stand(main, 'alertas');
     // Without an order, Reposo is its card alone: Eloísa adds the section once there is one.
-    const rest = surface(main, '#restEntrySection') || surface(main, '#rest.MuiCard-root'), diet = surface(main, '#nutritionOrderEntrySection');
+    const rest = surface(main, '#restEntrySection') || surface(main, '#rest.MuiCard-root') || stand(main, 'reposo');
+    const diet = surface(main, '#nutritionOrderEntrySection') || stand(main, 'regimen');
     const requests = ['exam','surgery'].map(kind => surface(main, '[data-hhr-empty-request="' + kind + '"]')).filter(Boolean);
     const nodes = [note, handoff, vitals, alerts, rest, diet, ...requests].filter(Boolean);
     // Find the smallest shared native grid that can expose these cards. An
@@ -213,8 +232,8 @@
     if (signs || notices) {
       // The diagnosis says why the patient is here. Its card opens the ones under the round when it
       // is the table Eloísa draws: a heading and one table whose second column is «Diagnóstico».
-      const diagnosis = surface(main, '#diagnosisEntrySection');
-      const reason = diagnosis && diagnosisTable(diagnosis) && placement(diagnosis, frame, hidden);
+      const diagnosis = surface(main, '#diagnosisEntrySection'), loading = !diagnosis && stand(main, 'diagnostico');
+      const reason = loading ? placement(loading, frame, hidden) : diagnosis && diagnosisTable(diagnosis) && placement(diagnosis, frame, hidden);
       if (reason && !reason.bridges.length) markSlot(reason, 'diagnosis');
       const printing = printLine(frame, marks);
       if (printing) marks.set(printing, 'print');
@@ -226,8 +245,7 @@
           const role = marks.get(child);
           if (role === 'bridge') markPeers(child);
           else if (role === 'note' || role === 'handoff') leading = false;
-          // The button that unfolds the empty sections is this view's own: it is not a column of Eloísa.
-          else if (!role && !child.matches('.hhr-ficha-empty-toggle')) marks.set(child, leading ? 'before' : 'peer');
+          else if (!role) marks.set(child, leading ? 'before' : 'peer');
         }
       }
       markPeers(frame);
@@ -289,7 +307,6 @@
       // instructions. At the end a heading and the sections without records or without permission, two
       // to a row, in the order Eloísa gives them. Every item sits on the same line of the grid: this
       // stacks each column, so that neither card is stretched to the height of the other column.
-      // A section folded behind «Ver vacías» keeps its item in the page, without a height.
       const drawn = el => el.getBoundingClientRect().height > 0;
       const tiles = signs ? [...requests, ...peers.filter(([, role]) => role === 'peer').map(([el]) => el).filter(el =>
         el.querySelector(':scope > section > [data-hhr-reading="status-card"]:only-child, :scope > [data-hhr-reading="status-card"]:only-child'))]
