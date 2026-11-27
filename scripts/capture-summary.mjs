@@ -619,6 +619,20 @@ async function verifyShapes(browser, assets) {
   assert.ok(shown.look.gaps.every(gap => gap === 12) && shown.look.edges.length === 1, 'Los bloques conservan su separación y sus bordes: ' + shown.look.gaps + ' ' + shown.look.edges);
   assert.equal(await page.locator('[data-hhr-ficha-folded] #diagnosisEntry, [data-hhr-ficha-folded]#diagnosisEntry').count(), 0, 'Un diagnóstico ausente no se pliega con las secciones vacías');
   await page.close();
+  // A summary the view recognizes says nothing. One it does not, here without Observaciones de entrega, says so once,
+  // after the page has been still, and is shown as Eloísa draws it.
+  page = await open({});
+  const quiet = await page.evaluate(() => new Promise(resolve => setTimeout(() => resolve(document.documentElement.getAttribute('data-hhr-view-unrecognized')), 4500)));
+  assert.equal(quiet, null, 'Un Resumen reconocido no avisa nada');
+  const unknown = await page.evaluate(() => new Promise(resolve => {
+    let count = 0;
+    document.addEventListener('hhr-view-unrecognized', event => { count += event.detail === 'Resumen' ? 1 : 100; });
+    document.querySelector('#shiftChangeEntrySection').closest('.MuiGrid-item').remove();
+    document.dispatchEvent(new Event('fixture-refresh'));
+    setTimeout(() => resolve({count, view:document.documentElement.getAttribute('data-hhr-view-unrecognized'), frame:Boolean(document.querySelector('[data-hhr-round="frame"]'))}), 5500);
+  }));
+  assert.deepEqual(unknown, {count:1, view:'Resumen', frame:false}, 'Un Resumen que la vista no reconoce lo avisa una vez: ' + JSON.stringify(unknown));
+  await page.close();
   // Procedimientos, Solicitud interconsulta, Solicitud de examen and Solicitudes de intervención quirúrgica with records
   // read like the other tables: the title, the headings and the first cell on one edge, and the same rhythm.
   page = await open({procedureList:summaryProcedures, referralList:summaryReferrals, testList:summaryTests, surgeryList:summarySurgeries});

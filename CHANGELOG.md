@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.220
+
+- Cuando la vista Compacta no reconoce el Resumen o el Plan de tratamiento de una ficha ya cargada, lo avisa una vez por paciente y vista: «La vista Compacta no reconoció el Resumen de esta ficha y lo muestra como lo dibuja Eloísa. Puede que Eloísa haya cambiado su página.». Antes volvía al aspecto de Eloísa sin avisar. Espera a que la página quede quieta 4 segundos y, mientras no la reconoce, deja `data-hhr-view-unrecognized` en la página.
+- El aviso de versión nueva («Actualizar» en la barra de Centro HHR) llega antes: la respuesta de GitHub vale una hora en vez de seis. En la página, con la 0.48.211 instalada y la 0.48.218 publicada, la barra todavía no avisaba (27-11-2026); con versiones publicadas varias veces al día, seis horas de respuesta guardada dejaban la instalada atrasada sin aviso.
+
 ## 0.48.219
 
 - Una sola familia de iconos. Los iconos rellenos de Eloísa (imprimir, archivar, suspender, comentarios y agregar nota) se dibujan con el contorno de los de la vista (trazo de 1,8 y puntas redondeadas), como Enmendar, Pautas o «Mostrar suspendidos». Conservan su lugar, su tamaño y su nombre.

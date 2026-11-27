@@ -249,6 +249,26 @@
     const desktop = globalThis.matchMedia?.('(min-width:1100px)');
     let noteEncounter = null, noteDisclosure = null, keepNoteFolded = false;
     const noteReader = globalThis.HhrFichaNoteReader.create();
+    // A view that has loaded and that this presentation does not recognize says so, once per patient and
+    // view: Eloísa may have changed its page, and the view shows it as Eloísa draws it. Centro HHR draws
+    // the notice; the page keeps an attribute while the view stays unrecognized.
+    let unrecognized = null, unrecognizedTimer = 0;
+    const announced = new Set();
+    const recognition = (view, missing, encounter) => {
+      const key = missing ? encounter + ':' + view : null;
+      if (key === unrecognized) return;
+      unrecognized = key;
+      clearTimeout(unrecognizedTimer);
+      if (!key) { document.documentElement.removeAttribute('data-hhr-view-unrecognized'); return; }
+      // Eloísa draws a section at a time: the view waits until the page has been still that long.
+      unrecognizedTimer = setTimeout(() => {
+        if (disposed || unrecognized !== key) return;
+        document.documentElement.setAttribute('data-hhr-view-unrecognized', view);
+        if (announced.has(key)) return;
+        announced.add(key);
+        document.dispatchEvent(new CustomEvent('hhr-view-unrecognized', {detail:view}));
+      }, 4000);
+    };
     const rememberNoteToggle = event => { keepNoteFolded = normalize(event.currentTarget.textContent) === 'leer menos'; };
     const setNoteDisclosure = (next, encounter) => {
       if (next === noteDisclosure && encounter === noteEncounter) return;
@@ -281,6 +301,7 @@
       unmark(element); links.delete(element);
     };
     const reset = () => {
+      recognition(null, false, null);
       noteReader.refresh(null, null);
       style?.remove(); style = null;
       surfaces.clear();
@@ -486,7 +507,14 @@
       const paragraph = readableDisclosure?.parentElement.previousElementSibling;
       noteReader.refresh(paragraph?.matches('.MuiTypography-caption') ? paragraph : null, encounterId);
       round.refresh(compact);
-      carePlan.refresh(theme === 'compact' && tab.id === 'encounter-event-tab-care-plan' ? document.querySelector('main') : null);
+      const planMain = theme === 'compact' && tab.id === 'encounter-event-tab-care-plan' ? document.querySelector('main') : null;
+      carePlan.refresh(planMain);
+      const settled = view => view && !view.querySelector('.MuiSkeleton-root,[role="progressbar"]');
+      if (settled(compact) && desktop?.matches && compact.querySelectorAll('.MuiCard-root').length >= 3) {
+        recognition('Resumen', !compact.querySelector('[data-hhr-round="frame"]'), encounterId);
+      } else if (settled(planMain) && planMain.querySelector('.MuiCard-root table')) {
+        recognition('Plan de tratamiento', !planMain.querySelector('[data-hhr-plan="card"]'), encounterId);
+      } else recognition(null, false, encounterId);
       const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
         // The line this view already holds counts while the round keeps it out of sight, and so does the
         // one right before the round, which is not drawn from the start.
