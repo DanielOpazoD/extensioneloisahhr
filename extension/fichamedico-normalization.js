@@ -62,6 +62,8 @@
     'peridentName',
     'preferredPeridentName',
     'prefferedPeridentName',
+    'patPrefferedPeridentName',
+    'patPreferredPeridentName',
     'documentType',
     'tipoIdentificador',
     'tipoDocumento',
@@ -93,10 +95,21 @@
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s+/g, ' ')
       .toLowerCase();
+  // Verified against Eloísa PrefferedPeridentEnum: 2 = CL_RUN; 3 = OTRO_NUMERO_IDENTIFICADOR,
+  // 9 = NUMERO_PASAPORTE, 10 = NUMERO_DOCUMENTO_IDENTIFICADOR_PAIS_ORIGEN, 11 = NUMERO_IDENTIFICADOR_FONASA.
+  // Maternal/auxiliary types (1=NN, 4=RUN responsable, 5=Otro responsable, 6=Ficha, 7=RYF, 8=Folio parto)
+  // never imply a personal documentType.
+  const FOREIGN_PERIDENT_IDS = new Set([3, 9, 10, 11]);
   const classifyDocumentTypeLabel = value => {
     const label = foldedLabel(value);
     if (!label) return undefined;
-    if (/^(?:pasaporte|passport)\b/.test(label)) return 'Pasaporte';
+    if (
+      /^(?:pasaporte|passport|documento identificador pais de origen|numero documento identificador pais de origen|numero identificador fonasa)\b/.test(
+        label
+      )
+    ) {
+      return 'Pasaporte';
+    }
     if (/^(?:run|rut)$/.test(label)) return 'RUT';
     return undefined;
   };
@@ -131,12 +144,13 @@
       if (explicit === 'Pasaporte') return 'Pasaporte';
       if (explicit === 'RUT') return hasNonRutLetter(run) ? undefined : 'RUT';
     }
-    // Only type 2 (own RUN) is verified across Eloísa endpoints; never guess passport IDs.
     for (const source of sources) {
       for (const key of DOCUMENT_TYPE_ID_KEYS) {
         const raw = source[key];
         if (raw === '' || raw == null || typeof raw === 'boolean') continue;
-        if (Number(raw) === 2) return hasNonRutLetter(run) ? undefined : 'RUT';
+        const id = Number(raw);
+        if (id === 2) return hasNonRutLetter(run) ? undefined : 'RUT';
+        if (FOREIGN_PERIDENT_IDS.has(id)) return 'Pasaporte';
       }
     }
     return undefined;

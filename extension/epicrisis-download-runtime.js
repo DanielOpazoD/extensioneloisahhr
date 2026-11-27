@@ -34,6 +34,7 @@
   };
 
   const handleRunRequest = async (request, operation) => {
+    const isPassport = request.patientDocumentType === 'Pasaporte';
     const rowsResult = await reports.resolveRows(request);
     if (rowsResult.error) return rowsResult;
     const listed = reports.listEpisodes({ ...request, rows: rowsResult.rows });
@@ -43,8 +44,17 @@
     if (!direct.error && !listed.episodes.some(episode => episode.encId === direct.encId)) {
       const context = await request.getClinicalReportContext(direct.encId, request.info, null, request.sender);
       if (context && context.error) return context;
-      if (reports.normalizeRun(context && context.patient && context.patient.run) !== request.patientRun)
-        return { error: 'El episodio no corresponde al RUN seleccionado. Actualiza el censo y reintenta.' };
+      const contextDocument = context && context.patient && context.patient.run;
+      const matchesIdentity = isPassport
+        ? reports.normalizeForeignDocument(contextDocument) === request.patientDocument
+        : reports.normalizeRun(contextDocument) === request.patientRun;
+      if (!matchesIdentity) {
+        return {
+          error: isPassport
+            ? 'El episodio no corresponde al documento seleccionado. Actualiza el censo y reintenta.'
+            : 'El episodio no corresponde al RUN seleccionado. Actualiza el censo y reintenta.',
+        };
+      }
       if (operation === 'list') return { ok: true, episodes: [direct.episode, ...listed.episodes] };
       return handleDirectRequest(request, { ...direct, context }, operation);
     }
@@ -56,16 +66,22 @@
 
   const handleRequest = async request => {
     if (request.delivery !== 'download') return request.printFallback(request);
-    const patientRun = reports.normalizeRun(request.patientRun);
-    const hasValidRun = reports.isValidRun(patientRun);
+    const isPassport = request.patientDocumentType === 'Pasaporte';
+    const patientDocument = isPassport
+      ? reports.normalizeForeignDocument(request.patientDocument || request.patientRun)
+      : '';
+    const patientRun = isPassport ? '' : reports.normalizeRun(request.patientRun);
+    const hasSearchableIdentity = isPassport
+      ? reports.isValidForeignDocument(patientDocument)
+      : reports.isValidRun(patientRun);
     const resolvedDirectEpisode = resolveDirectEpisode(request);
     const hasDirectHistoryRange = request.documentType === 'history' && !resolvedDirectEpisode.error &&
       Boolean(resolvedDirectEpisode.row.startPeriod);
-    const directEpisode = hasDirectHistoryRange || !hasValidRun ? resolvedDirectEpisode : null;
+    const directEpisode = hasDirectHistoryRange || !hasSearchableIdentity ? resolvedDirectEpisode : null;
     if (directEpisode && directEpisode.error) return directEpisode;
     const infoResult = await request.getFichaFetchInfo(request.sender);
     if (infoResult.error) return infoResult;
-    const withSession = { ...request, info: infoResult.info, patientRun };
+    const withSession = { ...request, info: infoResult.info, patientRun, patientDocument };
     const operation = request.operation || 'download';
     return directEpisode
       ? handleDirectRequest(withSession, directEpisode, operation)

@@ -11,9 +11,13 @@
     const queryTarget = async (record, target) => {
       const rows = [];
       const seen = new Set();
-      // Exact episodes may stop at RUN. Report-only days require BOTH populations:
-      // a mother and her newborn can have distinct episodes on the same day.
-      for (const identifierType of [2, 4]) {
+      // Exact episodes may stop as soon as their episode id is found. Report-only days require
+      // all applicable populations (e.g., own + maternal RUN, or foreign PrefferedPeridentEnum IDs).
+      const identifierTypes =
+        typeof lookup.identifierTypesForTarget === 'function'
+          ? lookup.identifierTypesForTarget(target)
+          : [2, 4];
+      for (const identifierType of identifierTypes) {
         const url =
           `${record.apiBase}/facility/${record.facId}/encounter` +
           `?facId=0&prefferedIdentifierCode=${encodeURIComponent(target.run)}` +

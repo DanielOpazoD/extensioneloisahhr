@@ -58,6 +58,7 @@ type ClinicalClient = {
     info: SessionInfo,
     days?: number
   ) => Promise<{ events?: unknown[]; error?: string }>;
+  fetchPatientHeader: (encId: string, info: SessionInfo) => Promise<unknown>;
 };
 
 type ClinicalClientFactory = {
@@ -470,6 +471,27 @@ describe('Ficha Médico read-only clinical client', () => {
     ]);
     expect(JSON.stringify(result.nursingActivity)).not.toContain('contenido clínico privado');
     expect(JSON.stringify(result.nursingActivity)).not.toContain('dato clínico privado');
+  });
+
+  it('falls back to patientHeaderData/{encId}/true when /false returns 204 for a discharged episode', async () => {
+    fetchWithTimeout
+      .mockResolvedValueOnce(response({ status: 204 }))
+      .mockResolvedValueOnce(
+        response({
+          status: 200,
+          json: async () => ({ patID: 4321, preferredIdentifierCode: '887766554', preferredPeridentId: 3 }),
+        })
+      );
+
+    await expect(client.fetchPatientHeader('910700', session)).resolves.toEqual({
+      patID: 4321,
+      preferredIdentifierCode: '887766554',
+      preferredPeridentId: 3,
+    });
+    expect(fetchWithTimeout.mock.calls.map(call => call[0])).toEqual([
+      'https://fichamedicoback.rayensalud.cl/api/encounter/patientHeaderData/910700/false',
+      'https://fichamedicoback.rayensalud.cl/api/encounter/patientHeaderData/910700/true',
+    ]);
   });
 
   it('keeps background as wiring and the read client free of writes or persistence', () => {

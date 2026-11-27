@@ -11,18 +11,64 @@
     'destinationSystemName', 'dischargeReasonName', 'dischargeTypeName',
     'bedDestination', 'destinationBed',
   ]);
+  const RUN_IDENTIFIER_TYPES = Object.freeze([2, 4]);
+  // Verified against Eloísa PrefferedPeridentEnum: 3=OTRO_NUMERO_IDENTIFICADOR,
+  // 9=NUMERO_PASAPORTE, 10=NUMERO_DOCUMENTO_IDENTIFICADOR_PAIS_ORIGEN, 11=NUMERO_IDENTIFICADOR_FONASA.
+  const FOREIGN_IDENTIFIER_TYPES = Object.freeze([3, 9, 10, 11]);
+  const normalizeForeignDocument = value =>
+    String(value || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+  const hasNonRutLetter = value => {
+    const cleaned = normalizeForeignDocument(value);
+    return /[A-Z]/.test(cleaned) && !/^\d+K$/.test(cleaned);
+  };
+  const isValidChileanRun = value => {
+    const cleaned = String(value || '').toUpperCase().replace(/[^0-9K]/g, '');
+    if (hasNonRutLetter(value) || !/^\d{6,8}[0-9K]$/.test(cleaned)) return false;
+    const body = cleaned.slice(0, -1);
+    const verifier = cleaned.slice(-1);
+    let sum = 0;
+    let factor = 2;
+    for (let i = body.length - 1; i >= 0; i -= 1) {
+      sum += Number(body[i]) * factor;
+      factor = factor === 7 ? 2 : factor + 1;
+    }
+    const rest = 11 - (sum % 11);
+    const expected = rest === 11 ? '0' : rest === 10 ? 'K' : String(rest);
+    return verifier === expected;
+  };
   const normalizeTargets = (runs, targets) => {
     const source = Array.isArray(targets) && targets.length ? targets : runs;
     return (Array.isArray(source) ? source : [])
       .map(value => {
         const target = value && typeof value === 'object' ? value : { run: value };
+        const isPassport = target.documentType === 'Pasaporte' || hasNonRutLetter(target.run);
+        const run = isPassport
+          ? normalizeForeignDocument(target.run)
+          : String(target.run || '').toUpperCase().replace(/[^0-9K]/g, '');
         return {
-          run: String(target.run || '').replace(/[^0-9kK]/g, ''),
+          run,
           encounterId: String(target.encounterId || '').trim(),
           ...(target.dischargeDay ? { dischargeDay: String(target.dischargeDay).trim() } : {}),
+          ...(target.documentType === 'Pasaporte' ? { documentType: 'Pasaporte' } : {}),
         };
       })
       .filter(target => target.run);
+  };
+  /**
+   * Selects Eloísa PrefferedPeridentEnum IDs for a discharge lookup target.
+   * ID-01: explicit passports or lettered documents NEVER query Chilean RUN/maternal RUN (2, 4).
+   * Purely numeric values that fail Chilean Mod-11 without explicit documentType (e.g. bulk report
+   * cells for foreign IDs) query foreign types first and retain [2, 4] fallback for mistyped RUNs.
+   */
+  const identifierTypesForTarget = target => {
+    const safeTarget = target && typeof target === 'object' ? target : { run: target };
+    if (safeTarget.documentType === 'Pasaporte' || hasNonRutLetter(safeTarget.run)) {
+      return FOREIGN_IDENTIFIER_TYPES;
+    }
+    if (!isValidChileanRun(safeTarget.run)) {
+      return [...FOREIGN_IDENTIFIER_TYPES, ...RUN_IDENTIFIER_TYPES];
+    }
+    return RUN_IDENTIFIER_TYPES;
   };
   const dischargeDayOf = value => {
     const raw = String(value || '').trim();
@@ -63,5 +109,16 @@
     }
     return result;
   };
-  return Object.freeze({ encounterIdOf, normalizeTargets, pickMetadata, selectEncounter });
+  return Object.freeze({
+    FOREIGN_IDENTIFIER_TYPES,
+    RUN_IDENTIFIER_TYPES,
+    encounterIdOf,
+    hasNonRutLetter,
+    identifierTypesForTarget,
+    isValidChileanRun,
+    normalizeForeignDocument,
+    normalizeTargets,
+    pickMetadata,
+    selectEncounter,
+  });
 });

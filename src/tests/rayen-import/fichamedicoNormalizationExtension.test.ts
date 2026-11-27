@@ -475,10 +475,30 @@ describe('Ficha Medico passport documentType propagation', () => {
     });
   });
 
+  it('propagates verified Eloísa PrefferedPeridentEnum foreign IDs (3, 9, 10, 11) as Pasaporte', () => {
+    for (const peridentId of [3, 9, 10, 11]) {
+      const encounter = normalization.normalizeEncounter(
+        { id: 501 + peridentId },
+        {
+          preferredIdentifierCode: '887766554',
+          preferredPeridentId: peridentId,
+          patPrefferedPeridentName: 'Número de Identificación',
+        },
+        {},
+        false
+      );
+      expect(encounter).toMatchObject({
+        run: '887766554',
+        documentType: 'Pasaporte',
+      });
+    }
+  });
+
   it('never guesses documentType from maternal RUN, unknown numeric ids, or generic identification labels', () => {
     for (const header of [
       { preferredIdentifierCode: '123456785', patientIdentifierTypeId: 4 },
-      { preferredIdentifierCode: '551234567', prefferedPeridentId: 9 },
+      { preferredIdentifierCode: '551234567', prefferedPeridentId: 8 },
+      { preferredIdentifierCode: '551234567', prefferedPeridentId: 99 },
       { preferredIdentifierCode: '551234567', preferredIdentifierTypeName: 'RUN Materno/progenitor(a)' },
       { preferredIdentifierCode: '551234567', preferredIdentifierTypeName: 'Número de Identificación' },
       { preferredIdentifierCode: '551234567', preferredIdentifierTypeName: 'Número Folio Comprobante de Parto' },
