@@ -6,7 +6,7 @@ importScripts(
   'message-contract.js', 'build-identity.js', 'hhr-origin-policy.js', 'exalab-background.js', 'exalab-session-transport.js', 'exalab-auto-runtime.js', 'eloisa-patient-code-contract.js', 'fichamedico-manual-patient-code-runtime.js',
   'encounter-navigation.js', 'worklist-return-state.js', 'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js', 'rapa-nui-weather.js', 'hhr-daily-births.js', 'extension-release-check.js',
   'hhr-request-forms.js', 'hhr-imaging-print.js',
-  'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
+  'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'hospitalized-roster-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
   'connection-relay-recovery.js', 'fichamedico-transport-runtime.js', 'fichamedico-history-read-model.js', 'fichamedico-device-evidence-runtime.js', 'clinical-read-error-contract.js', 'fichamedico-clinical-client.js', 'tab-encounter-authorization.js', 'fichamedico-patient-flow-runtime.js',
   'fichamedico-patient-context.js',
   'patient-document-manager-runtime.js',
@@ -1178,21 +1178,8 @@ const clinicalChecklists = self.HhrClinicalChecklistBroker.create({ chrome, reso
 // The reader on the Evolución card: the evolutions of the episode its own tab has open, read only.
 const evolutionNotes = self.HhrFichaEvolutionNotes.create({ resolveSession: resolveFichaClinicalSession, readJson: fichaMedicoClinicalClient.readJson, encounterOf: self.HhrPrescriptionPrint.resolveEncounterId,
   authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); } });
-// The patients of the switcher on the ficha's green bar: one read of the active census, without a
-// header per patient, answered only to the ficha's own page. Who, where; nothing clinical.
-const handleHospitalizedRosterRequest = async (_message, sender) => {
-  if (sender?.frameId !== 0 || !/^https:\/\/fichamedico\.rayensalud\.cl\/dashboard\//.test(sender?.url || '')) return { error: 'Lista de hospitalizados no disponible.' };
-  const infoResult = await getFichaFetchInfo(sender);
-  if (infoResult.error) return infoResult;
-  const rowResult = await fetchActiveEncounterRows(infoResult.info);
-  if (rowResult.error) return rowResult;
-  const patients = self.HhrPrescriptionPrint.activeHospitalizedEncounters({
-    encounters: rowResult.rows.map(row => fichaMedicoPatientContext.normalizeHospitalizedEncounter(row, null)),
-  }).map(({ encounterId, name, service, room, bed }) => ({ encounterId, name, service, room, bed }));
-  return { ok: true, patients };
-};
 const runtimeMessageRoutes = Object.freeze({
-  [RUNTIME_MESSAGES.HOSPITALIZED_ROSTER_REQUEST]: runtimeRoute(handleHospitalizedRosterRequest, 'No se pudo leer la lista de hospitalizados.'),
+  [RUNTIME_MESSAGES.HOSPITALIZED_ROSTER_REQUEST]: runtimeRoute(self.HhrHospitalizedRosterRuntime.create({ getFetchInfo: getFichaFetchInfo, fetchActiveEncounterRows, normalizeHospitalizedEncounter: fichaMedicoPatientContext.normalizeHospitalizedEncounter, activeHospitalizedEncounters: self.HhrPrescriptionPrint.activeHospitalizedEncounters }), 'No se pudo leer la lista de hospitalizados.'),
   [RUNTIME_MESSAGES.EVOLUTION_NOTES_REQUEST]: runtimeRoute(evolutionNotes.handle, 'No se pudieron leer las evoluciones.'),
   [RUNTIME_MESSAGES.CLINICAL_CHECKLIST]: runtimeRoute(clinicalChecklists.handle, 'No se pudo conectar la pauta con HHR.'),
   [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),

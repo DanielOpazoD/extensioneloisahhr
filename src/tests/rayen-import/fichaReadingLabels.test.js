@@ -489,7 +489,7 @@ it('lee la PAM como número entero y el autor de una alerta sin su cargo', () =>
   const main = document.createElement('main');
   main.innerHTML = '<div data-hhr-reading="vital-pam"><p>PAM:</p><p>87.50</p></div><div data-hhr-reading="vital-pam"><p>PAM:</p><p>90</p></div>' +
     '<section id="alertEntrySection"><div class="MuiCardContent-root"><div class="MuiBox-root"><div class="MuiStack-root"><div class="MuiStack-root">' +
-    '<p class="MuiTypography-body2">Enfermera(o) Elena  Ejemplo Prueba</p></div></div></div></div></section>';
+    '<p class="MuiTypography-body2">Enfermera(o) Elena  Ejemplo</p></div></div></div></div></section>';
   document.body.append(main);
   const labels = globalThis.HhrFichaReadingLabels.create();
   try {

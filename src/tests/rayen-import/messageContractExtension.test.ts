@@ -40,7 +40,7 @@ describe('shared Rayen runtime-message contract', () => {
   it('registers every service-worker request type once', () => {
     const values = Object.values(contract.types);
 
-    expect(values).toHaveLength(80);
+    expect(values).toHaveLength(81);
     expect(contract.validateRuntimeMessage({ type: contract.types.CLINICAL_CHECKLIST, encId: '42', request: { action: 'templates' } }).ok).toBe(true);
     expect(contract.validateRuntimeMessage({ type: contract.types.WORKLIST_RETURN_CONTEXT, action: 'return', entryKeys: [] }).ok).toBe(true);
     expect(contract.validateRuntimeMessage({ type: contract.types.WORKLIST_RETURN_CONTEXT }).ok).toBe(false);
