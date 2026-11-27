@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.225
+
+- Reposo sin indicación se lee bajo «Sin datos», con las demás secciones sin registros, como pediste para todo lo vacío. Su tarjeta queda en su lugar, fuera de la vista y con la frase de Eloísa para un lector de pantalla, y Régimen ocupa la línea bajo Signos vitales. El bloque que Eloísa comparte entre Reposo y Régimen no se desarma.
+- La impresión de la evolución va en su tarjeta: un icono junto a «Ver evoluciones» que pulsa el icono de Eloísa. Ese icono sale de la fila diaria, que queda con la fecha y la impresión del resumen diario.
+- Corregido: la PAM de la 0.48.223 se leía «87.3387»; la cifra de Eloísa no se ocultaba. Ahora se lee «87», y una comprobación en CI lo vigila.
+- Balance Hídrico vacío sigue en su línea: tiene el interruptor «Balance Hídrico Indicado», que se usa.
+
 ## 0.48.224
 
 - Las confirmaciones se leen con un solo estilo, simple. En el código de Eloísa hay más de veinte (leído el 27-11-2026): «Validar tratamiento», «¿Descartar Evolución?», «¿Descartar alta medica?», «¿Deseas renovar tu sesión?», «¿Confirmar aislamiento del paciente?», «¿Cancelar registro?», «¿Desea confirmar los cambios ingresados?» y otras. Todas usan el mismo diálogo de Eloísa, y ahora se leen así: la pregunta en 15 px, su frase en 13 px en tinta suave, una caja angosta con la esquina de la vista, lo que se pide con una línea alrededor de sus palabras y la vuelta («Salir», «Volver», «Cancelar») solo en palabras, sin mayúsculas. Eloísa conserva el orden, las palabras y las acciones. Un diálogo con un campo para escribir es un formulario y no cambia.

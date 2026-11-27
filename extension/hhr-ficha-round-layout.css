@@ -480,3 +480,18 @@
     color:var(--hhr-ficha-ink); font-size:var(--hhr-ficha-text-title); font-weight:600; line-height:1.35;
   }
 }
+
+/* Reposo without an order keeps its place in the block it shares with Régimen, out of sight: Eloísa's
+   sentence stays for a screen reader. Régimen takes the block, and «Reposo» is read under «Sin datos». */
+@media screen and (min-width:1100px) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
+    /* The ids weigh against the widths the round gives the items of the block. */
+    [data-hhr-round="care-hidden"]:not(#hhr-a):not(#hhr-b) {
+      position:absolute !important; inline-size:1px !important; block-size:1px !important; overflow:hidden !important;
+      clip-path:inset(50%); margin:0 !important; padding:0 !important;
+    }
+    .MuiGrid-container:has(> [data-hhr-round="care-hidden"]) > :not([data-hhr-round="care-hidden"]):not(#hhr-a):not(#hhr-b) {
+      flex:1 1 100% !important; max-inline-size:100% !important; inline-size:100% !important;
+    }
+  }
+}

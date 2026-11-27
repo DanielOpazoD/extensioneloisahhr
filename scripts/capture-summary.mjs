@@ -45,7 +45,8 @@ const read = page => page.evaluate(() => {
       .map(id => [id, item(id).getAttribute('data-hhr-round')])),
     note:box(one('#evolution')), signs:box(one('section#vitalSignsEntry')), handoff:box(one('#shiftChangeObservation')), alerts:box(one('#alertEntries')),
     tiles:[...document.querySelectorAll('.vitals-grid > .tile')].map(box),
-    rest:{...care('rest'), empty:getComputedStyle(one('#rest .MuiCardContent-root > p'), '::after').content, native:one('#rest .MuiCardContent-root > p').textContent},
+    rest:{...care('rest'), hidden:(own => own ? Math.round(own.getBoundingClientRect().width) : null)(one('#rest').closest('[data-hhr-round="care-hidden"]')), native:one('#rest .MuiCardContent-root > p').textContent,
+      tile:(proxy => proxy && {tile:proxy.getAttribute('data-hhr-round-tile'), name:proxy.textContent.trim(), aria:proxy.getAttribute('aria-hidden'), shown:proxy.getClientRects().length > 0})(one('[data-hhr-round-proxy="rest"]'))},
     // The last line of the round: the item of the care instructions and those of the requests without records.
     careLine:box(item('rest')), requests:[...document.querySelectorAll('.MuiGrid-item[data-hhr-round="empty-request"]')].map(box),
     alertList:(list => ({height:list.clientHeight, scroll:list.scrollHeight, overflow:getComputedStyle(list).overflowY}))(one('#alertEntries > .MuiCardContent-root > .MuiBox-root')),
@@ -326,7 +327,7 @@ async function verifySummary(page, width, native, off, sans) {
   // What has no records, or cannot be seen, closes the summary together: a heading and a short line for each section.
   // The owner asked for «Sin datos» in as few lines as can hold it: one group per state, its state said once,
   // then the names of its sections one after the other, wrapping under the first name.
-  assert.ok(group.count === 9 && group.inside && group.rows <= 4 && group.heights.every(height => height <= 24) && group.top >= shown.signs.top && group.left >= shown.signs.right - 1,
+  assert.ok(group.count === 10 && group.inside && group.rows <= 4 && group.heights.every(height => height <= 24) && group.top >= shown.signs.top && group.left >= shown.signs.right - 1,
     'Las secciones sin datos se leen junto a Signos, en pocas líneas: ' + JSON.stringify(group));
   assert.deepEqual([group.heading, group.headingSize, group.surfaces], ['"Sin datos"', '12px', ['rgba(0, 0, 0, 0)']], 'El grupo tiene su rótulo y no dibuja una tarjeta por sección');
   assert.deepEqual(group.leads.map(([state]) => state), ['none', 'denied'], 'Un grupo sin registros y otro sin permiso, en ese orden: ' + JSON.stringify(group.leads));
@@ -373,14 +374,14 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(new Set(shown.tiles.map(tile => Math.round(tile.top))).size <= 3, 'Las nueve mediciones ocupan tres filas a lo más en su mitad de la línea');
   assert.ok(shown.tiles.every(tile => tile.height <= 44), 'Una medición sin unidad no deja una línea vacía: ' + shown.tiles.map(tile => Math.round(tile.height)));
 
-  // An empty rest is a card without its section. It reads «Sin registro» on the line of Régimen.
-  assert.equal(shown.rest.mark, 'care-row', 'El reposo sin registro se reconoce sin su sección');
-  assert.match(shown.rest.empty, /^"Sin registro"/);
+  // An empty rest is a card without its section. The owner asked for every empty section under «Sin datos»: it
+  // keeps its place in the block it shares with Régimen, out of sight with Eloísa's sentence, and its name is read
+  // there with the sections without records. Régimen takes the line under Signos.
+  assert.ok(shown.rest.hidden !== null && shown.rest.hidden <= 1, 'El reposo sin registro deja su lugar, fuera de la vista: ' + JSON.stringify(shown.rest));
   assert.equal(shown.rest.native, 'No se presenta un Reposo registrado para este paciente', 'La frase de Eloísa sigue en la página');
-  assert.ok(near(middle(shown.rest), middle(shown.diet)) && shown.diet.left >= shown.rest.right - 1 && near(shown.diet.right, shown.signs.right, 2),
-    'Reposo y Régimen comparten una línea bajo Signos, a la altura de su centro');
-  // In half the line the diet keeps its value and its observation on one line and its byline on the next.
-  assert.ok(shown.rest.height <= 60 && shown.diet.height <= 60 && shown.diet.text, `El régimen se lee en dos líneas a lo más: ${shown.diet.height}`);
+  assert.deepEqual(shown.rest.tile, {tile:'item', name:'Reposo', aria:'true', shown:true}, 'y su nombre se lee bajo «Sin datos», con las secciones sin registros');
+  assert.ok(near(shown.diet.left, shown.signs.left, 2) && near(shown.diet.right, shown.signs.right, 2), 'Régimen ocupa la línea bajo Signos: ' + JSON.stringify([shown.diet.left, shown.diet.right]));
+  assert.ok(shown.diet.height <= 60 && shown.diet.text, `El régimen se lee en dos líneas a lo más: ${shown.diet.height}`);
   // Exámenes and Cirugía without requests are two more sections without data, in their group.
   assert.ok(requests.length === 2 && requests.every(request => request.top >= shown.signs.top && request.left >= shown.signs.right - 1 && request.right <= shown.alerts.right + 1 && request.height <= 30),
     'Las solicitudes sin registros se leen con las demás secciones sin datos: ' + JSON.stringify(requests));
@@ -670,7 +671,21 @@ async function verifyShapes(browser, assets) {
   // adds outlined ones. The owner asked for a single look: a line around the words, in the ink of what is pressed.
   // Each print says what it prints, in the look of «Imprimir indicaciones»: the icon of the daily row prints the
   // evolution and the one at the end of Fármacos the recetón (read on the page 27-11-2026).
-  const prints = await page.evaluate(() => [['.frame > .daily hr + button', 'Imprimir'], ['#medicationEntrySection .MuiCardHeader-action > .MuiStack-root > button.MuiIconButton-root', 'Imprimir recetón'],
+  // PAM reads as a whole number (asked 27-11-2026): Eloísa's figure, with two decimals, stays in the page out of sight.
+  const pam = await page.evaluate(() => { const value = document.querySelector('[data-hhr-vital-rounded]');
+    return value && {says:getComputedStyle(value, '::after').content, native:value.textContent, size:getComputedStyle(value).fontSize, width:Math.round(value.getBoundingClientRect().width)}; });
+  assert.ok(pam && pam.says === '"87" / ""' && pam.native === '87.33' && pam.size === '0px' && pam.width <= 20, 'La PAM se lee como número entero: ' + JSON.stringify(pam));
+  // The print of the evolution rides on its card, beside «Ver evoluciones», and presses Eloísa's icon, which
+  // leaves the daily row (asked by the owner on 27-11-2026, with the summary reorganized).
+  const evolutionPrint = await page.evaluate(() => {
+    const proxy = document.querySelector('#evolution .MuiCardHeader-action > .hhr-evo-entry + .hhr-evo-print'), native = document.querySelector('.frame > .daily hr + button');
+    let pressed = 0; native.addEventListener('click', () => { pressed++; }, {once:true}); proxy?.click();
+    return {proxy:Boolean(proxy), name:proxy?.getAttribute('aria-label'), size:proxy && [proxy.offsetWidth, proxy.offsetHeight], native:native.getClientRects().length,
+      rule:document.querySelector('.frame > .daily hr').getClientRects().length, pressed};
+  });
+  assert.deepEqual(evolutionPrint, {proxy:true, name:'Imprimir evolución', size:[28, 28], native:0, rule:0, pressed:1},
+    'La impresión de la evolución va en su tarjeta y pulsa el icono de Eloísa, que deja la fila diaria: ' + JSON.stringify(evolutionPrint));
+  const prints = await page.evaluate(() => [['#medicationEntrySection .MuiCardHeader-action > .MuiStack-root > button.MuiIconButton-root', 'Imprimir recetón'],
     ['#fixture-print', 'Imprimir indicaciones']].map(([selector, name]) => {
     const button = document.querySelector(selector);
     if (!button) return {missing:selector};
@@ -678,7 +693,7 @@ async function verifyShapes(browser, assets) {
     return {says:getComputedStyle(button, '::after').content, name:button.querySelector('svg').getAttribute('aria-label'), own:button.hasAttribute('aria-label'),
       height:Math.round(box.height), colour:look.color, size:getComputedStyle(button, '::after').fontSize, whole:button.scrollWidth <= button.clientWidth + 1};
   }));
-  assert.deepEqual(prints.map(({says, name, own}) => [says, name, own]), [['"Evolución" / ""', 'Imprimir', false], ['"Imprimir recetón" / ""', 'Imprimir recetón', false],
+  assert.deepEqual(prints.map(({says, name, own}) => [says, name, own]), [['"Imprimir recetón" / ""', 'Imprimir recetón', false],
     ['"Imprimir indicaciones" / ""', 'Imprimir indicaciones', false]], 'Cada impresión dice qué imprime, y su nombre sigue siendo el de Eloísa: ' + JSON.stringify(prints));
   assert.equal(new Set(prints.map(({height, colour, size, whole}) => [height, colour, size, whole].join())).size, 1, 'y todas se leen igual: ' + JSON.stringify(prints));
   // «Filtrar» of Balance Hídrico is measured with its filter open.

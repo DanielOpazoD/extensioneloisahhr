@@ -189,8 +189,10 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
       'El lápiz y la lista de enmendadas son un icono cada uno, con el nombre que les da Eloísa');
     assert.deepEqual(await Promise.all(tools.slice(1).map(tool => tool.getAttribute('title'))), ['Más opciones','Enmendar','Ver enmendados'],
       'Con el cursor encima, cada botón muestra el nombre que Eloísa solo da a su icono');
+    // The print of the evolution rides beside «Ver evoluciones» (27-11-2026) and is the next stop of the keyboard.
+    const print = note.getByRole('button', {name:'Imprimir evolución', exact:true});
     await tools[0].focus();
-    for (const next of tools.slice(1)) {
+    for (const next of [print, ...tools.slice(1)]) {
       await page.keyboard.press('Tab');
       assert.ok(await next.evaluate(el => el === document.activeElement), 'El foco debe seguir la lectura de la nota');
     }

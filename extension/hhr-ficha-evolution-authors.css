@@ -13,6 +13,19 @@
     display:inline-flex; flex-flow:row nowrap; align-items:center; align-self:center; gap:4px; margin:0;
   }
   .hhr-evo-entry { background:#edf5f2; white-space:nowrap; }
+  /* The print of the evolution, an icon of the family beside «Ver evoluciones». */
+  .hhr-evo-print {
+    position:relative; flex:none; inline-size:28px; block-size:28px; padding:0; border:0; border-radius:5px;
+    background:transparent; color:var(--hhr-ficha-action); cursor:pointer;
+    &::before { content:''; position:absolute; inset:0; margin:auto; inline-size:16px; block-size:16px; background:currentColor; mask:var(--hhr-icon-print) center / contain no-repeat; }
+    &:hover { background:var(--hhr-ficha-action-hover); }
+    &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+    @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
+  }
+  /* Its native icon leaves the daily row, with the rule before it: the row prints the daily summary. */
+  html[data-hhr-ficha-theme="compact"] :is([data-hhr-print-caption="Evolución"], hr.MuiDivider-vertical:has(+ [data-hhr-print-caption="Evolución"])) {
+    display:none !important;
+  }
   .hhr-evo-back { min-height:24px; padding:2px 6px; white-space:nowrap; font-size:.75rem; }
   .hhr-evo-filters {
     display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin:4px 0 8px;

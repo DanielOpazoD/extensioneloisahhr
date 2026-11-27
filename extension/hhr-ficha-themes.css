@@ -738,7 +738,8 @@
 /* Asked by the owner (27-11-2026): PAM as a whole number, the summary without «Gestión de Visitas», and
    Eloísa's green bar without the diagnosis, which the summary opens with. Eloísa's words stay in the page. */
 @media screen {
-  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-rounded]:not(#hhr-a) {
+  /* The ids outweigh the rule that gives the text of a measurement the size of its tile (it names #vitalSignsEntry). */
+  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-rounded]:not(#hhr-a):not(#hhr-b):not(#hhr-c) {
     font-size:0 !important;
     &::after { content:attr(data-hhr-vital-rounded) / ""; font-size:.75rem; line-height:1.15; }
   }
