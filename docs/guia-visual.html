@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es" data-hhr-ficha-theme="compact">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía visual de la vista Compacta</title>
+<!-- The values are the extension's own: this page reads its tokens, so it never drifts from them. -->
+<link rel="stylesheet" href="../extension/hhr-ficha-tokens.css">
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:#eff1f0; color:var(--hhr-ficha-ink); font:400 var(--hhr-ficha-text-body)/1.45 var(--hhr-ficha-sans); }
+  main { max-inline-size:980px; margin:0 auto; padding:28px 24px 48px; display:grid; gap:var(--hhr-ficha-block-gap); }
+  header h1 { margin:0; font:var(--hhr-ficha-weight-strong) 1.25rem/1.3 var(--hhr-ficha-sans); }
+  header p { margin:4px 0 0; color:var(--hhr-ficha-ink-soft); }
+  section { padding:14px var(--hhr-ficha-inset) 16px; border-radius:var(--hhr-ficha-radius); background:var(--hhr-ficha-surface); }
+  h2 { margin:0 0 4px; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans); }
+  .why { margin:0 0 12px; color:var(--hhr-ficha-ink-soft); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
+  .swatch { display:grid; gap:2px; }
+  .swatch i { display:block; block-size:36px; border-radius:6px; border:1px solid var(--hhr-ficha-line); }
+  .swatch b { font-weight:var(--hhr-ficha-weight-strong); }
+  .swatch span, .meta { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
+  .scale > div { display:flex; align-items:baseline; gap:12px; padding:6px 0; border-block-end:1px solid var(--hhr-ficha-line-soft); }
+  .scale > div:last-child { border:0; }
+  .scale code, .meta code { color:var(--hhr-ficha-ink-soft); font-size:var(--hhr-ficha-text-meta); }
+  .row { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; }
+  .button { display:inline-flex; align-items:center; min-block-size:var(--hhr-ficha-button); padding:0 12px; border:1px solid var(--hhr-ficha-button-line); border-radius:var(--hhr-ficha-button-radius);
+    background:transparent; color:var(--hhr-ficha-action); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans); }
+  .button.read { border-color:transparent; }
+  .button.back { border-color:transparent; color:var(--hhr-ficha-ink-soft); }
+  .button.off { border-color:var(--hhr-ficha-line-soft); color:var(--hhr-ficha-disabled); }
+  .icon { position:relative; inline-size:26px; block-size:26px; border-radius:var(--hhr-ficha-button-radius); color:var(--hhr-ficha-action); }
+  .icon::before { content:''; position:absolute; inset:0; margin:auto; inline-size:16px; block-size:16px; background:currentColor; mask:var(--glyph) center / contain no-repeat; }
+  .icon.tool { color:var(--hhr-ficha-tool); }
+  .tag { display:inline-flex; align-items:center; block-size:16px; padding:0 5px; border-radius:4px; background:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft);
+    font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-tag)/1 var(--hhr-ficha-sans); }
+  .switch { display:inline-flex; align-items:center; gap:6px; }
+  .switch i { inline-size:26px; block-size:14px; border-radius:7px; background:#a7afac; position:relative; }
+  .switch i::after { content:''; position:absolute; inset-block-start:-2px; inset-inline-start:-2px; inline-size:18px; block-size:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.4); }
+  .card { border:1px solid var(--hhr-ficha-line); border-radius:var(--hhr-ficha-radius); padding:10px var(--hhr-ficha-inset); }
+  .card h3 { margin:0; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans); }
+  .card .byline { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
+  .dialog { max-inline-size:30rem; padding:18px 20px 16px; border-radius:var(--hhr-ficha-radius); background:#fff; box-shadow:0 16px 40px rgb(7 27 49 / 22%); }
+  .dialog h3 { margin:0 0 6px; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans); }
+  .dialog p { margin:0; color:var(--hhr-ficha-ink-soft); }
+  .dialog .row { justify-content:flex-end; margin-block-start:16px; gap:8px; }
+  .stage { padding:18px; border-radius:var(--hhr-ficha-radius); background:rgb(17 38 34 / 32%); }
+  ol { margin:0; padding-inline-start:1.2rem; display:grid; gap:4px; }
+  ol b { font-weight:var(--hhr-ficha-weight-strong); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Guía visual de la vista Compacta</h1>
+    <p>Las tintas, tamaños y piezas que usa la extensión en la ficha, las listas y Centro HHR. Los valores se leen de <code>extension/hhr-ficha-tokens.css</code>; las reglas completas están en <code>docs/estilo-ficha.md</code>.</p>
+  </header>
+
+  <section>
+    <h2>Tintas de texto</h2>
+    <p class="why">Cinco para leer, más el deshabilitado. CI rechaza un texto en otra tinta.</p>
+    <div class="grid">
+      <div class="swatch"><i style="background:var(--hhr-ficha-ink)"></i><b>Texto</b><span>--hhr-ficha-ink · 16:1</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-ink-soft)"></i><b>Texto suave</b><span>--hhr-ficha-ink-soft · 8,9:1</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-muted)"></i><b>Apagado</b><span>--hhr-ficha-muted · 5,7:1</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-action)"></i><b>Acción</b><span>--hhr-ficha-action · 7,3:1</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-alarm)"></i><b>Alarma</b><span>--hhr-ficha-alarm · 5,6:1</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-disabled)"></i><b>Deshabilitado</b><span>--hhr-ficha-disabled</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Superficies y líneas</h2>
+    <p class="why">Una tarjeta es blanca, con la esquina de 8 px y sin sombra; una banda sitúa un encabezado.</p>
+    <div class="grid">
+      <div class="swatch"><i style="background:var(--hhr-ficha-surface)"></i><b>Superficie</b><span>--hhr-ficha-surface</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-band)"></i><b>Banda</b><span>--hhr-ficha-band</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-line)"></i><b>Línea</b><span>--hhr-ficha-line</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-action-hover)"></i><b>Apuntado</b><span>--hhr-ficha-action-hover</span></div>
+      <div class="swatch"><i style="background:var(--hhr-ficha-action-pressed)"></i><b>Elegido</b><span>--hhr-ficha-action-pressed</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tamaños de letra</h2>
+    <p class="why">Cinco tamaños, dos pesos (400 y 600).</p>
+    <div class="scale">
+      <div><span style="font:600 var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans)">Título de tarjeta</span><code>15 px · 600</code></div>
+      <div><span style="font-size:.875rem">Texto de una evolución en su ventana</span><code>14 px</code></div>
+      <div><span>Texto del Resumen, celdas, botones de una línea</span><code>13 px</code></div>
+      <div><span style="font-size:var(--hhr-ficha-text-meta);color:var(--hhr-ficha-ink-soft)">Firmas, encabezados de tabla, lo que sitúa</span><code>12 px</code></div>
+      <div><span class="tag">Etiqueta</span><code>11 px · 600</code></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Botones e iconos</h2>
+    <p class="why">Un solo botón: una línea alrededor de sus palabras, sin relleno ni mayúsculas. Lo que solo abre una lectura va sin línea. Un icono es verde si se pulsa y gris tenue si es una herramienta de fila.</p>
+    <div class="row">
+      <span class="button">Validar tratamiento</span>
+      <span class="button read">Ver evoluciones</span>
+      <span class="button off">Continuar</span>
+      <span class="icon" style="--glyph:var(--hhr-icon-print)" title="Imprimir"></span>
+      <span class="icon" style="--glyph:var(--hhr-icon-edit)" title="Enmendar"></span>
+      <span class="icon tool" style="--glyph:var(--hhr-icon-archive)" title="Archivar"></span>
+      <span class="icon tool" style="--glyph:var(--hhr-icon-notes)" title="Comentarios"></span>
+      <span class="icon" style="--glyph:var(--hhr-icon-suspended)" title="Mostrar suspendidos"></span>
+      <span class="icon" style="--glyph:var(--hhr-icon-filter)" title="Filtrar"></span>
+    </div>
+    <p class="meta">Botón de 26 px y esquina de 6 px; icono de 16 px en una caja de 26 a 28 px; todo control mide 24 px o deja 24 px libres a su alrededor.</p>
+  </section>
+
+  <section>
+    <h2>Etiquetas e interruptores</h2>
+    <div class="row">
+      <span class="tag">Común</span><span class="tag">Nuevo</span><span class="tag">Médica</span>
+      <span class="switch"><i></i>No reanimación</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tarjeta</h2>
+    <div class="card"><h3>Signos vitales <span class="byline">15-04-2026 · 08:15 · Nombre Apellido</span></h3><p style="margin:6px 0 0">Cada medición sobre la tarjeta, separada por una línea fina; un valor fuera de rango en el rojo de alarma.</p></div>
+  </section>
+
+  <section>
+    <h2>Confirmación</h2>
+    <p class="why">La pregunta, su frase, lo que se pide con una línea y la vuelta en palabras. Un diálogo con un campo es un formulario y conserva su aspecto.</p>
+    <div class="stage"><div class="dialog"><h3>Validar tratamiento</h3><p>Declaro haber revisado el tratamiento que el paciente está cursando.</p><div class="row"><span class="button">Continuar</span><span class="button back">Salir</span></div></div></div>
+  </section>
+
+  <section>
+    <h2>Reglas que más se usan</h2>
+    <ol>
+      <li><b>Igual en ambas fichas.</b> Todo cambio vale para la lista de trabajo médico y la de Gestión de cuidados.</li>
+      <li><b>Lo vacío va junto, bajo «Sin datos».</b> Su estado se dice una vez.</li>
+      <li><b>Una acción va donde está lo que hace.</b> La impresión de la evolución, en su tarjeta.</li>
+      <li><b>Las palabras de Eloísa se conservan.</b> La vista cambia cómo se lee, no lo que hace.</li>
+      <li><b>Lo que no se reconoce se dice.</b> La vista avisa y deja la pantalla como la dibuja Eloísa.</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>
