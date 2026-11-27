@@ -288,7 +288,7 @@
        tokens. A list had ten inks and seven sizes; it now has the ficha's. Read on the page: headings at
        14 px in black, cells at 14 px, the assignment at 16 px, the identifier in a 3.9:1 grey. */
     @media screen {
-      [data-hhr-worklist-layout] {
+      :root {
         table[${marked}] > thead > tr > th, table[${marked}] > thead > tr > th :is(p,span,.MuiTypography-root) {
           color:var(--hhr-ficha-ink-soft) !important; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.25 var(--hhr-ficha-sans) !important;
         }
@@ -300,6 +300,9 @@
         [data-hhr-patient-name-row] > :nth-child(2) { color:var(--hhr-ficha-ink) !important; font-weight:var(--hhr-ficha-weight-strong) !important; }
         :is(button[data-hhr-copy-run], [data-hhr-patient-identifier]) { color:var(--hhr-ficha-ink-soft) !important; font-size:var(--hhr-ficha-text-meta) !important; }
         button[data-hhr-copy-run]:is(:hover,:focus-visible) { color:var(--hhr-ficha-action) !important; }
+      }
+      /* The rail and the filters exist only with the layout of the list. */
+      [data-hhr-worklist-layout] {
         [data-hhr-worklist-rail] [role="tab"] { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.3 var(--hhr-ficha-sans); }
         [data-hhr-worklist-rail] [role="tab"][aria-selected="true"] {
           color:var(--hhr-ficha-action); background:var(--hhr-ficha-action-pressed); border-color:transparent; font-weight:var(--hhr-ficha-weight-strong);

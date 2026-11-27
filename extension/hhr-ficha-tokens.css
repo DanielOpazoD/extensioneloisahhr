@@ -2,7 +2,7 @@
    and takes its value from here, so a change of palette, scale or spacing is made once.
    New rules use these tokens; an older rule moves to them when it is next edited. */
 /* The worklists (data-hhr-worklist-layout) read in the same vocabulary as the ficha. */
-html[data-hhr-ficha-theme], html:has([data-hhr-worklist-layout]) {
+html[data-hhr-ficha-theme], html:has([data-hhr-worklist-layout]), html:has(table[data-hhr-compact-worklist]) {
   /* Ink: what is read, what explains it, what only situates it. Eloísa's own neutral inks
      (black at 87, 71 and 60 %), so a text the view restyles reads like the one it leaves. Colour
      is kept for what can be pressed and for flags: a grey name never looks like a link. */
