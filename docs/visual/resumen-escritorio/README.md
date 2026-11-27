@@ -1,5 +1,21 @@
 # Resumen compacto en escritorio
 
+## El estado de una fila como texto, en 0.48.216
+
+El responsable aceptó quitar las cajas del Diagnóstico. El estado es un selector de Eloísa con caja y flecha en la ficha médica, y solo texto en la de Gestión de cuidados.
+
+| Captura, 1440 × 900 | 0.48.215 | 0.48.216 |
+| --- | --- | --- |
+| Primera pantalla | [Antes](0.48.216/antes/1440-resumen.png) | [Después](0.48.216/despues/1440-resumen.png) |
+
+| Medida en la página, ficha médica, con el estilo aplicado a mano | Antes | En reposo | Con el foco en la fila |
+| --- | --- | --- | --- |
+| Línea de la caja | `rgba(0,0,0,.23)` | ninguna | `rgb(196,216,209)` |
+| Flecha | visible | oculta | visible |
+| Palabra respecto del borde de su celda | 14 px adentro | en el borde | en el borde |
+
+Vale también para el estado de Procedimientos y Solicitud de examen.
+
 ## «Sin datos» en pocas líneas, en 0.48.215
 
 El responsable aceptó compactar «Sin datos». Cada sección vacía ocupaba su propio renglón, de a dos, y repetía su estado.

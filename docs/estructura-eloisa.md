@@ -148,6 +148,8 @@ Esa lectura fue de un paciente sin procedimientos: la forma de Procedimientos **
 
 Sin diagnósticos (26-11-2026), la tarjeta no tiene tabla ni firma: `.MuiCardContent-root > p.MuiTypography-body2` «No se presentan diagnosticos registrados para este paciente», sin tilde.
 
+- El estado, en la ficha médica (27-11-2026): `div.MuiFormControl-root.MuiFormControl-fullWidth > div.MuiInputBase-root.MuiOutlinedInput-root` con `div#select-diagnosis-status.MuiSelect-select[role=combobox]` (la palabra en un `span.MuiTypography-caption`, relleno 3 px 32 px 3 px 14 px), `input.MuiSelect-nativeInput`, `svg.MuiSelect-icon` y `fieldset.MuiOutlinedInput-notchedOutline`, que dibuja la caja.
+- En la ficha de Gestión de cuidados el estado es solo un `span.MuiTypography-caption`: no se puede cambiar desde allí.
 ### Secciones vacías o sin permiso
 
 Medido el 26-11-2026 en un paciente de estadía corta:

@@ -427,10 +427,31 @@
       block-size:auto !important; min-block-size:26px; font-size:var(--hhr-ficha-text-body);
       [role="combobox"] { min-block-size:0 !important; padding-block:3px !important; }
     }
+    /* At rest it reads as the text of its column: no box and no arrow, its word on the reading edge of the cell.
+       Pointed at, or with the keyboard on its row, it shows its box and its arrow again, in the same place: the
+       word does not move. Open, it keeps them. Eloísa's select, its menu and what it writes do not change. */
+    :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) td .MuiInputBase-root:has([role="combobox"]) {
+      margin-inline-start:-6px; background:transparent;
+      [role="combobox"] { padding-inline-start:6px !important; color:var(--hhr-ficha-ink); }
+    }
+    /* Written from the select to its siblings, and the arrow shown with visibility: an opacity that follows the
+       focus of the row changed the order Chrome gives the Tab key in the round (measured 27-11-2026). */
+    :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) td [role="combobox"] {
+      ~ .MuiOutlinedInput-notchedOutline { border-color:transparent !important; transition:none; }
+      ~ .MuiSelect-icon { visibility:hidden; }
+    }
+    :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) :is(tr:hover, tr:focus-within) td [role="combobox"],
+    :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) td [role="combobox"][aria-expanded="true"] {
+      ~ .MuiOutlinedInput-notchedOutline { border-color:var(--hhr-ficha-button-line,#c4d8d1) !important; }
+      ~ .MuiSelect-icon { visibility:visible; color:var(--hhr-ficha-action); }
+    }
+    @media (forced-colors:active) {
+      :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) td [role="combobox"] ~ .MuiSelect-icon { visibility:visible; }
+    }
     /* In Procedimientos and Solicitud de examen it takes the width of its longest state, not a third of the table. */
     :is(#procedureEntrySection,#diagnosisTestEntrySection) td {
       .MuiFormControl-root, .MuiInputBase-root { min-inline-size:0 !important; }
-      [role="combobox"] { box-sizing:border-box; min-inline-size:7.5rem !important; padding-inline-start:8px !important; }
+      [role="combobox"] { box-sizing:border-box; min-inline-size:7.5rem !important; }
       /* A text Eloísa cuts keeps «Ver más» at the end of its own line, as the last word would be: the row
          stays one line high until it is opened. */
       > .MuiBox-root:has(> .MuiBox-root > button[data-hhr-note-disclosure]:only-child) {

@@ -95,11 +95,14 @@ export const summaryDiagnoses = [
   ['Dato ficticio', 'Z00.0: Diagnóstico de prueba de la simulación, no corresponde a una persona', 'Confirmado', '12-04-2026'],
   ['Dato ficticio', 'Z00.1: Segundo diagnóstico de prueba', 'Confirmado', '13-04-2026'],
 ];
+// As read on the page (27-11-2026): the box is a fieldset over the field, and the arrow is the select's own icon.
+const stateSelect = (id, value) => `<div class="MuiFormControl-root"><div class="MuiInputBase-root MuiOutlinedInput-root"><div class="MuiSelect-select" role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" id="${id}">${caption(value)}</div>` +
+  `<input aria-hidden="true" tabindex="-1" value="${value}">${icon('ArrowDropDownIcon').replace('class="MuiSvgIcon-root"', 'class="MuiSvgIcon-root MuiSelect-icon"')}` +
+  `<fieldset aria-hidden="true" class="MuiOutlinedInput-notchedOutline"><legend><span>&#8203;</span></legend></fieldset></div></div>`;
 const diagnosisRow = ([kind, text, status, date], index) => [
   index ? '' : icon('StarRoundedIcon'),
   `<div class="MuiStack-root"><div class="MuiBox-root">${caption(kind, true)}</div>${caption(text)}</div>`,
-  `<div class="MuiFormControl-root"><div class="MuiInputBase-root MuiOutlinedInput-root"><div role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" id="select-diagnosis-status-${index}">${caption(status)}</div>` +
-    `<input aria-hidden="true" tabindex="-1" value="${status}">${icon('ArrowDropDownIcon')}</div></div>`,
+  stateSelect('select-diagnosis-status-' + index, status),
   caption(date), caption('') + caption(''), caption(''),
   `<div class="MuiStack-root"><div class="MuiStack-root">${iconButton('SpeakerNotesIcon', 'Ver notas', 'Small', ' disabled').replace('MuiButtonBase-root ', 'MuiButtonBase-root Mui-disabled ')}${iconButton('NoteAddIcon', 'Agregar notas')}</div></div>`,
 ];
@@ -184,8 +187,6 @@ const free = section('freeIndicationEntrySection', 'freeIndicationEntry', 'Indic
   summaryFree.map(([name, schedule]) => [`<div class="MuiStack-root">${readable(name)}</div>`, caption(schedule), caption(requester + ' Prueba'), rowActions()])),
   '', toggle('Mostrar Suspendidos'));
 // A state that can still change is a native select, as the state of a diagnosis; a closed one is its word.
-const stateSelect = (id, value) => `<div class="MuiFormControl-root"><div class="MuiInputBase-root MuiOutlinedInput-root"><div role="combobox" tabindex="0" aria-expanded="false" aria-haspopup="listbox" id="${id}">${caption(value)}</div>` +
-  `<input aria-hidden="true" tabindex="-1" value="${value}">${icon('ArrowDropDownIcon')}</div></div>`;
 // The four sections below with records. Their columns and controls were read on screenshots of 26-11-2026, not
 // on an exported structure: the table is the one Eloísa draws everywhere else. To be calibrated with the page.
 export const summaryProcedures = [
@@ -342,7 +343,8 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiTableCell-head{position:sticky;top:0;z-index:2;background:white;font-weight:500}
   td .MuiStack-root:has(>.MuiStack-root>.MuiIconButton-root){flex-direction:row;align-items:center}td .MuiStack-root>.MuiStack-root:has(>.MuiIconButton-root){flex-direction:row}
   td>.MuiStack-root:has(>.markers){flex-direction:row;align-items:center;gap:8px}.markers{flex-direction:row;gap:4px}
-  :is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) [role=combobox]{min-width:196px;padding:8.5px 32px 8.5px 14px;cursor:pointer}:is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) .MuiOutlinedInput-root{position:relative}
+  :is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) [role=combobox]{min-width:196px;padding:8.5px 32px 8.5px 14px;cursor:pointer}:is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) .MuiOutlinedInput-root{position:relative;border:0}
+  .MuiOutlinedInput-notchedOutline{position:absolute;inset:-5px 0 0;margin:0;padding:0 8px;border:1px solid rgba(0,0,0,.23);border-radius:4px;pointer-events:none;overflow:hidden}.MuiOutlinedInput-notchedOutline legend{float:unset;width:auto;max-width:0.01px;height:11px;padding:0;font-size:12px;visibility:hidden}
   :is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) .MuiOutlinedInput-root>input{position:absolute;bottom:0;left:0;width:100%;opacity:0;pointer-events:none}:is(#diagnosisEntry,#procedureEntry,#diagnosisTestEntry) .MuiOutlinedInput-root>svg{position:absolute;right:7px;pointer-events:none}
   .balance{flex-direction:row;align-items:center;gap:8px;margin-bottom:16px}.balance>.MuiBox-root{width:200px}.balance>.MuiBox-root:last-child{width:auto}
   .select{position:relative;display:flex}.select .MuiOutlinedInput-root{position:relative;width:100%}.select [role=combobox]{width:100%;height:40px;padding:8.5px 32px 8.5px 14px;font-size:16px;line-height:23px;cursor:pointer}
