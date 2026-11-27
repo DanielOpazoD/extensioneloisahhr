@@ -137,7 +137,7 @@ const handoff = section('shiftChangeEntrySection', 'shiftChangeObservation', 'Ob
 const measurement = ([label, value, age, flagged]) => {
   const reading = label === 'Presión' ? `<div class="MuiGrid-root"><div class="MuiStack-root numeric"><h5 class="MuiTypography-root MuiTypography-h5">118</h5>` +
     `<h5 class="MuiTypography-root MuiTypography-h5">/</h5><h5 class="MuiTypography-root MuiTypography-h5">72</h5></div>` +
-    `<div class="MuiStack-root numeric"><p class="MuiTypography-root MuiTypography-body1">PAM:</p><p class="MuiTypography-root MuiTypography-body1">87</p></div></div>` :
+    `<div class="MuiStack-root numeric"><p class="MuiTypography-root MuiTypography-body1">PAM:</p><p class="MuiTypography-root MuiTypography-body1">87.33</p></div></div>` :
     `<h5 class="MuiTypography-root MuiTypography-h5"${flagged ? ' style="color:#cc2424"' : ''}>${value}</h5>`;
   // React nests a block inside this paragraph. The script below rebuilds it, as the parser would close the p.
   return `<div class="MuiPaper-root MuiCard-root tile"><div class="MuiCardContent-root"><div class="MuiTypography-root MuiTypography-body1" data-fixture-paragraph>${label}` +

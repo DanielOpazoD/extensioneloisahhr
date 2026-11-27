@@ -451,12 +451,14 @@ export const verifyNativeFicha = async (page, worker) => {
     assert.ok(await alertDraft.evaluate(el => el === document.activeElement));
     await alertDraft.fill('Alerta ficticia');
     const toggle = alertSection.getByRole('checkbox',{name:'No reanimación',exact:true});
-    const visits = alertSection.getByRole('checkbox',{name:'Gestión de Visitas',exact:true});
+    // The owner asked for the summary without «Gestión de Visitas» (27-11-2026): it stays in the page, out of sight.
+    const visits = alertSection.locator('label[data-hhr-visits-toggle] input[type="checkbox"]');
     const toggleCaption = () => toggle.evaluate(box => getComputedStyle(box.closest('label'),'::after').content);
     assert.match(await toggleCaption(),/Sin marcar/);
     await toggle.press('Space');
     assert.match(await toggleCaption(),/Marcado/);
     assert.equal(await visits.isChecked(),true);
+    assert.equal(await visits.isVisible(),false);
     assert.equal(await draft.inputValue(),'Borrador ficticio');
     assert.equal(await alertDraft.inputValue(),'Alerta ficticia');
     assert.equal(await handoff.getByRole('textbox',{name:'Observación de entrega'}).count(),1);

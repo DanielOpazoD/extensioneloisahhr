@@ -309,8 +309,19 @@
       viewMain = main && name ? main : null;
       if (viewMain && viewMain.getAttribute('data-hhr-ficha-view') !== name) viewMain.setAttribute('data-hhr-ficha-view', name);
     };
+    // Eloísa's green bar says the diagnosis again, cut; the summary opens with it. The owner asked
+    // for the bar without it (27-11-2026). Its words stay in the page, out of sight.
+    let barDiagnosis = null;
+    const setBarDiagnosis = on => {
+      const next = on ? [...document.querySelectorAll('#menu-app-bar-element .MuiToolbar-root .MuiStack-root > span.MuiTypography-root:first-child')]
+        .find(span => /^diagn[oó]stico$/i.test(span.textContent.trim()))?.parentElement || null : null;
+      if (barDiagnosis && barDiagnosis !== next) barDiagnosis.removeAttribute('data-hhr-bar-diagnosis');
+      barDiagnosis = next;
+      if (next && !next.hasAttribute('data-hhr-bar-diagnosis')) next.setAttribute('data-hhr-bar-diagnosis', '');
+    };
     const reset = () => {
       setView(null);
+      setBarDiagnosis(false);
       recognition(null, false, null);
       noteReader.refresh(null, null);
       style?.remove(); style = null;
@@ -505,6 +516,7 @@
       if (primary) mark(primary, 'data-hhr-ficha-primary');
       enhanceEvolution();
       setView(theme === 'compact' ? document.querySelector('main') : null, views[tab.id]);
+      setBarDiagnosis(theme === 'compact');
       const isSummary = tab.id === 'encounter-event-tab-summary' || normalize(tab.textContent) === 'resumen';
       const main = isSummary ? document.querySelector('main') : null;
       surfaces.refresh(main, theme === 'compact');

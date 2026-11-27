@@ -6,7 +6,7 @@ importScripts(
   'message-contract.js', 'build-identity.js', 'hhr-origin-policy.js', 'exalab-background.js', 'exalab-session-transport.js', 'exalab-auto-runtime.js', 'eloisa-patient-code-contract.js', 'fichamedico-manual-patient-code-runtime.js',
   'encounter-navigation.js', 'worklist-return-state.js', 'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js', 'rapa-nui-weather.js', 'hhr-daily-births.js', 'extension-release-check.js',
   'hhr-request-forms.js', 'hhr-imaging-print.js',
-  'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
+  'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'hospitalized-roster-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
   'connection-relay-recovery.js', 'fichamedico-transport-runtime.js', 'fichamedico-history-read-model.js', 'fichamedico-device-evidence-runtime.js', 'clinical-read-error-contract.js', 'fichamedico-clinical-client.js', 'tab-encounter-authorization.js', 'fichamedico-patient-flow-runtime.js',
   'fichamedico-patient-context.js',
   'patient-document-manager-runtime.js',
@@ -1179,6 +1179,7 @@ const clinicalChecklists = self.HhrClinicalChecklistBroker.create({ chrome, reso
 const evolutionNotes = self.HhrFichaEvolutionNotes.create({ resolveSession: resolveFichaClinicalSession, readJson: fichaMedicoClinicalClient.readJson, encounterOf: self.HhrPrescriptionPrint.resolveEncounterId,
   authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); } });
 const runtimeMessageRoutes = Object.freeze({
+  [RUNTIME_MESSAGES.HOSPITALIZED_ROSTER_REQUEST]: runtimeRoute(self.HhrHospitalizedRosterRuntime.create({ getFetchInfo: getFichaFetchInfo, fetchActiveEncounterRows, normalizeHospitalizedEncounter: fichaMedicoPatientContext.normalizeHospitalizedEncounter, activeHospitalizedEncounters: self.HhrPrescriptionPrint.activeHospitalizedEncounters }), 'No se pudo leer la lista de hospitalizados.'),
   [RUNTIME_MESSAGES.EVOLUTION_NOTES_REQUEST]: runtimeRoute(evolutionNotes.handle, 'No se pudieron leer las evoluciones.'),
   [RUNTIME_MESSAGES.CLINICAL_CHECKLIST]: runtimeRoute(clinicalChecklists.handle, 'No se pudo conectar la pauta con HHR.'),
   [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),

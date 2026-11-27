@@ -1,5 +1,14 @@
 # Cambios
 
+## 0.48.223
+
+- Cambio rápido de paciente: en la ficha abierta desde la lista de trabajo médico o desde Gestión de cuidados, el nombre del paciente en la barra verde abre la lista de pacientes hospitalizados, con buscador por nombre, sala o cama. Cada paciente es un enlace a la misma vista de su episodio, y el actual va marcado. La lista sale de una sola lectura del censo activo (nombre, servicio, sala y cama; nada clínico), se guarda un minuto y solo se entrega a la propia ficha. Se mueve con las flechas y se cierra con Escape.
+- La barra verde ya no muestra el diagnóstico: el Resumen empieza con él. Sus palabras siguen en la página.
+- La PAM se lee como número entero (Eloísa la escribe con dos decimales, leído en la página el 27-11-2026); la cifra de Eloísa sigue en la página.
+- En Alertas, quien escribió se lee con su nombre y apellido, sin el cargo («Elena Ejemplo», no «Enfermera(o) Elena Ejemplo»).
+- El Resumen ya no muestra «Gestión de Visitas», a pedido del responsable. El interruptor sigue en la página, fuera de la vista.
+- La ventana de Evoluciones es más compacta: texto de 14 px (antes 16), cabecera, filtros y márgenes más bajos y los botones de la vista. Conserva el tamaño de la ventana.
+
 ## 0.48.222
 
 - Alta (ficha médica) y Ejecución de cuidados (ficha de Gestión de cuidados) usan el mismo estilo que el Resumen: títulos de 15 px, tarjetas con la esquina de la vista y sin sombra, campos a la altura de una línea, el botón único sin relleno ni mayúsculas, interruptores del tamaño de los demás y texto a la letra del Resumen. Seguían con el aspecto original de Eloísa.

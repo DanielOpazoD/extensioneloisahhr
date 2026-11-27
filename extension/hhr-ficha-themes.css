@@ -734,3 +734,14 @@
     box-shadow:none !important; border-color:var(--hhr-ficha-line) !important; border-radius:8px !important;
   }
 }
+
+/* Asked by the owner (27-11-2026): PAM as a whole number, the summary without «Gestión de Visitas», and
+   Eloísa's green bar without the diagnosis, which the summary opens with. Eloísa's words stay in the page. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-rounded]:not(#hhr-a) {
+    font-size:0 !important;
+    &::after { content:attr(data-hhr-vital-rounded) / ""; font-size:.75rem; line-height:1.15; }
+  }
+  html[data-hhr-ficha-theme="compact"] label[data-hhr-visits-toggle] { display:none !important; }
+  html[data-hhr-ficha-theme="compact"] #menu-app-bar-element [data-hhr-bar-diagnosis] { display:none !important; }
+}

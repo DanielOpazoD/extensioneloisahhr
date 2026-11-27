@@ -50,6 +50,7 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 | [`hhr-ficha-evolution-authors.css`](../extension/hhr-ficha-evolution-authors.css) y [`.js`](../extension/hhr-ficha-evolution-authors.js) | Acciones de Evolución y filtro de evoluciones por profesional. |
 | [`hhr-ficha-reading-labels.css`](../extension/hhr-ficha-reading-labels.css) y [`.js`](../extension/hhr-ficha-reading-labels.js) | Firmas, campos de entrega y alerta, interruptores. |
 | [`hhr-ficha-history.css`](../extension/hhr-ficha-history.css) y [`hhr-history-date-navigation.js`](../extension/hhr-history-date-navigation.js) | Historial compacto y navegación por fechas. |
+| [`hhr-ficha-patient-switcher.js`](../extension/hhr-ficha-patient-switcher.js) y [`.css`](../extension/hhr-ficha-patient-switcher.css) | Lista de hospitalizados al pulsar el nombre del paciente en la barra verde. |
 | [`hhr-ficha-views.css`](../extension/hhr-ficha-views.css) | Alta y Ejecución de cuidados con el estilo del Resumen. |
 | [`hhr-ficha-care-plan.css`](../extension/hhr-ficha-care-plan.css) y [`.js`](../extension/hhr-ficha-care-plan.js) | Tarjetas de programación de Plan de tratamiento. |
 

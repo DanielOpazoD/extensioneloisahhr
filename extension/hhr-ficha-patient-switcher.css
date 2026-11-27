@@ -1,0 +1,33 @@
+/* The name of the patient in Eloísa's green bar opens the list of hospitalized patients
+   (hhr-ficha-patient-switcher.js). The name keeps its words and its place: it shows that it opens. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-patient-switch] {
+    cursor:pointer; border-radius:4px; text-decoration:underline dotted rgba(255,255,255,.6); text-underline-offset:3px;
+    &:hover { text-decoration-style:solid; }
+    &:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+  }
+  [data-hhr-patient-switcher] {
+    position:fixed; z-index:2147483100; inset-block-start:var(--hhr-switch-top, 56px); inset-inline-start:var(--hhr-switch-left, 16px);
+    box-sizing:border-box; inline-size:min(380px, calc(100vw - 16px)); max-block-size:min(70vh, 560px);
+    display:flex; flex-direction:column; gap:6px; padding:10px;
+    border:1px solid var(--hhr-ficha-line, #dce5e2); border-radius:var(--hhr-ficha-radius, 8px);
+    background:#fff; color:var(--hhr-ficha-ink, #212121); box-shadow:0 12px 32px rgba(7,27,49,.18);
+    font:400 var(--hhr-ficha-text-body, 13px)/1.4 var(--hhr-ficha-sans, system-ui, sans-serif);
+    input[type="search"] {
+      box-sizing:border-box; inline-size:100%; block-size:30px; padding:4px 8px;
+      border:1px solid var(--hhr-ficha-button-line, #c4d8d1); border-radius:var(--hhr-ficha-button-radius, 6px); font:inherit;
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus, #176f63); outline-offset:1px; }
+    }
+    .hhr-switch-status { margin:0; color:var(--hhr-ficha-ink-soft, #4a4a4a); font-size:var(--hhr-ficha-text-meta, 12px); }
+    .hhr-switch-list { overflow:auto; margin:0; padding:0; list-style:none; }
+    a {
+      display:grid; grid-template-columns:7.5rem minmax(0,1fr); gap:8px; align-items:baseline;
+      padding:5px 6px; border-radius:6px; color:inherit; text-decoration:none;
+      &:hover { background:var(--hhr-ficha-action-hover, #edf5f2); }
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus, #176f63); outline-offset:-2px; }
+      &[aria-current="page"] { background:var(--hhr-ficha-band, #f2f6f4); font-weight:var(--hhr-ficha-weight-strong, 600); }
+    }
+    .hhr-switch-place { color:var(--hhr-ficha-ink-soft, #4a4a4a); font-size:var(--hhr-ficha-text-meta, 12px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hhr-switch-name { overflow-wrap:anywhere; }
+  }
+}

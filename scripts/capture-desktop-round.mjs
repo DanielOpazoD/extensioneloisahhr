@@ -253,21 +253,20 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
   assert.equal(await history.evaluate(el => el === document.activeElement),true);
   const alerts = page.locator('#alertEntrySection');
   const noResuscitation = alerts.getByRole('checkbox',{name:'No reanimación'});
-  const visits = alerts.getByRole('checkbox',{name:'Gestión de Visitas'});
+  // The owner asked for the summary without «Gestión de Visitas» (27-11-2026): it is not drawn nor reached.
+  const visits = alerts.locator('label[data-hhr-visits-toggle]');
+  assert.equal(await visits.count(), 1, 'Gestión de Visitas se reconoce');
+  assert.equal(await visits.isVisible(), false, 'Gestión de Visitas no se muestra');
   assert.equal(await noResuscitation.isChecked(),false);
-  assert.equal(await visits.isChecked(),true);
   await alerts.getByRole('button',{name:'Archivar alerta'}).last().press('Tab');
   assert.equal(await noResuscitation.evaluate(el => el === document.activeElement),true);
   await noResuscitation.press('Space');
   assert.equal(await noResuscitation.isChecked(),true);
-  assert.equal(await visits.isChecked(),true);
   await noResuscitation.press('Tab');
-  assert.equal(await visits.evaluate(el => el === document.activeElement),true);
-  await visits.press('Tab');
   const openAlert = alerts.locator('[data-hhr-entry-open]');
   if (await openAlert.isVisible()) {
     assert.ok(!await alerts.locator('input:not([type=checkbox])').isVisible(), 'Nueva alerta empieza en modo lectura');
-    assert.ok(await openAlert.evaluate(el => el === document.activeElement), 'Tab desde Gestión de Visitas llega a Nueva alerta');
+    assert.ok(await openAlert.evaluate(el => el === document.activeElement), 'Tab desde No reanimación llega a Nueva alerta');
     await openAlert.press('Enter');
   } else if (reading && verifyLayout) assert.fail('Falta el botón para escribir una alerta');
   const alertText = alerts.getByRole('textbox');
