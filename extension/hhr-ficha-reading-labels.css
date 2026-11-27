@@ -229,6 +229,9 @@
     /* The rule hangs in the margin, leaving both switches on one edge.
        Once marked, the order takes the whole line of the card. */
     > [data-hhr-resuscitation-toggle] { margin-inline-start:-6px; }
+    /* Without «Gestión de visitas» (the owner asked to hide it, 27-11-2026), «No reanimación» takes its place
+       beside the alert action: one line, not two. */
+    &:has(> [data-hhr-visits-toggle]) > [data-hhr-resuscitation-toggle] { grid-column:1; }
     > [data-hhr-resuscitation-toggle]:has(input:checked) { width:auto; justify-self:stretch; }
   }
 }

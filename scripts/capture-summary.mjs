@@ -342,6 +342,15 @@ async function verifySummary(page, width, native, off, sans) {
   // The round: the note with the handoff and the alerts beside it, all three ending on one line; then the signs across the page.
   assert.ok(near(shown.handoff.left, shown.alerts.left) && near(shown.alerts.top, shown.handoff.bottom) && shown.handoff.left >= shown.note.right - 1, 'Alertas sigue a la entrega de turno');
   // From 1360 px the handoff and the alerts take five twelfths of the line; narrower, four.
+  const lined = await page.evaluate(() => {
+    const at = el => el && el.getBoundingClientRect();
+    const starts = [...new Set([...document.querySelectorAll('td[data-hhr-reading="order-requester"]')].map(td => td.closest('table'))
+      .map(table => Math.round(at(table.querySelector('td[data-hhr-reading="order-requester"]')).left)))];
+    const resuscitation = at(document.querySelector('#alertEntrySection [data-hhr-resuscitation-toggle]')), add = at(document.querySelector('#alertEntrySection [data-hhr-entry-open]'));
+    return {starts, footer:resuscitation && add ? Math.abs((resuscitation.top + resuscitation.bottom) / 2 - (add.top + add.bottom) / 2) : null};
+  });
+  assert.equal(lined.starts.length, 1, '«Solicitante» empieza en el mismo lugar en Fármacos e Indicaciones libres: ' + lined.starts);
+  assert.ok(lined.footer !== null && lined.footer <= 2, '«No reanimación» y «Agregar alerta» comparten una línea: ' + lined.footer);
   const share = shown.handoff.width / (shown.handoff.width + shown.note.width);
   assert.ok(Math.abs(share - (page.viewportSize().width >= 1360 ? 5 / 12 : 4 / 12)) < .02, 'La entrega de turno y Alertas tienen su ancho: ' + share.toFixed(3));
   assert.ok(near(shown.note.top, shown.handoff.top) && near(shown.alerts.bottom, shown.note.bottom, 1), `La nota y las tarjetas a su lado empiezan y terminan en la misma línea: ${shown.note.bottom} y ${shown.alerts.bottom}`);

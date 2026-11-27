@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.229
+
+- «No reanimación» y «Agregar alerta» vuelven a compartir una línea: al ocultar «Gestión de visitas» habían quedado en dos.
+- «Solicitante» empieza en el mismo lugar en Fármacos y en Indicaciones libres (antes 60 px de diferencia); un nombre más largo ensancha su columna.
+- Ventana angosta (600 a 1099 px): «Resumen diario paciente» es el campo compacto de escritorio (antes el campo grande de Eloísa) y las fechas, estados y acciones de Diagnóstico no se parten en dos líneas.
+
 ## 0.48.228
 
 - Corregido: la lista de pacientes del nombre en la barra verde quedaba en «El relé de Ficha Médico perdió conexión con la extensión.» cuando la pestaña aún no confirmaba su conexión. Ahora se pide la sesión otra vez un momento después, el error trae «Reintentar» sin cerrar la lista y la lista se empieza a leer al apuntar el nombre.
