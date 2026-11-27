@@ -1,5 +1,28 @@
 # Resumen compacto en escritorio
 
+## Alertas con la forma del resto, en 0.48.214
+
+El responsable aceptó dar a Alertas la forma del resto del Resumen. Se leyó la tarjeta en la página, en las dos fichas (26-11-2026).
+
+| Captura, 1488 × 910, nota breve y tres alertas | 0.48.213 | 0.48.214 |
+| --- | --- | --- |
+| Evolución, Entrega y Alertas | [Antes](0.48.214/antes/1488-alertas.png) | [Después](0.48.214/despues/1488-alertas.png) |
+
+| Medida en la página, con el estilo aplicado a mano (igual en las dos fichas) | Antes | Ahora |
+| --- | ---: | ---: |
+| Alto de una alerta | 49–50 px | 45–46 px |
+| Barra ámbar por fila | 2 px en cada una | ninguna; una marca de 7 px junto al título |
+| Peso del texto de la alerta | 600 | 400 |
+| Tinta de quién y cuándo | la del texto | gris `rgb(102,102,102)` |
+| «No reanimación» sin marcar | barra de 2 px y negrita | como el interruptor de al lado |
+
+| Medida en la ficha ficticia, nota de tres líneas y tres alertas | 0.48.213 | 0.48.214 |
+| --- | ---: | ---: |
+| Alto de la tarjeta de Alertas | 144 px: la lista se cortaba dentro de la primera alerta | 258 px: las tres alertas enteras |
+| Borde inferior de la nota y de Alertas | el mismo | el mismo |
+
+El alto mínimo que sigue a la lista depende del script de la extensión: no se pudo ver en la página.
+
 ## Un solo botón, en 0.48.213
 
 El responsable aceptó unificar los botones del Resumen. Se leyeron en la página, en las dos fichas (26-11-2026).

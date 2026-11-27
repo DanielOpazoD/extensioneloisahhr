@@ -29,6 +29,8 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 23. **Ninguna regla mira dentro de un control con `:has()` para pintarlo.** Un anillo de foco escrito como `label:has(input:focus-visible)` cambió el orden en que Chrome reparte el tabulador por la ronda (`reading-flow`): pasaba del filtro de una sección vacía a Diagnóstico. El foco y el estado se dibujan en el propio control.
 24. **Quién puede leer se decide con la dirección de la pestaña.** Eloísa cambia de pantalla sin cargar una página: la dirección con que se cargó un script (`sender.url`) puede ser la de la lista. El servicio usa `sender.tab.url`, que mantiene el navegador.
 25. **Un solo botón.** Un botón que hace algo es una línea alrededor de sus palabras (`--hhr-ficha-button`, `--hhr-ficha-button-radius`, `--hhr-ficha-button-line`), en la tinta de lo que se pulsa y sin relleno, sea de Eloísa o de la vista. Uno que solo abre una lectura no lleva línea. Deshabilitado, una tinta más clara (`--hhr-ficha-disabled`). No se usan el relleno ni un segundo color para dar énfasis: el orden y el lugar lo dan.
+26. **Una lista es una tabla sin cabecera.** Las alertas se leen como las filas de una tabla: texto en la tinta y el peso de lo que se lee, lo que sitúa (quién, cuándo) en gris, una línea entre filas. El color de una bandera se usa una vez por tarjeta, junto a su título, y en lo que está marcado («No reanimación»), no en cada fila.
+27. **Una tarjeta junto a la nota dice cuánto necesita.** Alertas publica el alto de su lista (`--hhr-round-need`, leído de sus filas y nunca del alto que se le dio) y su mínimo lo sigue hasta un tope; la nota toma ese mínimo como piso. Así ninguna de las dos lee el alto de la otra.
 
 ## Dónde vive cada cosa
 

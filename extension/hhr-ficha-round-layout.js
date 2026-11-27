@@ -302,6 +302,12 @@
       for (const [el, top] of offsets) set(el, '--hhr-round-offset', top + 'px');
       // A brief note still ends where the cards beside it end: it takes at least the handoff and the least
       // the alerts can be. It reads the height of neither as they are drawn, so they cannot chase each other.
+      // What the list of alerts needs to be read whole: the card around it and its rows, read from the rows
+      // themselves, never from the height the list has been given.
+      const list = fill?.querySelector('#alertEntrySection > .MuiCard-root > .MuiCardContent-root > .MuiBox-root:first-child');
+      const listed = list && list.childElementCount ? list.lastElementChild.getBoundingClientRect().bottom - list.firstElementChild.getBoundingClientRect().top : 0;
+      if (list) set(fill, '--hhr-round-need', Math.ceil(fill.getBoundingClientRect().height - list.getBoundingClientRect().height + listed) + 'px');
+      else fill?.style.removeProperty('--hhr-round-need');
       const beside = stacks[1].filter(item => item !== fill).reduce((sum, item) => sum + item.getBoundingClientRect().height, 0);
       const floor = beside + (fill ? parseFloat(getComputedStyle(fill).minBlockSize) || 0 : 0);
       // The card of the note sits inside its item: what the item adds around it is not asked of the card.
@@ -363,6 +369,7 @@
       for (const item of stacks.flat()) item.style.removeProperty('--hhr-round-offset');
       lead?.style.removeProperty('--hhr-round-floor');
       fill?.style.removeProperty('--hhr-round-fill');
+      fill?.style.removeProperty('--hhr-round-need');
       for (const item of halves) item.removeAttribute('data-hhr-round-half');
       for (const [peer] of peers) peer.style.removeProperty('--hhr-round-span');
       stacks = []; halves = []; peers = []; requests = []; signs = lead = fill = frame = null;
