@@ -280,6 +280,7 @@
         "hhr-ficha-evolution-authors.js",
         "hhr-ficha-note-reader.js",
         "hhr-ficha-patient-switcher.js",
+        "hhr-ficha-transitions.js",
         "hhr-native-ficha-presentation.js",
         "hhr-worklist-drawer.js",
         "worklist-return-navigation.js",
@@ -305,7 +306,8 @@
         "hhr-ficha-round-layout.css",
         "hhr-ficha-evolution-authors.css",
         "nursing-handoff-dialog.css",
-        "clinical-checklist.css"
+        "clinical-checklist.css",
+        "hhr-ficha-transitions.css"
       ],
       "run_at": "document_idle"
     },
