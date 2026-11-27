@@ -290,10 +290,11 @@
     @media screen {
       :root {
         table[${marked}] > thead > tr > th, table[${marked}] > thead > tr > th :is(p,span,.MuiTypography-root) {
-          color:var(--hhr-ficha-ink-soft) !important; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.25 var(--hhr-ficha-sans) !important;
+          /* The list keeps Eloísa's family: a wider one on another platform broke a name onto two lines. */
+          color:var(--hhr-ficha-ink-soft) !important; font-size:var(--hhr-ficha-text-meta) !important; font-weight:var(--hhr-ficha-weight-strong) !important; line-height:1.25 !important;
         }
         table[${marked}] > tbody > tr > td, table[${marked}] > tbody > tr > td :is(p,.MuiTypography-root,.MuiSelect-select) {
-          color:var(--hhr-ficha-ink); font-family:var(--hhr-ficha-sans); font-size:var(--hhr-ficha-text-body) !important;
+          color:var(--hhr-ficha-ink); font-size:var(--hhr-ficha-text-body) !important;
         }
         .hhr-location-service { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta) !important; }
         .hhr-location-bed { color:var(--hhr-ficha-ink); font-weight:var(--hhr-ficha-weight-strong); }
@@ -303,7 +304,7 @@
       }
       /* The rail and the filters exist only with the layout of the list. */
       [data-hhr-worklist-layout] {
-        [data-hhr-worklist-rail] [role="tab"] { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.3 var(--hhr-ficha-sans); }
+        [data-hhr-worklist-rail] [role="tab"] { color:var(--hhr-ficha-ink-soft); font-size:var(--hhr-ficha-text-body); font-weight:400; }
         [data-hhr-worklist-rail] [role="tab"][aria-selected="true"] {
           color:var(--hhr-ficha-action); background:var(--hhr-ficha-action-pressed); border-color:transparent; font-weight:var(--hhr-ficha-weight-strong);
         }
