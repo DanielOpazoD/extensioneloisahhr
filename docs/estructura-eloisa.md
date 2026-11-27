@@ -219,6 +219,14 @@ Pendiente de confirmar en la página real:
 - **Cómo fija Eloísa el ancho de la columna de horas** y cuánto mide en una ventana de 1280 px. La ficha ficticia supone 1000 px fijos.
 - **Cuándo se pliega el `.MuiCollapse-root`** de las herramientas.
 
+## Alta (ficha médica)
+
+Leído el 27-11-2026: `main > div.MuiStack-root > div.MuiBox-root` con `h6.MuiTypography-root` «Alta» (20 px, peso 500), un `form.MuiPaper-root.MuiCard-root` con `.MuiStepper-root` de tres pasos (Destino, Tratamiento, Próximo control) y un `div.MuiPaper-root.MuiCard-root` (esquinas de 12 px, relleno 64 px 32 px) con `form.MuiBox-root`: una `MuiGrid-container` con dos selectores MUI («Motivo de alta *», «Destino *»), un `label.MuiFormLabel-root` y un interruptor de 38 px «Traslado en ambulancia*», y `button.MuiButton-containedSecondary` «Continuar» (mayúsculas, deshabilitado hasta completar el paso).
+
+## Ejecución de cuidados (ficha de Gestión de cuidados)
+
+Leído el 27-11-2026: una `MuiGrid-container` con dos ítems. El primero (283 px): `div.MuiPaper-root > div.MuiPaper-root > form.MuiStack-root` con `h6` «Filtros», `button.MuiButton-contained` «Ejecución SOS», `p` «Rango de fechas», dos campos de fecha con calendario, `p` «Datos», cuatro selectores (Estación de enfermería, Departamento, Tipo de entrada, Estado), «Buscar» (relleno) y «Reiniciar» (texto). El segundo: un `div.MuiStack-root` (separación 16 px) con un `div.MuiBox-root` por hora: `p` del día cuando abre uno («Hoy, 27 de noviembre», 16 px) y `div.MuiPaper-root.MuiCard-root` con `div.MuiStack-root` (la hora en `p` gris `rgb(128,128,128)` de 14 px y un botón `PrintRoundedIcon`) y `.MuiCardContent-root > table` de 8 columnas: casilla de selección, Ubicación, Paciente, Indicación, Observación en, Indicación específica, Dosis Aplic. y Comentarios (un campo de texto). Celdas de 14 px; una fila medía 96 px.
+
 ## Historial
 
 `main > … > div.MuiGrid-container` con dos ítems:

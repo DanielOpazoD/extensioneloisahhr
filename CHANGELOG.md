@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.222
+
+- Alta (ficha médica) y Ejecución de cuidados (ficha de Gestión de cuidados) usan el mismo estilo que el Resumen: títulos de 15 px, tarjetas con la esquina de la vista y sin sombra, campos a la altura de una línea, el botón único sin relleno ni mayúsculas, interruptores del tamaño de los demás y texto a la letra del Resumen. Seguían con el aspecto original de Eloísa.
+- Ejecución de cuidados: los Filtros se leen como en Historial, cada día encabeza sus horas y cada hora es una tarjeta con su tabla al ritmo del Resumen. Medido en la página con el estilo aplicado a mano (27-11-2026): la vista pasa de 3481 a 2035 px de alto y cada fila de 96 a 61 px; la hora de cada tarjeta, que Eloísa escribía en un gris de 3,9:1, se lee a 16:1.
+- El icono de impresión de cada hora entra en la familia de iconos de contorno.
+- Antecedentes no cambia: en la ficha leída no tenía contenido que mostrar.
+- Nueva captura en CI (`scripts/capture-other-views.mjs`) que comprueba ambas vistas, también su contraste y el tamaño de sus controles.
+
 ## 0.48.221
 
 - Plan de tratamiento se ve igual en la ficha de Gestión de cuidados que en la de lista de trabajo médico. Ahí Eloísa abre cada tabla, salvo Procedimientos, con una columna de casillas para seleccionar filas (leído en la página el 27-11-2026), y la vista no la reconocía: tres de las cuatro tarjetas quedaban con títulos de 24 px, interruptores de 38 px y botones en mayúsculas. Ahora se reconocen las cuatro; la columna de selección mide lo que su casilla y la indicación se lee como en la ficha médica.

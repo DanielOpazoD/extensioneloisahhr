@@ -300,7 +300,17 @@
       });
       unmark(element); links.delete(element);
     };
+    // Alta and Ejecución de cuidados read in the language of the summary. Their stylesheet
+    // (hhr-ficha-views.css) presents them by the name of the view on main; their nodes stay Eloísa's.
+    const views = {'encounter-event-tab-discharge':'discharge', 'encounter-event-tab-care-plan-execute':'care-execution'};
+    let viewMain = null;
+    const setView = (main, name) => {
+      if (viewMain && viewMain !== main) viewMain.removeAttribute('data-hhr-ficha-view');
+      viewMain = main && name ? main : null;
+      if (viewMain && viewMain.getAttribute('data-hhr-ficha-view') !== name) viewMain.setAttribute('data-hhr-ficha-view', name);
+    };
     const reset = () => {
+      setView(null);
       recognition(null, false, null);
       noteReader.refresh(null, null);
       style?.remove(); style = null;
@@ -494,6 +504,7 @@
       if (!style) { style = document.createElement('style'); style.textContent = css; document.head.append(style); }
       if (primary) mark(primary, 'data-hhr-ficha-primary');
       enhanceEvolution();
+      setView(theme === 'compact' ? document.querySelector('main') : null, views[tab.id]);
       const isSummary = tab.id === 'encounter-event-tab-summary' || normalize(tab.textContent) === 'resumen';
       const main = isSummary ? document.querySelector('main') : null;
       surfaces.refresh(main, theme === 'compact');

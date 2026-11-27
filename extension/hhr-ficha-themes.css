@@ -715,11 +715,11 @@
    svg keeps its place, its size and its name: only its drawing is the outline, in its own ink. */
 @media screen {
   html[data-hhr-ficha-theme="compact"] main :is(
-    svg[data-testid="LocalPrintshopRoundedIcon"], svg[data-testid="ArchiveRoundedIcon"], svg[data-testid="CancelIcon"],
+    svg[data-testid="LocalPrintshopRoundedIcon"], svg[data-testid="PrintRoundedIcon"], svg[data-testid="ArchiveRoundedIcon"], svg[data-testid="CancelIcon"],
     svg[data-testid="SpeakerNotesIcon"], svg[data-testid="NoteAddIcon"]):not(:is(dialog,[role=dialog]) *) {
     background:currentColor; mask:var(--hhr-family-icon) center / contain no-repeat;
     > * { visibility:hidden; }
-    &[data-testid="LocalPrintshopRoundedIcon"] { --hhr-family-icon:var(--hhr-icon-print); }
+    &:is([data-testid="LocalPrintshopRoundedIcon"], [data-testid="PrintRoundedIcon"]) { --hhr-family-icon:var(--hhr-icon-print); }
     &[data-testid="ArchiveRoundedIcon"] { --hhr-family-icon:var(--hhr-icon-archive); }
     &[data-testid="CancelIcon"] { --hhr-family-icon:var(--hhr-icon-cancel); }
     &[data-testid="SpeakerNotesIcon"] { --hhr-family-icon:var(--hhr-icon-notes); }
