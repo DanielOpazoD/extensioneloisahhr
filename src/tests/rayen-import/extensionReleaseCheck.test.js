@@ -39,7 +39,7 @@ it('answers only the top frame of the ficha and asks GitHub without credentials 
   expect(storage.set).toHaveBeenCalledTimes(1);
 });
 
-it('keeps one answer for six hours and shares one request among simultaneous questions', async () => {
+it('keeps one answer for an hour and shares one request among simultaneous questions', async () => {
   let finish;
   // Only the first request waits: both questions must find it in flight.
   const { check, request, state } = setup({ reply: () => finish ? release('v0.48.194') : new Promise(done => { finish = () => done(release('v0.48.194')); }) });
@@ -47,7 +47,7 @@ it('keeps one answer for six hours and shares one request among simultaneous que
   await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(1));
   finish();
   expect(await Promise.all(both)).toEqual(Array(2).fill({ installed: '0.48.187', published: '0.48.194', available: true, ahead: false }));
-  state.clock += 6 * hour - 1;
+  state.clock += hour - 1;
   await check.status({}, ficha);
   expect(request).toHaveBeenCalledTimes(1);
   state.clock += 1;

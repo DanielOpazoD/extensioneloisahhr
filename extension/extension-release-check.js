@@ -3,8 +3,10 @@
   'use strict';
   const endpoint = 'https://api.github.com/repos/DanielOpazoD/extensioneloisahhr/releases/latest';
   const storageKey = 'hhr-release-check-v1';
-  // One answer serves a working shift. After a failure the next attempt waits an hour.
-  const fresh = 6 * 60 * 60_000, patience = 60 * 60_000;
+  // One answer serves an hour: versions are published several times a day, and an answer of six hours
+  // kept a version two releases behind without notice (seen 27-11-2026). After a failure the next attempt
+  // also waits an hour. One public request an hour, without page or session data.
+  const fresh = 60 * 60_000, patience = 60 * 60_000;
   const unavailable = 'Versión publicada no disponible.';
   const parse = version => /^\d+\.\d+\.\d+$/.test(version ?? '') ? version.split('.').map(Number) : null;
   /** True only when both are versions and `published` is the later one. */

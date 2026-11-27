@@ -110,6 +110,16 @@
     return notice;
   };
 
+  // The compact view tells when a loaded view of Eloísa is not one it recognizes: it then shows it as
+  // Eloísa draws it, and the change on Eloísa's side is worth reporting. Once per patient and view.
+  const unrecognizedViews = { 'Resumen': 'el Resumen', 'Plan de tratamiento': 'el Plan de tratamiento' };
+  document.addEventListener('hhr-view-unrecognized', event => {
+    const view = unrecognizedViews[event.detail];
+    if (!view) return;
+    showPageNotice(`La vista Compacta no reconoció ${view} de esta ficha y lo muestra como lo dibuja Eloísa. Puede que Eloísa haya cambiado su página.`,
+      { title: 'Vista Compacta', duration: 9000 });
+  });
+
   const requestPageConfirmation = ({ title, message, confirmLabel = 'Confirmar' }) =>
     new Promise(resolve => {
       const notice = showPageNotice(message, { title, duration: 0 });
