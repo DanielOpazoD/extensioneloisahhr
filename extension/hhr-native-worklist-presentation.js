@@ -284,6 +284,35 @@
     table[${marked}] > tbody > tr > :is(th,td) .MuiStack-root > :not(style) ~ :not(style) {
       margin-block-start:0 !important;
     }
+    /* The lists read in the language of the ficha (27-11-2026): its inks and its sizes, read in the ficha's
+       tokens. A list had ten inks and seven sizes; it now has the ficha's. Read on the page: headings at
+       14 px in black, cells at 14 px, the assignment at 16 px, the identifier in a 3.9:1 grey. */
+    @media screen {
+      :root {
+        table[${marked}] > thead > tr > th, table[${marked}] > thead > tr > th :is(p,span,.MuiTypography-root) {
+          /* The list keeps Eloísa's family: a wider one on another platform broke a name onto two lines. */
+          color:var(--hhr-ficha-ink-soft) !important; font-size:var(--hhr-ficha-text-meta) !important; font-weight:var(--hhr-ficha-weight-strong) !important; line-height:1.25 !important;
+        }
+        table[${marked}] > tbody > tr > td, table[${marked}] > tbody > tr > td :is(p,.MuiTypography-root,.MuiSelect-select) {
+          color:var(--hhr-ficha-ink); font-size:var(--hhr-ficha-text-body) !important;
+        }
+        .hhr-location-service { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta) !important; }
+        .hhr-location-bed { color:var(--hhr-ficha-ink); font-weight:var(--hhr-ficha-weight-strong); }
+        [data-hhr-patient-name-row] > :nth-child(2) { color:var(--hhr-ficha-ink) !important; font-weight:var(--hhr-ficha-weight-strong) !important; }
+        :is(button[data-hhr-copy-run], [data-hhr-patient-identifier]) { color:var(--hhr-ficha-ink-soft) !important; font-size:var(--hhr-ficha-text-meta) !important; }
+        button[data-hhr-copy-run]:is(:hover,:focus-visible) { color:var(--hhr-ficha-action) !important; }
+      }
+      /* The rail and the filters exist only with the layout of the list. */
+      [data-hhr-worklist-layout] {
+        [data-hhr-worklist-rail] [role="tab"] { color:var(--hhr-ficha-ink-soft); font-size:var(--hhr-ficha-text-body); font-weight:400; }
+        [data-hhr-worklist-rail] [role="tab"][aria-selected="true"] {
+          color:var(--hhr-ficha-action); background:var(--hhr-ficha-action-pressed); border-color:transparent; font-weight:var(--hhr-ficha-weight-strong);
+        }
+        [data-hhr-worklist-filterbar] :is(.MuiInputBase-root, #long-button) { background:#fff; border-color:var(--hhr-ficha-button-line); }
+        [data-hhr-worklist-filterbar] .MuiOutlinedInput-notchedOutline { border-color:var(--hhr-ficha-button-line); }
+        [data-hhr-worklist-filterbar] #long-button { color:var(--hhr-ficha-action); }
+      }
+    }
   `;
   const createNoveltyTooltip = () => {
     const selector = '[data-hhr-novelty-help]';

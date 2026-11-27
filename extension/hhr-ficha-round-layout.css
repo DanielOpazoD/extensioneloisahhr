@@ -495,3 +495,8 @@
     }
   }
 }
+/* «Sin datos» is a part of the desk: below it the empty Reposo reads in its own card, and its name of the
+   view is not drawn. */
+@media screen and (max-width:1099.98px) {
+  [data-hhr-round-proxy] { display:none !important; }
+}
