@@ -1,5 +1,22 @@
 # Resumen compacto en escritorio
 
+## «Sin datos» en pocas líneas, en 0.48.215
+
+El responsable aceptó compactar «Sin datos». Cada sección vacía ocupaba su propio renglón, de a dos, y repetía su estado.
+
+| Captura, 1440 × 900 | 0.48.214 | 0.48.215 |
+| --- | --- | --- |
+| Primera pantalla | [Antes](0.48.215/antes/1440-resumen.png) | [Después](0.48.215/despues/1440-resumen.png) |
+
+| Medida en la página, con el estilo y la colocación aplicados a mano | 0.48.214 | 0.48.215 |
+| --- | ---: | ---: |
+| Ficha médica: líneas y alto del grupo | 7 líneas, 179 px | 3 líneas, 71 px |
+| Ficha de Gestión de cuidados | 6 líneas, 153 px | 3 líneas, 71 px |
+| Veces que se dice el estado | una por sección | una por grupo |
+| Superposiciones | ninguna | ninguna |
+
+Los nombres de cada grupo empiezan en la misma columna, también al saltar de línea.
+
 ## Alertas con la forma del resto, en 0.48.214
 
 El responsable aceptó dar a Alertas la forma del resto del Resumen. Se leyó la tarjeta en la página, en las dos fichas (26-11-2026).

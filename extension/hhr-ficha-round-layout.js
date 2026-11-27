@@ -327,28 +327,49 @@
         .filter(drawn).sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1) : [];
       const care = signs && stacks[2].some(drawn) ? 1 : 0;
       const side = [care && 'care', tiles.length && 'tiles'].filter(Boolean).join(' ');
-      for (const tile of placed) if (!tiles.includes(tile)) { tile.removeAttribute('data-hhr-round-tile'); tile.style.removeProperty('--hhr-round-tile'); }
+      const release = tile => {
+        for (const name of ['data-hhr-round-tile', 'data-hhr-round-state', 'data-hhr-round-wrap']) tile.removeAttribute(name);
+        for (const name of ['--hhr-round-tile', '--hhr-round-tile-x']) tile.style.removeProperty(name);
+      };
+      for (const tile of placed) if (!tiles.includes(tile)) release(tile);
       placed = tiles;
       if (!side) { frame.removeAttribute('data-hhr-round-side'); frame.style.removeProperty('--hhr-round-under'); return; }
       if (frame.getAttribute('data-hhr-round-side') !== side) frame.setAttribute('data-hhr-round-side', side);
-      // A section with a filter of its own takes a whole line of the column. The others pair up.
-      const rows = [];
-      let open = null;
-      for (const tile of tiles) {
-        if (tile.querySelector('label')) rows.push([tile]);
-        else if (open) { open.push(tile); open = null; }
-        else rows.push(open = [tile]);
-      }
-      for (const row of rows) row.forEach((tile, at) => {
-        const place = row.length === 1 && tile.querySelector('label') ? 'whole' : at ? 'end' : 'start';
-        if (tile.getAttribute('data-hhr-round-tile') !== place) tile.setAttribute('data-hhr-round-tile', place);
+      // The sections are read by their state, one group per state: first those without records (or without
+      // requests), then those that cannot be seen. A group is its state once, then the names of its sections
+      // one after the other, wrapping under the first name. The owner asked for the group in two lines.
+      const denied = tile => Boolean(tile.querySelector('[data-hhr-reading="status-denied"]'));
+      const ordered = [...tiles.filter(tile => !denied(tile)), ...tiles.filter(denied)];
+      const attr = (el, name, value) => { if (value === null) el.removeAttribute(name); else if (el.getAttribute(name) !== value) el.setAttribute(name, value); };
+      ordered.forEach((tile, at) => {
+        const state = denied(tile) ? 'denied' : 'none';
+        attr(tile, 'data-hhr-round-tile', !at || denied(ordered[at - 1]) !== denied(tile) ? 'lead' : 'item');
+        attr(tile, 'data-hhr-round-state', state);
       });
-      // Heights are read once every tile has its width. The first row starts under the heading.
+      // Positions are read once every tile has its own width. The first line starts under the heading.
       const gap = parseFloat(getComputedStyle(frame).rowGap) || 0;
+      const inset = parseFloat(getComputedStyle(frame).getPropertyValue('--hhr-round-inset')) || 16;
+      const start = signs.getBoundingClientRect().right + (parseFloat(getComputedStyle(frame).columnGap) || 0);
+      const end = frame.getBoundingClientRect().right - inset;
+      const step = 16;
       let top = tiles.length ? parseFloat(getComputedStyle(frame, '::before').height) || 20 : 0;
-      for (const row of rows) {
-        for (const tile of row) set(tile, '--hhr-round-tile', top + 'px');
-        top += Math.max(...row.map(tile => tile.getBoundingClientRect().height)) + 4;
+      let x = 0, line = 0, indent = inset;
+      for (const tile of ordered) {
+        const box = tile.getBoundingClientRect();
+        let wrap = false;
+        if (tile.getAttribute('data-hhr-round-tile') === 'lead') {
+          if (line) top += line + 2;
+          x = inset; line = 0;
+          // Its state is read first, in a column of its own: every name of the group starts after it.
+          const label = tile.querySelector(':is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"])');
+          indent = inset + (label ? label.getBoundingClientRect().right - box.left + 10 : 0);
+        } else if (start + x + step + box.width > end && x > indent) {
+          top += line + 2; x = indent; line = 0; wrap = true;
+        } else x += step;
+        attr(tile, 'data-hhr-round-wrap', wrap ? '' : null);
+        set(tile, '--hhr-round-tile', top + 'px');
+        set(tile, '--hhr-round-tile-x', x + 'px');
+        x += box.width; line = Math.max(line, box.height);
       }
       set(frame, '--hhr-round-under', signs.getBoundingClientRect().height + gap + 'px');
     }
@@ -364,7 +385,10 @@
         frame.style.removeProperty('--hhr-round-line');
         frame.style.removeProperty('--hhr-round-under');
       }
-      for (const tile of placed) { tile.removeAttribute('data-hhr-round-tile'); tile.style.removeProperty('--hhr-round-tile'); }
+      for (const tile of placed) {
+        for (const name of ['data-hhr-round-tile', 'data-hhr-round-state', 'data-hhr-round-wrap']) tile.removeAttribute(name);
+        for (const name of ['--hhr-round-tile', '--hhr-round-tile-x']) tile.style.removeProperty(name);
+      }
       placed = [];
       for (const item of stacks.flat()) item.style.removeProperty('--hhr-round-offset');
       lead?.style.removeProperty('--hhr-round-floor');

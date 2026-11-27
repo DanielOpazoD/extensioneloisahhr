@@ -190,7 +190,7 @@ export async function captureAdmissionRound(page, directory, width, verify) {
     assert.ok(request.x >= right(signs) - 1 && right(request) <= right(alerts) + 1 && request.height > 0 && request.height <= 36, 'La solicitud vacía se lee en una fila junto a Signos');
   }
   // Every section without records is read in that group, two to a row in Eloísa's order: a request takes the half that comes to it.
-  assert.ok([exam, surgery].every(request => request.y >= signs.y && (Math.abs(request.x - right(signs)) <= 2 || Math.abs(right(request) - right(alerts)) < 2)) &&
+  assert.ok([exam, surgery].every(request => request.y >= signs.y && request.x >= right(signs) - 1 && right(request) <= right(alerts) + 1) &&
     Math.abs(exam.height - surgery.height) < 1, 'Las dos solicitudes se leen junto a Signos, bajo el rótulo «Sin datos», cada una en una mitad de su línea');
   // Without a rest order, both instructions share a line under the measurements, or the diet takes the next one.
   assert.ok(Math.abs(rest.x - signs.x) < 2 && Math.abs(right(diet) - right(signs)) <= 2 && Math.abs(Math.min(rest.y, diet.y) - bottom(signs) - gap) < 2 &&

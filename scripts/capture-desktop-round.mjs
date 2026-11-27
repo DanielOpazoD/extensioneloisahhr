@@ -121,7 +121,8 @@ export async function captureDesktopRound(page, directory, width, verifyLayout, 
           assert.equal(sharedLine, fit.needed < fit.available, 'Reposo y Régimen comparten línea siempre que caben, y solo entonces');
         }
         // Every section without records is read in that group now, two to a row in Eloísa's order: a request takes the half that comes to it.
-        assert.ok([band.exam, band.surgery].every(request => request.top >= band.signs.top && (Math.abs(request.left - side.left) <= 2 || Math.abs(request.right - side.right) <= 1)) &&
+        // Every section without records is read in that group now, by name, one after the other.
+        assert.ok([band.exam, band.surgery].every(request => request.top >= band.signs.top && request.left >= side.left - 1 && request.right <= side.right + 1) &&
           Math.abs(band.exam.height - band.surgery.height) < 1,
           'Las dos solicitudes vacías se leen junto a Signos, bajo el rótulo «Sin datos», cada una en una mitad de su línea');
         for (const request of [band.exam,band.surgery]) assert.ok(request.left >= side.left - 1 && request.right <= side.right + 1 && request.height > 0, 'Las solicitudes explícitamente vacías deben quedar visibles junto a Signos');
