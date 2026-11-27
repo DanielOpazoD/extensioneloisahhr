@@ -13,9 +13,10 @@
   // The longest the old view waits for the new one; past it, the new one shows as it is.
   const cap = 450;
 
-  function create({ doc = globalThis.document, win = globalThis } = {}) {
+  // `trusted` says whether a click came from the person: only theirs is taken over.
+  function create({ doc = globalThis.document, win = globalThis, trusted = event => event.isTrusted } = {}) {
     const root = doc.documentElement;
-    let active = false, listening = false, waiting = null, revealTimer = 0;
+    let active = false, listening = false, waiting = null, revealTimer = 0, replaying = false;
 
     const reduced = () => Boolean(win.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
     const release = () => {
@@ -53,7 +54,7 @@
     });
 
     function onClick(event) {
-      if (!active || !event.isTrusted || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (!active || replaying || !trusted(event) || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const tab = event.target.closest?.(TAB);
       if (!tab || tab.getAttribute('aria-selected') === 'true' || tab.disabled || tab.getAttribute('aria-disabled') === 'true') return;
       if (typeof doc.startViewTransition !== 'function' || reduced()) { wait(tab.id, { veil: true }); return; }
@@ -63,10 +64,16 @@
       root.setAttribute('data-hhr-ficha-switching', '');
       let transition;
       try {
-        transition = doc.startViewTransition(() => { const done = wait(tab.id, { veil: false }); tab.click(); return done; });
+        transition = doc.startViewTransition(() => {
+          const done = wait(tab.id, { veil: false });
+          replaying = true;
+          try { tab.click(); } finally { replaying = false; }
+          return done;
+        });
       } catch {
         root.removeAttribute('data-hhr-ficha-switching');
-        tab.click();
+        replaying = true;
+        try { tab.click(); } finally { replaying = false; }
         return;
       }
       transition.finished.catch(() => {}).finally(() => root.removeAttribute('data-hhr-ficha-switching'));
