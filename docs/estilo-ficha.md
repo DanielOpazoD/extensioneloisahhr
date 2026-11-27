@@ -38,6 +38,7 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 32. **Un trazo para todos los iconos.** Los iconos rellenos de Eloísa se dibujan con el contorno de la vista (`--hhr-icon-print`, `--hhr-icon-archive`, `--hhr-icon-cancel`, `--hhr-icon-notes`, `--hhr-icon-note-add`): la máscara va sobre su propio `svg`, que conserva su caja y su nombre. Todo texto se lee a 4,5:1 y todo control mide 24 px o deja 24 px libres; `scripts/visual-quality.mjs` lo comprueba en CI.
 33. **Lo que no se reconoce se dice.** Una vista cargada que la presentación no reconoce (sin `data-hhr-round="frame"` en el Resumen, sin `data-hhr-plan="card"` en Plan) se muestra como la dibuja Eloísa y lo avisa una vez por paciente y vista, con el evento `hhr-view-unrecognized` que dibuja Centro HHR.
 34. **Todas las pestañas hablan el mismo idioma.** Alta y Ejecución de cuidados usan los títulos, tarjetas, campos, botón e interruptores del Resumen. La presentación nombra la vista en `main` (`data-hhr-ficha-view`) y `hhr-ficha-views.css` la presenta; los nodos de Eloísa no cambian.
+35. **Una confirmación pregunta una vez, en voz baja.** Las confirmaciones de Eloísa y de la extensión se leen igual: la pregunta (15 px), su frase (13 px, tinta suave), lo que se pide con una línea y la vuelta solo en palabras, sin mayúsculas, sin cambiar su orden ni sus acciones. Un diálogo con un campo para escribir es un formulario y conserva su aspecto. Nunca se usa el `confirm()` del navegador.
 
 ## Dónde vive cada cosa
 

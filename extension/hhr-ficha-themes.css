@@ -745,3 +745,46 @@
   html[data-hhr-ficha-theme="compact"] label[data-hhr-visits-toggle] { display:none !important; }
   html[data-hhr-ficha-theme="compact"] #menu-app-bar-element [data-hhr-bar-diagnosis] { display:none !important; }
 }
+
+/* Eloísa's confirmations, one look (read in its code 27-11-2026: «Validar tratamiento», «¿Descartar
+   Evolución?», «¿Descartar alta medica?», «¿Deseas renovar tu sesión?», «¿Confirmar aislamiento del paciente?»
+   and some twenty more share one MUI dialog: a title, a sentence, the actions). A question, a sentence and
+   two actions, as quiet as the summary: the action with a line around its words, the way back in words
+   only, no capitals. A dialog with a field to fill is a form and keeps its look. Eloísa's order, words and
+   actions do not change. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] .MuiDialog-root .MuiDialog-paper:has(> .MuiDialogActions-root):not(:has(input:not([type="hidden"]),textarea,select,[role="combobox"],[contenteditable="true"],table)) {
+    inline-size:auto; max-inline-size:min(30rem, calc(100vw - 32px)) !important; margin:16px !important;
+    border-radius:var(--hhr-ficha-radius) !important; box-shadow:0 16px 40px rgb(7 27 49 / 22%) !important;
+    color:var(--hhr-ficha-ink);
+    > .MuiDialogTitle-root {
+      padding:18px 20px 6px !important; color:var(--hhr-ficha-ink);
+      &, .MuiTypography-root { margin:0; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans) !important; }
+    }
+    > .MuiDialogContent-root { padding:0 20px !important; }
+    .MuiDialogContentText-root, > .MuiDialogContent-root > .MuiTypography-root {
+      margin:0; color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.5 var(--hhr-ficha-sans) !important;
+    }
+    > .MuiDialogActions-root {
+      gap:8px; padding:16px 20px !important;
+      > :not(:first-child) { margin-inline-start:0 !important; }
+      .MuiButton-root {
+        min-inline-size:0; min-block-size:30px !important; padding:0 12px !important;
+        border:1px solid transparent !important; border-radius:var(--hhr-ficha-button-radius) !important;
+        background:transparent !important; box-shadow:none !important; color:var(--hhr-ficha-ink-soft) !important;
+        /* Eloísa writes some of these words in capitals («CONTINUAR», «SALIR»): they read as words. */
+        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans) !important; text-transform:lowercase !important;
+        &::first-letter { text-transform:uppercase; }
+        &:hover:not(:disabled, .Mui-disabled) { background:var(--hhr-ficha-action-hover) !important; }
+        &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+        &:is(:disabled, .Mui-disabled) { color:var(--hhr-ficha-disabled) !important; }
+      }
+      /* What the dialog asks for: a line around its words, in the ink of an action. */
+      .MuiButton-root:is(.MuiButton-contained, [type="submit"]) {
+        border-color:var(--hhr-ficha-button-line) !important; color:var(--hhr-ficha-action) !important;
+        &:is(:disabled, .Mui-disabled) { border-color:var(--hhr-ficha-line-soft) !important; color:var(--hhr-ficha-disabled) !important; }
+      }
+    }
+  }
+  html[data-hhr-ficha-theme="compact"] .MuiDialog-root:has(.MuiDialog-paper > .MuiDialogActions-root) > .MuiBackdrop-root { background-color:rgb(17 38 34 / 32%); }
+}

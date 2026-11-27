@@ -23,6 +23,16 @@
       #hhr-clinical-page-notices .hhr-page-notice-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 10px; }
       #hhr-clinical-page-notices button { min-height: 31px; padding: 5px 11px; border: 1px solid #cbd7d4; border-radius: 7px; background: #fff; color: #3b4b48; cursor: pointer; font: inherit; font-weight: 600; }
       #hhr-clinical-page-notices button.is-primary { border-color: #15968b; background: #15968b; color: #fff; }
+      /* A confirmation asks once, quietly, as Eloísa's own confirmations read in the compact view: a question,
+         its sentence, the way back in words only and the action with a line around its words. */
+      #hhr-clinical-page-notices .hhr-page-notice[role="dialog"] { padding: 16px 18px 14px; border: 1px solid #dce5e2; border-radius: 8px; box-shadow: 0 16px 40px rgba(7,27,49,.22); }
+      #hhr-clinical-page-notices .hhr-page-notice[role="dialog"] strong { margin-bottom: 6px; color: #212121; font-size: 15px; font-weight: 600; }
+      #hhr-clinical-page-notices .hhr-page-notice[role="dialog"] > span { color: #4a4a4a; font-size: 13px; line-height: 1.5; }
+      #hhr-clinical-page-notices .hhr-page-notice[role="dialog"] .hhr-page-notice-actions { gap: 8px; margin-top: 14px; }
+      #hhr-clinical-page-notices .hhr-page-notice[role="dialog"] button { min-height: 30px; padding: 0 12px; border-color: transparent; border-radius: 6px; background: transparent; color: #4a4a4a; font-size: 12px; }
+      #hhr-clinical-page-notices .hhr-page-notice[role="dialog"] button.is-primary { border-color: #c4d8d1; background: transparent; color: #285f59; }
+      #hhr-clinical-page-notices .hhr-page-notice[role="dialog"] button:hover { background: #edf5f2; }
+      #hhr-clinical-page-notices .hhr-page-notice[role="dialog"] button:focus-visible { outline: 2px solid #176f63; outline-offset: 1px; }
   `;
 
   const centerCss = ui => `

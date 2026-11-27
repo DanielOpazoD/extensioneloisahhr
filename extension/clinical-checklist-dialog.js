@@ -488,12 +488,29 @@
       }
       state.initialAnswers ??= { ...state.answers };
     };
+    // Changing the template with answers asks first, inside this window and in its words: the browser's
+    // own box spoke for the page and could not be styled. Until it is answered, the template stays.
     select.addEventListener('change', () => {
-      if (hasDraft(state) && !window.confirm('¿Descartar las respuestas de esta plantilla?')) {
-        select.value = state.templateId;
-        return;
-      }
-      selectTemplate();
+      if (!hasDraft(state)) { selectTemplate(); return; }
+      const wanted = select.value;
+      select.value = state.templateId;
+      dialog?.querySelector('.hhr-checklist-confirm')?.remove();
+      const ask = make('div');
+      ask.className = 'hhr-checklist-confirm';
+      ask.setAttribute('role', 'alertdialog');
+      ask.setAttribute('aria-labelledby', 'hhr-checklist-confirm-question');
+      const question = make('p', '¿Descartar las respuestas de esta plantilla?');
+      question.id = 'hhr-checklist-confirm-question';
+      const answer = discard => () => {
+        ask.remove();
+        if (!discard) { select.focus(); return; }
+        select.value = wanted;
+        selectTemplate();
+      };
+      const back = button('Volver', answer(false));
+      ask.append(question, back, button('Descartar', answer(true), 'is-confirm'));
+      select.closest('label,div')?.after(ask);
+      back.focus();
     });
     selectTemplate();
     const ageLabel = state.catalog.patientAge ? ' · ' + state.catalog.patientAge : '';

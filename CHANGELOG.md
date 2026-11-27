@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.224
+
+- Las confirmaciones se leen con un solo estilo, simple. En el código de Eloísa hay más de veinte (leído el 27-11-2026): «Validar tratamiento», «¿Descartar Evolución?», «¿Descartar alta medica?», «¿Deseas renovar tu sesión?», «¿Confirmar aislamiento del paciente?», «¿Cancelar registro?», «¿Desea confirmar los cambios ingresados?» y otras. Todas usan el mismo diálogo de Eloísa, y ahora se leen así: la pregunta en 15 px, su frase en 13 px en tinta suave, una caja angosta con la esquina de la vista, lo que se pide con una línea alrededor de sus palabras y la vuelta («Salir», «Volver», «Cancelar») solo en palabras, sin mayúsculas. Eloísa conserva el orden, las palabras y las acciones. Un diálogo con un campo para escribir es un formulario y no cambia.
+- Las dos confirmaciones propias de la extensión («Cambios sin guardar» y «Revisión del último guardado») se leen igual.
+- Cambiar de plantilla con respuestas en Aplicar pauta pregunta dentro de la misma ventana, con «Volver» y «Descartar», en lugar del cuadro del navegador, que no se podía ajustar.
+- Nueva comprobación en CI: una confirmación con la estructura de Eloísa toma este estilo, con su contraste y el tamaño de sus botones, y un diálogo con un campo conserva el suyo.
+
 ## 0.48.223
 
 - Cambio rápido de paciente: en la ficha abierta desde la lista de trabajo médico o desde Gestión de cuidados, el nombre del paciente en la barra verde abre la lista de pacientes hospitalizados, con buscador por nombre, sala o cama. Cada paciente es un enlace a la misma vista de su episodio, y el actual va marcado. La lista sale de una sola lectura del censo activo (nombre, servicio, sala y cama; nada clínico), se guarda un minuto y solo se entrega a la propia ficha. Se mueve con las flechas y se cierra con Escape.
