@@ -1,5 +1,15 @@
 # Cambios
 
+## 0.48.228
+
+- Corregido: la lista de pacientes del nombre en la barra verde quedaba en «El relé de Ficha Médico perdió conexión con la extensión.» cuando la pestaña aún no confirmaba su conexión. Ahora se pide la sesión otra vez un momento después, el error trae «Reintentar» sin cerrar la lista y la lista se empieza a leer al apuntar el nombre.
+- Instrumentos de evaluación sin registros va bajo «Sin datos» con las demás secciones vacías, también cuando Eloísa lo dibuja antes de la nota.
+- Observaciones de entrega de turno y Alertas tienen más ancho: cinco doceavos de la línea desde 1360 px (antes cuatro).
+- Signos vitales: cada medición es su nombre, debajo su valor al comienzo y bajo el valor la PAM o la hora. Los valores de una fila quedan en la misma línea.
+- Los números de la vista usan cifras de ancho fijo: se leen en columna.
+- Ventana angosta (600 a 1099 px, notebook chico o tablet): el Resumen es una sola columna en el orden de escritorio, con las tarjetas con su aspecto de escritorio.
+- Plan de tratamiento: «Planificación estandar» y «Planificación única» son botones con su línea, como «Validar tratamiento», y la fila bajo el puntero se marca a lo largo de sus horas.
+
 ## 0.48.227
 
 - Las listas de trabajo (médica y de Gestión de cuidados) usan las tintas y tamaños de la ficha. Medido en la página con el estilo aplicado a mano (27-11-2026): la lista médica pasa de 9 tintas de texto a 4 y de 4 tamaños a 2; la de cuidados, de 11 tintas a 6 y de 6 tamaños a 3; ninguna conserva texto de bajo contraste (había un gris de 3,9:1) y el alto de las filas no cambia. Encabezados en 12 px y tinta suave, celdas en 13 px, nombre y cama en peso 600, el filtro elegido en el verde de acción. «Nuevo» conserva su verde, el mismo en ambas listas.

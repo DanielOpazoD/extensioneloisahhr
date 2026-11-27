@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
-import { assertPalette, assertQuality } from './visual-quality.mjs';
+import { assertFigures, assertPalette, assertQuality } from './visual-quality.mjs';
 import { summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
 
 const refresh = async page => {
@@ -341,6 +341,9 @@ async function verifySummary(page, width, native, off, sans) {
 
   // The round: the note with the handoff and the alerts beside it, all three ending on one line; then the signs across the page.
   assert.ok(near(shown.handoff.left, shown.alerts.left) && near(shown.alerts.top, shown.handoff.bottom) && shown.handoff.left >= shown.note.right - 1, 'Alertas sigue a la entrega de turno');
+  // From 1360 px the handoff and the alerts take five twelfths of the line; narrower, four.
+  const share = shown.handoff.width / (shown.handoff.width + shown.note.width);
+  assert.ok(Math.abs(share - (page.viewportSize().width >= 1360 ? 5 / 12 : 4 / 12)) < .02, 'La entrega de turno y Alertas tienen su ancho: ' + share.toFixed(3));
   assert.ok(near(shown.note.top, shown.handoff.top) && near(shown.alerts.bottom, shown.note.bottom, 1), `La nota y las tarjetas a su lado empiezan y terminan en la misma línea: ${shown.note.bottom} y ${shown.alerts.bottom}`);
   assert.ok(shown.alertList.overflow === 'auto' && shown.alertList.scroll <= shown.alertList.height + 1, 'Tres alertas caben en su lista sin desplazarla: ' + JSON.stringify(shown.alertList));
   // Alertas reads like the rest of the summary: a row is its text in the ink and weight of what is read, with who
@@ -373,7 +376,22 @@ async function verifySummary(page, width, native, off, sans) {
     return Math.round(card.getBoundingClientRect().bottom - last); });
   assert.ok(blank >= 0 && blank <= 12, 'La tarjeta de Signos termina con sus mediciones, sin una franja en blanco: ' + blank);
   assert.ok(new Set(shown.tiles.map(tile => Math.round(tile.top))).size <= 3, 'Las nueve mediciones ocupan tres filas a lo más en su mitad de la línea');
-  assert.ok(shown.tiles.every(tile => tile.height <= 44), 'Una medición sin unidad no deja una línea vacía: ' + shown.tiles.map(tile => Math.round(tile.height)));
+  // Name, value and what details it (the PAM, the time): three lines, never a fourth left empty.
+  assert.ok(shown.tiles.every(tile => tile.height <= 56), 'Una medición sin unidad no deja una línea vacía: ' + shown.tiles.map(tile => Math.round(tile.height)));
+  const reading = await page.evaluate(() => {
+    const tiles = [...document.querySelectorAll('#vitalSignsEntry [data-hhr-reading="vital-tile"]')].filter(tile => tile.querySelector('[data-hhr-reading="vital-value"]'));
+    const at = (tile, role) => tile.querySelector('[data-hhr-reading="' + role + '"]')?.getBoundingClientRect();
+    const pressure = tiles.find(tile => tile.querySelector('[data-hhr-reading="vital-pam"]'));
+    const value = at(pressure, 'vital-value'), pam = at(pressure, 'vital-pam'), name = at(pressure, 'vital-label');
+    const rows = Object.values(Object.groupBy(tiles, tile => Math.round(tile.getBoundingClientRect().top)));
+    return {pam:{under:Math.round(pam.top - value.bottom), start:Math.round(pam.left - value.left), name:Math.round(value.top - name.bottom)},
+      tops:rows.map(row => new Set(row.map(tile => Math.round(at(tile, 'vital-value').top))).size),
+      starts:tiles.map(tile => Math.round(at(tile, 'vital-value').left - at(tile, 'vital-label').left))};
+  });
+  assert.ok(reading.pam.under >= -1 && reading.pam.under <= 4 && Math.abs(reading.pam.start) <= 1 && reading.pam.name >= -1,
+    'La PAM va bajo el valor de la presión, al mismo comienzo: ' + JSON.stringify(reading.pam));
+  assert.ok(reading.tops.every(size => size === 1), 'Los valores de una fila de mediciones están en la misma línea: ' + reading.tops);
+  assert.ok(reading.starts.every(start => Math.abs(start) <= 1), 'Cada valor empieza donde su nombre: ' + reading.starts);
 
   // An empty rest is a card without its section. The owner asked for every empty section under «Sin datos»: it
   // keeps its place in the block it shares with Régimen, out of sight with Eloísa's sentence, and its name is read
@@ -831,7 +849,7 @@ try {
       await page.screenshot({path:path.join(directory, width + '-resumen-completo.png'), fullPage:true});
     }
     if (revision === 'WORKTREE') await verifySummary(page, width, native, off, sans);
-    if (revision === 'WORKTREE' && !sans) { await assertQuality(page, `Resumen ${width}`, assert); await assertPalette(page, `Resumen ${width}`, assert); }
+    if (revision === 'WORKTREE' && !sans) { await assertQuality(page, `Resumen ${width}`, assert); await assertPalette(page, `Resumen ${width}`, assert); await assertFigures(page, `Resumen ${width}`, assert); }
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
   }
@@ -849,6 +867,18 @@ try {
       proxy:[...document.querySelectorAll('[data-hhr-round-proxy]')].filter(el => el.getClientRects().length).length}));
     assert.ok(narrow.page <= narrow.window + 1 && narrow.cards && narrow.proxy === 0, 'A 1024 px el resumen no se desborda a lo ancho: ' + JSON.stringify(narrow));
     assert.equal(narrow.top, 0, 'A 1024 px el resumen se abre arriba aunque Eloísa dé el foco al campo de alertas');
+    // One column read in the order of the desk (asked 27-11-2026): each block takes the line.
+    const column = await page.evaluate(() => {
+      const frame = document.querySelector('[data-hhr-round="frame"]'), box = el => el.getBoundingClientRect();
+      const of = role => frame.querySelector(':scope > [data-hhr-round="' + role + '"]');
+      const order = ['diagnosis', 'note', 'handoff', 'alerts', 'vitals', 'care'].map(role => [role, of(role) && Math.round(box(of(role)).top)]);
+      const width = Math.round(box(frame).width);
+      return {order, full:['diagnosis', 'note', 'handoff', 'alerts', 'vitals', 'care'].every(role => of(role) && Math.abs(box(of(role)).width - width) <= 2),
+        titles:[...new Set(['#diagnosisEntry', '#evolution', '#vitalSignsEntry', '#medicationEntry'].map(id => getComputedStyle(document.querySelector(id + ' .MuiCardHeader-title')).fontSize))]};
+    });
+    assert.ok(column.order.every(([, top], at) => top !== null && (!at || top > column.order[at - 1][1])) && column.full,
+      'A 1024 px el resumen es una columna en el orden del escritorio: ' + JSON.stringify(column));
+    assert.deepEqual(column.titles, ['15px'], 'y sus tarjetas se titulan como en el escritorio: ' + column.titles);
     await assertQuality(page, 'Resumen a 1024 px', assert);
     await page.screenshot({path:path.join(directory, '1024-resumen.png')});
     await page.close();

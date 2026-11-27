@@ -263,9 +263,9 @@ const daily = `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 daily"><
 const printOrders = `<div class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 print">${iconButton('LocalPrintshopRoundedIcon', 'Imprimir indicaciones', 'Medium', ' id="fixture-print"')}</div>`;
 const grid = 'MuiGrid-root MuiGrid-container MuiGrid-spacing-xs-2';
 const frame = ({alertList = summaryAlerts, diagnoses = summaryDiagnoses, careOrders = summaryCareOrders, procedureList = [], referralList = [], testList = [], surgeryList = [], ...shape} = {}) => `<div class="${grid} frame">${daily}
+  ${item(card('encounterFormEntry', 'Instrumentos de evaluación', message('No presentan instrumentos de evaluación registrados')))}
   ${item(`<div class="${grid}">${item(discharge)}${item(evolution)}</div>`, 'xs-6')}
   ${item(handoff, 'xs-12 md-6')}
-  ${item(card('encounterFormEntry', 'Instrumentos de evaluación', message('No presentan instrumentos de evaluación registrados')))}
   ${item(section('physicalExaminationEntry', 'physicalExaminationEntry', 'Examen físico', message('No presenta exámenes físicos registrados')))}
   ${item(vitals)}${printOrders}
   ${item(`<div class="MuiGrid-root MuiGrid-container">${item(rest)}${item(diet)}</div>`, 'xs-6')}

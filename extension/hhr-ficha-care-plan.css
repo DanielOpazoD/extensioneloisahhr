@@ -51,8 +51,12 @@
     }
     /* With room, a tool says the name Eloísa gives it. Without room the name shows on hover. */
     @container hhr-plan (min-width:62rem) {
+      /* A planning opens a form: it is a button, a line around its words, as «Validar tratamiento» in the
+         summary (27-11-2026). The menu stays an icon. */
+      > [data-hhr-plan="tools"] .MuiStack-root:has(> button[data-hhr-plan-caption]) { gap:6px; }
       > [data-hhr-plan="tools"] button[data-hhr-plan-caption] {
-        inline-size:auto; padding:0 8px 0 6px;
+        inline-size:auto; padding:0 10px 0 7px;
+        border:1px solid var(--hhr-ficha-button-line); border-radius:var(--hhr-ficha-button-radius);
         &::after {
           content:attr(data-hhr-plan-caption) / ''; margin-inline-start:5px;
           font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1 var(--hhr-ficha-sans);
@@ -67,6 +71,8 @@
       :is(p,span.MuiTypography-root) { margin:0; color:inherit; font:inherit; }
     }
     table tbody tr:last-child > td { border-block-end:0; }
+    /* The row under the pointer is found along its hours, as in the lists. */
+    table:not([data-hhr-plan-empty]) tbody tr:hover > td { background:var(--hhr-ficha-action-hover); }
     /* Headings situate: the day and its hours, in the small size and the soft ink. */
     table th {
       border-block:1px solid var(--hhr-ficha-line); background:var(--hhr-ficha-band);

@@ -1,6 +1,8 @@
 // Mark native layout branches without moving React-owned controls.
 (() => {
   'use strict';
+  // A card Eloísa drew with nothing in it: its section holds only the status of the read.
+  const EMPTY_CARD = ':scope > section > [data-hhr-reading="status-card"]:only-child, :scope > [data-hhr-reading="status-card"]:only-child';
   const attribute = 'data-hhr-round';
   const isLayout = node => node.matches(':is(div,section):not(.MuiCard-root,.MuiPaper-root,[role],[tabindex],[contenteditable],[hidden],[aria-hidden],[aria-label],[aria-labelledby])');
   const hasOwnText = node => [...node.childNodes].some(child => child.nodeType === Node.TEXT_NODE && child.textContent.trim());
@@ -254,7 +256,9 @@
           const role = marks.get(child);
           if (role === 'bridge') markPeers(child);
           else if (role === 'note' || role === 'handoff') leading = false;
-          else if (!role) marks.set(child, leading ? 'before' : 'peer');
+          // An empty card goes with the others under «Sin datos», wherever Eloísa draws it
+          // (Instrumentos de evaluación comes before the note).
+          else if (!role) marks.set(child, leading && !child.querySelector(EMPTY_CARD) ? 'before' : 'peer');
         }
       }
       markPeers(frame);
@@ -332,7 +336,7 @@
       // stacks each column, so that neither card is stretched to the height of the other column.
       const drawn = el => el.getBoundingClientRect().height > 0;
       const tiles = signs ? [...requests, ...peers.filter(([, role]) => role === 'peer').map(([el]) => el).filter(el =>
-        el.querySelector(':scope > section > [data-hhr-reading="status-card"]:only-child, :scope > [data-hhr-reading="status-card"]:only-child'))]
+        el.querySelector(EMPTY_CARD))]
         .filter(drawn).sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1) : [];
       const care = signs && stacks[2].some(drawn) ? 1 : 0;
       const side = [care && 'care', tiles.length && 'tiles'].filter(Boolean).join(' ');
