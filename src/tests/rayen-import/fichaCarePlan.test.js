@@ -118,7 +118,8 @@ it('dibuja como icono los interruptores de una tarjeta y deja el de la vista com
 });
 
 it('reconoce Programación de procedimientos, que deja vacía su primera columna', () => {
-  const main = mount(card({heading:''}).replace('Programación de prueba', 'Programación de procedimientos'));
+  // On the page its first heading is an empty cell, without «Ir a Hoy» (read 27-11-2026).
+  const main = mount(card().replace('Programación de prueba', 'Programación de procedimientos').replace(/<th><p>Indicación<\/p><button>Ir a Hoy<\/button><\/th>/, '<th></th>'));
   plan.refresh(main);
   expect(marks('.MuiCard-root')).toEqual(['card']);
 });
