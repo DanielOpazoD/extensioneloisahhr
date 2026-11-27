@@ -523,6 +523,67 @@ describe('Gestión de Camas CUDYR normalizer', () => {
     ]);
   });
 
+  it('maps midwife practitioner role 8 to Matrona and marks unrecognized CUDYR form warnings as partial metadata', async () => {
+    const midwifeEntry = {
+      ...sourceVersion,
+      id: 1020,
+      value: 'D3',
+      healthCarePractitionerId: 55,
+      healthCarePractitionerRoleId: 8,
+    };
+    const unknownFormEntry = {
+      ...sourceVersion,
+      id: 1021,
+      formId: 3,
+      value: 'A1',
+    };
+    const rows = cudyr.buildSnapshot({
+      includeObservations: true,
+      practitioners: [{ id: 55, fullName: 'Matrona Sintética' }],
+      definitions: [],
+      beds: [bedWith([midwifeEntry])],
+    });
+    expect(rows[0]).toMatchObject({
+      encId: '901',
+      crdValue: 'D3',
+      author: 'Matrona Sintética',
+      authorRole: 'Matrona',
+      metadataComplete: true,
+    });
+
+    const runtime = loadClinicalScoreRuntime().create(
+      createRuntimeDependencies({
+        resolveGestionCamasSession: async () => ({
+          record: {
+            apiBase: 'https://hospbackend.rayensalud.cl/api',
+            facId: '1342',
+            token: 'token-1',
+          },
+        }),
+        fetchWithTimeout: async (url: string) => {
+          if (url.endsWith('/beds')) {
+            return { ok: true, status: 200, json: async () => [bedWith([midwifeEntry, unknownFormEntry])] };
+          }
+          if (url.includes('/healthCarePractitioners')) {
+            return { ok: true, status: 200, json: async () => [{ id: 55, fullName: 'Matrona Sintética' }] };
+          }
+          return { ok: true, status: 200, json: async () => [] };
+        },
+      })
+    );
+    const result = await runtime.handleCudyrCategoriesRequest();
+    expect(result).toMatchObject({
+      ok: true,
+      source: 'gestion_camas',
+      metadataStatus: 'partial',
+    });
+    expect(String(result.warning)).toContain('formId no reconocido (3)');
+    expect((result.items as Array<Record<string, unknown>>)[0]).toMatchObject({
+      author: 'Matrona Sintética',
+      authorRole: 'Matrona',
+    });
+  });
+
   it('caches definitions and practitioners per facility, falls back on transient failure, and refreshes for an unseen practitioner', async () => {
     let clock = 10_000;
     let practitionersStatus = 200;
