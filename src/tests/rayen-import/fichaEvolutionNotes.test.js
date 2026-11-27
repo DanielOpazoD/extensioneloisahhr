@@ -60,7 +60,7 @@ describe('lectura de evoluciones para la tarjeta Evolución', () => {
     // Eloísa opens a ficha from its list without loading a page: the address of the script that asks stays
     // the list's, and the tab's own address, which the browser keeps, says which episode is open.
     const list = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list';
-    expect((await open.handle({ encId: '77' }, { frameId: 0, url: list, tab: { id: 5, url: list + '/77' } })).ok).toBe(true);
+    expect((await reader().handle({ encId: '77' }, { frameId: 0, url: list, tab: { id: 5, url: list + '/77' } })).ok).toBe(true);
     expect(await open.handle({ encId: '77' }, { ...sender('77'), tab: { id: 5, url: list + '/78' } })).toEqual(denied);
     expect(await reader({ authorize: async () => false }).handle({ encId: '77' }, sender('77'))).toEqual(denied);
     expect(await open.handle({ encId: 'abc' }, sender('77'))).toEqual({ error: 'El episodio clínico no es válido.' });
