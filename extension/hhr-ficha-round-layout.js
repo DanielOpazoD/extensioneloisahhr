@@ -142,7 +142,8 @@
     });
     if (at < 0) return null;
     // A folded empty section is not drawn. Anything else between the line and the card is.
-    const next = items.slice(at + 1).find(item => !marks.has(item) && getComputedStyle(item).display !== 'none');
+    // The name of an empty Reposo under «Sin datos» is the view's own and is not drawn in the flow.
+    const next = items.slice(at + 1).find(item => !marks.has(item) && !item.hasAttribute('data-hhr-round-proxy') && getComputedStyle(item).display !== 'none');
     // The button takes the room after the title. A byline there, which Eloísa does not write today, keeps it.
     // Eloísa can wrap the card in a second section of its own, #dilutionEntrySection.
     const heading = next?.querySelector(':scope > #medicationEntrySection > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-content,' +
@@ -203,6 +204,9 @@
     const signs = placement(vitals, frame, hidden), notices = placement(alerts, frame, hidden);
     if (signs) markSlot(signs, 'vitals');
     if (notices) markSlot(notices, 'alerts');
+    // Reposo without an order says so in a sentence (marked a status card). It keeps its place in the block
+    // it shares with Régimen, out of sight, and is read under «Sin datos» with the other empty sections.
+    const restEmpty = Boolean(rest && (rest.matches('[data-hhr-reading="status-card"]') || rest.querySelector('[data-hhr-reading="status-card"]')));
     const grouped = careSections(frame, frame.contains(rest) ? rest : null, frame.contains(diet) ? diet : null);
     for (const section of grouped) {
       const slot = placement(section, frame, hidden);
@@ -211,6 +215,11 @@
       const rows = [];
       for (const [node, name] of [[rest, 'Reposo'], [diet, 'Régimen']]) {
         if (!node || !section.contains(node)) continue;
+        if (node === rest && restEmpty) {
+          const own = branchOf(rest, section).at(-1);
+          if (own !== section) marks.set(own, 'care-hidden');
+          continue;
+        }
         const row = careRow(node, name);
         if (row) {
           rows.push(node);
@@ -398,8 +407,20 @@
       for (const [peer] of peers) peer.style.removeProperty('--hhr-round-span');
       stacks = []; halves = []; peers = []; requests = []; signs = lead = fill = frame = null;
     }
+    // The name of an empty Reposo under «Sin datos»: a tile of the view, hidden from a screen reader, which
+    // reads Eloísa's own sentence where it stays. It follows the block of Reposo and Régimen in the page.
+    const proxy = document.createElement('div');
+    proxy.setAttribute('data-hhr-round-proxy', 'rest');
+    proxy.setAttribute('aria-hidden', 'true');
+    proxy.innerHTML = '<div data-hhr-reading="status-card"><span class="MuiCardHeader-title">Reposo</span><p data-hhr-reading="status-message"></p></div>';
     function refresh(main) {
       const next = layout(main);
+      const empty = [...next].find(([, role]) => role === 'care-hidden')?.[0];
+      const holder = empty && [...next].find(([el, role]) => (role === 'care' || role === 'care-card') && el.contains(empty))?.[0];
+      if (holder?.parentElement && next.get(holder.parentElement) === 'frame') {
+        if (proxy.previousElementSibling !== holder) holder.after(proxy);
+        next.set(proxy, 'peer');
+      } else proxy.remove();
       for (const el of previous.keys()) if (!next.has(el)) el.removeAttribute(attribute);
       for (const [el, value] of next) if (previous.get(el) !== value) el.setAttribute(attribute, value);
       const changed = previous.size !== next.size || [...next].some(([el, role]) => previous.get(el) !== role);

@@ -175,7 +175,7 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   assert.ok(keyboardScroll, 'Tab debe llegar al texto desplazable de la evolución');
   await readLastLineWithKeyboard(page, noteText);
   await verifyAdmissionReader(page, noteText, directory, width);
-  const {note, signs, observations, alerts, exam, surgery, rest, diet} = measured;
+  const {note, signs, observations, alerts, exam, surgery, diet} = measured;
   const right = r => r.x + r.width;
   const bottom = r => r.y + r.height;
   const aligned = (a,b) => Math.abs(a.x - b.x) < 2 && Math.abs(right(a) - right(b)) < 2;
@@ -192,12 +192,13 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   // Every section without records is read in that group, two to a row in Eloísa's order: a request takes the half that comes to it.
   assert.ok([exam, surgery].every(request => request.y >= signs.y && request.x >= right(signs) - 1 && right(request) <= right(alerts) + 1) &&
     Math.abs(exam.height - surgery.height) < 1, 'Las dos solicitudes se leen junto a Signos, bajo el rótulo «Sin datos», cada una en una mitad de su línea');
-  // Without a rest order, both instructions share a line under the measurements, or the diet takes the next one.
-  assert.ok(Math.abs(rest.x - signs.x) < 2 && Math.abs(right(diet) - right(signs)) <= 2 && Math.abs(Math.min(rest.y, diet.y) - bottom(signs) - gap) < 2 &&
-    (Math.abs(diet.x - right(rest)) < 2 ? Math.abs(middle(diet) - middle(rest)) <= 3 || Math.abs(diet.y - rest.y) < 2 : Math.abs(diet.y - bottom(rest)) < 2), 'Reposo y Régimen se leen bajo Signos');
-  assert.ok(rest.height > 0 && rest.height <= 36 && diet.height > 0 && diet.height <= 60, 'Reposo vacío y Régimen con observación y firma son compactos');
-  const emptyRest = await page.locator('#rest [data-hhr-round="care-empty"]').evaluate(el => getComputedStyle(el,'::after').content);
-  assert.match(emptyRest, /^"Sin registro"/, 'Un reposo sin registro se resume en dos palabras');
+  // Without a rest order Reposo is read under «Sin datos», with the sections without records (asked 27-11-2026):
+  // its card keeps its place out of sight, with Eloísa's sentence, and Régimen takes the line under the measurements.
+  assert.ok(Math.abs(diet.x - signs.x) < 2 && Math.abs(right(diet) - right(signs)) <= 2 && Math.abs(diet.y - bottom(signs) - gap) < 2, 'Régimen ocupa la línea bajo Signos');
+  assert.ok(diet.height > 0 && diet.height <= 60, 'Régimen con observación y firma es compacto');
+  const emptyRest = await page.evaluate(() => ({hidden:Math.round(document.querySelector('#rest').closest('[data-hhr-round="care-hidden"]')?.getBoundingClientRect().width ?? -1),
+    tile:document.querySelector('[data-hhr-round-proxy="rest"]')?.getAttribute('data-hhr-round-tile'), name:document.querySelector('[data-hhr-round-proxy="rest"]')?.textContent.trim()}));
+  assert.ok(emptyRest.hidden >= 0 && emptyRest.hidden <= 1 && emptyRest.tile && emptyRest.name === 'Reposo', 'Un reposo sin registro se lee bajo «Sin datos»: ' + JSON.stringify(emptyRest));
   assert.ok(await page.getByText('No se presenta un Reposo registrado para este paciente').isVisible());
   assert.ok(await page.getByText('Preferir porciones pequeñas.').isVisible());
 

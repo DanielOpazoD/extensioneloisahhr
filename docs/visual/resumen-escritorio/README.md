@@ -1,5 +1,11 @@
 # Resumen compacto en escritorio
 
+## Reposo vacío en «Sin datos» e impresión de la evolución en su tarjeta, en 0.48.225
+
+| Captura, 1440 × 900 | 0.48.224 | 0.48.225 |
+| --- | --- | --- |
+| Primera pantalla | [Antes](0.48.225/antes/1440-resumen.png) | [Después](0.48.225/despues/1440-resumen.png) |
+
 ## Confirmaciones con un solo estilo, en 0.48.224
 
 | Captura, 1440 × 900 | 0.48.224 |

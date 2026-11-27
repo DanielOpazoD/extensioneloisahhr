@@ -8,6 +8,8 @@
   // Match each native message to its own heading before it can be folded.
   const optionalStates = new Map([
     ['instrumentos de evaluación', 'instrumentos de evaluación registrados'],
+    // Without an order Eloísa draws Reposo as its card alone, with this sentence: it reads with the empty sections.
+    ['reposo', 'un reposo registrado'],
     ['examen físico', 'exámenes físicos registrados'],
     ['producto no farmacológico', 'productos no farmacológicos registrados'],
     ['procedimientos', 'procedimientos registrados'],

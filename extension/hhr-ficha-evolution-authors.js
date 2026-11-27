@@ -110,6 +110,14 @@
   // Without it, or in Historial, it filters the timeline Eloísa has drawn, as it always did.
   function create({ readNotes } = {}) {
     const entry = button('Ver evoluciones', 'hhr-evo-entry');
+    // Printing the evolution belongs to its card: Eloísa puts the icon in the daily row, named only
+    // «Imprimir» (it prints Reporte_Evolucion_Paciente, read on the page 27-11-2026). This button, beside
+    // «Ver evoluciones», presses Eloísa's own icon; the icon stays in the page, out of sight.
+    const print = button('', 'hhr-evo-print');
+    print.setAttribute('aria-label', 'Imprimir evolución');
+    print.title = 'Imprimir evolución';
+    const dailyPrint = () => document.querySelector('[data-hhr-print-caption="Evolución"]');
+    print.addEventListener('click', () => { const native = dailyPrint(); if (native && !native.disabled) native.click(); });
     const bar = document.createElement('div');
     bar.className = 'hhr-evo-filters';
     const group = document.createElement('div');
@@ -172,6 +180,7 @@
       notesReader?.close();
       markToolbar(null);
       entry.remove();
+      print.remove();
       unfilter();
       historyTab = null;
       episode = null;
@@ -201,10 +210,14 @@
           summary?.querySelector('.MuiCardHeader-content');
         if (host && historyTab && !historyTab.matches(':disabled,[aria-disabled="true"]') && rendered(host)) {
           if (entry.parentElement !== host) host.prepend(entry);
-        } else entry.remove();
+          const native = inHistory ? null : dailyPrint();
+          if (native && host.matches('.MuiCardHeader-action')) { if (print.previousElementSibling !== entry) entry.after(print); }
+          else print.remove();
+        } else { entry.remove(); print.remove(); }
         return;
       }
       entry.remove();
+      print.remove();
       const host = timeline || document.querySelector('main');
       if (!host) return;
       if (bar.parentElement !== host) host.prepend(bar);

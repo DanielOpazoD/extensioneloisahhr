@@ -389,6 +389,26 @@ it('reads an empty rest without its section, marks the diagnosis that opens the 
   expect(main.innerHTML).toBe(original);
 });
 
+it('reads an empty rest under «Sin datos» and leaves its card in the block it shares with Régimen', () => {
+  const main = realSummary({folded:' hidden'}), original = main.innerHTML;
+  // The reading surfaces mark Eloísa's sentence of an empty rest as the state of an empty section.
+  document.getElementById('rest').setAttribute('data-hhr-reading', 'status-card');
+  const marked = main.innerHTML;
+  layout.refresh(main);
+  const restItem = document.getElementById('rest').parentElement;
+  expect(restItem.dataset.hhrRound).toBe('care-hidden');
+  expect(document.querySelector('#rest [data-hhr-round]')).toBeNull();
+  const proxy = document.querySelector('[data-hhr-round-proxy="rest"]');
+  expect([proxy.previousElementSibling.id, proxy.dataset.hhrRound, proxy.getAttribute('aria-hidden'), proxy.textContent]).toEqual(['care-item', 'peer', 'true', 'Reposo']);
+  expect(document.querySelector('#nutritionOrder [data-hhr-round="care-value"] .MuiChip-label').textContent).toBe('Común');
+  // The print line still finds Fármacos past the name of the view.
+  expect(document.getElementById('print-line').dataset.hhrRound).toBe('print');
+  layout.clear();
+  expect(main.innerHTML).toBe(marked);
+  document.getElementById('rest').removeAttribute('data-hhr-reading');
+  expect(main.innerHTML).toBe(original);
+});
+
 it('docks the print icon on Fármacos also when Eloísa wraps its card in a second section', () => {
   const main = realSummary({folded:' hidden'});
   const section = document.getElementById('medicationEntrySection');
