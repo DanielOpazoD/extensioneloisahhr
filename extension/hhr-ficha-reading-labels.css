@@ -105,12 +105,14 @@
     [data-hhr-ficha-primary] [role="tab"][aria-selected="true"] {
       background:transparent; border-radius:0; box-shadow:inset 0 -2px #18796c;
     }
-    /* The pinned section links already reserve their height in the first slot. */
-    main:has(> .MuiStack-root:first-child > [data-hhr-ficha-section-slot]:first-child + [data-hhr-round="frame"]) {
+    /* The round starts right under the tabs. None of this waits for the line of section links to be
+       known: Eloísa draws it after the round is laid out. */
+    main:has(> .MuiStack-root:first-child > [data-hhr-round="frame"]) {
       padding-block-start:2px !important;
     }
-    [data-hhr-ficha-section-slot] + [data-hhr-round="frame"] {
-      padding-block-start:0 !important;
+    [data-hhr-round="frame"][data-hhr-round] {
+      /* Eloísa hangs the grid one gutter up. The round keeps its place from its first frame. */
+      padding-block-start:0 !important; margin-block-start:0 !important;
       > .MuiGrid-item:has(> [data-hhr-update-label]):has(input):has(button) {
         padding-block:0 !important; min-height:30px; align-items:center;
         > [data-hhr-update-label] { margin-block:2px; }

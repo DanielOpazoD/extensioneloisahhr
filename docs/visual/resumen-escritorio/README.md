@@ -1,5 +1,23 @@
 # Resumen compacto en escritorio
 
+## La carga sin saltos, medida con la versión instalada, en 0.48.212
+
+Con la 0.48.211 instalada se midió la carga de la ficha médica y de la de Gestión de cuidados, cuadro por cuadro y sin datos clínicos (26-11-2026, 1500 × 950 px). Las dos se comportan igual.
+
+| Qué se veía | Por qué | Con las reglas nuevas aplicadas en la página |
+| --- | --- | --- |
+| Diagnóstico a 174 px y luego a 114 | el margen alto de la ronda esperaba a la línea de enlaces | 110 px desde el primer cuadro |
+| La nota a 262 px y luego a 208 | lo mismo | 198 → 204 px |
+| Enlaces de sección a la vista unos 160 ms | la línea se reconocía por el enlace de la nota, que llega con la nota | 0 enlaces en todos los cuadros |
+| La fecha del resumen diario un instante en su línea | su acople también esperaba a esa línea | de la espera a la línea de pestañas |
+
+| Qué se veía | Por qué | Cómo se corrige |
+| --- | --- | --- |
+| Signos vitales un cuadro con 624 px (final 134) | Eloísa lo dibujó dentro del cuadro, después del turno de la vista | lo pendiente se presenta al cambiar el tamaño de la página, antes del pintado |
+| Diagnóstico un cuadro con 130 px (final 82) | lo mismo | lo mismo |
+
+La segunda tabla no se pudo comprobar en la página: depende del script de la extensión instalada. La comprueba la extensión instalada en la prueba del CI, con un apartado que se dibuja dentro de un `requestAnimationFrame`.
+
 ## Lector de evoluciones desde la lista, icono de suspendidos y nota breve con el alto de su bloque, en 0.48.211
 
 El responsable avisó que «Ver evoluciones» respondía «Las evoluciones no fueron autorizadas para el episodio de esta pestaña», y pidió quitar «Imprimir selección» de las órdenes de examen, un icono para ver lo suspendido en lugar del interruptor con su texto, que una evolución breve tenga el alto de Entrega y Alertas, y una interfaz más limpia.
