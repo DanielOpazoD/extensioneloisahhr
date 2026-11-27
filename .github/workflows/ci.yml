@@ -65,6 +65,8 @@ jobs:
         run: node scripts/capture-evolution-reader.mjs WORKTREE "$RUNNER_TEMP/lector-evoluciones"
       - name: Verify the summary arrives in the compact view while it loads
         run: node scripts/capture-loading.mjs WORKTREE "$RUNNER_TEMP/ficha-carga"
+      - name: Verify a change of module reads as one page
+        run: node scripts/capture-transitions.mjs WORKTREE "$RUNNER_TEMP/ficha-transiciones"
       - run: npm run test:dau
       - run: npm run build
       - uses: actions/upload-artifact@v7

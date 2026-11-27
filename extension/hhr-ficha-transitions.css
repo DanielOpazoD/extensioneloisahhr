@@ -1,0 +1,33 @@
+/* The change of module in the compact ficha (hhr-ficha-transitions.js). The green bar, the line of tabs and
+   Centro HHR never move: only what is under the tabs changes. */
+@media screen {
+  /* Without view transitions: the content under the tabs waits, veiled, for the view of the new module.
+     The veil lifts by itself after 300 ms, should the script that removes it stop. */
+  html[data-hhr-ficha-theme="compact"][data-hhr-ficha-settling] main > :not(.MuiAppBar-root) {
+    opacity:0; animation:hhr-ficha-reveal 140ms ease-out 300ms forwards;
+  }
+  html[data-hhr-ficha-theme="compact"][data-hhr-ficha-revealing] main > :not(.MuiAppBar-root) {
+    animation:hhr-ficha-reveal 160ms cubic-bezier(.2,0,0,1) both;
+  }
+
+  /* With view transitions: the persistent parts are taken apart from the page and shown as they are. */
+  html[data-hhr-ficha-switching] {
+    #menu-app-bar-element { view-transition-name:hhr-ficha-bar; }
+    main > .MuiAppBar-root { view-transition-name:hhr-ficha-tabs; }
+    #hhr-clinical-operations-bar { view-transition-name:hhr-ficha-ops; }
+  }
+  ::view-transition-group(hhr-ficha-bar), ::view-transition-group(hhr-ficha-tabs), ::view-transition-group(hhr-ficha-ops) { animation:none; }
+  ::view-transition-old(hhr-ficha-bar), ::view-transition-old(hhr-ficha-tabs), ::view-transition-old(hhr-ficha-ops) { display:none; }
+  ::view-transition-new(hhr-ficha-bar), ::view-transition-new(hhr-ficha-tabs), ::view-transition-new(hhr-ficha-ops) { animation:none; }
+  /* The rest: the old module fades out, the new one fades in from 4 px below. */
+  ::view-transition-old(root) { animation:hhr-ficha-leave 110ms ease-in both; }
+  ::view-transition-new(root) { animation:hhr-ficha-arrive 170ms cubic-bezier(.2,0,0,1) both; }
+
+  @media (prefers-reduced-motion:reduce) {
+    html[data-hhr-ficha-theme="compact"]:is([data-hhr-ficha-settling],[data-hhr-ficha-revealing]) main > :not(.MuiAppBar-root) { animation-duration:1ms; }
+    ::view-transition-old(*), ::view-transition-new(*), ::view-transition-group(*) { animation:none !important; }
+  }
+}
+@keyframes hhr-ficha-reveal { from { opacity:0; } to { opacity:1; } }
+@keyframes hhr-ficha-leave { to { opacity:0; } }
+@keyframes hhr-ficha-arrive { from { opacity:0; transform:translateY(4px); } }

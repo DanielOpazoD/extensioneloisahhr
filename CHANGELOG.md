@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.230
+
+- Cambiar de pestaña en la ficha (Resumen, Plan de tratamiento, Historial, Alta…) se lee como una sola página. En Chrome, el clic llega a Eloísa dentro de una transición de vista: la vista anterior queda en pantalla mientras Eloísa dibuja la nueva, y la nueva entra con un fundido de 170 ms. La barra verde, la línea de pestañas y la barra de Centro HHR no se mueven.
+- Donde no hay transiciones, o con «reducir movimiento», lo que está bajo las pestañas espera velado hasta que la vista presenta el módulo nuevo (450 ms como máximo); el velo se levanta solo aunque la extensión se detenga.
+- En CI, `scripts/capture-transitions.mjs` comprueba los tres casos: con transición (Eloísa recibe un solo clic, dentro de la transición, y las pestañas no se mueven), con velo, y el velo que se levanta solo; y que con movimiento reducido no hay transición.
+
 ## 0.48.229
 
 - Plan de tratamiento (medido en la página el 27-11-2026): la tarjeta pierde el relleno propio de Eloísa (16 × 32 px) y lee desde el mismo borde que las demás; las horas ocupan el ancho de la tabla (antes 100 px cada una, con la mitad derecha vacía), cada una sobre su casilla; una hora programada va en la banda de los encabezados con una línea fina, no en salmón con borde naranjo; cada fila mide lo que su texto (las casillas de 49 px fijaban 50 px por fila). Una tarjeta sin filas no dibuja sus horas.
