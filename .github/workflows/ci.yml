@@ -42,6 +42,8 @@ jobs:
         run: node scripts/capture-history.mjs WORKTREE "$RUNNER_TEMP/ficha-historial"
       - name: Verify the compact treatment plan keeps hours, states and native names
         run: node scripts/capture-care-plan.mjs WORKTREE "$RUNNER_TEMP/ficha-plan"
+      - name: Verify Alta and Ejecución de cuidados read like the summary
+        run: node scripts/capture-other-views.mjs WORKTREE "$RUNNER_TEMP/ficha-vistas"
       - name: Verify the compact summary on the shapes Eloísa draws
         run: node scripts/capture-summary.mjs WORKTREE "$RUNNER_TEMP/ficha-resumen"
       - name: Verify the medical worklist reads like the care worklist

@@ -1,5 +1,22 @@
 # Resumen compacto en escritorio
 
+## Alta y Ejecución de cuidados con el estilo del Resumen, en 0.48.222
+
+| Captura, 1440 × 900 | 0.48.221 | 0.48.222 |
+| --- | --- | --- |
+| Alta | [Antes](0.48.222/antes/1440-alta.png) | [Después](0.48.222/despues/1440-alta.png) |
+| Ejecución de cuidados | [Antes](0.48.222/antes/1440-ejecucion.png) | [Después](0.48.222/despues/1440-ejecucion.png) |
+
+| Medida en la página, con el estilo aplicado a mano | Antes | Después |
+| --- | ---: | ---: |
+| Alta: título | 20 px / 500 | 15 px / 600 |
+| Alta: campos | — | 33 px |
+| Alta: interruptor | 38 px | 29 px |
+| Ejecución de cuidados: alto de la vista | 3481 px | 2035 px |
+| Ejecución de cuidados: alto de una fila | 96 px | 61 px |
+| Ambas: esquinas de tarjeta | 12 px | 8 px |
+| Ambas: textos en mayúsculas | botones | ninguno |
+
 ## Plan de la ficha de cuidados como el de la ficha médica, en 0.48.221
 
 En la ficha de Gestión de cuidados, tres de las cuatro tarjetas de Plan abren con una columna de casillas y no se reconocían.

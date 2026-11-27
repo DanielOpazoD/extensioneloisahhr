@@ -37,6 +37,7 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 31. **Una impresión dice qué imprime.** Cada icono de impresión lleva sus palabras (`data-hhr-print-caption`), en la tinta de una acción y sin línea, como «Imprimir indicaciones». El nombre de Eloísa sigue siendo el del botón. Un filtro que no hay con qué usar (Balance Hídrico sin registros) espera tras un icono, después del estado.
 32. **Un trazo para todos los iconos.** Los iconos rellenos de Eloísa se dibujan con el contorno de la vista (`--hhr-icon-print`, `--hhr-icon-archive`, `--hhr-icon-cancel`, `--hhr-icon-notes`, `--hhr-icon-note-add`): la máscara va sobre su propio `svg`, que conserva su caja y su nombre. Todo texto se lee a 4,5:1 y todo control mide 24 px o deja 24 px libres; `scripts/visual-quality.mjs` lo comprueba en CI.
 33. **Lo que no se reconoce se dice.** Una vista cargada que la presentación no reconoce (sin `data-hhr-round="frame"` en el Resumen, sin `data-hhr-plan="card"` en Plan) se muestra como la dibuja Eloísa y lo avisa una vez por paciente y vista, con el evento `hhr-view-unrecognized` que dibuja Centro HHR.
+34. **Todas las pestañas hablan el mismo idioma.** Alta y Ejecución de cuidados usan los títulos, tarjetas, campos, botón e interruptores del Resumen. La presentación nombra la vista en `main` (`data-hhr-ficha-view`) y `hhr-ficha-views.css` la presenta; los nodos de Eloísa no cambian.
 
 ## Dónde vive cada cosa
 
@@ -49,6 +50,7 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 | [`hhr-ficha-evolution-authors.css`](../extension/hhr-ficha-evolution-authors.css) y [`.js`](../extension/hhr-ficha-evolution-authors.js) | Acciones de Evolución y filtro de evoluciones por profesional. |
 | [`hhr-ficha-reading-labels.css`](../extension/hhr-ficha-reading-labels.css) y [`.js`](../extension/hhr-ficha-reading-labels.js) | Firmas, campos de entrega y alerta, interruptores. |
 | [`hhr-ficha-history.css`](../extension/hhr-ficha-history.css) y [`hhr-history-date-navigation.js`](../extension/hhr-history-date-navigation.js) | Historial compacto y navegación por fechas. |
+| [`hhr-ficha-views.css`](../extension/hhr-ficha-views.css) | Alta y Ejecución de cuidados con el estilo del Resumen. |
 | [`hhr-ficha-care-plan.css`](../extension/hhr-ficha-care-plan.css) y [`.js`](../extension/hhr-ficha-care-plan.js) | Tarjetas de programación de Plan de tratamiento. |
 
 Un lector nuevo sigue la forma de [`hhr-ficha-care-plan.js`](../extension/hhr-ficha-care-plan.js): `create()` devuelve `refresh(raíz)` y `clear()`, reconoce por estructura y texto nativo, lleva la cuenta de cada atributo que pone y lo retira cuando deja de aplicar. [`hhr-native-ficha-presentation.js`](../extension/hhr-native-ficha-presentation.js) lo crea y le pasa `main` solo en su pestaña y en la vista Compacta.
