@@ -31,6 +31,7 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 25. **Un solo botón.** Un botón que hace algo es una línea alrededor de sus palabras (`--hhr-ficha-button`, `--hhr-ficha-button-radius`, `--hhr-ficha-button-line`), en la tinta de lo que se pulsa y sin relleno, sea de Eloísa o de la vista. Uno que solo abre una lectura no lleva línea. Deshabilitado, una tinta más clara (`--hhr-ficha-disabled`). No se usan el relleno ni un segundo color para dar énfasis: el orden y el lugar lo dan.
 26. **Una lista es una tabla sin cabecera.** Las alertas se leen como las filas de una tabla: texto en la tinta y el peso de lo que se lee, lo que sitúa (quién, cuándo) en gris, una línea entre filas. El color de una bandera se usa una vez por tarjeta, junto a su título, y en lo que está marcado («No reanimación»), no en cada fila.
 27. **Una tarjeta junto a la nota dice cuánto necesita.** Alertas publica el alto de su lista (`--hhr-round-need`, leído de sus filas y nunca del alto que se le dio) y su mínimo lo sigue hasta un tope; la nota toma ese mínimo como piso. Así ninguna de las dos lee el alto de la otra.
+28. **Lo que comparte un estado lo dice una vez.** Bajo «Sin datos» las secciones se agrupan por estado (sin registros, sin permiso): el estado va una vez, en una columna propia, y los nombres siguen uno tras otro. El script (`hhr-ficha-round-layout.js`) coloca cada ítem de Eloísa en su línea con `--hhr-round-tile` y `--hhr-round-tile-x`; ningún nodo se mueve.
 
 ## Dónde vive cada cosa
 

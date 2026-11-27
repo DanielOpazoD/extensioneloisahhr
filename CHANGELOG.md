@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.48.215
+
+- «Sin datos» se lee en pocas líneas: un grupo por estado. «Sin registros» y, a continuación, los nombres de las secciones sin registros o sin solicitudes, uno tras otro y separados por un punto; luego «Sin permiso» con los suyos. Cada sección ya no repite su estado. En la página, con el estilo y la colocación aplicados a mano, el grupo pasa de 7 líneas y 179 px a 3 líneas y 71 px en la ficha médica, y de 6 líneas y 153 px a 3 y 71 en la de Gestión de cuidados.
+- Los nombres de un grupo empiezan en una misma columna, también al saltar de línea, y se leen en la tinta de lo que explica, sin negrita.
+- «Exámenes» y «Cirugía» sin solicitudes van en el grupo sin registros, como las demás.
+- El icono de «Mostrar suspendidos» sigue al nombre de su sección.
+- Vale igual para la ficha abierta desde la lista de trabajo médico y desde Gestión de cuidados.
+
 ## 0.48.214
 
 - Alertas se lee como el resto del Resumen. Cada alerta es una fila: su texto en la tinta y el peso de lo que se lee (antes en negrita), quién la escribió y cuándo en gris, y una línea entre dos filas. La barra ámbar que llevaba cada fila pasa a ser una sola marca junto al título «Alertas», que aparece cuando hay alertas. En la página, con el estilo aplicado a mano, una fila pasa de 49–50 a 45–46 px en las dos fichas.

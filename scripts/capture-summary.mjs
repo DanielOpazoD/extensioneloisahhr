@@ -154,7 +154,11 @@ const read = page => page.evaluate(() => {
           rows:new Set(tiles.map(tile => Math.round(box(tile).top))).size,
           inside:tiles.every(tile => tile.getBoundingClientRect().left >= rail.left - 1 && tile.getBoundingClientRect().right <= rail.right + 1), heights:tiles.map(tile => Math.round(box(tile).height)),
           surfaces:[...new Set(tiles.map(tile => getComputedStyle(tile).backgroundColor))],
-          says:tiles.map(tile => (message => message && getComputedStyle(message, '::after').content)(tile.querySelector('[data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]')))},
+          says:tiles.map(tile => (message => message && getComputedStyle(message, '::after').content)(tile.querySelector('[data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]'))),
+          // A group per state: its state once, then the names one after the other.
+          leads:tiles.map(tile => tile.closest('[data-hhr-round-tile]')).filter(tile => tile?.getAttribute('data-hhr-round-tile') === 'lead').map(tile => [tile.getAttribute('data-hhr-round-state'), Math.round(box(tile).top)]),
+          names:tiles.map(tile => { const title = tile.querySelector('.MuiCardHeader-title, h3'); return title && Math.round(title.getBoundingClientRect().left); }),
+          wraps:tiles.map(tile => tile.closest('[data-hhr-round-tile]')).filter(tile => tile?.hasAttribute('data-hhr-round-wrap')).map(tile => Math.round(tile.getBoundingClientRect().left))},
         // The daily row: the name of its field before it, whole, and the byline out of sight.
         daily:(row => row && (name => ({name:box(name), field:box(row.querySelector('.MuiInputBase-root')), byline:box(row.querySelector('[data-hhr-update-label]')),
           clipped:name.scrollWidth > name.clientWidth + 1}))(row.querySelector('.MuiInputLabel-root')))(one('.frame > .daily')),
@@ -227,9 +231,10 @@ async function verifySummary(page, width, native, off, sans) {
   assert.deepEqual(look.titles, ['15px 600'], 'Cada tarjeta se titula igual');
   assert.deepEqual(look.surfaces, ['8px none'], 'Diagnóstico y las tarjetas bajo la ronda tienen la misma superficie');
   assert.ok(look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(look.tables));
-  assert.ok(look.empty.every(gap => gap >= 8 && gap <= 12), 'Una sección vacía separa su nombre de su mensaje: ' + look.empty);
+  // Under «Sin datos» a section is its name alone: the state is said once by its group.
+  void look.empty;
   assert.deepEqual(look.inks, ['rgb(33, 33, 33)', 'rgb(74, 74, 74)', 'rgb(102, 102, 102)'], 'El texto usa las tintas neutras de Eloísa');
-  assert.ok(look.emptyEdges.every(edge => edge === inset), 'Una sección vacía empieza en el borde de lectura: ' + look.emptyEdges);
+  void look.emptyEdges;
   // The owner asked for an icon in place of the switch and its words, wherever a section shows what is suspended.
   assert.ok(look.filter.afterMessage && look.filter.oneLine && look.filter.gap >= 4 && look.filter.gap <= 16 && look.filter.box.join() === '20,20' && look.filter.head.join() === '28,28' &&
     look.filter.icon && look.filter.words <= 1 && /^Mostrar Suspendidos$/i.test(look.filter.name) && look.filter.hint === look.filter.name,
@@ -305,11 +310,16 @@ async function verifySummary(page, width, native, off, sans) {
   else assert.ok(!daily.clipped && daily.name.width > 100 && daily.name.right <= daily.field.left && Math.abs((daily.name.top + daily.name.bottom) / 2 - (daily.field.top + daily.field.bottom) / 2) <= 2,
     'El nombre del campo del resumen diario se lee entero, antes del campo: ' + JSON.stringify(daily));
   // What has no records, or cannot be seen, closes the summary together: a heading and a short line for each section.
-  assert.ok(group.count === 9 && group.inside && group.rows <= 6 && group.heights.every(height => height <= 44) && group.top >= shown.signs.top && group.left >= shown.signs.right - 1,
-    'Las secciones sin datos se leen junto a Signos, en la otra mitad de su línea: ' + JSON.stringify(group));
+  // The owner asked for «Sin datos» in as few lines as can hold it: one group per state, its state said once,
+  // then the names of its sections one after the other, wrapping under the first name.
+  assert.ok(group.count === 9 && group.inside && group.rows <= 4 && group.heights.every(height => height <= 24) && group.top >= shown.signs.top && group.left >= shown.signs.right - 1,
+    'Las secciones sin datos se leen junto a Signos, en pocas líneas: ' + JSON.stringify(group));
   assert.deepEqual([group.heading, group.headingSize, group.surfaces], ['"Sin datos"', '12px', ['rgba(0, 0, 0, 0)']], 'El grupo tiene su rótulo y no dibuja una tarjeta por sección');
-  assert.ok(group.says.every(state => ['"Sin registros" / ""', '"Sin permiso" / ""'].includes(state)) && group.says.filter(state => /permiso/.test(state)).length === 2 && group.says.slice(-2).every(state => /permiso/.test(state)),
-    'Cada sección dice su estado en dos palabras, y sin permiso no es lo mismo que sin registros: ' + group.says);
+  assert.deepEqual(group.leads.map(([state]) => state), ['none', 'denied'], 'Un grupo sin registros y otro sin permiso, en ese orden: ' + JSON.stringify(group.leads));
+  assert.deepEqual(group.says.filter(state => state !== 'none'), ['"Sin registros" / ""', '"Sin permiso" / ""'], 'Cada grupo dice su estado una vez: ' + group.says);
+  const leadNames = group.names.filter((left, at) => at === 0 || at === group.names.length - 2);
+  assert.ok(group.wraps.every(left => Math.abs(left - leadNames[0]) <= 1) && Math.abs(leadNames[0] - leadNames[1]) <= 1,
+    'Los nombres de cada grupo empiezan en una misma columna, también al saltar de línea: ' + JSON.stringify([leadNames, group.wraps]));
   // Its sentence is three text nodes. Read whole, it is an empty request like Exámenes, beside it on the last line of the round.
   assert.deepEqual([lines.operationTheaterRequestEntry.mark, lines.operationTheaterRequestEntry.round], ['status-card', 'empty-request'], 'Cirugía sin solicitudes acompaña a Exámenes');
 
