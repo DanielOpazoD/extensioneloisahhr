@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.221
+
+- Plan de tratamiento se ve igual en la ficha de Gestión de cuidados que en la de lista de trabajo médico. Ahí Eloísa abre cada tabla, salvo Procedimientos, con una columna de casillas para seleccionar filas (leído en la página el 27-11-2026), y la vista no la reconocía: tres de las cuatro tarjetas quedaban con títulos de 24 px, interruptores de 38 px y botones en mayúsculas. Ahora se reconocen las cuatro; la columna de selección mide lo que su casilla y la indicación se lee como en la ficha médica.
+
 ## 0.48.220
 
 - Cuando la vista Compacta no reconoce el Resumen o el Plan de tratamiento de una ficha ya cargada, lo avisa una vez por paciente y vista: «La vista Compacta no reconoció el Resumen de esta ficha y lo muestra como lo dibuja Eloísa. Puede que Eloísa haya cambiado su página.». Antes volvía al aspecto de Eloísa sin avisar. Espera a que la página quede quieta 4 segundos y, mientras no la reconoce, deja `data-hhr-view-unrecognized` en la página.

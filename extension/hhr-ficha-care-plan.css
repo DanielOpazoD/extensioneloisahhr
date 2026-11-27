@@ -84,11 +84,19 @@
       /* «3 / 5» is one figure: it does not break between its arrows. */
       .MuiStack-root > p { white-space:nowrap; }
     }
+    /* In the ficha of Gestión de cuidados a column of checkboxes selects the rows: as narrow as its box,
+       with the reading edge of the card before it. The indication is the column after it. */
+    table[data-hhr-plan-select] :is(th,td):first-child {
+      inline-size:1px; padding-inline:calc(var(--hhr-ficha-inset) - 5px) 0 !important;
+      .MuiCheckbox-root, > span:has(> input[type="checkbox"]) { padding:3px !important; }
+      svg { inline-size:18px; block-size:18px; font-size:1.125rem; }
+    }
+    table[data-hhr-plan-select] :is(th,td):nth-child(2) { padding-inline-start:6px !important; }
     /* Eloísa's page controls held the first column open. Smaller, they no longer do: the
        indication keeps that width in a narrow window, where the hours would take the rest. */
-    table th:first-child { min-inline-size:14rem; }
+    table:not([data-hhr-plan-select]) th:first-child, table[data-hhr-plan-select] th:nth-child(2) { min-inline-size:14rem; }
     /* An indication is what is read; its posology explains it. */
-    table td:first-child {
+    :is(table:not([data-hhr-plan-select]) td:first-child, table[data-hhr-plan-select] td:nth-child(2)) {
       > .MuiStack-root { gap:0; }
       > .MuiStack-root > .MuiStack-root { align-items:center; gap:2px 6px; }
       > .MuiStack-root > .MuiStack-root > p { font-weight:var(--hhr-ficha-weight-strong); }

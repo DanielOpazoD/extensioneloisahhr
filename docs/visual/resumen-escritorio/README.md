@@ -1,5 +1,17 @@
 # Resumen compacto en escritorio
 
+## Plan de la ficha de cuidados como el de la ficha médica, en 0.48.221
+
+En la ficha de Gestión de cuidados, tres de las cuatro tarjetas de Plan abren con una columna de casillas y no se reconocían.
+
+| Captura, 1440 × 900 | 0.48.221 |
+| --- | --- |
+| Plan de la ficha de cuidados | [Después](0.48.221/despues/1440-plan-cuidados.png) |
+
+| Medida en la página, ficha de cuidados | 0.48.220 | 0.48.221 (condición leída en la página) |
+| --- | ---: | ---: |
+| Tarjetas reconocidas | 1 de 4 | 4 de 4 |
+
 ## Una familia de iconos y la barra en la línea de pestañas, en 0.48.219
 
 Tercera y cuarta parte de las mejoras aceptadas de la auditoría visual.

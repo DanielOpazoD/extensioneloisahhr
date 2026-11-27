@@ -19,18 +19,23 @@
     const header = card.querySelector(':scope > .MuiCardHeader-root');
     const content = card.querySelector(':scope > .MuiCardContent-root');
     const table = content?.querySelector(':scope > .MuiTableContainer-root > table');
-    const headings = table?.tHead?.rows[0]?.cells;
+    const cells = [...(table?.tHead?.rows[0]?.cells || [])];
+    // In the ficha of Gestión de cuidados a table opens with a column that selects its rows: a checkbox and
+    // nothing else, in the heading and in each row (read on the page 27-11-2026). The schedule follows it.
+    const selects = cell => !cell?.textContent.trim() && cell.querySelectorAll(controls).length === 1 && Boolean(cell.querySelector('input[type="checkbox"]'));
+    const select = cells.length === 3 && selects(cells[0]);
+    const headings = select ? cells.slice(1) : cells;
     // Programación de procedimientos leaves its first heading empty (read on the page 27-11-2026): its title says what it is.
     const titled = /^programacion de /.test(plain(header?.querySelector('.MuiCardHeader-title')?.textContent));
-    const first = plain(headings?.[0]?.textContent);
-    if (!header || headings?.length !== 2 || !(first.startsWith('indicacion') || (titled && !first))) return null;
+    const first = plain(headings[0]?.textContent);
+    if (!header || headings.length !== 2 || !(first.startsWith('indicacion') || (titled && !first))) return null;
     // The tools sit between the header and the table: icon buttons and nothing else.
     const tools = [...card.children].find(el => el !== header && el !== content);
     const buttons = tools ? [...tools.querySelectorAll('button')] : [];
     const onlyButtons = buttons.length && buttons.length === tools.querySelectorAll(controls).length &&
       buttons.every(button => button.matches('.MuiIconButton-root') && button.querySelector('svg') && !button.textContent.trim());
     const rows = [...(table.tBodies[0]?.rows || [])];
-    return {table, tools:onlyButtons && card.children.length === 3 ? tools : null, buttons:onlyButtons ? buttons : [],
+    return {table, select, tools:onlyButtons && card.children.length === 3 ? tools : null, buttons:onlyButtons ? buttons : [],
       empty:rows.length === 1 && rows[0].cells.length === 1 && rows[0].cells[0].colSpan > 1};
   }
 
@@ -69,6 +74,7 @@
           if (label.querySelector('input[type="checkbox"]')) filterOf(label);
         }
         if (plan.empty) set(next, plan.table, attribute + '-empty');
+        if (plan.select) set(next, plan.table, attribute + '-select');
         if (plan.tools) set(next, plan.tools, attribute, 'tools');
         for (const button of plan.tools ? plan.buttons : []) {
           const name = nativeName(button, hints.has(button));
