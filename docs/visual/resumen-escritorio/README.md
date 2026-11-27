@@ -1,5 +1,19 @@
 # Resumen compacto en escritorio
 
+## Un solo juego de controles, en 0.48.226
+
+| Captura, 1440 × 900 | 0.48.225 | 0.48.226 |
+| --- | --- | --- |
+| Resumen completo | [Antes](0.48.226/antes/1440-resumen-completo.png) | [Después](0.48.226/despues/1440-resumen-completo.png) |
+
+| Medida en la ficha ficticia | 0.48.225 | 0.48.226 |
+| --- | ---: | ---: |
+| Grises de icono de herramienta | 3 | 1 |
+| Iconos de comentario deshabilitados a la vista | 21 | 0 |
+| Etiqueta de Régimen | 18 px / 13 px | 16 px / 11 px |
+| Icono de suspendidos en tablas | 28 px | 26 px |
+| Separación entre tarjetas de Plan | 8 px | 12 px |
+
 ## Reposo vacío en «Sin datos» e impresión de la evolución en su tarjeta, en 0.48.225
 
 | Captura, 1440 × 900 | 0.48.224 | 0.48.225 |
