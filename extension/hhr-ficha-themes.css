@@ -500,6 +500,14 @@
     min-height:0 !important;
     > [data-hhr-ficha-sections] { display:none !important; }
   }
+  /* The same line before the view has named it. Eloísa fills it link by link while the ficha loads, and
+     the one of the note, by which the view knows the line, comes with the note (read 26-11-2026: the
+     links were seen for some 160 ms and everything under them moved 60 px). What holds it is known by
+     its place: the item right before the round, with nothing but a grid inside. */
+  html[data-hhr-ficha-theme="compact"] main .MuiGrid-item:has(> .MuiGrid-container:only-child):has(+ [data-hhr-round="frame"]) {
+    min-height:0 !important;
+    > .MuiGrid-container { display:none !important; }
+  }
   /* Who wrote an alert, or asked for a prescription: a first name and a first surname. The whole name
      stays in the page. */
   html[data-hhr-ficha-theme="compact"] [data-hhr-author] {
@@ -534,12 +542,14 @@
   }
 }
 
+/* The frame is named twice in the selectors below, for their weight: they once waited for the line of
+   section links before the round, and must still win over the columns of the round. */
 /* The daily date and its print action stay in view while the summary scrolls: the row has no line
    of its own. It rides at the end of the line of tabs, beside the floating Centro HHR bar. Should
    that line have no room, it rides on the section links: they scroll under it and the last of them
    still stops clear of it. */
 @media screen and (min-width:1100px) {
-  html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-section-slot] + [data-hhr-round="frame"] > .MuiGrid-item[data-hhr-round="before"][data-hhr-ficha-dock] {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"][data-hhr-ficha-dock] {
     position:fixed !important; z-index:26;
     /* An out-of-flow item would otherwise be the last stop of the round for the Tab key. */
     reading-order:-1;
@@ -555,7 +565,7 @@
     > :not([data-hhr-update-label]) { display:inline-flex; align-items:center; gap:6px; }
   }
   /* The daily form at the height of a line of text, on the section line or in its own row. */
-  html[data-hhr-ficha-theme="compact"] [data-hhr-ficha-section-slot] + [data-hhr-round="frame"] > .MuiGrid-item[data-hhr-round="before"]:has(> [data-hhr-update-label]):has(form input) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"]:has(> [data-hhr-update-label]):has(form input) {
     min-height:30px !important;
     /* The row says what it prints, not who last updated the summary: the note carries its own byline.
        The native one stays in the page for a screen reader. */

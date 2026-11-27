@@ -488,8 +488,10 @@
       round.refresh(compact);
       carePlan.refresh(theme === 'compact' && tab.id === 'encounter-event-tab-care-plan' ? document.querySelector('main') : null);
       const caption = main && [...main.querySelectorAll('.MuiGrid-container .MuiTypography-caption')].find(element =>
-        // The line this view already holds counts while the round keeps it out of sight.
-        ['evolucion','valoracion'].includes(normalize(element.textContent)) && (element.getClientRects().length || row?.contains(element)));
+        // The line this view already holds counts while the round keeps it out of sight, and so does the
+        // one right before the round, which is not drawn from the start.
+        ['evolucion','valoracion'].includes(normalize(element.textContent)) && (element.getClientRects().length || row?.contains(element) ||
+          element.closest('.MuiGrid-container')?.parentElement?.nextElementSibling?.matches('[data-hhr-round="frame"]')));
       const nextRow = caption?.closest('.MuiGrid-container');
       if (row && row !== nextRow) {
         undock(); dailyRow = null;

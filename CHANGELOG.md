@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.212
+
+- Revisión de la carga de las dos fichas con la 0.48.211 instalada, cuadro por cuadro en la página. La ronda ya se armaba desde el primer cuadro; quedaban tres saltos de un instante, y se corrigen:
+  - La parte alta de la ronda ya no espera a la línea de enlaces de sección, que Eloísa dibuja y llena después: Diagnóstico empezaba 60 px más abajo y subía al llegar la nota, los enlaces se alcanzaban a ver unos 160 ms y la fecha del resumen diario aparecía un instante en su propia línea antes de acoplarse. Con las reglas nuevas aplicadas en la página, Diagnóstico queda en su lugar desde el primer cuadro, la nota se mueve 6 px y la fecha pasa directo a la línea de pestañas, en la ficha médica y en la de Gestión de cuidados.
+  - Lo que Eloísa dibuja dentro del mismo cuadro, después del turno de la vista, también se presenta antes de pintarse. Signos vitales se vio un cuadro con 624 px de alto en lugar de 134, y Diagnóstico con 130 en lugar de 82.
+  - El marcador de carga de Diagnóstico mide lo que dos diagnósticos.
+
 ## 0.48.211
 
 - «Ver evoluciones» vuelve a funcionar al entrar a la ficha desde la lista. Decía «Las evoluciones no fueron autorizadas para el episodio de esta pestaña»: Eloísa pasa de la lista a la ficha sin cargar una página, y la extensión comparaba el episodio con la dirección de la lista. Ahora usa la dirección de la pestaña, que el navegador mantiene. Comprobado en la página: desde la lista fallaba siempre y con la ficha cargada directamente leía sus notas.

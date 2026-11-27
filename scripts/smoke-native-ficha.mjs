@@ -100,6 +100,20 @@ export const verifyNativeFicha = async (page, worker) => {
         });
       }));
       assert.equal(presented, true, 'Un apartado recién dibujado toma la forma de la vista en el mismo cuadro');
+      // Eloísa also draws inside the frame itself, after this view's turn in it. The section then changes the
+      // size of the page, and it is presented before that frame is painted, not in the next one.
+      const late = await page.locator('#procedureEntrySection').evaluate(el => new Promise(done => {
+        requestAnimationFrame(() => {
+          const drawn = el.cloneNode(true);
+          drawn.removeAttribute('data-hhr-ficha-summary-card');
+          drawn.append(Object.assign(document.createElement('p'), {textContent:'Registro de prueba que llega dentro del cuadro.'}));
+          el.replaceWith(drawn);
+          const after = new MessageChannel();
+          after.port1.onmessage = () => done(drawn.hasAttribute('data-hhr-ficha-summary-card'));
+          after.port2.postMessage(0);
+        });
+      }));
+      assert.equal(late, true, 'Un apartado que Eloísa dibuja dentro del cuadro también toma la forma de la vista antes de pintarse');
       // A section left without records stays in view: nothing folds it and no button unfolds it.
       const optional = page.locator('#procedureEntrySection');
       await optional.evaluate(el => el.lastChild.textContent = 'Sin registros');

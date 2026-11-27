@@ -38,6 +38,9 @@ function hold() {
       <span class="MuiTypography-root MuiTypography-body1 MuiCardHeader-subheader">${bar}</span></div></div><div class="MuiCardContent-root">${bar}${bar}</div></div>`);
   }
   swap(document.querySelector('.frame > .daily > p'), bar.replace('">', '" style="width:300px;height:14px">'));
+  // The line of section links is there from the start, empty: Eloísa adds each link with its section.
+  window.fixtureLinks = [...document.querySelector('.rail').children];
+  document.querySelector('.rail').replaceChildren();
   // The fictional page had scrolled to the field it focuses when it opens; a ficha that loads is at its top.
   scrollTo(0, 0);
 }
@@ -49,6 +52,9 @@ function arrive(ids) {
     stand.replaceWith(element);
     return false;
   });
+  // The link of a section comes with it.
+  const rail = document.querySelector('.rail'), arrived = ids ? window.fixtureLinks.filter(link => ids.includes('observationEntrySection') && /^(?:Evolución|Alertas|Signos vitales)$/.test(link.textContent.trim())) : window.fixtureLinks;
+  rail.append(...arrived.filter(link => !link.isConnected));
   window.fichaFixture?.refresh();
 }
 const read = page => page.evaluate(() => {
@@ -62,7 +68,8 @@ const read = page => page.evaluate(() => {
     page:document.documentElement.scrollHeight, overflow:document.documentElement.scrollWidth > innerWidth,
     row:shown(row), waiting:getComputedStyle(row).animationName, docked:row.hasAttribute('data-hhr-ficha-dock'), rowBox:box(row),
     rail:shown(document.querySelector('.rail')), margin:Math.round(document.querySelector('.fixture-placeholder, #evolution').getBoundingClientRect().left),
-    frame:frame.getAttribute('data-hhr-round'), columns:frame.hasAttribute('data-hhr-round-columns'),
+    frame:frame.getAttribute('data-hhr-round'), columns:frame.hasAttribute('data-hhr-round-columns'), top:Math.round(frame.getBoundingClientRect().top + scrollY),
+    links:[...document.querySelectorAll('.rail .MuiTypography-caption')].filter(shown).length,
     note:(card => card && box(card))(document.querySelector('#evolution')), signs:(card => card && box(card))(document.querySelector('section#vitalSignsEntry')),
     // Where the round puts the note and the signs, loaded or not.
     noteSlot:(item => item && box(item))(document.querySelector('[data-hhr-round="note"]')), signsSlot:(item => item && box(item))(document.querySelector('[data-hhr-round="vitals"]')),
@@ -127,6 +134,10 @@ try {
       // The round is laid out from the placeholders: each section then arrives where it is read.
       assert.ok(mounted.frame === 'frame' && mounted.columns && mounted.stands === native.stands && !mounted.row && !mounted.rail && !mounted.overflow,
         'Con todo en carga, la ronda ya está armada con los marcadores, sin la fila diaria ni la línea de enlaces: ' + JSON.stringify(mounted));
+      // Eloísa fills the line of section links while the ficha loads, and the view knows that line by the link
+      // of the note: the round starts in its place before any of that, and no link is ever drawn.
+      assert.ok(mounted.top === wholeSettled.top && partial.top === wholeSettled.top && [mounted, partial, partialSettled, whole, wholeSettled].every(step => step.links === 0),
+        'La ronda empieza en su lugar desde el primer cuadro y la línea de enlaces no se llega a dibujar: ' + JSON.stringify([mounted.top, partial.top, wholeSettled.top, mounted.links, partial.links, whole.links]));
       const near = (a, b, slack) => a && b && a.every((value, at) => Math.abs(value - b[at]) <= slack[at]);
       // In this fictional page the daily row keeps a line of its own once it arrives (30 px), and a diagnosis with
       // two rows is 24 px taller than its placeholder: the note is that much lower, in the same column and size.
@@ -137,7 +148,7 @@ try {
         'Al llegar la firma del día, la fila diaria deja de esperar en el mismo pase: ' + JSON.stringify(partial));
       assert.deepEqual([partial.docked, partial.rowBox, partial.note, partial.signs], [partialSettled.docked, partialSettled.rowBox, partialSettled.note, partialSettled.signs],
         'Nada cambia de lugar un cuadro después: la fecha, la nota y los signos quedan puestos en el pase que los dibuja');
-      assert.ok(partial.stands > 0 && partial.heights.every(size => size <= 72), 'Lo que aún carga sigue en una línea dentro de la ronda, y Diagnóstico guarda dos de sus filas: ' + JSON.stringify(partial.heights));
+      assert.ok(partial.stands > 0 && partial.heights.every(size => size <= 82), 'Lo que aún carga sigue en una línea dentro de la ronda, y Diagnóstico guarda dos de sus filas: ' + JSON.stringify(partial.heights));
       assert.ok(whole.stands === 0 && whole.frame === 'frame' && !whole.overflow, 'Al llegar el resto no queda ningún marcador');
       assert.deepEqual([whole.docked, whole.rowBox, whole.note, whole.signs], [wholeSettled.docked, wholeSettled.rowBox, wholeSettled.note, wholeSettled.signs],
         'La página completa tampoco se mueve un cuadro después de dibujarse');

@@ -778,8 +778,27 @@
   // paints it: a card never shows in its original form first. The controls of the bar, which do not
   // change what the page looks like, keep their own slower pace.
   let stale = true, presenting = 0;
+  // Eloísa also changes the page inside the frame itself, after this view's turn in it: a section
+  // was seen one frame as Eloísa drew it (read 26-11-2026: the signs, 624 px high for one frame). A
+  // section that arrives changes the size of the page, and that is told after every script of the
+  // frame has run and before it is painted: what is still to present is presented then. The page is
+  // not watched while the view resizes it, which the browser reports as an error of the observer.
+  let watched = null;
+  const lateFrame = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
+    if (!active || !stale || !document.body || !uiLifecycle.owns()) return;
+    lateFrame.disconnect();
+    watched = null;
+    present();
+  }) : null;
   const present = () => {
     stale = false;
+    const page = document.querySelector('main');
+    if (lateFrame && page !== watched) {
+      lateFrame.disconnect();
+      watched = page;
+      // Watched from the next task on: starting now would report the size the view has just given it.
+      if (page) window.setTimeout(() => { if (active && watched === page && page.isConnected) lateFrame.observe(page); }, 0);
+    }
     const encId = helper.resolveEncounterId(window.location.href);
     // Until the saved view is known the page keeps the one it opened with.
     if (fichaTheme !== null) nativePresentation?.refresh(encId, fichaTheme);
@@ -918,6 +937,7 @@
       }
       active = false;
       cancelAnimationFrame(presenting);
+      lateFrame?.disconnect();
       document.removeEventListener('click', onWorklistPrint, true);
       document.removeEventListener('click', onWorklistEdit, true);
       document.removeEventListener('click', onWorklistCopyRun, true);
