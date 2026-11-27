@@ -72,6 +72,8 @@
       .MuiStack-root > span.MuiTypography-root:has(> span.MuiTypography-root + span.MuiTypography-root:last-child) {
         display:inline-flex; inline-size:auto; column-gap:4px; margin:0;
         > span:first-child { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
+        /* Eloísa draws the value in a light weight (300): it is what is read, at the weight of the text. */
+        > span:last-child { color:var(--hhr-ficha-ink); font-weight:400; }
         &:has(> span:last-child:empty) { display:none; }
       }
       .MuiStack-root:has(> span.MuiTypography-root > span.MuiTypography-root + span.MuiTypography-root:last-child) {
@@ -81,11 +83,18 @@
       /* Any other chip of an event is a small tag under its text, not a pill of its own height. */
       .MuiChip-root:not([data-hhr-history-new]) {
         height:16px; border-radius:4px; background:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft);
-        font:var(--hhr-ficha-weight-strong) .625rem/1 var(--hhr-ficha-sans);
-        > .MuiChip-label { padding-inline:5px; }
+        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-tag)/1 var(--hhr-ficha-sans);
+        > .MuiChip-label { padding-inline:5px; font:inherit; }
       }
-      /* The state of the event closes its first line. */
-      [data-hhr-history-new] { position:absolute; inset-block-start:7px; inset-inline-end:var(--hhr-ficha-inset); margin:0; }
+      /* The state of the event closes its first line, at the size of a tag (Eloísa writes it at 10 px). */
+      [data-hhr-history-new] {
+        position:absolute; inset-block-start:7px; inset-inline-end:var(--hhr-ficha-inset); margin:0; height:16px;
+        .MuiChip-label { font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-tag)/1 var(--hhr-ficha-sans) !important; }
+      }
+      /* A grey of Eloísa that reads at 3.9:1 takes the soft ink of the view. */
+      [data-hhr-history-quiet] { color:var(--hhr-ficha-ink-soft) !important; }
+      /* A value Eloísa writes in a light weight (300) beside its label (500) keeps the weight of the text. */
+      [data-hhr-history-light] { font-weight:400 !important; }
       /* The last word of the line leaves the badge its place, also when the line wraps. */
       &:has([data-hhr-history-new]) > .MuiCardHeader-root .MuiCardHeader-subheader { margin-inline-end:4.75rem; }
     }
@@ -108,6 +117,33 @@
     margin:0 0 6px; padding:0 0 4px; border-block-end:1px solid var(--hhr-ficha-line); font-size:var(--hhr-ficha-text-meta);
     .hhr-evo-author, .hhr-evo-back { min-height:26px; padding:2px 8px; color:var(--hhr-ficha-action); font-size:var(--hhr-ficha-text-meta); }
     .hhr-evo-author[aria-pressed="true"] { background:var(--hhr-ficha-action-pressed); color:var(--hhr-ficha-ink); }
+  }
+}
+
+/* The filters of Historial read as a card of the view: its title at the size of the others, controls at
+   the height of a line, «Filtrar» as the one button. Eloísa's controls keep their place and their words. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] .MuiGrid-container:has(> .MuiGrid-item > [data-hhr-history-timeline]) > .MuiGrid-item:first-child:has(form) > .MuiPaper-root {
+    border-radius:var(--hhr-ficha-radius) !important; box-shadow:none !important;
+    > .MuiCardHeader-root { padding:8px var(--hhr-ficha-inset) 4px !important; }
+    > .MuiCardHeader-root .MuiCardHeader-title { color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans) !important; }
+    > .MuiCardHeader-root .MuiIconButton-root { padding:4px; color:var(--hhr-ficha-ink-soft); svg { inline-size:18px; block-size:18px; } }
+    > .MuiCardContent-root { padding:6px var(--hhr-ficha-inset) 12px !important; }
+    form { gap:12px !important; }
+    .MuiFormControlLabel-root { margin-inline-start:-6px; }
+    .MuiFormControlLabel-root .MuiSwitch-root { zoom:.75; }
+    .MuiFormControlLabel-label { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans) !important; }
+    .MuiInputLabel-root { font-size:var(--hhr-ficha-text-meta) !important; }
+    .MuiInputBase-root { font-size:var(--hhr-ficha-text-body); }
+    :is(.MuiInputBase-input,.MuiSelect-select) { box-sizing:border-box; min-height:0 !important; padding-block:6px !important; }
+    .MuiButton-root {
+      min-block-size:var(--hhr-ficha-button,26px) !important; padding:2px 10px !important;
+      border:1px solid var(--hhr-ficha-button-line,#c4d8d1) !important; border-radius:var(--hhr-ficha-button-radius,6px) !important;
+      background:transparent !important; color:var(--hhr-ficha-action) !important; box-shadow:none !important;
+      font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans) !important; text-transform:none !important;
+      &:hover { background:var(--hhr-ficha-action-hover) !important; }
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+    }
   }
 }
 

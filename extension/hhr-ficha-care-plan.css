@@ -8,6 +8,12 @@
     gap:8px;
     > * { margin-block:0 !important; }
   }
+  /* The switch above the cards reads as a note, at three quarters of its size, whatever shape the view has. */
+  html[data-hhr-ficha-theme="compact"] label[data-hhr-plan-filter="all"] {
+    margin:0 !important;
+    .MuiSwitch-root { zoom:.75; }
+    .MuiFormControlLabel-label { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans) !important; }
+  }
   /* A switch that filters what is listed reads as a note, at four fifths of its size. */
   html[data-hhr-ficha-theme="compact"] :is([data-hhr-plan="filter"], [data-hhr-plan="card"] > .MuiCardHeader-root) {
     .MuiSwitch-root { zoom:.8; }
@@ -27,6 +33,8 @@
       .MuiCardHeader-title { color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans); }
       .MuiCardHeader-action { align-self:center; margin:0; }
       .MuiCardHeader-action :is(label,.MuiFormControlLabel-root) { margin:0; }
+      /* Its filter is an icon at the height of the line of the title. */
+      .MuiCardHeader-action label[data-hhr-plan-filter]:not([data-hhr-plan-filter="other"]) { inline-size:26px; block-size:26px; }
     }
     > [data-hhr-plan="tools"] {
       grid-column:2; grid-row:1; padding:0 6px 0 0 !important;
@@ -87,7 +95,7 @@
       > .MuiStack-root > .MuiBox-root > p { color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
       .MuiChip-root {
         block-size:16px; border-radius:4px; background:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft);
-        font:var(--hhr-ficha-weight-strong) .625rem/1 var(--hhr-ficha-sans);
+        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-tag)/1 var(--hhr-ficha-sans);
         > .MuiChip-label { padding-inline:5px; font:inherit; }
       }
     }

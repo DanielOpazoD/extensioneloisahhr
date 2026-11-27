@@ -33,6 +33,7 @@ Esta guía reúne las reglas con las que se rediseñaron el Resumen compacto, el
 27. **Una tarjeta junto a la nota dice cuánto necesita.** Alertas publica el alto de su lista (`--hhr-round-need`, leído de sus filas y nunca del alto que se le dio) y su mínimo lo sigue hasta un tope; la nota toma ese mínimo como piso. Así ninguna de las dos lee el alto de la otra.
 28. **Lo que comparte un estado lo dice una vez.** Bajo «Sin datos» las secciones se agrupan por estado (sin registros, sin permiso): el estado va una vez, en una columna propia, y los nombres siguen uno tras otro. El script (`hhr-ficha-round-layout.js`) coloca cada ítem de Eloísa en su línea con `--hhr-round-tile` y `--hhr-round-tile-x`; ningún nodo se mueve.
 29. **Un control que casi nunca se usa se lee como su valor.** El estado de una fila es su palabra, en el borde de su celda; su caja y su flecha aparecen al apuntar la fila o con el teclado en ella, sin mover la palabra.
+30. **Una vista, un idioma.** Plan e Historial usan los iconos, el botón, las tintas y el tamaño de etiqueta del Resumen (`--hhr-ficha-text-tag`, `--hhr-icon-hidden`). Un interruptor que muestra lo que una tarjeta oculta es un icono con su nombre al apuntarlo. Un gris o un peso de Eloísa que no se lee bien se corrige leyendo su estilo una vez por nodo (`data-hhr-history-quiet`, `data-hhr-history-light`), nunca aplanando rótulos y valores juntos. El rojo de un valor fuera de rango es `--hhr-ficha-alarm`.
 
 ## Dónde vive cada cosa
 

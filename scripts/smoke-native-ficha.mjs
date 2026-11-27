@@ -480,7 +480,8 @@ export const verifyNativeFicha = async (page, worker) => {
     const ageWeight = locator => locator.evaluate(el => Number(getComputedStyle(el,'::after').fontWeight));
     const recent = medical.locator('.tile [data-hhr-vital-elapsed]').first();
     assert.ok(await ageWeight(older) > await ageWeight(recent));
-    assert.equal(await medical.locator('.vitals-grid [style*="color"]').evaluate(el => getComputedStyle(el).color),'rgb(204, 36, 36)');
+    // A value out of range keeps its flag, in a red that reads.
+    assert.equal(await medical.locator('.vitals-grid [style*="color"]').evaluate(el => getComputedStyle(el).color),'rgb(198, 40, 40)');
   } finally {
     await medical.close();
   }

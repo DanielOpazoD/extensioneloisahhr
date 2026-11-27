@@ -41,7 +41,7 @@ export async function verifyNursingSummary(page, worker) {
   await glucoseTime.evaluate(node => node.removeAttribute('title'));
   await glucoseSource.waitFor({state:'detached'});
   assert.equal(await tiles.first().locator('[data-hhr-reading="vital-pam"]').innerText(), 'PAM: 90');
-  assert.equal(await tiles.nth(3).locator('strong').evaluate(el=>getComputedStyle(el).color),'rgb(255, 0, 0)');
+  assert.equal(await tiles.nth(3).locator('strong').evaluate(el=>getComputedStyle(el).color),'rgb(198, 40, 40)');
   const historyButton = page.getByRole('button',{name:'Ver historial completo'});
   assert.ok(await historyButton.isVisible());
   assert.equal(await historyButton.getAttribute('title'),'Ver historial completo');

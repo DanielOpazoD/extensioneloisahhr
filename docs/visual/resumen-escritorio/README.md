@@ -1,5 +1,26 @@
 # Resumen compacto en escritorio
 
+## Plan e Historial con el idioma del Resumen, en 0.48.217
+
+El responsable aceptó las mejoras de la auditoría visual. Primera parte: Plan de tratamiento e Historial usan los iconos, botones, tamaños y tintas del Resumen.
+
+| Captura, 1440 × 900 | 0.48.216 | 0.48.217 |
+| --- | --- | --- |
+| Plan de tratamiento | [Antes](0.48.217/antes/1440-plan.png) | [Después](0.48.217/despues/1440-plan.png) |
+| Historial | [Antes](0.48.217/antes/1440-historial.png) | [Después](0.48.217/despues/1440-historial.png) |
+
+| Medida en la página, con el estilo aplicado a mano | 0.48.216 | 0.48.217 |
+| --- | ---: | ---: |
+| Tarjetas de Plan reconocidas | 3 de 4 | 4 de 4 |
+| Interruptor de una tarjeta de Plan | interruptor y texto | icono de 26 px |
+| Historial: textos en peso 300 | 96 | 0 |
+| Historial: rótulos en peso 500 | 80 | 80 |
+| Historial: textos en el gris de 3,9:1 | 9 | 0 |
+| Historial: etiquetas | 10 px | 11 px |
+| Signo vital fuera de rango | rojo de Eloísa | `#c62828`, 5,2:1 |
+
+El panel de Filtros de la ficha ficticia usa controles nativos; en la página real, «Filtrar» mide 26 px y lleva la línea del botón único.
+
 ## El estado de una fila como texto, en 0.48.216
 
 El responsable aceptó quitar las cajas del Diagnóstico. El estado es un selector de Eloísa con caja y flecha en la ficha médica, y solo texto en la de Gestión de cuidados.
