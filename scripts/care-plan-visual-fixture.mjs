@@ -22,11 +22,14 @@ const chip = label => `<div class="MuiChip-root MuiChip-sizeSmall"><span class="
 // Seven hours per page, split by day as Eloísa does.
 export const planDays = [['Ayer (14/04/2026)', ['08:00 p. m.', '10:00 p. m.']], ['Hoy (15/04/2026)', ['12:00 a. m.', '02:00 a. m.', '04:00 a. m.', '06:00 a. m.', '08:00 a. m.']]];
 const states = {done:'CheckRoundedIcon', due:'AccessTimeRoundedIcon', off:'TimerOffIcon'};
-const row = ({name, posology, chips = [], slots}) => `<tr class="MuiTableRow-root">
+const row = ({name, posology, chips = [], slots}, select) => `<tr class="MuiTableRow-root">${select ? selector('td') : ''}
   <td class="MuiTableCell-root MuiTableCell-body"><div class="MuiStack-root"><div class="MuiStack-root"><p class="MuiTypography-root MuiTypography-body1">${name}</p>${chips.map(chip).join('')}</div>
     <div class="MuiBox-root"><p class="MuiTypography-root MuiTypography-body1">${posology}</p></div></div></td>
   <td class="MuiTableCell-root MuiTableCell-body"><div class="MuiBox-root slots">${slots.map(state =>
     `<div class="MuiStack-root">${state ? `<div class="MuiBox-root">${iconButton(states[state])}</div>` : ''}</div>`).join('')}</div></td></tr>`;
+// In the ficha of Gestión de cuidados a table opens with a column that selects its rows (read 27-11-2026).
+const selector = tag => `<${tag} class="MuiTableCell-root MuiTableCell-${tag === 'th' ? 'head MuiTableCell-stickyHeader' : 'body'} MuiTableCell-paddingCheckbox">` +
+  `<span class="MuiButtonBase-root MuiCheckbox-root"><input class="PrivateSwitchBase-input" type="checkbox"><svg class="MuiSvgIcon-root" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg></span></${tag}>`;
 const emptyRow = `<tr class="MuiTableRow-root"><td class="MuiTableCell-root MuiTableCell-body" colspan="3"><p class="MuiTypography-root MuiTypography-body1">No se registra un plan de tratamiento.</p></td></tr>`;
 
 export const planCards = [
@@ -48,20 +51,23 @@ export const planCards = [
   {title:'Programación de cuidados', filter:'Mostrar Finalizados', rows:[]},
 ];
 
-const card = ({title, filter, rows}) => `<div class="MuiPaper-root MuiCard-root">
+// The ficha of Gestión de cuidados: the same cards, all but Programación de procedimientos with their column of checkboxes.
+export const careFichaPlanCards = planCards.map((item, at) => ({...item, select:at > 0}));
+
+const card = ({title, filter, rows, select = false}) => `<div class="MuiPaper-root MuiCard-root">
   <div class="MuiCardHeader-root"><div class="MuiCardHeader-content"><span class="MuiTypography-root MuiTypography-h5 MuiCardHeader-title">${title}</span></div>
     <div class="MuiCardHeader-action">${toggle(filter)}</div></div>
   <div class="MuiBox-root"><div class="MuiCollapse-root MuiCollapse-entered"><div class="MuiCollapse-wrapper"><div class="MuiCollapse-wrapperInner"><div class="MuiStack-root tools">
     ${iconButton('AccessTimeRoundedIcon', 'Planificación estandar')}${iconButton('TouchAppIcon', 'Planificación única')}${iconButton('MoreVertIcon')}</div></div></div></div></div>
   <div class="MuiCardContent-root"><div class="MuiTableContainer-root"><table class="MuiTable-root MuiTable-stickyHeader">
-    <thead class="MuiTableHead-root"><tr class="MuiTableRow-root MuiTableRow-head">
+    <thead class="MuiTableHead-root"><tr class="MuiTableRow-root MuiTableRow-head">${select ? selector('th') : ''}
       <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader"><p class="MuiTypography-root MuiTypography-body1">Indicación</p>
         <div class="MuiStack-root pages"><button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-text">Ir a Hoy</button>
           ${iconButton('ChevronLeftRoundedIcon', '', 'Small')}<p class="MuiTypography-root MuiTypography-body1">3 / 5</p>${iconButton('ChevronRightRoundedIcon', '', 'Small')}</div></th>
       <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader" style="width:1000px"><div class="MuiStack-root days">${planDays.map(([day, hours]) =>
         `<div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">${day}</span><div class="MuiStack-root hours">${hours.map(hour =>
           `<span class="MuiTypography-root MuiTypography-caption">${hour}</span>`).join('')}</div></div>`).join('')}</div></th></tr></thead>
-    <tbody class="MuiTableBody-root">${rows.length ? rows.map(row).join('') : emptyRow}</tbody>
+    <tbody class="MuiTableBody-root">${rows.length ? rows.map(item => row(item, select)).join('') : emptyRow}</tbody>
     <tfoot class="MuiTableFooter-root"><tr class="MuiTableRow-root"><td class="MuiTableCell-root"></td><td class="MuiTableCell-root"></td><td class="MuiTableCell-root"></td></tr></tfoot>
   </table></div></div></div>`;
 
@@ -85,10 +91,12 @@ export const carePlanPage = (cards = planCards) => `<!doctype html><html lang="e
   .MuiIconButton-sizeSmall{width:34px;height:34px;padding:5px}.MuiIconButton-root svg{width:24px;height:24px;fill:currentColor}
   .MuiCardContent-root{padding:16px}.MuiCardContent-root:last-child{padding-bottom:24px}.MuiTableContainer-root{max-height:600px;overflow:auto}
   table{width:100%;border-collapse:separate;border-spacing:0}th,td{padding:16px;border-bottom:1px solid #e0e0e0;text-align:left;vertical-align:middle;font-size:14px;line-height:1.5}
+  .MuiTableCell-paddingCheckbox{width:48px;padding:0 0 0 4px}.MuiCheckbox-root{position:relative;display:inline-flex;padding:9px;border-radius:50%}
+  .MuiCheckbox-root input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}.MuiCheckbox-root svg{width:24px;height:24px;fill:rgba(0,0,0,.6)}
   th{position:sticky;top:0;z-index:2;background:white;font-weight:500}th p,td p{margin:0;font-size:16px}
   .pages{flex-direction:row;align-items:center;gap:8px}.MuiButton-text{min-width:64px;padding:6px 8px;border:0;border-radius:4px;background:none;color:#218b80;font:500 14px/1.75 Arial,sans-serif;text-transform:uppercase;white-space:nowrap;cursor:pointer}
   .days{flex-direction:row}.days .MuiTypography-caption{display:block;font-size:12px;line-height:1.66}.hours{flex-direction:row}.hours span{flex:none;width:100px;text-align:center}
-  td:first-child>.MuiStack-root{gap:4px}td:first-child>.MuiStack-root>.MuiStack-root{flex-flow:row wrap;align-items:center;gap:8px}
+  td>.MuiStack-root{gap:4px}td>.MuiStack-root>.MuiStack-root{flex-flow:row wrap;align-items:center;gap:8px}
   .MuiChip-root{display:inline-flex;align-items:center;height:24px;border-radius:16px;background:#e4e9e7;color:#344841;font-size:13px}.MuiChip-label{padding:0 8px}
   .slots{display:flex}.slots>.MuiStack-root{flex:none;align-items:center;justify-content:center;width:100px}
 </style><header class="banner">Ficha de hospitalizados <small>Plan de tratamiento · Episodio ficticio</small></header>

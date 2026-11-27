@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
-import { carePlanPage, planCards, planDays } from './care-plan-visual-fixture.mjs';
+import { carePlanPage, careFichaPlanCards, planCards, planDays } from './care-plan-visual-fixture.mjs';
 import { assertQuality } from './visual-quality.mjs';
 
 const hours = planDays.flatMap(([, list]) => list);
@@ -230,6 +230,39 @@ try {
     if (revision === 'WORKTREE' && !sans) await assertQuality(page, `Plan ${width}`, assert);
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
+  }
+  // The ficha of Gestión de cuidados draws the same cards with a column of checkboxes before the indication.
+  // The owner asked for every change in both fichas: its plan reads as the medical one.
+  if (revision === 'WORKTREE') {
+    const read = async cards => {
+      const page = await browser.newPage({viewport:{width:1440, height:900}, deviceScaleFactor:1, locale:'es-CL', timezoneId:'Pacific/Easter'});
+      await page.setContent(carePlanPage(cards));
+      await settle(page);
+      await mountFicha(page, assets, {});
+      await settle(page);
+      const shape = await page.evaluate(() => {
+        const box = el => el.getBoundingClientRect();
+        return [...document.querySelectorAll('main .MuiCard-root')].map(card => {
+          const head = card.querySelector('thead tr'), first = card.querySelector('tbody tr td p');
+          const select = card.querySelector('table')?.hasAttribute('data-hhr-plan-select');
+          const indication = head.cells[select ? 1 : 0];
+          return {mark:card.getAttribute('data-hhr-plan'), select, title:Math.round(box(card.querySelector('.MuiCardHeader-title')).height),
+            edge:Math.round(box(card.querySelector('.MuiCardHeader-title')).left - box(card).left),
+            box:select ? Math.round(box(head.cells[0]).width) : 0, heading:Math.round(box(indication).height),
+            text:first ? getComputedStyle(first).fontSize : null, filter:card.querySelector('.MuiCardHeader-action label')?.getAttribute('data-hhr-plan-filter')};
+        });
+      });
+      return {page, shape};
+    };
+    const medical = await read(planCards), care = await read(careFichaPlanCards);
+    assert.deepEqual(care.shape.map(card => [card.mark, card.select]), [['card', false], ['card', true], ['card', true], ['card', true]],
+      'En la ficha de Gestión de cuidados se reconocen las cuatro tarjetas, con su columna de selección: ' + JSON.stringify(care.shape));
+    assert.deepEqual(care.shape.map(({title, edge, heading, text, filter}) => [title, edge, heading, text, filter]),
+      medical.shape.map(({title, edge, heading, text, filter}) => [title, edge, heading, text, filter]), 'y se leen como en la ficha médica: ' + JSON.stringify(care.shape));
+    assert.ok(care.shape.filter(card => card.select).every(card => card.box > 0 && card.box <= 44), 'La columna de selección mide lo que su casilla: ' + JSON.stringify(care.shape.map(card => card.box)));
+    await assertQuality(care.page, 'Plan de la ficha de cuidados', assert);
+    await care.page.screenshot({path:path.join(directory, '1440-plan-cuidados.png')});
+    await Promise.all([medical.page.close(), care.page.close()]);
   }
 } finally {
   await browser.close();

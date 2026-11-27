@@ -209,6 +209,8 @@ Cada tarjeta:
   - Sin registros: una fila con `td[colspan=3] > p` «No se registra un plan de tratamiento.».
   - `tfoot` con tres celdas vacías.
 
+En la ficha de Gestión de cuidados (leído el 27-11-2026), las tablas de indicaciones libres, medicamentos y cuidados abren con una columna `th.MuiTableCell-paddingCheckbox` de 46 px con un `span.MuiCheckbox-root > input[type=checkbox]` y sin texto, en la cabecera y en cada fila; la de procedimientos no la tiene.
+
 Leído en la página el 27-11-2026: en Programación de procedimientos la primera columna de la tabla no tiene texto (ni «Indicación»); la vista la reconoce por el título «Programación de …». Los interruptores de cabecera son `label.MuiFormControlLabel-root` con un `MuiSwitch` (pista y botón como `span`).
 
 Pendiente de confirmar en la página real:

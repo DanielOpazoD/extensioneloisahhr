@@ -124,6 +124,24 @@ it('reconoce Programación de procedimientos, que deja vacía su primera columna
   expect(marks('.MuiCard-root')).toEqual(['card']);
 });
 
+it('reconoce la columna de selección de la ficha de Gestión de cuidados y solo esa', () => {
+  // On the page each table but Procedimientos opens with a checkbox in its heading and in each row (read 27-11-2026).
+  const box = tag => `<${tag}><span class="MuiCheckbox-root"><input type="checkbox"></span></${tag}>`;
+  const select = html => html.replace('<thead><tr>', '<thead><tr>' + box('th')).replace(/<tbody><tr>/, '<tbody><tr>' + box('td'));
+  const main = mount(select(card()) + select(card().replace('Indicación</p>', 'Prestación</p>')) + card());
+  plan.refresh(main);
+  expect(marks('.MuiCard-root')).toEqual(['card', null, 'card']);
+  expect([...document.querySelectorAll('table')].map(table => table.hasAttribute('data-hhr-plan-select'))).toEqual([true, false, false]);
+  // A first column with words, or with more than a checkbox, is not a column of selection.
+  for (const first of ['<th>Sel <input type="checkbox"></th>', '<th><input type="checkbox"><button>Todo</button></th>']) {
+    plan.clear();
+    plan.refresh(mount(card().replace('<thead><tr>', '<thead><tr>' + first)));
+    expect(marks('.MuiCard-root')).toEqual([null]);
+  }
+  plan.clear();
+  expect(document.querySelectorAll('[data-hhr-plan-select]')).toHaveLength(0);
+});
+
 it('no escribe en la página cuando nada cambió', async () => {
   const main = mount(card() + card({body:emptyBody}));
   plan.refresh(main);
