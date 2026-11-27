@@ -315,7 +315,7 @@ export const summaryPage = options => `<!doctype html><html lang="es"><meta char
   .MuiIconButton-sizeSmall{padding:5px}.MuiIconButton-root:disabled{color:rgba(0,0,0,.26);cursor:default}
   .MuiButton-root{display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:6px 16px;border:0;border-radius:4px;background:none;color:#218b80;
     font:500 14px/1.75 Inter,"Inter Fallback",system-ui,sans-serif;text-transform:uppercase;cursor:pointer}.MuiButton-contained{background:#218b80;color:white;box-shadow:0 3px 1px -2px rgba(0,0,0,.2)}
-  .MuiButton-containedSecondary{background:#6d5a9c}.MuiButton-root:disabled{background:rgba(0,0,0,.12);color:rgba(0,0,0,.26);box-shadow:none}
+  .MuiButton-containedSecondary{background:#e64a19}.MuiButton-root:disabled{background:rgba(0,0,0,.12);color:rgba(0,0,0,.26);box-shadow:none}
   .MuiButton-text{background:none}.MuiButton-textSizeSmall{padding:4px 5px;font-size:13px}
   .MuiFormControlLabel-root{display:inline-flex;align-items:center;margin:0 16px 0 -11px;cursor:pointer}
   .MuiSwitch-root{position:relative;display:inline-flex;flex:none;width:58px;height:38px;padding:12px}.MuiSwitch-root>span:last-child{flex:1;border-radius:7px;background:#a7afac}

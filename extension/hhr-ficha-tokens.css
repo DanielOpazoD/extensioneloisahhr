@@ -45,6 +45,11 @@ html[data-hhr-ficha-theme] {
   --hhr-ficha-page-margin:clamp(32px, 4vw - 16px, 56px);
   --hhr-ficha-page-max:1440px;
   --hhr-ficha-control:28px;
+  /* One button: the height of a line of controls, its corner and the line that draws it. */
+  --hhr-ficha-button:26px;
+  --hhr-ficha-button-radius:6px;
+  --hhr-ficha-button-line:#c4d8d1;
+  --hhr-ficha-disabled:#98a39f;
   /* The lines of the note that the desktop round always gives it, and the most it grows to on a tall window. */
   --hhr-ficha-note-lines:14;
   --hhr-ficha-note-most:30;

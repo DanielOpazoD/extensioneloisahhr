@@ -627,3 +627,34 @@
     th[data-hhr-actions-heading] { font-size:0 !important; }
   }
 }
+
+/* One button in the summary. Eloísa draws four: filled in green («Imprimir», «Filtrar»), filled in
+   orange («Validar tratamiento»), outlined and bare (read on the page 26-11-2026). The owner asked for
+   one. A button that does something is a line around its words, in the ink of what can be pressed;
+   one that only opens something to read has no line («Ver evoluciones», «Historial»). Same height,
+   same corner, same type. Eloísa's own buttons keep their place, their words and what they do; a
+   disabled one says so in a lighter ink. The buttons of a row of a table and those of Eloísa's
+   windows are not touched. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] :is(.MuiButton-contained, .MuiButton-outlined):not(:is(dialog,[role=dialog],td,th) *),
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root {
+    box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; min-inline-size:0;
+    min-block-size:var(--hhr-ficha-button) !important; padding:0 10px !important;
+    border:1px solid var(--hhr-ficha-button-line) !important; border-radius:var(--hhr-ficha-button-radius) !important;
+    background:transparent !important; color:var(--hhr-ficha-action) !important; box-shadow:none !important;
+    font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans) !important; text-transform:none !important; white-space:nowrap;
+    &::first-letter { text-transform:uppercase; }
+    &:hover:not(:disabled, .Mui-disabled) { background:var(--hhr-ficha-action-hover) !important; border-color:#9dbfb5 !important; }
+    &:active:not(:disabled, .Mui-disabled) { background:var(--hhr-ficha-action-pressed) !important; }
+    &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+    &:is(:disabled, .Mui-disabled) { border-color:var(--hhr-ficha-line-soft) !important; color:var(--hhr-ficha-disabled) !important; cursor:default; }
+    /* An icon inside takes the ink of the words. */
+    svg { color:inherit; fill:currentColor; }
+    @media (forced-colors:active) { border-color:ButtonText !important; }
+  }
+  /* Its first letter is a capital only where the button is a block of text: Eloísa writes «validar tratamiento». */
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] .MuiCardHeader-action :is(.MuiButton-contained, .MuiButton-outlined):not(:has(svg)),
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root:not(:has(svg)) {
+    display:inline-block; block-size:var(--hhr-ficha-button) !important; line-height:calc(var(--hhr-ficha-button) - 2px) !important;
+  }
+}
