@@ -75,7 +75,8 @@
         background:currentColor;
         mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4v5h5M3.7 8.5a9 9 0 1 1-.4 6.5M12 7v5l3 2'/%3E%3C/svg%3E") center / contain no-repeat;
       }
-      @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
+      &:focus-within { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+    @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
       &:hover { background:#e6f1ee; }
       &:focus-visible { outline:2px solid #176f63; outline-offset:2px; }
     }
@@ -334,12 +335,53 @@
   html[data-hhr-ficha-theme="compact"] :is([data-hhr-ficha-primary] [role="tab"], [data-hhr-reading="vital-history"]) { text-transform:none; }
 }
 
+/* «Mostrar suspendidos» is one icon wherever a section offers it: the owner asked for it in place of the
+   switch and its words. It is Eloísa's own checkbox, in its place: the icon covers it, takes its click and
+   its focus, and reads pressed while the suspended ones are shown. Its words stay as its name. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] label[data-hhr-reading-toggle="suspended"] {
+    position:relative; display:inline-flex !important; flex:none; box-sizing:border-box;
+    inline-size:28px; block-size:28px; margin:0 !important; padding:0 !important; border-radius:5px;
+    color:var(--hhr-ficha-ink-soft); font-size:0 !important; line-height:0 !important; cursor:pointer;
+    :is(.MuiFormControlLabel-label,.MuiTypography-root) { inline-size:0; overflow:hidden; font-size:0 !important; line-height:0 !important; }
+    /* The switch keeps its place in the line, as large as the icon. Its track and its thumb are not drawn;
+       its checkbox is, as the surface of the icon: it shows the keyboard focus and reads pressed by itself.
+       No rule here looks into the label with :has(): one that did changed the order in which Chrome hands
+       the Tab key through the round (measured 26-11-2026). */
+    .MuiSwitch-root { position:relative; flex:none; inline-size:100% !important; block-size:100% !important; margin:0 !important; padding:0 !important; zoom:1; }
+    .MuiSwitch-root > :not(.MuiSwitch-switchBase,.PrivateSwitchBase-root) { opacity:0; }
+    .MuiSwitch-root > :is(.MuiSwitch-switchBase,.PrivateSwitchBase-root) {
+      position:absolute !important; inset:0 !important; inline-size:auto; block-size:auto; padding:0 !important; background:none !important; transform:none !important;
+      > :not(input) { opacity:0; }
+      > input {
+        position:absolute !important; inset:0 !important; inline-size:100% !important; block-size:100% !important; margin:0 !important;
+        appearance:none; opacity:1 !important; border:0; border-radius:5px; background:transparent; cursor:pointer;
+        &:checked { background:var(--hhr-ficha-action-pressed); }
+        &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+        @media (forced-colors:active) { &:checked { outline:2px solid Highlight; } }
+      }
+    }
+    &::before { content:''; position:absolute; inset:0; z-index:1; margin:auto; inline-size:16px; block-size:16px; background:currentColor; mask:var(--hhr-icon-suspended) center / contain no-repeat; pointer-events:none; }
+    &:hover { background:var(--hhr-ficha-action-hover); color:var(--hhr-ficha-action); }
+    @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
+    /* On the line of a section without records it is as high as that line. */
+    [data-hhr-reading="status-card"] & { inline-size:20px; block-size:20px; &::before { inline-size:14px; block-size:14px; } }
+  }
+  /* «Imprimir selección» of the exam requests is not drawn, nor the line that only held it. */
+  html[data-hhr-ficha-theme="compact"] #diagnosisTestEntrySection :is([data-hhr-print-selection], .MuiBox-root:has(> [data-hhr-print-selection]:only-child)) { display:none !important; }
+  /* The tools of a row wait in a quieter ink until the row is pointed at or holds the keyboard: a list is
+     read as its text first. A tool Eloísa disables keeps its own lighter ink. */
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] :is(tbody > tr, #alertEntrySection .MuiCardContent-root .MuiStack-root):not(:hover, :focus-within) .MuiIconButton-root:enabled:not(:is(dialog,[role=dialog]) *) {
+    color:#8a9692;
+  }
+}
+
 /* Eloísa's own controls of the summary at the size of a line of the compact view. A filter
    switch, the contained button of a card and the state of a diagnosis keep their colour and
    their words: only their size and their case change. */
 @media screen {
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
-    [data-hhr-reading-toggle] .MuiSwitch-root { zoom:.75; }
+    [data-hhr-reading-toggle]:not([data-hhr-reading-toggle="suspended"]) .MuiSwitch-root { zoom:.75; }
     /* MUI leaves 16 px after a switch's label. Closing a heading, the label ends on the reading edge like any other action. */
     .MuiCardHeader-action .MuiFormControlLabel-root:last-child { margin-inline-end:0 !important; }
     :is(#medicationEntrySection,#dilutionEntrySection,#noPharmaEntrySection,#freeIndicationEntrySection) > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-action .MuiButton-root,

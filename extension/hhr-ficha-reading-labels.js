@@ -242,13 +242,22 @@
         for (const control of main.querySelectorAll('label:has(input[type="checkbox"])')) {
           if (control.closest('dialog,[role=dialog],#hhr-prescription-print-modal')) continue;
           const name = control.textContent.trim();
-          if (/^mostrar suspendidos$/i.test(name)) label(control, 'data-hhr-reading-toggle', 'suspended');
+          if (/^mostrar suspendidos$/i.test(name)) {
+            label(control, 'data-hhr-reading-toggle', 'suspended');
+            // The filter is drawn as an icon: its words are its name, and what the pointer reads over it.
+            if (!control.hasAttribute('title') || control.title === name) label(control, 'title', name);
+          }
           else if (control.closest('#alertEntrySection') && /^(?:no reanimación|gestión de visitas)$/i.test(name)) {
             label(control, 'data-hhr-reading-toggle', 'alert');
             if (/^no reanimación$/i.test(name) && control.querySelectorAll('input[type="checkbox"]').length === 1) {
               label(control, 'data-hhr-resuscitation-toggle', '');
             }
           }
+        }
+        // «Imprimir selección (n órdenes)», over the table of exam requests: the owner asked for the summary
+        // without it. Each order keeps its own print action in its row.
+        for (const button of main.querySelectorAll('#diagnosisTestEntrySection .MuiCardContent-root button')) {
+          if (!button.closest('table,dialog,[role=dialog]') && /^imprimir selecci[oó]n\b/i.test(button.textContent.trim())) label(button, 'data-hhr-print-selection', '');
         }
         const candidates = main.querySelectorAll('.MuiCardHeader-subheader,.MuiGrid-item > p.MuiTypography-body2');
         for (const el of candidates) {
