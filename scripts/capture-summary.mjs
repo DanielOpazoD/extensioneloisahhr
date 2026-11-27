@@ -378,6 +378,17 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(diagnosis.card.top < native.diagnosis.card.top - 600, 'Diagnóstico deja de estar tras las indicaciones');
   assert.ok(diagnosis.rows.length === summaryDiagnoses.length && diagnosis.rows.every((row, at) => row.text.includes(summaryDiagnoses[at][1])), 'Cada diagnóstico conserva su texto');
   assert.ok(diagnosis.rows.every(row => row.height <= 36 && row.state >= 24), 'Un diagnóstico es una línea y su estado sigue siendo pulsable: ' + diagnosis.rows.map(row => row.height));
+  // The owner asked for the state read as text: no box nor arrow at rest, both again on the row pointed at, the word in place.
+  const quiet = async () => page.evaluate(() => [...document.querySelectorAll('#diagnosisEntrySection tbody tr')].map(row => { const root = row.querySelector('[role="combobox"]').parentElement, cell = root.closest('td');
+    return [getComputedStyle(root.querySelector('.MuiOutlinedInput-notchedOutline')).borderTopColor, getComputedStyle(root.querySelector('.MuiSelect-icon')).visibility,
+      Math.round(root.querySelector('[role="combobox"] .MuiTypography-root').getBoundingClientRect().left - cell.getBoundingClientRect().left - parseFloat(getComputedStyle(cell).paddingLeft))]; }));
+  await page.mouse.move(0, 0);
+  const rest = await quiet();
+  await page.locator('#diagnosisEntrySection tbody tr').first().hover();
+  const pointed = await quiet();
+  await page.mouse.move(0, 0);
+  assert.ok(rest.every(([line, arrow, edge]) => line === 'rgba(0, 0, 0, 0)' && arrow === 'hidden' && Math.abs(edge) <= 1) && pointed[0][0] !== rest[0][0] && pointed[0][1] === 'visible' && pointed[0][2] === rest[0][2] &&
+    pointed.slice(1).every(([line, arrow]) => line === 'rgba(0, 0, 0, 0)' && arrow === 'hidden'), 'El estado se lee como texto y muestra su caja y su flecha al apuntar su fila, sin moverse: ' + JSON.stringify([rest, pointed]));
   assert.deepEqual(diagnosis.rows.map(row => row.icons), [['18×18', '24×24', '24×24'], ['24×24', '24×24']], 'La estrella y las notas de un diagnóstico miden lo que una línea');
   assert.deepEqual(diagnosis.rows.map(row => row.star), [true, false], 'La estrella marca el diagnóstico principal');
   assert.ok(diagnosis.title.right <= diagnosis.rows[0].left + 1 && near(diagnosis.byline.height, 16, 3), 'El nombre y la firma de la tarjeta ocupan su columna, la firma en una línea');

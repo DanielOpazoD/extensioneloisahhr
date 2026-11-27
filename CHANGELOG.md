@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.48.216
+
+- El estado de un diagnóstico, de un procedimiento o de una orden de examen se lee como el texto de su columna: sin caja ni flecha, y alineado con las demás celdas (antes 14 px más adentro). Al apuntar su fila o llegar a ella con el teclado aparecen su caja y su flecha, sin que la palabra se mueva; abierto, las conserva. El selector de Eloísa, su menú y lo que escribe no cambian.
+- Así Diagnóstico se lee igual en las dos fichas: en la de Gestión de cuidados Eloísa ya escribe el estado como texto (leído en la página el 27-11-2026), y en la de lista de trabajo médico ahora se ve igual hasta que se apunta.
+- Verificado en la página, con el estilo aplicado a mano: en reposo sin línea ni flecha y la palabra en el borde de su celda; con el foco, la línea y la flecha de nuevo en el mismo lugar.
+
 ## 0.48.215
 
 - «Sin datos» se lee en pocas líneas: un grupo por estado. «Sin registros» y, a continuación, los nombres de las secciones sin registros o sin solicitudes, uno tras otro y separados por un punto; luego «Sin permiso» con los suyos. Cada sección ya no repite su estado. En la página, con el estilo y la colocación aplicados a mano, el grupo pasa de 7 líneas y 179 px a 3 líneas y 71 px en la ficha médica, y de 6 líneas y 153 px a 3 y 71 en la de Gestión de cuidados.
