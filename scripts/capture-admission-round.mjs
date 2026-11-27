@@ -20,44 +20,13 @@ async function readLastLineWithKeyboard(page, target) {
   }
 }
 
-async function verifyAdmissionReader(page, noteText, directory, width) {
-  const opener = page.getByRole('button', {name:'Leer nota completa', exact:true});
-  const reader = page.getByRole('dialog', {name:'Evolución completa', exact:true});
-  const text = await noteText.textContent();
-  const columnBounds = () => page.evaluate(() =>
-    ['#evolution', 'section#vitalSignsEntry', '#shiftChangeObservation', '#alerts'].map(selector => {
-      const {x,y,width,height} = document.querySelector(selector).getBoundingClientRect();
-      return [x,y,width,height];
-    }));
-  // The reader opens from the card's heading, in the line of the other actions and right after «Ver evoluciones».
-  await page.getByRole('button', {name:'Ver evoluciones', exact:true}).focus();
-  await page.keyboard.press('Tab');
-  assert.ok(await opener.evaluate(el => el === document.activeElement), 'El lector entra en la secuencia de Tab, tras «Ver evoluciones»');
-  assert.ok(await opener.evaluate(el => { const box = el.getBoundingClientRect(), entry = el.parentElement.querySelector('.hhr-evo-entry').getBoundingClientRect();
-    return el.textContent === 'Nota completa' && Math.abs(box.top - entry.top) < 2 && box.left >= entry.right && box.height >= 28; }), '«Nota completa» comparte la línea de acciones de la tarjeta');
-  const initialColumns = await columnBounds();
-  await page.keyboard.press('Enter');
-  await reader.waitFor();
-  assert.ok(await reader.evaluate(el => el.matches('dialog:modal') && el.contains(document.activeElement)));
-  assert.ok(await reader.getByRole('heading', {name:'Evolución completa',exact:true}).isVisible());
-  const body = reader.getByText(lastAdmissionLine, {exact:false});
-  assert.equal(await body.textContent(), text, 'El lector conserva los párrafos, incluidos el inicio y cierre del ingreso');
-  const close = reader.getByRole('button', {name:'Cerrar', exact:true});
-  assert.ok(await close.isVisible());
-  assert.deepEqual(await columnBounds(), initialColumns, 'Abrir el lector mantiene las dos columnas en su posición');
-  assert.ok(await reader.getByText('Más texto abajo ↓', {exact:true}).isVisible());
-  if (width === 1440) await page.screenshot({path:path.join(directory, '1440-lector.png')});
-  await readLastLineWithKeyboard(page, body);
-  await reader.getByText('Fin de la evolución',{exact:true}).waitFor();
-  await page.keyboard.press('Escape');
-  await reader.waitFor({state:'hidden'});
-  assert.ok(await opener.evaluate(el => el === document.activeElement), 'Escape devuelve el foco al botón del lector');
-  assert.deepEqual(await columnBounds(), initialColumns, 'Cerrar el lector conserva los bordes de las dos columnas');
-  await page.keyboard.press('Enter');
-  await reader.waitFor();
-  await close.press('Enter');
-  await reader.waitFor({state:'hidden'});
-  assert.ok(await opener.evaluate(el => el === document.activeElement), 'Cerrar también devuelve el foco al botón del lector');
+// The owner asked to drop «Nota completa» and its window (27-11-2026): the whole note is read in its card,
+// which scrolls as a region the keyboard reaches right after «Ver evoluciones» and its tools.
+async function verifyAdmissionReader(page, noteText) {
+  assert.equal(await page.getByRole('button', {name:/nota completa/i}).count(), 0, 'Sin el botón «Nota completa»');
+  assert.equal(await page.locator('dialog.hhr-note-dialog').count(), 0, 'Sin la ventana de la nota completa');
+  assert.ok(await noteText.evaluate(el => el.getAttribute('role') === 'region' && el.tabIndex === 0 && el.scrollHeight > el.clientHeight + 1),
+    'La nota larga se desplaza en su tarjeta, alcanzable con el teclado');
 }
 
 export async function captureAdmissionRound(page, directory, width, verify) {
@@ -174,7 +143,7 @@ export async function captureAdmissionRound(page, directory, width, verify) {
   }
   assert.ok(keyboardScroll, 'Tab debe llegar al texto desplazable de la evolución');
   await readLastLineWithKeyboard(page, noteText);
-  await verifyAdmissionReader(page, noteText, directory, width);
+  await verifyAdmissionReader(page, noteText);
   const {note, signs, observations, alerts, exam, surgery, diet} = measured;
   const right = r => r.x + r.width;
   const bottom = r => r.y + r.height;

@@ -5,8 +5,11 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
 import { assertFigures, assertPalette, assertQuality } from './visual-quality.mjs';
-import { summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
+import { summaryAlerts, summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
 
+// Each table starts on the edge of its title, but Indicaciones libres, which starts where Fármacos reads its
+// indication, after the days of treatment (27-11-2026); its own check compares the two.
+const edged = ([title, heading, cell, id]) => heading === cell && (title === heading || id === 'freeIndicationEntrySection');
 const refresh = async page => {
   // The readers materialize each cut text with Eloísa's own disclosure: one refresh per commit of the host.
   for (let turn = 0; turn < 4; turn++) { await page.evaluate(() => document.dispatchEvent(new Event('fixture-refresh'))); await settle(page); }
@@ -87,7 +90,7 @@ const read = page => page.evaluate(() => {
       edge:Math.round(box(line).left + parseFloat(getComputedStyle(line).paddingLeft)), size:getComputedStyle(line).fontSize, colour:getComputedStyle(line).color,
       afterTitle:Math.round(box(line).top - box(one('#medicationEntry .MuiCardHeader-title')).bottom), beforeTable:Math.round(box(one('#medicationEntry thead')).top - box(line).bottom)})(
       one('#medicationEntry > .MuiCardContent-root > .MuiBox-root:first-child:not(:only-child)')),
-    archive:[...document.querySelectorAll('#alertEntries .alert-row button')].map(button => [Math.round(box(button.querySelector('svg')).width), Math.round(box(button).height), button.getAttribute('aria-label')]),
+    archive:[...document.querySelectorAll('#alertEntries .alert-row button:has(svg)')].map(button => [Math.round(box(button.querySelector('svg')).width), Math.round(box(button).height), button.getAttribute('aria-label')]),
     tabs:getComputedStyle(one('[role="tab"]')).textTransform,
     // What good order asks of the whole page: its edges, its gaps, its type and its surfaces. Only in the compact view.
     look:!one('[data-hhr-ficha-sections] [data-hhr-ficha-link]') || !one('[data-hhr-round="frame"]') ? null : (() => {
@@ -108,7 +111,7 @@ const read = page => page.evaluate(() => {
       const tables = tabled.map(section => {
         // The reading edge of a cell is where its content box starts: «Tiempo» aligns its days to the right on purpose.
         const edge = cell => cell.getBoundingClientRect().left + parseFloat(getComputedStyle(cell).paddingLeft);
-        return [firstText(section.querySelector('.MuiCardHeader-title')), edge(section.querySelector('thead th')), edge(section.querySelector('tbody td'))].map(Math.round);
+        return [...[firstText(section.querySelector('.MuiCardHeader-title')), edge(section.querySelector('thead th')), edge(section.querySelector('tbody td'))].map(Math.round), section.id];
       });
       const empty = ['ramEntry', 'allergyEntry', 'noPharmaEntry'].map(id => {
         const card = document.getElementById(id);
@@ -158,7 +161,8 @@ const read = page => page.evaluate(() => {
           top:Math.min(...tiles.map(tile => box(tile).top)), bottom:Math.max(...tiles.map(tile => box(tile).bottom)), left:Math.min(...tiles.map(tile => tile.getBoundingClientRect().left)),
           rows:new Set(tiles.map(tile => Math.round(box(tile).top))).size,
           inside:tiles.every(tile => tile.getBoundingClientRect().left >= rail.left - 1 && tile.getBoundingClientRect().right <= rail.right + 1), heights:tiles.map(tile => Math.round(box(tile).height)),
-          surfaces:[...new Set(tiles.map(tile => getComputedStyle(tile).backgroundColor))],
+          // No box inside a name paints either: the group stands on the page.
+          surfaces:[...new Set(tiles.flatMap(tile => [tile, ...tile.querySelectorAll('*')]).filter(el => !el.closest('button, label, .MuiSwitch-root')).map(el => getComputedStyle(el).backgroundColor))],
           says:tiles.map(tile => (message => message && getComputedStyle(message, '::after').content)(tile.querySelector('[data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]'))),
           // A group per state: its state once, then the names one after the other.
           leads:tiles.map(tile => tile.closest('[data-hhr-round-tile]')).filter(tile => tile?.getAttribute('data-hhr-round-tile') === 'lead').map(tile => [tile.getAttribute('data-hhr-round-state'), Math.round(box(tile).top)]),
@@ -236,7 +240,7 @@ async function verifySummary(page, width, native, off, sans) {
   assert.ok(look.sizes.every(size => [11, 12, 13, 15, 16].includes(size)), 'Los tamaños de letra de la vista: ' + look.sizes);
   assert.deepEqual(look.titles, ['15px 600'], 'Cada tarjeta se titula igual');
   assert.deepEqual(look.surfaces, ['8px none'], 'Diagnóstico y las tarjetas bajo la ronda tienen la misma superficie');
-  assert.ok(look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(look.tables));
+  assert.ok(look.tables.every(edged), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(look.tables));
   // Under «Sin datos» a section is its name alone: the state is said once by its group.
   void look.empty;
   assert.deepEqual(look.inks, ['rgb(33, 33, 33)', 'rgb(74, 74, 74)', 'rgb(102, 102, 102)'], 'El texto usa las tintas neutras de Eloísa');
@@ -342,6 +346,24 @@ async function verifySummary(page, width, native, off, sans) {
   // The round: the note with the handoff and the alerts beside it, all three ending on one line; then the signs across the page.
   assert.ok(near(shown.handoff.left, shown.alerts.left) && near(shown.alerts.top, shown.handoff.bottom) && shown.handoff.left >= shown.note.right - 1, 'Alertas sigue a la entrega de turno');
   // From 1360 px the handoff and the alerts take five twelfths of the line; narrower, four.
+  const lined = await page.evaluate(() => {
+    const at = el => el && el.getBoundingClientRect();
+    const starts = [...new Set([...document.querySelectorAll('td[data-hhr-reading="order-requester"]')].map(td => td.closest('table'))
+      .map(table => Math.round(at(table.querySelector('td[data-hhr-reading="order-requester"]')).left)))];
+    const resuscitation = at(document.querySelector('#alertEntrySection [data-hhr-resuscitation-toggle]')), add = at(document.querySelector('#alertEntrySection [data-hhr-entry-open]'));
+    // Where the indication of each table starts to be read: the content box of its first heading, or of the one after «Tiempo».
+    const indication = id => { const th = [...(document.querySelector('#' + id + ' table')?.tHead?.rows[0]?.cells || [])].find(cell => /^indicaci[oó]n|^indication/i.test(cell.textContent.trim()));
+      return th ? Math.round(th.getBoundingClientRect().left + parseFloat(getComputedStyle(th).paddingLeft)) : null; };
+    const indications = ['medicationEntrySection', 'freeIndicationEntrySection'].map(indication);
+    const alerts = document.querySelector('#alertEntrySection');
+    return {starts, indications, footer:resuscitation && add ? Math.abs((resuscitation.top + resuscitation.bottom) / 2 - (add.top + add.bottom) / 2) : null,
+      whole:alerts.textContent.includes('con su pauta de seguimiento completa.'),
+      disclosures:[...alerts.querySelectorAll('button')].filter(button => /leer (más|menos)/i.test(button.textContent) && button.getClientRects().length).length};
+  });
+  assert.ok(lined.whole && lined.disclosures === 0, 'Una alerta se lee entera, sin «Ver más» ni flecha: ' + JSON.stringify(lined));
+  assert.ok(lined.indications.every(Number.isFinite) && Math.abs(lined.indications[0] - lined.indications[1]) <= 2, 'La indicación de Indicaciones libres empieza donde la de Fármacos: ' + lined.indications);
+  assert.equal(lined.starts.length, 1, '«Solicitante» empieza en el mismo lugar en Fármacos e Indicaciones libres: ' + lined.starts);
+  assert.ok(lined.footer !== null && lined.footer <= 3, '«No reanimación» y «Agregar alerta» comparten una línea: ' + lined.footer);
   const share = shown.handoff.width / (shown.handoff.width + shown.note.width);
   assert.ok(Math.abs(share - (page.viewportSize().width >= 1360 ? 5 / 12 : 4 / 12)) < .02, 'La entrega de turno y Alertas tienen su ancho: ' + share.toFixed(3));
   assert.ok(near(shown.note.top, shown.handoff.top) && near(shown.alerts.bottom, shown.note.bottom, 1), `La nota y las tarjetas a su lado empiezan y terminan en la misma línea: ${shown.note.bottom} y ${shown.alerts.bottom}`);
@@ -350,7 +372,8 @@ async function verifySummary(page, width, native, off, sans) {
   // wrote it and when in the ink of what situates, and no rule of its own. One mark beside the title flags the card.
   const alertLook = await page.evaluate(() => { const card = document.querySelector('#alertEntries'), look = (el, pseudo) => getComputedStyle(el, pseudo);
     const rows = [...card.querySelectorAll('.alerts-list > .alert-row')], toggle = card.querySelector('[data-hhr-resuscitation-toggle]');
-    const flag = () => [look(toggle).backgroundColor, look(toggle).boxShadow === 'none', look(toggle.querySelector('.MuiFormControlLabel-label')).fontWeight, Math.round(toggle.getBoundingClientRect().left), Math.round(toggle.getBoundingClientRect().width)];
+    const flag = () => [look(toggle).backgroundColor, look(toggle).boxShadow === 'none', look(toggle.querySelector('.MuiFormControlLabel-label')).fontWeight, Math.round(toggle.getBoundingClientRect().left), Math.round(toggle.getBoundingClientRect().width),
+      look(toggle.querySelector('.MuiFormControlLabel-label')).color];
     const idle = flag();
     toggle.querySelector('input').click();
     const on = flag();
@@ -361,9 +384,12 @@ async function verifySummary(page, width, native, off, sans) {
         return [look(row).borderInlineStartWidth, look(message).fontWeight, look(message).color, author ? look(author, '::after').color : look(signed).color, look(time).color].join(' | '); }),
       heights:rows.map(row => Math.round(row.getBoundingClientRect().height)), mark:[look(card.querySelector('.MuiCardHeader-title'), '::before').backgroundColor, look(card.querySelector('.MuiCardHeader-title'), '::before').width], idle, on}; });
   assert.deepEqual([...new Set(alertLook.rows)], ['0px | 400 | rgb(33, 33, 33) | rgb(102, 102, 102) | rgb(102, 102, 102)'], 'Una alerta se lee como una fila del resumen, sin su propia regla: ' + JSON.stringify(alertLook.rows));
-  assert.ok(alertLook.heights.every(height => height <= 64) && alertLook.mark.join() === 'rgb(181, 121, 63),7px', 'y la tarjeta lleva una sola marca, junto a su título: ' + JSON.stringify([alertLook.heights, alertLook.mark]));
-  assert.ok(alertLook.idle[0] === 'rgba(0, 0, 0, 0)' && alertLook.idle[1] && alertLook.idle[2] === '400' && alertLook.on[0] !== alertLook.idle[0] && !alertLook.on[1] && alertLook.on[2] === '600' &&
-    alertLook.on[3] === alertLook.idle[3], '«No reanimación» se lee como un interruptor más hasta que se marca, y no se mueve al marcarla: ' + JSON.stringify([alertLook.idle, alertLook.on]));
+  // A short alert is one row; the long one, read whole, adds its second line and no more.
+  assert.ok(alertLook.heights.every((height, at) => height <= (summaryAlerts[at]?.[1].length > 60 ? 84 : 64)) && alertLook.mark.join() === 'rgb(181, 121, 63),7px', 'y la tarjeta lleva una sola marca, junto a su título: ' + JSON.stringify([alertLook.heights, alertLook.mark]));
+  // Marked, it has no box of its own: its name takes the alarm ink and the weight of a title (27-11-2026).
+  assert.ok(alertLook.idle[0] === 'rgba(0, 0, 0, 0)' && alertLook.idle[1] && alertLook.idle[2] === '400' && alertLook.on[0] === 'rgba(0, 0, 0, 0)' && alertLook.on[1] &&
+    alertLook.on[2] === '600' && alertLook.on[5] === 'rgb(198, 40, 40)' && alertLook.on[3] === alertLook.idle[3],
+    '«No reanimación» se lee como un interruptor más; marcada, su nombre en la tinta de alarma, sin caja, y no se mueve: ' + JSON.stringify([alertLook.idle, alertLook.on]));
   assert.equal(shown.noteLines, 14, 'La nota muestra catorce líneas a la vez');
   // Under the note, the signs take the first half of the line and the care instructions follow under them: what has no
   // data sits beside both. The owner saw the signs stretched to the height of that column, with a blank band under
@@ -658,7 +684,7 @@ async function verifyShapes(browser, assets) {
   page = await open({procedureList:summaryProcedures, referralList:summaryReferrals, testList:summaryTests, surgeryList:summarySurgeries});
   shown = await read(page);
   assert.equal(shown.look.tables.length, 7, 'Las cuatro secciones dibujan su tabla: ' + shown.look.tables.length);
-  assert.ok(shown.look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(shown.look.tables));
+  assert.ok(shown.look.tables.every(edged), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(shown.look.tables));
   assert.ok(shown.look.rhythm.every(([heading, band, cell]) => heading === '12px' && band === shown.look.rhythm[0][1] && cell === shown.look.rhythm[0][2]),
     'Las tablas comparten el tamaño de sus cabeceras y de sus celdas y su banda: ' + JSON.stringify(shown.look.rhythm));
   // The owner asked for Procedimientos as dense as the rest: these sections read at the rhythm of Fármacos. A row is one
@@ -808,7 +834,7 @@ async function verifyShapes(browser, assets) {
   // The older shape of Fármacos, its card straight in its section, without the line of its validator.
   page = await open({nested:false});
   shown = await read(page);
-  assert.ok(shown.roles['fixture-print'] === 'print' && shown.validator === null && shown.look.edges.length === 1 && shown.look.tables.every(([title, heading, cell]) => title === heading && heading === cell),
+  assert.ok(shown.roles['fixture-print'] === 'print' && shown.validator === null && shown.look.edges.length === 1 && shown.look.tables.every(edged),
     'Fármacos sin su segunda sección conserva su forma: ' + JSON.stringify([shown.roles['fixture-print'], shown.look.edges, shown.look.tables]));
   await page.close();
   // Validated: the line names who did it, in the ink of what is read.

@@ -628,6 +628,23 @@
       return;
     }
     if (bar.parentElement !== document.body) document.body.append(bar);
+    // In the compact ficha the bar is part of the white line of tabs: its top, its height and its end
+    // (the owner saw it hang half under that line, 27-11-2026).
+    const line = document.documentElement.dataset.hhrFichaTheme === 'compact' && window.matchMedia('(min-width: 1100px)').matches
+      ? document.querySelector('[data-hhr-ficha-primary]') : null;
+    const lineRect = line?.getClientRects().length ? line.getBoundingClientRect() : null;
+    if (lineRect && lineRect.height >= 28 && lineRect.top >= 0 && lineRect.top < 140) {
+      bar.style.setProperty('--hhr-ops-top', Math.round(lineRect.top) + 'px');
+      bar.style.setProperty('--hhr-ops-right', Math.max(0, Math.round(window.innerWidth - lineRect.right)) + 'px');
+      bar.style.setProperty('--hhr-ops-height', Math.round(lineRect.height) + 'px');
+      bar.toggleAttribute('data-hhr-ops-docked', true);
+      return;
+    }
+    if (bar.hasAttribute('data-hhr-ops-docked')) {
+      bar.removeAttribute('data-hhr-ops-docked');
+      bar.style.removeProperty('--hhr-ops-right');
+      bar.style.removeProperty('--hhr-ops-height');
+    }
     if (window.matchMedia('(max-width: 560px)').matches) return;
     const sampledElements = typeof document.elementsFromPoint === 'function'
       ? document.elementsFromPoint(Math.max(1, Math.round(window.innerWidth / 2)), 2)

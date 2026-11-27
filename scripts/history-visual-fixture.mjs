@@ -76,7 +76,20 @@ export const historyPage = (days = historyDays) => `<!doctype html><html lang="e
   .MuiTabs-root [role=tablist]{display:flex;gap:8px;align-items:center}.MuiTabs-root button{background:none;border:0;font:inherit;font-size:13px;padding:10px 12px;cursor:pointer}
   main{padding:16px 24px}.layout{display:flex;gap:16px;align-items:flex-start}.layout>.MuiGrid-item{flex:0 0 calc(75% - 8px);min-width:0}
   .layout>.filters{flex-basis:calc(25% - 8px)}.filters form{display:flex;flex-direction:column;gap:12px}
-  .filters label{display:flex;flex-direction:column;gap:4px;font-size:13px}.filters select,.filters button{font:inherit;padding:8px}
+  .MuiCardHeader-root{display:flex;align-items:center;padding:16px}.MuiCardHeader-content{flex:1}.MuiCardHeader-title{font-size:20px;font-weight:600}
+  .MuiIconButton-root{display:inline-flex;padding:8px;border:0;border-radius:50%;background:none;color:#555}.MuiIconButton-root svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2}
+  .MuiCardContent-root{padding:16px}.filters form>*{flex:none}
+  .MuiFormControlLabel-root{display:inline-flex;align-items:center;font-size:16px}.MuiSwitch-root{position:relative;display:inline-flex;width:58px;height:38px;padding:12px;box-sizing:border-box}
+  .MuiSwitch-switchBase{position:absolute;top:9px;left:9px;width:20px;height:20px;border-radius:50%;background:#fafafa;box-shadow:0 1px 3px rgba(0,0,0,.4)}.MuiSwitch-input{opacity:0;position:absolute;inset:0;margin:0}
+  .MuiSwitch-track{width:100%;height:100%;border-radius:7px;background:#000;opacity:.38}
+  .MuiFormControl-root{position:relative;display:inline-flex;flex-direction:column;min-width:0;margin-top:8px}
+  .MuiInputLabel-root{position:absolute;left:0;top:0;transform:translate(14px,-9px) scale(.75);transform-origin:top left;color:rgba(0,0,0,.6);font-size:16px;z-index:1;background:none}
+  .MuiInputBase-root{position:relative;display:inline-flex;align-items:center;font-size:16px;border-radius:4px}
+  .MuiSelect-select{flex:1;padding:16.5px 32px 16.5px 14px;min-height:1.4375em;cursor:pointer}.MuiSelect-nativeInput{position:absolute;bottom:0;left:0;opacity:0;pointer-events:none;width:100%}
+  .MuiSelect-icon{position:absolute;right:7px;width:24px;height:24px;fill:rgba(0,0,0,.54)}
+  .MuiOutlinedInput-notchedOutline{position:absolute;inset:-5px 0 0;margin:0;padding:0 8px;border:1px solid rgba(0,0,0,.23);border-radius:inherit;pointer-events:none}
+  .MuiOutlinedInput-notchedOutline legend{float:unset;width:auto;max-width:100%;height:11px;padding:0;font-size:.75em;visibility:hidden}.MuiOutlinedInput-notchedOutline legend span{padding:0 5px}
+  .filters .MuiButton-root{font:inherit;padding:8px;width:100%;border:0;border-radius:4px;background:#218b80;color:#fff;text-transform:uppercase}
   .day{display:flex;justify-content:center;margin:8px 0 12px}
   .MuiChip-root{display:inline-flex;align-items:center;border-radius:16px;height:32px;padding:0 12px;background:#e4e9e7;color:#344841;font-size:13px}
   .MuiCard-root{background:white;border-radius:8px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
@@ -98,7 +111,14 @@ export const historyPage = (days = historyDays) => `<!doctype html><html lang="e
 <div class="MuiAppBar-root"><div class="MuiTabs-root"><div class="MuiTabs-scroller"><div role="tablist">${tabs.map(([id,label]) =>
   `<button role="tab" id="encounter-event-tab-${id}" aria-selected="${id === 'history'}">${label}</button>`).join('')}</div></div></div></div>
 <main class="MuiBox-root"><div class="MuiGrid-root MuiGrid-container layout"><div class="MuiGrid-root MuiGrid-item filters"><div class="MuiPaper-root MuiCard-root">
-  <div class="MuiCardHeader-root"><div class="MuiCardHeader-content"><span class="MuiTypography-root MuiCardHeader-title">Filtros</span></div></div>
-  <div class="MuiCardContent-root"><form class="MuiStack-root">${['Rango de fecha','Roles','Categorías']
-    .map(name => `<label>${name} <select><option>Todos</option></select></label>`).join('')}<button type="submit">Filtrar</button></form></div></div></div>
+  <div class="MuiCardHeader-root"><div class="MuiCardHeader-content"><span class="MuiTypography-root MuiTypography-h5 MuiCardHeader-title">Filtros</span></div>
+    <div class="MuiCardHeader-action"><button type="button" class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium" aria-label="Imprimir"><svg class="MuiSvgIcon-root" viewBox="0 0 24 24" width="24" height="24"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg></button></div></div>
+  <div class="MuiCardContent-root"><form class="MuiStack-root filter-form">
+    <label class="MuiFormControlLabel-root"><span class="MuiSwitch-root"><span class="MuiSwitch-switchBase"><input type="checkbox" class="MuiSwitch-input"></span><span class="MuiSwitch-track"></span></span><span class="MuiTypography-root MuiFormControlLabel-label">Ir a ingreso</span></label>
+    ${[['addDays','Rango de fecha','2 Semanas'],['roles','Roles','Todos'],['categories','Categorías','Todos']].map(([id, name, value]) =>
+    `<div class="MuiFormControl-root MuiFormControl-fullWidth"><label id="${id}-label" class="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-shrink MuiInputLabel-outlined">${name}</label>
+      <div class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-formControl"><div id="mui-component-select-${id}" role="combobox" aria-labelledby="${id}-label" tabindex="0" class="MuiSelect-select MuiSelect-outlined MuiInputBase-input MuiOutlinedInput-input">${value}</div>
+      <input aria-hidden="true" tabindex="-1" class="MuiSelect-nativeInput" value="${value}"><svg class="MuiSvgIcon-root MuiSelect-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+      <fieldset aria-hidden="true" class="MuiOutlinedInput-notchedOutline"><legend><span>${name}</span></legend></fieldset></div></div>`).join('')}
+    <div class="MuiStack-root"><button type="submit" class="MuiButtonBase-root MuiButton-root MuiButton-contained">Filtrar</button></div></form></div></div></div>
 <div class="MuiGrid-root MuiGrid-item"><div class="MuiStack-root timeline">${days.map(([label, events]) => day(label, events)).join('')}</div></div></div></main>${floatingBar}</html>`;

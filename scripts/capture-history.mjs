@@ -133,6 +133,14 @@ async function verifyTimeline(page, directory, width, measured) {
   const columns = await page.evaluate(() => [document.querySelector('.filters'), document.querySelector('.timeline').parentElement].map(el => Math.round(el.getBoundingClientRect().width)));
   assert.ok(columns[0] >= 260 && columns[0] <= 280 && columns[1] > columns[0] * 3, 'Los filtros ceden ancho a la línea de tiempo: ' + columns);
   assert.ok(await page.getByRole('button', {name:'Filtrar', exact:true}).isVisible());
+  // Each field is its name, small, above a line around its value: no name on the border (27-11-2026).
+  const fields = await page.evaluate(() => [...document.querySelectorAll('.filters .MuiFormControl-root:has(> .MuiInputLabel-root)')].map(field => {
+    const name = field.querySelector('.MuiInputLabel-root'), box = field.querySelector('.MuiInputBase-root');
+    return {height:Math.round(box.getBoundingClientRect().height), above:Math.round(box.getBoundingClientRect().top - name.getBoundingClientRect().bottom),
+      size:getComputedStyle(name).fontSize, legend:getComputedStyle(field.querySelector('legend')).display};
+  }));
+  assert.ok(fields.length === 3 && fields.every(field => field.height === 28 && field.above >= 0 && field.above <= 6 && field.size === '12px' && field.legend === 'none'),
+    'Los filtros son su nombre sobre un campo de una línea: ' + JSON.stringify(fields));
 
   // Outside the compact view the timeline is Eloísa's again.
   await page.evaluate(() => { document.dispatchEvent(new CustomEvent('fixture-theme', {detail:'off'})); });

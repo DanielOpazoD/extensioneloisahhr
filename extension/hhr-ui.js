@@ -85,7 +85,7 @@
 
   // --- Operations-bar stylesheet (lives inside its Shadow DOM) ---
   const barCss = `
-    :host {${tokenVars} position:fixed;top:var(--hhr-ops-top,70px);right:18px;z-index:2147483000;display:flex;align-items:center;gap:3px;height:38px;box-sizing:border-box;padding:3px 4px;border:1px solid rgba(16,42,67,.14);border-radius:13px;background:rgba(255,255,255,.98);box-shadow:0 1px 2px rgba(16,42,67,.08),0 9px 24px rgba(16,42,67,.14);color:var(--hhr-ink-700);font-family:var(--hhr-font);line-height:1.2;contain:layout style;transition:opacity .22s ease,filter .22s ease,box-shadow .22s ease}
+    :host {${tokenVars} position:fixed;top:var(--hhr-ops-top,70px);right:var(--hhr-ops-right,18px);z-index:2147483000;display:flex;align-items:center;gap:3px;height:var(--hhr-ops-height,38px);box-sizing:border-box;padding:3px 4px;border:1px solid rgba(16,42,67,.14);border-radius:13px;background:rgba(255,255,255,.98);box-shadow:0 1px 2px rgba(16,42,67,.08),0 9px 24px rgba(16,42,67,.14);color:var(--hhr-ink-700);font-family:var(--hhr-font);line-height:1.2;contain:layout style;transition:opacity .22s ease,filter .22s ease,box-shadow .22s ease}
     :host(.is-idle){opacity:.45;filter:saturate(.6);box-shadow:0 1px 2px rgba(16,42,67,.08),0 5px 14px rgba(16,42,67,.08)}
     :host(.is-collapsed){height:36px;padding:3px;border-radius:999px}:host(.is-collapsed) .modules,:host(.is-collapsed) .divider,:host(.is-collapsed) .session,:host(.is-collapsed) .collapse,:host(.is-collapsed) .exams-menu{display:none}
     :host([data-hhr-ops-awaiting-layout]), :host([data-hhr-ops-awaiting-preference]) { visibility:hidden }

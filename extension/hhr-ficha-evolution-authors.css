@@ -59,21 +59,8 @@
     [data-hhr-evolution-block]:has(> [data-hhr-note-scroll]) {
       display:grid; grid-template-columns:minmax(0,1fr) auto;
       align-items:center; reading-flow:grid-rows;
-      /* The rule marks where the visible excerpt ends and its two actions begin. */
+      /* The rule marks where the visible excerpt ends and Eloísa's disclosure begins. */
       > [data-hhr-note-text] { grid-column:1 / -1; border-block-end:1px solid var(--hhr-ficha-line-soft); }
-      > .hhr-note-open {
-        grid-area:2 / 1; justify-self:start; display:inline-flex; align-items:center; gap:5px;
-        margin:2px 0 0 -6px; padding:2px 7px 2px 6px;
-        min-height:26px; border:0; border-radius:4px; background:transparent;
-        color:var(--hhr-ficha-action); font:600 .75rem/1.4 var(--hhr-ficha-sans); cursor:pointer;
-        &::before {
-          content:''; flex:none; inline-size:13px; block-size:13px; background:currentColor;
-          mask:var(--hhr-icon-expand) center / contain no-repeat;
-        }
-        &:hover { background:#edf5f2; }
-        &:focus-visible { outline:2px solid #087269; }
-        @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
-      }
       > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; margin-block-start:2px; }
     }
     > .MuiCardHeader-root { align-items:center; flex-wrap:wrap; gap:2px 12px; }
@@ -89,17 +76,6 @@
         mask:var(--hhr-icon-notes) center / contain no-repeat;
       }
       &:hover { background:#edf5f2; border-color:#7da99e; }
-      @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
-    }
-    /* The window of the whole note opens from the card's heading, in one line with Eloísa's own actions
-       and drawn like them. */
-    > .MuiCardHeader-root > .MuiCardHeader-action > .hhr-note-open {
-      display:inline-flex; flex:none; align-items:center; justify-content:center; gap:6px; box-sizing:border-box;
-      min-height:28px; margin:0; padding:3px 8px; border:1px solid transparent; border-radius:5px; background:transparent;
-      color:var(--hhr-ficha-action); font:600 .75rem/1.35 var(--hhr-ficha-sans); white-space:nowrap; cursor:pointer;
-      &::before { content:''; flex:none; inline-size:15px; block-size:15px; background:currentColor; mask:var(--hhr-icon-expand) center / contain no-repeat; }
-      &:hover { background:var(--hhr-ficha-action-hover); }
-      &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
       @media (forced-colors:active) { &::before { forced-color-adjust:none; background:ButtonText; } }
     }
     /* Leave the native disclosure in the reading flow, beside the end of its own note. */
@@ -138,7 +114,7 @@
           > .MuiCardHeader-action {
             display:contents;
             > * { grid-row:1; order:4; }
-            > :is(.hhr-evo-entry,.hhr-note-open) { order:1; }
+            > .hhr-evo-entry { order:1; }
           }
         }
         > .MuiCardContent-root, > .MuiCardContent-root > .MuiStack-root { display:contents; }
@@ -168,7 +144,6 @@
                   &:hover { background:var(--hhr-ficha-action-hover); }
                 }
               }
-              > .hhr-note-open { grid-row:1; order:1; }
             }
           }
           > :last-child {
@@ -180,7 +155,7 @@
         .hhr-evo-entry { border-color:transparent; margin-inline-start:4px; }
         .hhr-evo-entry:hover, .hhr-evo-entry:focus-visible { background:#edf5f2; }
         :is(.MuiCardHeader-action, .MuiCardHeader-action > .MuiStack-root, .hhr-checklist-launcher,
-            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button:not(.hhr-evo-entry,.hhr-note-open) {
+            .MuiCardContent-root > .MuiStack-root > :last-child > .MuiStack-root) > button:not(.hhr-evo-entry) {
           display:inline-grid; place-items:center; width:28px; height:28px; min-width:28px;
           box-sizing:border-box; padding:0; margin:0; border-radius:5px;
           font-size:16px; line-height:1;
@@ -211,31 +186,6 @@
     /* Eloísa's writing tools and the guideline menu are icons of one family, each with its native name
        for the pointer and for a screen reader. Only the two actions that open something to read carry
        a word: with every action named the heading lost its line on a laptop. */
-  }
-}
-@media screen {
-  /* The whole note in a window for reading: most of the screen, one white surface, and nothing
-     drawn but the text, who signed it and how to leave. */
-  dialog.hhr-note-dialog {
-    box-sizing:border-box; width:min(76rem,calc(100vw - 3rem)); max-height:94dvh;
-    margin:auto; padding:0; border:0; border-radius:12px; overflow:hidden;
-    background:var(--hhr-ficha-surface); color:var(--hhr-ficha-ink); box-shadow:0 24px 64px rgb(17 38 34 / 30%);
-    font:inherit;
-    &[open] { display:flex; flex-direction:column; }
-    &::backdrop { background:rgb(17 38 34 / 52%); }
-    header { display:grid; grid-template-columns:1fr auto; align-items:center; gap:2px 1rem;
-      flex:none; padding:20px 32px 14px; border-block-end:1px solid var(--hhr-ficha-line-soft); }
-    h2 { grid-area:1 / 1; margin:0; font:600 var(--hhr-ficha-text-lead)/1.4 var(--hhr-ficha-sans); }
-    small { color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans); }
-    button { grid-area:1 / 2 / span 2; min-height:32px; padding:4px 14px; border:1px solid var(--hhr-ficha-line);
-      border-radius:var(--hhr-ficha-radius); background:transparent; color:var(--hhr-ficha-action);
-      font:600 var(--hhr-ficha-text-body)/1 var(--hhr-ficha-sans); cursor:pointer;
-      &:hover { background:var(--hhr-ficha-action-hover); } }
-    .hhr-note-content { padding:24px 32px 28px; overflow:auto; white-space:pre-wrap; scrollbar-width:thin;
-      overflow-wrap:anywhere; font:normal var(--hhr-ficha-text-lead)/1.65 var(--hhr-ficha-sans); }
-    .hhr-note-position { flex:none; padding:8px 32px 12px; border-block-start:1px solid var(--hhr-ficha-line-soft);
-      color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans); text-align:end; }
-    :focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:-2px; }
   }
 }
 @media screen {
@@ -290,4 +240,4 @@
     :focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:-2px; }
   }
 }
-@media print { .hhr-evo-entry,.hhr-evo-filters,.hhr-note-open,dialog.hhr-note-dialog,dialog.hhr-evo-reader { display:none !important; } }
+@media print { .hhr-evo-entry,.hhr-evo-filters,dialog.hhr-evo-reader { display:none !important; } }

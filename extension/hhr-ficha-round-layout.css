@@ -222,6 +222,11 @@
           inline-size:max-content !important; max-inline-size:100%; min-inline-size:0;
           margin:var(--hhr-round-tile,1.25rem) 0 0 var(--hhr-round-tile-x,0px) !important;
           border-radius:0; background:transparent;
+          /* Every name of the group stands on the page, whatever box Eloísa draws it in: a white card behind
+             Examen físico and its state was seen on the page (27-11-2026). */
+          &, section, .MuiPaper-root, .MuiCard-root, .MuiCardHeader-root, .MuiCardContent-root, [data-hhr-reading="status-card"] {
+            background:transparent !important; box-shadow:none !important; border-color:transparent !important;
+          }
           /* Beside the signs they belong to the round: the Tab key reaches them before the cards under it. */
           reading-order:0;
           [data-hhr-reading="status-card"], &[data-hhr-reading="status-card"] {
@@ -294,8 +299,6 @@
           max-block-size:clamp(calc(var(--hhr-ficha-note-lines) * 1lh), 100vh - 31rem, calc(var(--hhr-ficha-note-most) * 1lh));
           max-block-size:clamp(calc(var(--hhr-ficha-note-lines) * 1lh), round(down, 100vh - 31rem, 1lh), calc(var(--hhr-ficha-note-most) * 1lh));
         }
-        /* Without a heading to hold them, the actions keep their line under the text. */
-        &:has(> .hhr-note-open) > [data-hhr-note-text] { border-block-end:1px solid var(--hhr-ficha-line-soft); }
         > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; margin-block-start:2px; }
       }
       /* A brief note, without Eloísa's «Leer más», has no lines to keep: its card still ends where the

@@ -1,8 +1,9 @@
 // A fictional Plan de tratamiento with the structure of the real one (docs/estructura-eloisa.md):
 // a switch and four scheduling cards. Each card has its header with a switch, a collapsible box
 // with three icon tools named on their icons, and a table with a sticky header: «Indicación» with
-// the page controls, then the hours of each day in slots of 100 px. A scheduled hour holds an
-// icon button without a name. Sizes follow what was measured: header padding 24px 16px with a
+// the page controls, then the hours of each day in boxes of 100 px, grouped by day. A scheduled hour holds an
+// icon button without a name, in a box Eloísa paints salmon with an orange edge (read 27-11-2026). The card
+// has a padding of its own of 16px 32px. Sizes follow what was measured: header padding 24px 16px with a
 // 24 px title, cells with 16 px of padding and 16 px text, a table container of at most 600 px.
 const paths = {
   AccessTimeRoundedIcon:'<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
@@ -65,8 +66,8 @@ const card = ({title, filter, rows, select = false}) => `<div class="MuiPaper-ro
         <div class="MuiStack-root pages"><button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-text">Ir a Hoy</button>
           ${iconButton('ChevronLeftRoundedIcon', '', 'Small')}<p class="MuiTypography-root MuiTypography-body1">3 / 5</p>${iconButton('ChevronRightRoundedIcon', '', 'Small')}</div></th>
       <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader" style="width:1000px"><div class="MuiStack-root days">${planDays.map(([day, hours]) =>
-        `<div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">${day}</span><div class="MuiStack-root hours">${hours.map(hour =>
-          `<span class="MuiTypography-root MuiTypography-caption">${hour}</span>`).join('')}</div></div>`).join('')}</div></th></tr></thead>
+        `<div class="MuiBox-root day"><div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">${day}</span></div><div class="MuiStack-root hours">${hours.map(hour =>
+          `<div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">${hour}</span></div>`).join('')}</div></div>`).join('')}</div></th></tr></thead>
     <tbody class="MuiTableBody-root">${rows.length ? rows.map(item => row(item, select)).join('') : emptyRow}</tbody>
     <tfoot class="MuiTableFooter-root"><tr class="MuiTableRow-root"><td class="MuiTableCell-root"></td><td class="MuiTableCell-root"></td><td class="MuiTableCell-root"></td></tr></tfoot>
   </table></div></div></div>`;
@@ -83,7 +84,7 @@ export const carePlanPage = (cards = planCards) => `<!doctype html><html lang="e
   .MuiSwitch-switchBase{position:absolute;top:0;left:0;padding:9px}.MuiSwitch-thumb{display:block;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.4)}
   .MuiSwitch-input{position:absolute;top:0;left:-100%;width:300%;height:100%;margin:0;opacity:0;cursor:pointer}
   .MuiSwitch-switchBase:has(:checked){transform:translateX(20px)}.MuiSwitch-switchBase:has(:checked) .MuiSwitch-thumb{background:#247d71}
-  .MuiCard-root{overflow:hidden;border-radius:8px;background:white;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .MuiCard-root{overflow:hidden;padding:16px 32px;border-radius:8px;background:white;box-shadow:0 1px 3px rgba(0,0,0,.12)}
   .MuiCardHeader-root{display:flex;align-items:center;padding:24px 16px}.MuiCardHeader-content{flex:1 1 auto;min-width:0}
   .MuiCardHeader-title{display:block;font-size:24px;line-height:1.334}.MuiCardHeader-action{flex:none;align-self:flex-start;margin:-4px -8px -4px 0}
   .tools{flex-direction:row;justify-content:flex-end;gap:8px;padding:0 16px 8px}
@@ -95,10 +96,11 @@ export const carePlanPage = (cards = planCards) => `<!doctype html><html lang="e
   .MuiCheckbox-root input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}.MuiCheckbox-root svg{width:24px;height:24px;fill:rgba(0,0,0,.6)}
   th{position:sticky;top:0;z-index:2;background:white;font-weight:500}th p,td p{margin:0;font-size:16px}
   .pages{flex-direction:row;align-items:center;gap:8px}.MuiButton-text{min-width:64px;padding:6px 8px;border:0;border-radius:4px;background:none;color:#218b80;font:500 14px/1.75 Arial,sans-serif;text-transform:uppercase;white-space:nowrap;cursor:pointer}
-  .days{flex-direction:row}.days .MuiTypography-caption{display:block;font-size:12px;line-height:1.66}.hours{flex-direction:row}.hours span{flex:none;width:100px;text-align:center}
+  .days{flex-direction:row}.days .MuiTypography-caption{display:block;font-size:12px;line-height:1.66;text-align:center}.hours{flex-direction:row}.hours>.MuiBox-root{flex:none;width:100px;text-align:center}
   td>.MuiStack-root{gap:4px}td>.MuiStack-root>.MuiStack-root{flex-flow:row wrap;align-items:center;gap:8px}
   .MuiChip-root{display:inline-flex;align-items:center;height:24px;border-radius:16px;background:#e4e9e7;color:#344841;font-size:13px}.MuiChip-label{padding:0 8px}
-  .slots{display:flex}.slots>.MuiStack-root{flex:none;align-items:center;justify-content:center;width:100px}
+  .slots{display:flex}.slots>.MuiStack-root{flex:none;align-items:center;justify-content:center;width:100px;min-height:49px}
+  .slots>.MuiStack-root>.MuiBox-root{display:flex;align-items:center;justify-content:center;width:100px;height:49px;background:rgb(241,216,208);border-right:1px solid rgb(230,74,25)}
 </style><header class="banner">Ficha de hospitalizados <small>Plan de tratamiento · Episodio ficticio</small></header>
 <div class="MuiAppBar-root"><div class="MuiTabs-root"><div class="MuiTabs-scroller"><div role="tablist">${tabs.map(([id,label]) =>
   `<button role="tab" id="encounter-event-tab-${id}" aria-selected="${id === 'care-plan'}">${label}</button>`).join('')}</div></div></div></div>

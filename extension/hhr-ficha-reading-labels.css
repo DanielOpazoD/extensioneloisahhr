@@ -18,6 +18,8 @@
       &[data-hhr-note-disclosure="more"]::before { content:'Ver más' / ''; font:600 .75rem/1.2 var(--hhr-ficha-sans); text-transform:none; }
       &[data-hhr-note-disclosure="more"]::after { transform:rotate(45deg); }
       &:focus-visible { outline:2px solid #0b6e66; outline-offset:1px; }
+      /* An alert or a handoff opened whole has no way back to its cut. */
+      &[data-hhr-note-disclosure="whole"] { display:none !important; }
     }
     button[data-hhr-entry-suffix] {
       display:inline-flex; align-items:center; justify-content:center; column-gap:.25em;
@@ -66,14 +68,13 @@
         > [data-hhr-reading-toggle="alert"] { width:fit-content; margin:0; min-height:24px; }
         > :not([data-hhr-reading-toggle="alert"]) { width:100%; }
       }
-      /* «No reanimación» reads like the switch beside it until it is on: then it is the flag of the card.
-         Its box is the same in both states, so nothing moves when it is pressed. */
+      /* «No reanimación» reads like the other switches of the view: a small switch, its name at 12 px and its
+         state after it. On, its name takes the alarm ink and the weight of a title, with no box of its own
+         (27-11-2026: the owner found the amber box out of the view's language). Nothing moves when pressed. */
       [data-hhr-resuscitation-toggle] {
         padding-inline:6px 8px; border-radius:var(--hhr-ficha-button-radius,6px);
-        &:has(input:checked) {
-          background:#fff4e7; box-shadow:inset 2px 0 #965924;
-          .MuiFormControlLabel-label { font-weight:600; color:#6f3f12; }
-        }
+        .MuiSwitch-root { zoom:.8; }
+        &:has(input:checked) .MuiFormControlLabel-label { font-weight:var(--hhr-ficha-weight-strong,600); color:var(--hhr-ficha-alarm,#c62828); }
       }
       [data-hhr-resuscitation-toggle]::after {
         content:'Sin marcar' / ''; margin-inline-start:.35em; color:var(--hhr-ficha-ink-soft);
@@ -227,8 +228,10 @@
     > [data-hhr-reading-toggle="alert"]:has(+ [data-hhr-entry-open]) { grid-column:1; }
     > [data-hhr-entry-open] { grid-column:2; justify-self:end; align-self:center; min-height:24px; padding-block:1px; }
     /* The rule hangs in the margin, leaving both switches on one edge.
-       Once marked, the order takes the whole line of the card. */
+       The order keeps its place when marked. */
     > [data-hhr-resuscitation-toggle] { margin-inline-start:-6px; }
-    > [data-hhr-resuscitation-toggle]:has(input:checked) { width:auto; justify-self:stretch; }
+    /* Without «Gestión de visitas» (the owner asked to hide it, 27-11-2026), «No reanimación» takes its place
+       beside the alert action: one line, not two. */
+    &:has(> [data-hhr-visits-toggle]) > [data-hhr-resuscitation-toggle] { grid-column:1; align-self:center; }
   }
 }

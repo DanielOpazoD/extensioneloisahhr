@@ -211,6 +211,8 @@ Cada tarjeta:
 
 En la ficha de Gestión de cuidados (leído el 27-11-2026), las tablas de indicaciones libres, medicamentos y cuidados abren con una columna `th.MuiTableCell-paddingCheckbox` de 46 px con un `span.MuiCheckbox-root > input[type=checkbox]` y sin texto, en la cabecera y en cada fila; la de procedimientos no la tiene.
 
+Leído en la página el 27-11-2026, después: la tarjeta (`.MuiPaper-root`) tiene un relleno propio de 16 px 32 px. En la cabecera de horas, cada día es un `div.MuiBox-root` con su rótulo en otro `div.MuiBox-root` y sus horas en un `div.MuiStack-root` de `div.MuiBox-root` de 100 px (el día mide lo que sus horas). En cada fila, la celda de horas (`td.MuiTableCell-paddingNone`) es `div.MuiBox-root > div.MuiStack-root` por hora (100 × 49 px); una hora programada es un `div.MuiBox-root` pintado `rgb(241, 216, 208)` con un borde derecho de 1 px `rgb(230, 74, 25)` que lleva el icono de estado. La herramienta de planificación puede venir plegada (`MuiCollapse-hidden`).
+
 Leído en la página el 27-11-2026: en Programación de procedimientos la primera columna de la tabla no tiene texto (ni «Indicación»); la vista la reconoce por el título «Programación de …». Los interruptores de cabecera son `label.MuiFormControlLabel-root` con un `MuiSwitch` (pista y botón como `span`).
 
 Pendiente de confirmar en la página real:

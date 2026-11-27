@@ -35,7 +35,15 @@
     const onlyButtons = buttons.length && buttons.length === tools.querySelectorAll(controls).length &&
       buttons.every(button => button.matches('.MuiIconButton-root') && button.querySelector('svg') && !button.textContent.trim());
     const rows = [...(table.tBodies[0]?.rows || [])];
-    return {table, select, tools:onlyButtons && card.children.length === 3 ? tools : null, buttons:onlyButtons ? buttons : [],
+    // The hours: in the heading, a row of days, each its label and its hours; in each row, one box per hour
+    // (read on the page 27-11-2026). Taken only when every row has as many boxes as the heading has hours.
+    const hourCell = headings[1];
+    const days = [...(hourCell?.querySelectorAll(':scope > .MuiStack-root > .MuiBox-root') || [])];
+    const hours = days.flatMap(day => [...day.querySelectorAll(':scope > .MuiStack-root > *')]);
+    const slots = rows.map(row => [...(row.cells[row.cells.length - 1]?.querySelectorAll(':scope > .MuiBox-root > .MuiStack-root') || [])]);
+    const grid = hours.length && days.length && rows.length && !(rows.length === 1 && rows[0].cells.length === 1) &&
+      slots.every(list => list.length === hours.length) ? {cell:hourCell, row:hourCell.firstElementChild, days, hours, slots:slots.flat()} : null;
+    return {table, select, grid, tools:onlyButtons && card.children.length === 3 ? tools : null, buttons:onlyButtons ? buttons : [],
       empty:rows.length === 1 && rows[0].cells.length === 1 && rows[0].cells[0].colSpan > 1};
   }
 
@@ -45,8 +53,9 @@
       if (element.getAttribute(name) !== value) element.setAttribute(name, value);
       next.set(element, (next.get(element) || new Set()).add(name));
     };
+    let sizedBefore = new Set();
     function refresh(main) {
-      const next = new Map(), named = new Set();
+      const next = new Map(), named = new Set(), sized = new Set();
       const cards = main ? [...main.querySelectorAll('.MuiCard-root')].filter(card => !card.closest('dialog,[role="dialog"],[hidden],main [aria-hidden="true"]')) : [];
       const found = cards.map(card => [card, schedule(card)]).filter(([, plan]) => plan);
       // The view is the stack that holds the scheduling cards and, at most, the switch above them.
@@ -74,6 +83,26 @@
           if (label.querySelector('input[type="checkbox"]')) filterOf(label);
         }
         if (plan.empty) set(next, plan.table, attribute + '-empty');
+        // The hours take the width the table gives them, not 100 px each: the right half of the card was empty.
+        if (plan.grid) {
+          const {cell, row, days, hours, slots} = plan.grid;
+          const style = getComputedStyle(cell);
+          const room = cell.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+          const width = Math.max(64, Math.floor(room / hours.length));
+          if (card.style.getPropertyValue('--hhr-plan-hour') !== width + 'px') card.style.setProperty('--hhr-plan-hour', width + 'px');
+          sized.add(card);
+          set(next, row, attribute + '-days');
+          for (const day of days) {
+            set(next, day, attribute + '-day', String(day.querySelectorAll(':scope > .MuiStack-root > *').length));
+          }
+          for (const hour of hours) set(next, hour, attribute + '-hour');
+          for (const slot of slots) {
+            set(next, slot, attribute + '-slot');
+            // A scheduled hour is a box Eloísa paints: the view gives it the band of its headings.
+            const mark = slot.querySelector(':scope > .MuiBox-root');
+            if (mark && (mark.hasAttribute(attribute + '-mark') || getComputedStyle(mark).backgroundColor !== 'rgba(0, 0, 0, 0)')) set(next, mark, attribute + '-mark');
+          }
+        }
         if (plan.select) set(next, plan.table, attribute + '-select');
         if (plan.tools) set(next, plan.tools, attribute, 'tools');
         for (const button of plan.tools ? plan.buttons : []) {
@@ -89,6 +118,8 @@
           }
         }
       }
+      for (const card of sizedBefore) if (!sized.has(card)) card.style.removeProperty('--hhr-plan-hour');
+      sizedBefore = sized;
       for (const [element, names] of marks) for (const name of names) if (!next.get(element)?.has(name)) element.removeAttribute(name);
       for (const button of hints) if (!named.has(button)) button.removeAttribute('title');
       marks.clear(); next.forEach((names, element) => marks.set(element, names));

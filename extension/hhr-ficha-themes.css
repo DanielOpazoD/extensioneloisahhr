@@ -424,7 +424,10 @@
       &[data-hhr-reading="time-symbol-one"]::after { content:'\a0 d' / ' día'; }
     }
     /* Who asked for a prescription situates it: one line, in the ink of what explains. */
-    [data-hhr-reading="order-requester"] { color:var(--hhr-ficha-muted); white-space:nowrap; }
+    /* Its column has one width in every table of prescriptions, so that «Solicitante» starts at the same
+       place in Fármacos and in Indicaciones libres, whose actions already end on one edge. A longer name
+       widens it. */
+    [data-hhr-reading="order-requester"] { color:var(--hhr-ficha-muted); white-space:nowrap; inline-size:6.5rem; }
     /* Who validated the treatment reads as a byline under the title, as Eloísa's «Última actualización»
        does, close to the table it signs. Not yet validated, it says so, beside «Validar tratamiento». */
     [data-hhr-reading="order-validator"] {
@@ -610,7 +613,10 @@
     > [data-hhr-update-label] { margin:0 !important; white-space:nowrap; }
     > :not([data-hhr-update-label]) { display:inline-flex; align-items:center; gap:6px; }
   }
-  /* The daily form at the height of a line of text, on the section line or in its own row. */
+}
+/* The daily form at the height of a line of text, on the section line or in its own row: also in a narrow
+   window, where it opens the column (27-11-2026; it was Eloísa's large field there). */
+@media screen and (min-width:600px) {
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"]:has(> [data-hhr-update-label]):has(form input) {
     min-height:30px !important;
     /* The row says what it prints, not who last updated the summary: the note carries its own byline.
@@ -705,9 +711,10 @@
   }
 }
 
-/* A value out of its range keeps Eloísa's flag in a red that reads (5.6:1 instead of 3.7:1). */
+/* A vital sign reads in the ink of every value, also out of its range: the owner asked for the signs
+   without red (27-11-2026). Eloísa's flag stays in the page, recognised and undone by the view. */
 @media screen {
-  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-flag] { color:var(--hhr-ficha-alarm) !important; }
+  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-flag] { color:var(--hhr-ficha-ink) !important; }
 }
 
 /* A print says what it prints, as «Imprimir indicaciones» does beside the title of Fármacos: its icon
@@ -748,6 +755,10 @@
 @media screen and (min-width:1100px) {
   html[data-hhr-ficha-theme="compact"] #hhr-clinical-operations-bar {
     box-shadow:none !important; border-color:var(--hhr-ficha-line) !important; border-radius:8px !important;
+  }
+  /* Docked on the white line of tabs, it is the end of that line: no edge, no corner, no shadow. */
+  html[data-hhr-ficha-theme="compact"] #hhr-clinical-operations-bar[data-hhr-ops-docked] {
+    border:0 !important; border-radius:0 !important; background:transparent !important; padding-block:0 !important;
   }
 }
 
@@ -859,6 +870,8 @@
     :is(#alertEntrySection,#shiftChangeEntrySection) [data-hhr-entry-prompt]:not(#hhr-a):not(#hhr-b) { row-gap:16px !important; }
     /* The daily row does not repeat the byline the note below carries, as on the desk. */
     [data-hhr-update-repeat="note"] { position:absolute !important; inline-size:1px; block-size:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    /* A date, a state or an action of a diagnosis is one word: it does not break; the diagnosis takes the rest. */
+    #diagnosisEntrySection td:not(:nth-child(2)) { inline-size:1%; white-space:nowrap; }
     /* Reposo and Régimen read at the size of the summary: their name, their value and their byline. */
     > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
       .MuiCard-root { box-shadow:none !important; border-radius:var(--hhr-ficha-radius) !important; }
@@ -872,5 +885,16 @@
       column-gap:var(--hhr-ficha-block-gap); flex-wrap:nowrap; margin:0 !important; inline-size:100% !important;
       > .MuiGrid-item { flex:1 1 0 !important; max-inline-size:none !important; min-inline-size:0; padding:0 !important; }
     }
+  }
+}
+
+/* Indicaciones libres reads its indication where Fármacos reads its own, after the days of treatment
+   (27-11-2026, the owner asked for the tables in line). «Tiempo» has one width, and the first column of
+   Indicaciones libres starts after that same width. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] {
+    :is(#medicationEntrySection,#dilutionEntrySection) table td:first-child:has([data-hhr-reading^="time-symbol"]) { box-sizing:border-box; inline-size:3.75rem; }
+    /* Named twice for the weight of the rules that give every first cell the reading edge. */
+    #freeIndicationEntrySection#freeIndicationEntrySection table:not(:is(dialog,[role=dialog]) *) :is(th,td):first-child:not(#hhr-a) { padding-inline-start:calc(3.75rem + 7px) !important; }
   }
 }

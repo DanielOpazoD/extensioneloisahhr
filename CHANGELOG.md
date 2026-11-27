@@ -1,5 +1,21 @@
 # Cambios
 
+## 0.48.229
+
+- Plan de tratamiento (medido en la página el 27-11-2026): la tarjeta pierde el relleno propio de Eloísa (16 × 32 px) y lee desde el mismo borde que las demás; las horas ocupan el ancho de la tabla (antes 100 px cada una, con la mitad derecha vacía), cada una sobre su casilla; una hora programada va en la banda de los encabezados con una línea fina, no en salmón con borde naranjo; cada fila mide lo que su texto (las casillas de 49 px fijaban 50 px por fila). Una tarjeta sin filas no dibuja sus horas.
+- La barra de Centro HHR va sobre la línea blanca de pestañas, con su misma altura y su mismo final, sin borde ni sombra (antes colgaba 6 px más abajo y 11 px por fuera de ella).
+- Filtros de Historial: cada campo es su nombre pequeño encima y una línea fina alrededor de su valor, de 28 px; sin el nombre montado en el borde.
+- Indicaciones libres lee su indicación donde Fármacos lee la suya, después de los días de tratamiento.
+- El cambio de paciente nombra solo el código de la cama (H1C1, que ya dice la sala); se puede seguir buscando por sala.
+- Sin el botón «Nota completa» ni su ventana: una evolución larga se lee desplazándose dentro de su tarjeta (también con el teclado) o en «Ver evoluciones».
+- Alertas y Observaciones de entrega de turno se leen enteras: la vista abre una vez el «Leer más» de Eloísa en cada texto que corta y no dibuja la flecha para volver a cortarlo. Sin la vista compacta, los textos vuelven a como los dibuja Eloísa.
+- «No reanimación» se lee como los demás interruptores: interruptor pequeño, nombre en 12 px y su estado después. Marcada, su nombre va en la tinta de alarma y en peso 600, sin la caja ámbar.
+- Signos vitales sin rojo: un valor fuera de rango se lee en la tinta de todo valor.
+- «Sin datos»: ningún nombre dibuja una caja blanca, sea cual sea la forma en que Eloísa lo trae (se vio en Examen físico).
+- «No reanimación» y «Agregar alerta» vuelven a compartir una línea: al ocultar «Gestión de visitas» habían quedado en dos.
+- «Solicitante» empieza en el mismo lugar en Fármacos y en Indicaciones libres (antes 60 px de diferencia); un nombre más largo ensancha su columna.
+- Ventana angosta (600 a 1099 px): «Resumen diario paciente» es el campo compacto de escritorio (antes el campo grande de Eloísa) y las fechas, estados y acciones de Diagnóstico no se parten en dos líneas.
+
 ## 0.48.228
 
 - Corregido: la lista de pacientes del nombre en la barra verde quedaba en «El relé de Ficha Médico perdió conexión con la extensión.» cuando la pestaña aún no confirmaba su conexión. Ahora se pide la sesión otra vez un momento después, el error trae «Reintentar» sin cerrar la lista y la lista se empieza a leer al apuntar el nombre.

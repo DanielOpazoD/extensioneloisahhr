@@ -197,36 +197,23 @@ describe('Compact native history dates', () => {
 });
 
 describe('Native ficha presentation', () => {
-  it('dismisses the complete reader when the source or episode changes and restores the native attributes', () => {
+  it('lets a long note scroll in its card, without a reader window, and restores the native attributes', () => {
     document.body.innerHTML = '<div><span aria-label="Nota nativa">Ingreso ficticio</span></div>';
     const source = document.querySelector('span');
     Object.defineProperties(source, {
       scrollHeight:{value:480}, clientHeight:{value:180}, innerText:{get:() => source.textContent},
     });
-    const createElement = document.createElement.bind(document);
-    const create = vi.spyOn(document,'createElement').mockImplementation(tag => {
-      const node = createElement(tag);
-      if (tag === 'dialog') {
-        node.showModal = () => { node.open = true; };
-        node.close = () => { node.open = false; };
-      }
-      return node;
-    });
     const reader = globalThis.HhrFichaNoteReader.create();
     reader.refresh(source,'uno');
-    document.querySelector('.hhr-note-open').click();
-    expect(document.querySelector('.hhr-note-content').textContent).toBe('Ingreso ficticio');
-    source.textContent = 'Nota corregida';
-    reader.refresh(source,'uno');
-    expect(document.querySelector('dialog')).toBeNull();
-    document.querySelector('.hhr-note-open').click();
-    reader.refresh(source,'dos');
-    expect(document.querySelector('dialog')).toBeNull();
+    // The owner asked to drop «Nota completa» and its window (27-11-2026).
+    expect(document.querySelector('button,dialog')).toBeNull();
+    expect([source.getAttribute('role'), source.getAttribute('tabindex'), source.getAttribute('aria-label')]).toEqual(['region', '0', 'Nota nativa']);
+    expect(source.hasAttribute('data-hhr-note-scroll')).toBe(true);
     reader.refresh(null,null);
     expect(source.getAttribute('aria-label')).toBe('Nota nativa');
     expect(source.hasAttribute('tabindex')).toBe(false);
-    expect(document.querySelector('.hhr-note-open')).toBeNull();
-    create.mockRestore();
+    expect(source.hasAttribute('role')).toBe(false);
+    expect(source.hasAttribute('data-hhr-note-scroll')).toBe(false);
   });
 
   it('opens the native summary note once and respects manual folding across refreshes and remounts', () => {
