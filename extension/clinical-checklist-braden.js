@@ -18,9 +18,9 @@
     ],
   });
   const REASSESS_BY_RISK = Object.freeze({
-    alto: 'Cada 24 h',
-    moderado: 'Cada 72 h',
-    bajo: 'Cada 7 días',
+    alto: Object.freeze({ hours: 24, label: 'Cada 24 h' }),
+    moderado: Object.freeze({ hours: 72, label: 'Cada 72 h' }),
+    bajo: Object.freeze({ days: 7, label: 'Cada 7 días' }),
   });
   const RISK_TITLE = Object.freeze({
     alto: 'Alto',
@@ -195,7 +195,7 @@
       subscores,
       risk,
       riskLabel: RISK_TITLE[risk],
-      reassess: REASSESS_BY_RISK[risk],
+      reassess: REASSESS_BY_RISK[risk].label,
       carePlan,
     };
   }
@@ -402,6 +402,8 @@
 
   root.HhrChecklistBraden = Object.freeze({
     EVOLUTION_HEADING,
+    REASSESS_BY_RISK,
+    calendarDay,
     isBundledBraden,
     eligibleTemplate,
     isBradenTemplate,

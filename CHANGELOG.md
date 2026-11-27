@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.231
+
+- «Ver evoluciones → Scores» muestra las valoraciones válidas `#EscalaBraden` del episodio con su fecha, puntaje, riesgo y próxima valoración en hora de Rapa Nui. El nombre de la escala abre la nota original. Las notas que aparecen en Scores se apartan de la lista de Evoluciones.
+
 ## 0.48.230
 
 - Braden adulto y Braden Q abren desde Acciones de evolución con las pautas incluidas en la extensión. Braden Q está disponible desde los 30 días y hasta antes de los 15 años. La valoración se inserta en una evolución vacía con el encabezado `#EscalaBraden` y se guarda con los controles de Eloísa.

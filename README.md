@@ -36,6 +36,8 @@ En «Acciones de evolución», «Continuar pauta» recupera las respuestas al ce
 
 «Acciones de evolución → Braden» abre la pauta incluida en la extensión. En la fecha de valoración, desde los 30 días y hasta antes de los 15 años corresponde Braden Q, y desde los 15 años corresponde Braden adulto. La extensión comprueba la ficha y prepara una evolución dedicada cuya primera línea es `#EscalaBraden`. «Insertar en evolución» requiere un editor vacío. Revisa y guarda el texto con los controles de Eloísa.
 
+En «Ver evoluciones → Scores» aparecen las valoraciones Braden válidas de ese episodio, ordenadas por fecha de valoración. El nombre de la escala abre la nota original con sus observaciones. La próxima valoración se calcula desde la fecha y hora registradas en Rapa Nui, según el riesgo. Las notas tachadas y archivadas figuran con su estado. Las notas que se muestran en Scores se omiten de Evoluciones en este lector. «Ver más antiguas» amplía el período para ambas vistas.
+
 ## Preparar un cambio
 
 Usa Node 22.22 y `npm ci`. Crea una rama desde `main`, realiza el cambio y guarda un commit.
