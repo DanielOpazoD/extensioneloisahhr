@@ -19,11 +19,76 @@
     .replace(/&(?:nbsp|amp|lt|gt|quot|#39);/g, entity => ENTITIES[entity])
     .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   const roleOf = note => note.role || 'Sin profesión';
+  const flagsOf = note => [[note.crossedOut, 'Tachada'], [note.archived, 'Archivada'], [note.amended, 'Enmendada']];
+  const views = ['Evoluciones', 'Scores'];
+  const scoreColumns = ['Escala', 'Fecha de valoración', 'Puntaje', 'Riesgo', 'Próxima valoración'];
+  const asTime = ({date, time}) => {
+    const node = Object.assign(el('time'), {dateTime: date + (time ? 'T' + time : '')});
+    node.append(el('span', 'hhr-score-date', date.split('-').reverse().join('-')),
+      el('span', 'hhr-score-time-separator', ' · '), el('span', 'hhr-score-hour', time || 'hora por confirmar'));
+    return node;
+  };
+
+  function partition(notes) {
+    const evolutions = [], scores = [];
+    for (const note of notes) {
+      const text = readable(note.note);
+      const value = globalThis.HhrClinicalBradenNotes?.parse(text, note);
+      if (value) scores.push({ ...value, note, text });
+      else evolutions.push({ ...note, text });
+    }
+    const stamp = row => row.valuation.date + 'T' + row.valuation.time;
+    scores.sort((a, b) => stamp(b).localeCompare(stamp(a)));
+    return { evolutions, scores };
+  }
+
+  function scoresTable(scores) {
+    const table = el('table', 'hhr-scores-table');
+    table.createCaption().textContent = 'Valoraciones Braden del episodio';
+    const header = table.createTHead().insertRow();
+    for (const label of scoreColumns) header.append(Object.assign(el('th', '', label), { scope: 'col' }));
+    const rows = table.createTBody();
+    for (const [index, score] of scores.entries()) {
+      const row = rows.insertRow();
+      const name = Object.assign(el('th'), { scope: 'row' });
+      const show = button(score.scale, 'hhr-score-note-link');
+      const date = asTime(score.valuation);
+      const details = rows.insertRow();
+      details.className = 'hhr-score-detail';
+      details.id = 'hhr-score-detail-' + index;
+      details.hidden = true;
+      show.setAttribute('aria-expanded', 'false');
+      show.setAttribute('aria-controls', details.id);
+      show.setAttribute('aria-label', score.scale + ', nota del ' + date.textContent);
+      show.addEventListener('click', () => {
+        details.hidden = !details.hidden;
+        show.setAttribute('aria-expanded', String(!details.hidden));
+      });
+      name.append(show);
+      for (const [on, label] of flagsOf(score.note)) {
+        if (on) name.append(el('span', 'hhr-score-flag', label));
+      }
+      row.append(name);
+      row.insertCell().append(date);
+      row.insertCell().textContent = score.points + ' / ' + score.maximum;
+      row.insertCell().textContent = score.risk;
+      const due = row.insertCell();
+      if (score.next) due.append(asTime(score.next));
+      else due.textContent = score.note.crossedOut || score.note.archived ? '—' : 'Hora por confirmar';
+      const detailCell = details.insertCell();
+      detailCell.colSpan = scoreColumns.length;
+      const author = [score.note.role, score.note.author].filter(Boolean).join(' · ');
+      if (author) detailCell.append(el('strong', '', author));
+      detailCell.append(el('p', '', score.text));
+    }
+    return table;
+  }
 
   function create({ readNotes, openHistory } = {}) {
     let dialog = null, episode = null, opener = null, request = 0;
-    let notes = [], days = 14, older = null, selected = '', state = 'idle', failure = '';
-    let scope, filters, feed, status, more, retry;
+    let notes = [], scores = [], days = 14, older = null, selected = '', state = 'idle', failure = '';
+    let chosenView = views[0], pendingDays = 14;
+    let heading, scope, viewButtons, filters, feed, scoreFeed, history, status, more, retry;
 
     const close = () => {
       if (!dialog) return;
@@ -31,11 +96,20 @@
       if (typeof dialog.close === 'function') dialog.close();
       dialog.remove();
       dialog = null;
+      notes = []; scores = [];
+      feed.replaceChildren();
+      scoreFeed.replaceChildren();
       if (opener?.isConnected) opener.focus({ preventScroll: true });
       opener = null;
     };
     function draw() {
       if (!dialog) return;
+      const showingScores = chosenView === 'Scores';
+      heading.textContent = chosenView;
+      dialog.setAttribute('aria-label', chosenView + ' del episodio');
+      dialog.toggleAttribute('data-hhr-scores-view', showingScores);
+      for (const choice of viewButtons.children) choice.setAttribute('aria-pressed', String(choice.textContent === chosenView));
+      history.hidden = showingScores;
       scope.textContent = (WINDOW_LABELS.get(days) || '') + ' · hora de Rapa Nui';
       const roles = new Map();
       for (const note of notes) roles.set(roleOf(note), (roles.get(roleOf(note)) || 0) + 1);
@@ -58,16 +132,21 @@
         head.append(el('strong', '', roleOf(note)));
         if (note.author) head.append(el('span', '', note.author));
         head.append(el('time', '', note.day ? note.day + ' · ' + note.time : 'Sin hora legible'));
-        for (const [on, label] of [[note.crossedOut, 'Tachada'], [note.archived, 'Archivada'], [note.amended, 'Enmendada']]) {
+        for (const [on, label] of flagsOf(note)) {
           if (on) head.append(el('mark', '', label));
         }
-        item.append(head, el('p', '', readable(note.note)));
+        item.append(head, el('p', '', note.text));
         return item;
       }));
-      feed.hidden = !shown.length;
+      filters.hidden = showingScores;
+      feed.hidden = showingScores || !shown.length;
+      scoreFeed.hidden = !showingScores || !scores.length;
+      scoreFeed.replaceChildren(...(showingScores && scores.length ? [scoresTable(scores)] : []));
+      const hasResults = showingScores ? scores.length : notes.length;
+      const subject = showingScores ? 'valoraciones Braden' : 'evoluciones';
       const period = (WINDOW_LABELS.get(days) || '').toLowerCase();
-      const message = state === 'loading' ? 'Cargando evoluciones…' : state === 'failed' ? failure :
-        notes.length ? '' : 'Sin evoluciones en ' + (days === 365 ? 'el ' : 'los ') + period + '.';
+      const message = state === 'loading' ? 'Cargando ' + subject + '…' : state === 'failed' ? failure :
+        hasResults ? '' : 'Sin ' + subject + ' en ' + (days === 365 ? 'el ' : 'los ') + period + '.';
       if (status.textContent !== message) status.textContent = message;
       status.hidden = !message;
       retry.hidden = state !== 'failed';
@@ -76,6 +155,7 @@
     }
     async function load(window) {
       const turn = ++request, target = episode;
+      pendingDays = window;
       state = 'loading';
       draw();
       let answer;
@@ -87,22 +167,36 @@
         failure = answer?.error || 'No se pudieron leer las evoluciones.';
       } else {
         state = 'ready';
-        ({ notes, days, older } = answer);
+        ({ days, older } = answer);
+        ({ evolutions: notes, scores } = partition(answer.notes));
       }
       draw();
-      if (state === 'ready' && notes.length) feed.scrollTop = 0;
+      if (state === 'ready') feed.scrollTop = scoreFeed.scrollTop = 0;
     }
     function open(encounter, from) {
       if (dialog || !encounter || typeof readNotes !== 'function') return false;
       episode = encounter; opener = from || null;
-      notes = []; days = 14; older = null; selected = ''; state = 'idle';
+      notes = []; scores = []; days = 14; older = null; selected = ''; state = 'idle'; chosenView = views[0];
       dialog = el('dialog', 'hhr-evo-reader');
-      dialog.setAttribute('aria-label', 'Evoluciones del episodio');
+      dialog.setAttribute('aria-label', chosenView + ' del episodio');
       const header = el('header');
+      heading = el('h2', '', chosenView);
       scope = el('small');
-      const history = button('Ver en Historial', 'hhr-evo-reader-history');
+      history = button('Ver en Historial', 'hhr-evo-reader-history');
       const leave = button('Cerrar', 'hhr-evo-reader-close');
-      header.append(el('h2', '', 'Evoluciones'), scope, history, leave);
+      header.append(heading, scope, history, leave);
+      viewButtons = el('div', 'hhr-evo-reader-views');
+      viewButtons.setAttribute('role', 'group');
+      viewButtons.setAttribute('aria-label', 'Vista de la ficha');
+      for (const view of views) {
+        const choice = button(view, 'hhr-evo-reader-filter');
+        choice.addEventListener('click', () => {
+          if (chosenView === view) return;
+          chosenView = view;
+          draw();
+        });
+        viewButtons.append(choice);
+      }
       filters = el('div', 'hhr-evo-reader-filters');
       filters.setAttribute('role', 'group');
       filters.setAttribute('aria-label', 'Evoluciones por profesión');
@@ -110,16 +204,20 @@
       feed.tabIndex = 0;
       feed.setAttribute('role', 'region');
       feed.setAttribute('aria-label', 'Evoluciones, de la más reciente a la más antigua');
+      scoreFeed = el('div', 'hhr-evo-reader-scores');
+      scoreFeed.tabIndex = 0;
+      scoreFeed.setAttribute('role', 'region');
+      scoreFeed.setAttribute('aria-label', 'Historial de Scores');
       const footer = el('footer');
       status = el('span');
       status.setAttribute('role', 'status');
       retry = button('Reintentar', 'hhr-evo-reader-retry');
       more = button('', 'hhr-evo-reader-more');
       footer.append(status, retry, more);
-      dialog.append(header, filters, feed, footer);
+      dialog.append(header, viewButtons, filters, feed, scoreFeed, footer);
       leave.addEventListener('click', close);
       history.addEventListener('click', () => { close(); openHistory?.(); });
-      retry.addEventListener('click', () => load(days));
+      retry.addEventListener('click', () => load(pendingDays));
       more.addEventListener('click', () => { if (older) load(older); });
       filters.addEventListener('click', event => {
         const choice = event.target.closest?.('.hhr-evo-reader-filter');

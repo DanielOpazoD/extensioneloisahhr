@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import '../../../extension/hhr-origin-policy.js';
 import '../../../extension/clinical-checklist-evolution.js';
+import '../../../extension/clinical-checklist-braden-templates.js';
 import '../../../extension/clinical-checklist-braden.js';
 import '../../../extension/clinical-checklist-broker.js';
 
@@ -41,6 +42,65 @@ it('rechaza un editor ambiguo, un diálogo ajeno y un texto que no cabe', () => 
   note.removeAttribute('maxlength');
   expect(globalThis.HhrChecklistEvolution.insert(record)).toBe(true);
   expect(document.querySelector('section textarea').value).toBe('');
+});
+
+it('inserta una valoración Braden dedicada sin duplicarla ni alterar una nota narrativa', () => {
+  document.body.innerHTML = '<section id="observationEntrySection"><textarea>Nota previa</textarea></section>';
+  const editor = document.querySelector('textarea');
+  const entered = vi.fn();
+  editor.addEventListener('input', entered);
+  const heading = '#EscalaBraden';
+  const text = heading + '\nBraden Q\nPuntaje: 16 / 28';
+  const { insertStandalone } = globalThis.HhrChecklistEvolution;
+  expect(insertStandalone(text, heading)).toBe(false);
+  expect(editor.value).toBe('Nota previa');
+  editor.value = '';
+  expect(insertStandalone('Nota previa\n' + text, heading)).toBe(false);
+  expect(insertStandalone(text, heading)).toBe(true);
+  expect(insertStandalone(text, heading)).toBe(true);
+  expect(editor.value).toBe(text);
+  expect(entered).toHaveBeenCalledTimes(1);
+});
+
+it('elige Braden Q recién a los 30 días y Braden adulto desde el cumpleaños 15', () => {
+  const { eligibleTemplate } = globalThis.HhrChecklistBraden;
+  const patient = { patientBirthDate: '2026-10-28T00:00:00', patientAge: '1 mes' };
+  expect(eligibleTemplate(patient, '2026-11-26').reason).toMatch(/NSRAS/);
+  expect(eligibleTemplate(patient, '2026-11-27').templateId).toBe('hhr-lpp-braden-q');
+  expect(eligibleTemplate(patient, '2041-10-27').templateId).toBe('hhr-lpp-braden-q');
+  expect(eligibleTemplate(patient, '2041-10-28').templateId).toBe('hhr-lpp-braden-adulto');
+  expect(eligibleTemplate(patient, '2026-10-27').reason).toMatch(/nacimiento/);
+  expect(eligibleTemplate(patient, '2026-02-30').reason).toMatch(/fecha/);
+  expect(eligibleTemplate({ patientAge: '1 mes' }).reason).toMatch(/confirmar la edad/);
+  expect(eligibleTemplate({ patientAge: '29 días' }).reason).toMatch(/NSRAS/);
+  expect(eligibleTemplate({ patientAge: '30 días' }).templateId).toBe('hhr-lpp-braden-q');
+});
+
+it.each([
+  { index: 0, title: 'Braden adulto', minimum: 6, maximum: 23, high: 12, moderate: 15 },
+  { index: 1, title: 'Braden Q', minimum: 7, maximum: 28, high: 16, moderate: 21 },
+])('calcula y genera la nota legible para $title', ({ index, title, minimum, maximum, high, moderate }) => {
+  const { evaluateDraft, buildDraftEvolutionText } = globalThis.HhrChecklistBraden;
+  const template = globalThis.HhrBradenTemplates[index];
+  const answers = { fecha: '2026-11-27', hora: '16:00' };
+  const dimensions = template.fields.filter(field => field.type === 'choice');
+  expect(dimensions).toHaveLength(minimum);
+  expect(dimensions.map(field => field.shortCode)).toEqual(['PS', 'H', 'A', 'M', 'N', 'F', 'PO'].slice(0, minimum));
+  expect(buildDraftEvolutionText(template, answers)).toBe('');
+  for (const total of [minimum, high, high + 1, moderate, moderate + 1, maximum]) {
+    let remaining = total - minimum;
+    for (const field of dimensions) {
+      const option = Math.min(remaining, field.options.length - 1);
+      answers[field.id] = field.options[option].label;
+      remaining -= option;
+    }
+    const risk = total <= high ? 'alto' : total <= moderate ? 'moderado' : 'bajo';
+    expect(evaluateDraft(template, answers)).toMatchObject({ complete: true, points: total, maximum, risk });
+    const text = buildDraftEvolutionText(template, answers);
+    expect(text.split('\n').slice(0, 3)).toEqual(['#EscalaBraden', title, '2026-11-27 16:00']);
+    expect(text).toContain('Puntaje: ' + total + ' / ' + maximum);
+    expect(text).toContain('(' + risk + ')');
+  }
 });
 
 it('monta el disparador dentro de la tarjeta MUI de Evolución y abre el editor desde botones de ícono', async () => {
@@ -103,6 +163,9 @@ it('verifica el episodio, el profesional y el documento de nuevo antes de entreg
   }
   const staleSender = { ...sender, url: url.replace('/91', '/80') };
   expect(await broker.handle({ ...base, request: { action: 'verify' } }, staleSender)).toMatchObject({ episode: '91', actor: '17', document: 'TEST-X' });
+  expect(await broker.handle({ encId: '91', request: { action: 'braden' } }, sender)).toMatchObject({
+    episode: '91', actor: '17', document: 'TEST-X', patientName: 'Paciente ficticio',
+  });
   expect(tabs.connect).not.toHaveBeenCalled();
 });
 

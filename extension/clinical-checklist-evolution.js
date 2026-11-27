@@ -224,6 +224,8 @@
       .replace(/\r\n?/g, '\n')
       .includes(marker);
 
+  const normalizedText = text => String(text ?? '').replace(/\r\n?/g, '\n');
+
   const dispatchTextEvents = (el, insertedValue) => {
     try {
       el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: insertedValue }));
@@ -233,7 +235,8 @@
     el.dispatchEvent(new Event('change', { bubbles: true }));
   };
 
-  const insertIntoContentEditable = (el, value, marker) => {
+  const insertIntoContentEditable = (el, value, matches) => {
+    const before = readEditorText(el);
     const doc = el.ownerDocument || document;
     const win = doc.defaultView || window;
     el.focus();
@@ -245,15 +248,18 @@
       selection.removeAllRanges();
       selection.addRange(range);
     }
-    if (typeof doc.execCommand === 'function' && doc.execCommand('insertText', false, value) && hasMarker(readEditorText(el), marker)) {
-      return true;
+    if (typeof doc.execCommand === 'function') {
+      doc.execCommand('insertText', false, value);
+      const after = readEditorText(el);
+      if (after !== before) return matches(after);
     }
     try {
       if (typeof DataTransfer === 'function' && typeof ClipboardEvent === 'function') {
         const dt = new DataTransfer();
         dt.setData('text/plain', value);
         el.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: dt }));
-        if (hasMarker(readEditorText(el), marker)) return true;
+        const after = readEditorText(el);
+        if (after !== before) return matches(after);
       }
     } catch {
       // Fall back to direct text node insertion below.
@@ -267,7 +273,7 @@
       selection.addRange(range);
     }
     dispatchTextEvents(el, value);
-    return hasMarker(readEditorText(el), marker);
+    return matches(readEditorText(el));
   };
 
   function focusEnd(el) {
@@ -292,14 +298,31 @@
       return true;
     }
     const value = (previous.trim() ? '\n\n' : '') + record.evolution;
+    return writeText(el, previous, value, text => hasMarker(text, marker));
+  }
+
+  function insertStandalone(text, heading) {
+    const el = editor();
+    if (!el || !heading || normalizedText(text).split('\n', 1)[0] !== heading) return false;
+    const previous = readEditorText(el);
+    const matches = value => normalizedText(value).trimEnd() === normalizedText(text).trimEnd();
+    if (matches(previous)) {
+      focusEnd(el);
+      return true;
+    }
+    if (previous.trim()) return false;
+    return writeText(el, '', text, matches);
+  }
+
+  function writeText(el, previous, value, matches) {
     if (el instanceof HTMLTextAreaElement) {
       if (el.maxLength >= 0 && (previous + value).length > el.maxLength) return false;
       el.focus();
       const nextValue = previous + value;
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, nextValue);
       dispatchTextEvents(el, value);
-      if (!hasMarker(el.value, marker)) return false;
-    } else if (!insertIntoContentEditable(el, value, marker)) {
+      if (!matches(el.value)) return false;
+    } else if (!insertIntoContentEditable(el, value, matches)) {
       return false;
     }
     focusEnd(el);
@@ -310,6 +333,7 @@
     editor,
     openEditor,
     insert,
+    insertStandalone,
     evolutionDialog,
     templateDialog,
     dialogs,

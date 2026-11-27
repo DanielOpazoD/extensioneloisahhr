@@ -7,12 +7,26 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { extensionSource, fichaAssets, mountFicha, settle } from './ficha-capture-harness.mjs';
 import { summaryPage } from './summary-visual-fixture.mjs';
+import '../extension/clinical-checklist-braden-templates.js';
+import '../extension/clinical-checklist-braden.js';
 
 const [revision, directory] = process.argv.slice(2);
 if (!revision || !directory) throw Error('Uso: node scripts/capture-evolution-reader.mjs <ref|WORKTREE> <directorio>');
 
 // An invented history, as Eloísa's report writes it: mainland wall clocks without offset.
 const entry = (id, at, role, [first, last], note, more = {}) => ({id, OBE_NOTES:note, OBE_PUBLISH_DATETIME:at, HCPR_NAME:role, HCP_FGN:first, HCP_FFN:last, ...more});
+function assessment(index, points, fecha, hora, piel = '') {
+  const template = globalThis.HhrBradenTemplates[index];
+  const fields = template.fields.filter(field => field.type === 'choice');
+  const answers = {fecha, hora, piel};
+  let remaining = points - fields.length;
+  for (const field of fields) {
+    const option = Math.min(remaining, field.options.length - 1);
+    answers[field.id] = field.options[option].label;
+    remaining -= option;
+  }
+  return globalThis.HhrChecklistBraden.buildDraftEvolutionText(template, answers);
+}
 const long = 'Paciente de simulación en buenas condiciones generales. ' + 'Sin cambios respecto del control anterior de la simulación. '.repeat(9);
 const recent = [
   {publishDatetime:'2026-04-15T11:12:35', evolutionResume:[entry(41, '2026-04-15T11:12:35', 'Médico', ['Tomás', 'Ejemplo'], 'Evolución médica de prueba.\nPlan de la ronda: mantener conducta de la simulación.')]},
@@ -21,8 +35,18 @@ const recent = [
   {publishDatetime:'2026-04-14T10:30:00', evolutionResume:[entry(38, '2026-04-14T10:30:00', 'Médico', ['Tomás', 'Ejemplo'], long, {OBE_AMENDED:true}),
     entry(37, '2026-04-14T10:10:00', 'Enfermera(o)', ['Elena', 'Ejemplo'], 'Nota de prueba anulada por su autora.', {IS_CROSSED_OUT:true})]},
   {publishDatetime:'2026-04-13T02:10:00', evolutionResume:[entry(36, '2026-04-13T02:10:00', 'Enfermera(o)', ['Marta', 'Ejemplo'], 'Ingreso de enfermería de prueba: paciente ficticio orientado.')]},
+  {evolutionResume:[
+    entry(51, '2026-04-15T13:00:00', 'Enfermera(o)', ['Elena', 'Ejemplo'],
+      assessment(0, 15, '2026-04-14', '23:40', 'Piel íntegra en la simulación.')),
+    entry(52, '2026-04-15T11:45:00', 'Enfermera(o)', ['Elena', 'Ejemplo'], assessment(1, 7, '2026-04-15', '08:30')),
+    entry(53, '2026-04-15T10:15:00', 'Enfermera(o)', ['Marta', 'Ejemplo'], assessment(0, 16, '2026-04-14', '08:00'), {ARCHIVED:true}),
+  ]},
 ];
-const older = [...recent, {publishDatetime:'2026-03-02T12:00:00', evolutionResume:[entry(12, '2026-03-02T12:00:00', 'Nutricionista', ['Paula', 'Ejemplo'], 'Evaluación nutricional de prueba.')]}];
+const older = [...recent, {publishDatetime:'2026-03-02T12:00:00', evolutionResume:[
+  entry(12, '2026-03-02T12:00:00', 'Nutricionista', ['Paula', 'Ejemplo'], 'Evaluación nutricional de prueba.'),
+  entry(13, '2026-03-02T11:00:00', 'Enfermera(o)', ['Marta', 'Ejemplo'], assessment(0, 16, '2026-03-02', '08:30')),
+  entry(14, '2026-03-01T11:00:00', 'Enfermera(o)', ['Marta', 'Ejemplo'], '#EscalaBraden\nPuntaje pendiente de confirmar.'),
+]}];
 
 await mkdir(directory, {recursive:true});
 const assets = await fichaAssets(revision);
@@ -36,7 +60,7 @@ try {
   // What the worker would answer: its own projection of the invented history.
   await page.addScriptTag({content:await extensionSource(revision)('ficha-evolution-notes.js')});
   const notes = await page.evaluate(([recent, older]) => ({14:window.HhrFichaEvolutionNotes.project(recent), 60:window.HhrFichaEvolutionNotes.project(older), 365:'El servidor de Ficha Médico respondió HTTP 500.'}), [recent, older]);
-  assert.deepEqual(notes[14].map(note => [note.id, note.day, note.time, note.role, note.author]), [
+  assert.deepEqual(notes[14].filter(note => Number(note.id) < 50).map(note => [note.id, note.day, note.time, note.role, note.author]), [
     ['41', '15-04-2026', '09:12', 'Médico', 'Tomás Ejemplo'], ['40', '15-04-2026', '07:40', 'Enfermera(o)', 'Elena Ejemplo'],
     ['39', '14-04-2026', '16:05', 'Kinesiólogo(a)', 'Rosa Ejemplo'], ['38', '14-04-2026', '08:30', 'Médico', 'Tomás Ejemplo'],
     ['37', '14-04-2026', '08:10', 'Enfermera(o)', 'Elena Ejemplo'], ['36', '13-04-2026', '00:10', 'Enfermera(o)', 'Marta Ejemplo'],
@@ -83,21 +107,56 @@ try {
   await page.screenshot({path:path.join(directory, '1440-evoluciones-enfermeria.png')});
   await filters.getByRole('button', {name:/^Todas/}).click();
 
+  await reader.getByRole('button', {name:'Scores', exact:true}).press('Enter');
+  const scoresDialog = page.getByRole('dialog', {name:'Scores del episodio'});
+  const table = scoresDialog.getByRole('table', {name:'Valoraciones Braden del episodio'});
+  const scoreRows = table.locator('tbody tr:not(.hhr-score-detail)');
+  assert.deepEqual(await table.getByRole('columnheader').allTextContents(),
+    ['Escala', 'Fecha de valoración', 'Puntaje', 'Riesgo', 'Próxima valoración']);
+  const cells = () => scoreRows.evaluateAll(rows => rows.map(row => [...row.cells].map(cell => cell.innerText.trim())));
+  assert.deepEqual(await cells(), [
+    ['Braden Q', '15-04-2026 · 08:30', '7 / 28', 'Alto', '16-04-2026 · 08:30'],
+    ['Braden adulto', '14-04-2026 · 23:40', '15 / 23', 'Moderado', '17-04-2026 · 23:40'],
+    ['Braden adulto\nArchivada', '14-04-2026 · 08:00', '16 / 23', 'Bajo', '—'],
+  ], 'El orden y los plazos se calculan desde la fecha de valoración, no desde su publicación');
+  assert.deepEqual(await page.evaluate(() => window.fichaNoteRequests), [['1', 14]], 'Scores y Evoluciones comparten la lectura');
+  const noteLink = table.getByRole('button', {name:'Braden adulto, nota del 14-04-2026 · 23:40', exact:true});
+  await noteLink.press('Enter');
+  await table.getByText('Observaciones de piel e intervenciones: Piel íntegra en la simulación.', {exact:false}).waitFor();
+  assert.equal(await noteLink.getAttribute('aria-expanded'), 'true');
+  await noteLink.press('Enter');
+  await page.screenshot({path:path.join(directory, '1440-scores.png')});
+  await page.setViewportSize({width:390, height:844});
+  const scroll = scoresDialog.getByRole('region', {name:'Historial de Scores'});
+  const narrow = await scroll.evaluate(el => ({ tabIndex:el.tabIndex, scroll:el.scrollWidth, width:el.clientWidth,
+    inViewport:el.closest('dialog').getBoundingClientRect().right <= innerWidth }));
+  assert.ok(narrow.tabIndex === 0 && narrow.scroll <= narrow.width + 1 && narrow.inViewport,
+    'Las cinco columnas caben en una pantalla estrecha: ' + JSON.stringify(narrow));
+  await page.screenshot({path:path.join(directory, '390-scores.png')});
+  await page.setViewportSize({width:1440, height:900});
+  await scoresDialog.getByRole('button', {name:'Evoluciones', exact:true}).click();
+  assert.equal(await shown.count(), 6, 'Las valoraciones válidas no aparecen en Evoluciones');
+
   // Older notes are asked for, never read by default. A failed read says so: it is not «no evolutions».
   const more = reader.getByRole('button', {name:'Ver más antiguas (últimos 60 días)', exact:true});
   await more.click();
   await reader.getByText('Nutricionista', {exact:true}).first().waitFor();
-  assert.equal(await shown.count(), 7);
+  assert.equal(await shown.count(), 8);
+  await reader.getByText('Puntaje pendiente de confirmar.', {exact:false}).waitFor();
   assert.equal(await reader.locator('small').textContent(), 'Últimos 60 días · hora de Rapa Nui');
+  await reader.getByRole('button', {name:'Scores', exact:true}).click();
+  assert.equal(await scoreRows.count(), 4);
+  assert.deepEqual((await cells()).at(-1), ['Braden adulto', '02-03-2026 · 08:30', '16 / 23', 'Bajo', '09-03-2026 · 08:30']);
+  await scoresDialog.getByRole('button', {name:'Evoluciones', exact:true}).click();
   await reader.getByRole('button', {name:'Ver más antiguas (último año)', exact:true}).click();
   const status = reader.getByRole('status');
   await reader.getByRole('button', {name:'Reintentar', exact:true}).waitFor();
   assert.equal(await status.textContent(), 'El servidor de Ficha Médico respondió HTTP 500.');
-  assert.equal(await shown.count(), 7, 'Una lectura fallida conserva las evoluciones ya leídas');
+  assert.equal(await shown.count(), 8, 'Una lectura fallida conserva las evoluciones ya leídas');
   assert.deepEqual(await page.evaluate(() => window.fichaNoteRequests.map(([, days]) => days)), [14, 60, 365]);
-  await page.evaluate(() => { window.fichaNotes = {60:[]}; });
+  await page.evaluate(() => { window.fichaNotes = {365:[]}; });
   await reader.getByRole('button', {name:'Reintentar', exact:true}).click();
-  await reader.getByText('Sin evoluciones en los últimos 60 días.', {exact:true}).waitFor();
+  await reader.getByText('Sin evoluciones en el último año.', {exact:true}).waitFor();
   assert.equal(await shown.count(), 0);
   await page.evaluate(() => { delete window.fichaNotes; });
 
