@@ -559,4 +559,91 @@ describe('clinical report runtime direct episodes and history', () => {
       error: 'No se pudo acceder al navegador para abrir la ficha clínica completa.',
     });
   });
+
+  it('lists and downloads epicrisis for numeric Pasaporte patients using foreign PrefferedPeridentEnum IDs only (ID-01)', async () => {
+    const queriedTypes: string[] = [];
+    const fetchWithTimeout = vi.fn(async (url: string) => {
+      if (url.includes('/api/report/Reporte_Epicrisis.pdf')) {
+        return new Response(new TextEncoder().encode('%PDF-passport-epicrisis'), {
+          status: 200,
+          headers: { 'content-type': 'application/pdf' },
+        });
+      }
+      const parsed = new URL(url);
+      const typeId = parsed.searchParams.get('prefferedPeridentId') || '';
+      queriedTypes.push(typeId);
+      if (typeId === '3') {
+        return new Response(
+          JSON.stringify([
+            {
+              encounterId: 910700,
+              patientIdentifier: '887766554',
+              patientIdentifierTypeId: 3,
+              patientName: 'CLARA EXTRANJERA',
+              startPeriod: '2026-10-25T22:22:00-05:00',
+              endPeriod: '2026-10-27T13:10:00-05:00',
+            },
+            // ID-01: a Chilean RUN row with matching digits must never leak into a Pasaporte list.
+            {
+              encounterId: 999999,
+              patientIdentifier: '887766554',
+              patientIdentifierTypeId: 2,
+              patientName: 'OTRA PERSONA',
+              startPeriod: '2026-10-01',
+              endPeriod: '2026-10-02',
+            },
+          ]),
+          { status: 200 }
+        );
+      }
+      return new Response('[]', { status: 200 });
+    });
+
+    const runtime = loadFactory().create(
+      createDependencies({
+        fetchWithTimeout,
+        getFichaFetchInfo: vi.fn(async () => ({
+          info: {
+            apiOrigin: 'https://fichamedicoback.rayensalud.cl',
+            token: 'testing',
+            facId: '1342',
+          },
+        })),
+      })
+    );
+
+    const listed = await runtime.handleNursingMedicalEpicrisisPrintRequest({
+      encId: '910700',
+      patientRun: '',
+      patientDocument: '887766554',
+      patientDocumentType: 'Pasaporte',
+      delivery: 'download',
+      operation: 'list',
+    } as never);
+    expect(listed).toEqual({
+      ok: true,
+      episodes: [
+        {
+          encId: '910700',
+          startDate: '2026-10-25',
+          endDate: '2026-10-27',
+          active: false,
+          patientName: 'CLARA EXTRANJERA',
+          identifierType: 3,
+        },
+      ],
+    });
+    expect(queriedTypes).toEqual(['3']);
+
+    const downloaded = await runtime.handleNursingMedicalEpicrisisPrintRequest({
+      encId: '910700',
+      patientRun: '',
+      patientDocument: '887766554',
+      patientDocumentType: 'Pasaporte',
+      delivery: 'download',
+      operation: 'download',
+      documentType: 'epicrisis',
+    } as never);
+    expect(downloaded).toMatchObject({ ok: true, encId: '910700' });
+  });
 });

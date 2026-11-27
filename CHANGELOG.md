@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.233
+
+- Documentos extranjeros y pasaportes numéricos: consulta los identificadores oficiales de Eloísa (`prefferedPeridentId` 3, 9, 10 y 11) en egresos de Gestión de Camas e informes de hospitalización/epicrisis, manteniendo la separación estricta con RUN chileno (ID-01).
+- Reconoce automáticamente `preferredPeridentId` 3, 9, 10 y 11 como `Pasaporte` al normalizar pacientes de Ficha Médico y utiliza `/api/encounter/patientHeaderData/{encId}/true` como respaldo cuando `/false` devuelve HTTP 204 en episodios ya egresados.
+
 ## 0.48.232
 
 - CUDYR de Gestión de Camas: identifica el rol de Matrona (`healthCarePractitionerRoleId: 8`) en los registros de categorización y marca `metadataStatus` como `partial` cuando la captura informa advertencias de formularios no reconocidos (`snapshotWarnings`).

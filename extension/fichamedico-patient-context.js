@@ -30,13 +30,15 @@
     !Boolean(row.isDead)
   );
 
-  const DOC_TYPE_KEYS = ['preferredIdentifierTypeName', 'prefferedIdentifierTypeName', 'preferredIdentifierName', 'prefferedIdentifierName', 'identifierTypeName', 'patientIdentifierTypeName', 'peridentName', 'preferredPeridentName', 'prefferedPeridentName', 'documentType', 'tipoIdentificador', 'tipoDocumento'];
+  const DOC_TYPE_KEYS = ['preferredIdentifierTypeName', 'prefferedIdentifierTypeName', 'preferredIdentifierName', 'prefferedIdentifierName', 'identifierTypeName', 'patientIdentifierTypeName', 'peridentName', 'preferredPeridentName', 'prefferedPeridentName', 'patPrefferedPeridentName', 'patPreferredPeridentName', 'documentType', 'tipoIdentificador', 'tipoDocumento'];
   const DOC_TYPE_OBJS = ['preferredIdentifierType', 'prefferedIdentifierType', 'identifierType', 'patientIdentifierType', 'perident'];
   const passportDocumentType = (...sources) => {
     for (const src of sources) {
       const obj = asObject(src);
       const label = DOC_TYPE_KEYS.map(k => obj[k]).concat(DOC_TYPE_OBJS.map(k => obj[k] && typeof obj[k] === 'object' ? obj[k].name || obj[k].description || obj[k].label : obj[k])).find(v => typeof v === 'string' && v.trim());
-      if (label) return /^(?:pasaporte|passport)\b/i.test(label.trim()) ? 'Pasaporte' : undefined;
+      if (label) { const f = label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); if (/^(?:pasaporte|passport|documento identificador pais de origen|numero documento identificador pais de origen|numero identificador fonasa)\b/.test(f)) return 'Pasaporte'; if (/^(?:run|rut)$/.test(f)) return undefined; }
+      const id = ['patientIdentifierTypeId', 'prefferedPeridentId', 'preferredPeridentId', 'peridentId'].map(k => obj[k]).find(v => v !== '' && v != null && typeof v !== 'boolean');
+      if (id !== undefined) return [3, 9, 10, 11].includes(Number(id)) ? 'Pasaporte' : undefined;
     }
   };
   const normalizeHospitalizedEncounter = (rawRow, rawHeader) => {

@@ -434,10 +434,19 @@
     };
 
     const fetchPatientHeader = async (encId, info) => {
+      const encoded = encodeURIComponent(encId);
       const result = await readJson({
         info,
-        path: `/api/encounter/patientHeaderData/${encodeURIComponent(encId)}/false`,
+        path: `/api/encounter/patientHeaderData/${encoded}/false`,
       });
+      if (result.status === 204 || !result.data) {
+        // Discharged encounters return HTTP 204 on /false and HTTP 200 on /true.
+        const discharged = await readJson({
+          info,
+          path: `/api/encounter/patientHeaderData/${encoded}/true`,
+        });
+        return discharged.data;
+      }
       return result.data;
     };
 
