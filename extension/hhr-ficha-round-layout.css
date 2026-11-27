@@ -299,8 +299,6 @@
           max-block-size:clamp(calc(var(--hhr-ficha-note-lines) * 1lh), 100vh - 31rem, calc(var(--hhr-ficha-note-most) * 1lh));
           max-block-size:clamp(calc(var(--hhr-ficha-note-lines) * 1lh), round(down, 100vh - 31rem, 1lh), calc(var(--hhr-ficha-note-most) * 1lh));
         }
-        /* Without a heading to hold them, the actions keep their line under the text. */
-        &:has(> .hhr-note-open) > [data-hhr-note-text] { border-block-end:1px solid var(--hhr-ficha-line-soft); }
         > .MuiBox-root:has(> button[data-hhr-note-disclosure]:only-child) { grid-area:2 / 2; margin-block-start:2px; }
       }
       /* A brief note, without Eloísa's «Leer más», has no lines to keep: its card still ends where the

@@ -7,7 +7,7 @@
 - Filtros de Historial: cada campo es su nombre pequeño encima y una línea fina alrededor de su valor, de 28 px; sin el nombre montado en el borde.
 - Indicaciones libres lee su indicación donde Fármacos lee la suya, después de los días de tratamiento.
 - El cambio de paciente nombra solo el código de la cama (H1C1, que ya dice la sala); se puede seguir buscando por sala.
-- «Nota completa» sin su flecha.
+- Sin el botón «Nota completa» ni su ventana: una evolución larga se lee desplazándose dentro de su tarjeta (también con el teclado) o en «Ver evoluciones».
 - Alertas y Observaciones de entrega de turno se leen enteras: la vista abre una vez el «Leer más» de Eloísa en cada texto que corta y no dibuja la flecha para volver a cortarlo. Sin la vista compacta, los textos vuelven a como los dibuja Eloísa.
 - «No reanimación» se lee como los demás interruptores: interruptor pequeño, nombre en 12 px y su estado después. Marcada, su nombre va en la tinta de alarma y en peso 600, sin la caja ámbar.
 - Signos vitales sin rojo: un valor fuera de rango se lee en la tinta de todo valor.
