@@ -6,7 +6,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle } from './ficha-capture-harness.mjs';
 import { otherViewPage } from './other-views-visual-fixture.mjs';
-import { assertQuality } from './visual-quality.mjs';
+import { assertPalette, assertQuality } from './visual-quality.mjs';
 
 // What makes a view read like the summary, measured as it is painted.
 const read = page => page.evaluate(() => {
@@ -42,6 +42,7 @@ async function verify(page, view) {
   assert.ok(shown.labels.every(Boolean), `${name}: el nombre de cada campo queda sobre su campo: ` + JSON.stringify(shown.labels));
   if (view === 'care-plan-execute') assert.deepEqual(shown.cells, ['13px'], 'Ejecución de cuidados: las celdas a la letra del Resumen: ' + shown.cells);
   await assertQuality(page, name, assert);
+  await assertPalette(page, name, assert);
   // Outside the compact view, Eloísa's look comes back.
   await page.evaluate(() => document.dispatchEvent(new CustomEvent('fixture-theme', {detail:'off'})));
   await settle(page);

@@ -68,7 +68,7 @@
       display:inline-flex; align-items:center; justify-content:center; flex:none;
       box-sizing:border-box; inline-size:26px; min-width:26px !important; block-size:26px; min-height:26px;
       padding:0 !important; margin:0; font-size:0 !important; line-height:1;
-      color:var(--hhr-ficha-action); background:transparent; border:1px solid #c9dcd5; border-radius:5px;
+      color:var(--hhr-ficha-action); background:transparent; border:1px solid #c9dcd5; border-radius:var(--hhr-ficha-button-radius);
       > :not(.MuiTouchRipple-root) { font-size:0 !important; }
       &::before {
         content:''; box-sizing:border-box; inline-size:14px; block-size:14px;
@@ -338,7 +338,7 @@
 @media screen {
   html[data-hhr-ficha-theme="compact"] :is(label[data-hhr-reading-toggle="suspended"], label[data-hhr-plan-filter="suspended"], label[data-hhr-plan-filter="hidden"]) {
     position:relative; display:inline-flex !important; flex:none; box-sizing:border-box;
-    inline-size:28px; block-size:28px; margin:0 !important; padding:0 !important; border-radius:5px;
+    inline-size:26px; block-size:26px; margin:0 !important; padding:0 !important; border-radius:var(--hhr-ficha-button-radius);
     color:var(--hhr-ficha-ink-soft); font-size:0 !important; line-height:0 !important; cursor:pointer;
     :is(.MuiFormControlLabel-label,.MuiTypography-root) { inline-size:0; overflow:hidden; font-size:0 !important; line-height:0 !important; }
     /* The switch keeps its place in the line, as large as the icon. Its track and its thumb are not drawn;
@@ -788,4 +788,23 @@
     }
   }
   html[data-hhr-ficha-theme="compact"] .MuiDialog-root:has(.MuiDialog-paper > .MuiDialogActions-root) > .MuiBackdrop-root { background-color:rgb(17 38 34 / 32%); }
+}
+
+/* One set of controls (27-11-2026). Two inks for an icon: the green of what is pressed and the quiet grey of a
+   tool of a row; a comment icon that has nothing to show is not drawn; a value of Régimen is a tag. */
+@media screen {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
+    /* Archivar, the calendar of the daily date and the filter of Balance Hídrico: tools, in the grey of the tools. */
+    :is(#alertEntrySection .MuiIconButton-root:enabled, .MuiInputAdornment-root .MuiIconButton-root:enabled, button[data-hhr-balance-filter]):not(:is(dialog,[role=dialog]) *) {
+      color:var(--hhr-ficha-tool);
+      &:hover { color:var(--hhr-ficha-action); }
+    }
+    /* A comment Eloísa cannot open (no comment) leaves its place empty: one disabled icon on every row was noise. */
+    td :is(button:disabled, button.Mui-disabled):has(> svg[data-testid="SpeakerNotesIcon"]) { visibility:hidden; }
+    [data-hhr-round="care-value"] .MuiChip-root {
+      block-size:16px !important; border-radius:4px; background:var(--hhr-ficha-band); color:var(--hhr-ficha-ink-soft);
+      font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-tag)/1 var(--hhr-ficha-sans);
+      > .MuiChip-label { padding-inline:5px; font:inherit; }
+    }
+  }
 }

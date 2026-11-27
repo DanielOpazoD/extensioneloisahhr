@@ -5,7 +5,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle } from './ficha-capture-harness.mjs';
 import { historyDays, historyPage } from './history-visual-fixture.mjs';
-import { assertQuality } from './visual-quality.mjs';
+import { assertPalette, assertQuality } from './visual-quality.mjs';
 
 // What the compact timeline promises, checked on the page itself.
 async function verifyTimeline(page, directory, width, measured) {
@@ -167,7 +167,8 @@ try {
     });
     console.info('Historial sintético', assets.version, width, JSON.stringify(measured));
     await page.screenshot({path:path.join(directory, width + '-historial.png')});
-    if (revision === 'WORKTREE') await assertQuality(page, `Historial ${width}`, assert);
+    if (revision === 'WORKTREE') { await assertQuality(page, `Historial ${width}`, assert); // The fictional filters are native controls, not Eloísa's: on the page they take the view's inks.
+      await assertPalette(page, `Historial ${width}`, assert, '[data-hhr-history-timeline]'); }
     if (revision === 'WORKTREE') await verifyTimeline(page, directory, width, measured);
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();

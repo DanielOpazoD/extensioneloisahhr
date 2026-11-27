@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
-import { assertQuality } from './visual-quality.mjs';
+import { assertPalette, assertQuality } from './visual-quality.mjs';
 import { summaryDiagnoses, summaryFree, summaryMedications, summaryPage, summaryProcedures, summaryReferrals, summarySurgeries, summaryTests } from './summary-visual-fixture.mjs';
 
 const refresh = async page => {
@@ -232,7 +232,8 @@ async function verifySummary(page, width, native, off, sans) {
   // The wide pass swaps only the view's family, to measure another platform: there two are expected.
   if (!sans) assert.equal(look.families.length, 1, 'Una sola tipografía en toda la ficha: ' + look.families);
   assert.deepEqual(look.weights, ['400', '600'], 'Dos pesos de letra');
-  assert.ok(look.sizes.every(size => [12, 13, 15, 16].includes(size)), 'Cuatro tamaños de letra: ' + look.sizes);
+  // The tag (11 px) joins the scale since a value of Régimen reads as the other tags (27-11-2026).
+  assert.ok(look.sizes.every(size => [11, 12, 13, 15, 16].includes(size)), 'Los tamaños de letra de la vista: ' + look.sizes);
   assert.deepEqual(look.titles, ['15px 600'], 'Cada tarjeta se titula igual');
   assert.deepEqual(look.surfaces, ['8px none'], 'Diagnóstico y las tarjetas bajo la ronda tienen la misma superficie');
   assert.ok(look.tables.every(([title, heading, cell]) => title === heading && heading === cell), 'Cada tabla empieza en el borde de su título: ' + JSON.stringify(look.tables));
@@ -241,7 +242,7 @@ async function verifySummary(page, width, native, off, sans) {
   assert.deepEqual(look.inks, ['rgb(33, 33, 33)', 'rgb(74, 74, 74)', 'rgb(102, 102, 102)'], 'El texto usa las tintas neutras de Eloísa');
   void look.emptyEdges;
   // The owner asked for an icon in place of the switch and its words, wherever a section shows what is suspended.
-  assert.ok(look.filter.afterMessage && look.filter.oneLine && look.filter.gap >= 4 && look.filter.gap <= 16 && look.filter.box.join() === '20,20' && look.filter.head.join() === '28,28' &&
+  assert.ok(look.filter.afterMessage && look.filter.oneLine && look.filter.gap >= 4 && look.filter.gap <= 16 && look.filter.box.join() === '20,20' && look.filter.head.join() === '26,26' &&
     look.filter.icon && look.filter.words <= 1 && /^Mostrar Suspendidos$/i.test(look.filter.name) && look.filter.hint === look.filter.name,
     '«Mostrar suspendidos» es un icono tras el estado de su sección, con sus palabras como nombre y como ayuda: ' + JSON.stringify(look.filter));
   assert.equal(look.filter.freeEnd, inset, 'Un filtro que cierra la cabecera termina en el borde de lectura');
@@ -783,6 +784,7 @@ async function verifyShapes(browser, assets) {
     'Dispositivos invasivos se lee como Fármacos: una línea por fila y por encabezado, la fecha con su hora en una línea y la tabla dentro de su tarjeta: ' + JSON.stringify(devices));
   assert.deepEqual(devices.size, ['12px', true], 'con la letra de las demás tablas');
   await assertQuality(page, 'Resumen de la ficha de cuidados', assert);
+  await assertPalette(page, 'Resumen de la ficha de cuidados', assert);
   await page.screenshot({path:path.join(directory, '1440-ficha-de-cuidados.png')});
   await page.close();
   // The older shape of Fármacos, its card straight in its section, without the line of its validator.
@@ -829,7 +831,7 @@ try {
       await page.screenshot({path:path.join(directory, width + '-resumen-completo.png'), fullPage:true});
     }
     if (revision === 'WORKTREE') await verifySummary(page, width, native, off, sans);
-    if (revision === 'WORKTREE' && !sans) await assertQuality(page, `Resumen ${width}`, assert);
+    if (revision === 'WORKTREE' && !sans) { await assertQuality(page, `Resumen ${width}`, assert); await assertPalette(page, `Resumen ${width}`, assert); }
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
   }

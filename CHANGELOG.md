@@ -1,5 +1,15 @@
 # Cambios
 
+## 0.48.226
+
+- Un solo juego de controles. Los iconos de «Mostrar suspendidos» miden 26 px, como los de Plan (antes 28). Los botones de lectura comparten la esquina de los demás botones.
+- Dos tintas para un icono: el verde de lo que se pulsa y el gris tenue de una herramienta de fila (`--hhr-ficha-tool`). «Archivar» de las alertas, el calendario de la fecha diaria y el filtro de Balance Hídrico pasan a ese gris; antes usaban tres grises distintos.
+- Menos ruido en las filas: el icono de comentario que Eloísa deja deshabilitado (no hay comentario) ya no se dibuja en cada fila de Fármacos, Indicaciones libres y Diagnóstico; deja su lugar vacío, así que las columnas no se mueven.
+- El valor de Régimen («Común») es una etiqueta como las demás: 16 px y letra de etiqueta (antes 18 px y 13 px).
+- Plan separa sus tarjetas con 12 px, como el Resumen (antes 8).
+- La pestaña activa usa el verde de acción.
+- Nueva comprobación en CI: todo texto del Resumen (ambas fichas), Plan, Historial, Alta y Ejecución de cuidados usa una de las tintas de la vista (texto, texto suave, apagado, acción, alarma, deshabilitado y las dos marcas de una indicación).
+
 ## 0.48.225
 
 - Reposo sin indicación se lee bajo «Sin datos», con las demás secciones sin registros, como pediste para todo lo vacío. Su tarjeta queda en su lugar, fuera de la vista y con la frase de Eloísa para un lector de pantalla, y Régimen ocupa la línea bajo Signos vitales. El bloque que Eloísa comparte entre Reposo y Régimen no se desarma.

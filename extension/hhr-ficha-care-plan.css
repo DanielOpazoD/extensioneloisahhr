@@ -5,7 +5,8 @@
 @media screen {
   html[data-hhr-ficha-theme="compact"] [data-hhr-plan="view"] {
     /* The reader marks the view only when all it holds is recognized: the cards and their switch. */
-    gap:8px;
+    /* The cards of the plan keep the distance of the cards of the summary. */
+    gap:12px;
     > * { margin-block:0 !important; }
   }
   /* The switch above the cards reads as a note, at three quarters of its size, whatever shape the view has. */

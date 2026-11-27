@@ -23,7 +23,7 @@ export const readQuality = (page, scope = 'main') => page.evaluate(scope => {
   const name = el => (el.getAttribute('aria-label') || el.title || el.closest('label')?.title || el.textContent || el.closest('label')?.textContent ||
     el.querySelector('svg[aria-label]')?.getAttribute('aria-label') || el.tagName).replace(/\s+/g, ' ').trim().slice(0, 40);
 
-  const contrast = [];
+  const contrast = [], palette = new Map();
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const seen = new Set();
   while (walker.nextNode()) {
@@ -36,6 +36,8 @@ export const readQuality = (page, scope = 'main') => page.evaluate(scope => {
     const back = behind(el), front = [r, g, b].map((v, i) => v * a + back[i] * (1 - a));
     const [light, dark] = [luminance(front), luminance(back)].sort((x, y) => y - x);
     const ratio = (light + .05) / (dark + .05);
+    const ink = 'rgb(' + front.map(Math.round).join(', ') + ')';
+    palette.set(ink, (palette.get(ink) || []).concat(name(el)));
     const large = size >= 24 || (size >= 18.66 && Number(look.fontWeight) >= 700);
     if (ratio < (large ? 3 : 4.5)) contrast.push(`${name(el)} ${ratio.toFixed(2)}:1 ${look.color} sobre rgb(${back.map(Math.round).join(', ')})`);
   }
@@ -60,7 +62,7 @@ export const readQuality = (page, scope = 'main') => page.evaluate(scope => {
       other.left < x + 12 && other.right > x - 12 && other.top < y + 12 && other.bottom > y - 12);
     if (crowded) small.push(`${name(box.target.matches('label') ? box.target.querySelector('input') || box.target : box.target)} ${Math.round(width)}×${Math.round(height)}`);
   }
-  return {contrast:[...new Set(contrast)], small:[...new Set(small)]};
+  return {contrast:[...new Set(contrast)], small:[...new Set(small)], palette:Object.fromEntries([...palette].map(([ink, names]) => [ink, names.slice(0, 3)]))};
 }, scope);
 
 // Every view reads at 4.5:1 and keeps its targets at 24 px, or 24 px apart.
@@ -69,4 +71,13 @@ export async function assertQuality(page, view, assert, scope = 'main') {
   assert.ok(quality, `${view}: no hay ${scope} que leer`);
   assert.ok(!quality.contrast.length, `${view}: todo texto se lee a 4,5:1 o más (3:1 si es grande): ${quality.contrast.join(' | ')}`);
   assert.ok(!quality.small.length, `${view}: todo control mide 24 px o deja 24 px libres a su alrededor: ${quality.small.join(' | ')}`);
+}
+
+// The inks of the view (docs/estilo-ficha.md): text, soft text, muted, action, alarm, the disabled ink and the
+// two marks of an order (SOS, antimicrobial). A text in any other ink is a colour the view did not choose.
+export const viewInks = ['rgb(33, 33, 33)', 'rgb(74, 74, 74)', 'rgb(102, 102, 102)', 'rgb(40, 95, 89)', 'rgb(198, 40, 40)', 'rgb(152, 163, 159)', 'rgb(21, 87, 84)', 'rgb(112, 66, 0)'];
+export async function assertPalette(page, view, assert, scope = 'main', allowed = viewInks) {
+  const {palette} = await readQuality(page, scope);
+  const stray = Object.entries(palette).filter(([ink]) => !allowed.includes(ink));
+  assert.ok(!stray.length, `${view}: todo texto usa una tinta de la vista: ` + JSON.stringify(stray));
 }

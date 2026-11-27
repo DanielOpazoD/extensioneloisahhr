@@ -64,6 +64,8 @@ html[data-hhr-ficha-theme] {
   --hhr-icon-hidden:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z'/%3E%3Ccircle cx='12' cy='12' r='2.8'/%3E%3C/svg%3E");
   /* A value out of its range, in a red that reads on a light surface (5.6:1). */
   --hhr-ficha-alarm:#c62828;
+  /* A tool of a row, quiet until it is pointed at: 3.1:1, enough for an icon (WCAG 1.4.11). */
+  --hhr-ficha-tool:#8a9692;
   /* Eloísa's filled icons, drawn in the outline of the view's own (stroke 1.8, round ends). */
   --hhr-icon-print:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M7 14h10v6H7z'/%3E%3C/svg%3E");
   --hhr-icon-archive:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 5h17v4h-17zM5 9v10h14V9M10 13h4'/%3E%3C/svg%3E");

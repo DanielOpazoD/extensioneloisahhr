@@ -5,7 +5,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
 import { carePlanPage, careFichaPlanCards, planCards, planDays } from './care-plan-visual-fixture.mjs';
-import { assertQuality } from './visual-quality.mjs';
+import { assertPalette, assertQuality } from './visual-quality.mjs';
 
 const hours = planDays.flatMap(([, list]) => list);
 const refresh = async page => { await page.evaluate(() => document.dispatchEvent(new Event('fixture-refresh'))); await settle(page); };
@@ -227,7 +227,7 @@ try {
     console.info('Plan de tratamiento sintético', assets.version, width, sans ? 'con letra ancha' : '', JSON.stringify(measured.summary), 'sin extensión', JSON.stringify(native.summary));
     if (!sans) await page.screenshot({path:path.join(directory, width + '-plan.png')});
     if (revision === 'WORKTREE') await verifyPlan(page, width, native);
-    if (revision === 'WORKTREE' && !sans) await assertQuality(page, `Plan ${width}`, assert);
+    if (revision === 'WORKTREE' && !sans) { await assertQuality(page, `Plan ${width}`, assert); await assertPalette(page, `Plan ${width}`, assert); }
     if (errors.length) throw Error(errors.join('\n'));
     await page.close();
   }
