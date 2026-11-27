@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.230
+
+- Braden adulto y Braden Q abren desde Acciones de evolución con las pautas incluidas en la extensión. Braden Q está disponible desde los 30 días y hasta antes de los 15 años. La valoración se inserta en una evolución vacía con el encabezado `#EscalaBraden` y se guarda con los controles de Eloísa.
+
 ## 0.48.229
 
 - Plan de tratamiento (medido en la página el 27-11-2026): la tarjeta pierde el relleno propio de Eloísa (16 × 32 px) y lee desde el mismo borde que las demás; las horas ocupan el ancho de la tabla (antes 100 px cada una, con la mitad derecha vacía), cada una sobre su casilla; una hora programada va en la banda de los encabezados con una línea fina, no en salmón con borde naranjo; cada fila mide lo que su texto (las casillas de 49 px fijaban 50 px por fila). Una tarjeta sin filas no dibuja sus horas.

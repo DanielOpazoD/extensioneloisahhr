@@ -35,13 +35,15 @@
     };
     const pautas = addItem('Pautas', null);
     pautas.autofocus = true;
-    let shortcutMode;
-    const shortcut = addItem('Braden', () => shortcutMode);
+    const braden = addItem('Braden', 'braden');
+    let favoriteMode;
+    const shortcut = addItem('', () => favoriteMode);
     const showMenu = ({ saved, draft, favorite } = {}) => {
       pautas.textContent = saved ? 'Insertar pauta guardada' : draft ? 'Continuar pauta' : 'Pautas';
-      shortcutMode = favorite ? { templateId: favorite.id } : 'braden';
-      shortcut.textContent = favorite?.title || 'Braden';
-      shortcut.hidden = Boolean(saved || draft || (!favorite && !hasBraden));
+      braden.hidden = Boolean(saved || draft || !hasBraden);
+      favoriteMode = favorite ? { templateId: favorite.id } : null;
+      shortcut.textContent = favorite?.title || '';
+      shortcut.hidden = Boolean(saved || draft || !favorite);
     };
     let menuRevision = 0;
     const status = document.createElement('span');

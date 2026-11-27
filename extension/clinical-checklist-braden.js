@@ -2,6 +2,9 @@
 (root => {
   'use strict';
   const HOSPITAL_TIME_ZONE = 'Pacific/Easter';
+  const EVOLUTION_HEADING = '#EscalaBraden';
+  const ADULT_ID = 'hhr-lpp-braden-adulto';
+  const PEDIATRIC_ID = 'hhr-lpp-braden-q';
   const DEFAULT_CARE_PLANS = Object.freeze({
     bajo: ['Cuidados básicos de enfermería.'],
     moderado: [
@@ -56,6 +59,46 @@
       Boolean(template.riskBands) ||
       String(template.id || '').startsWith('hhr-lpp-braden')
     );
+  }
+
+  function isBundledBraden(id) {
+    return id === ADULT_ID || id === PEDIATRIC_ID;
+  }
+
+  // Birthdays and evaluation dates are calendar dates. UTC is used only to count days.
+  function calendarDay(value) {
+    const text = String(value || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+    const day = new Date(text + 'T00:00:00Z');
+    return Number.isFinite(day.getTime()) && day.toISOString().startsWith(text) ? day : null;
+  }
+
+  function eligibleTemplate(catalog, date = hospitalDateTimeNow().date) {
+    const evaluation = calendarDay(date);
+    if (!evaluation) return { reason: 'Ingresa una fecha de valoración válida.' };
+    const birthDate = String(catalog?.patientBirthDate || '').trim();
+    const birth = calendarDay(birthDate.match(/^\d{4}-\d{2}-\d{2}(?=$|[T ])/i)?.[0]);
+    if (birth) {
+      const days = (evaluation - birth) / 86400000;
+      if (days < 0) return { reason: 'La fecha de valoración es anterior al nacimiento.' };
+      if (days < 30) return { reason: 'Braden Q se aplica desde los 30 días. Para menores de 30 días corresponde NSRAS.' };
+      const years = evaluation.getUTCFullYear() - birth.getUTCFullYear();
+      const beforeBirthday = date.slice(5) < birth.toISOString().slice(5, 10);
+      return { templateId: years - Number(beforeBirthday) >= 15 ? ADULT_ID : PEDIATRIC_ID };
+    }
+    // A current age label cannot establish eligibility on a different evaluation date.
+    if (date === hospitalDateTimeNow().date) {
+      const label = String(catalog?.patientAge || '').toLowerCase();
+      const years = Number(label.match(/(\d+)\s*años?\b/)?.[1] || 0);
+      const months = Number(label.match(/(\d+)\s*mes(?:es)?\b/)?.[1] || 0);
+      const days = Number(label.match(/(\d+)\s*d[ií]as?\b/)?.[1] || 0);
+      if (years >= 15) return { templateId: ADULT_ID };
+      if (years >= 1 || months * 28 + days >= 30) return { templateId: PEDIATRIC_ID };
+      if (/d[ií]as?\b/.test(label) && months === 0) {
+        return { reason: 'Braden Q se aplica desde los 30 días. Para menores de 30 días corresponde NSRAS.' };
+      }
+    }
+    return { reason: 'Eloísa debe confirmar la edad en la fecha de valoración para aplicar esta pauta.' };
   }
 
   function parseAgeYears(patientAge, patientBirthDate, now = new Date()) {
@@ -164,18 +207,22 @@
     const fecha = answers?.fecha || stamp.date;
     const hora = answers?.hora || stamp.time;
     const notes = String(answers?.piel || '').trim();
+    const observations = notes ? ['Observaciones de piel e intervenciones: ' + notes] : [];
+    const standalone = root.HhrBradenTemplates?.includes(template);
     const lines = [
-      'Valoración de riesgo de lesiones por presión · ' + template.title,
-      `${fecha} ${hora} · ${authorName || 'Evaluador'}`,
+      ...(standalone ? [EVOLUTION_HEADING] : []),
+      standalone ? template.title : 'Valoración de riesgo de lesiones por presión · ' + template.title,
+      `${fecha} ${hora}` + (standalone && !authorName ? '' : ' · ' + (authorName || 'Evaluador')),
       'Subpuntajes: ' + summary.subscores.map(item => `${item.code} ${item.points}`).join(' · '),
       ...summary.subscores.map(item => `${item.label}: ${item.value}`),
-      ...(notes ? ['Observaciones de piel e intervenciones: ' + notes] : []),
+      ...(!standalone ? observations : []),
       `Puntaje: ${summary.points} / ${summary.maximum}`,
       `Riesgo de LPP según escala: ${summary.riskLabel} (${summary.risk})`,
       `Reevaluar: ${summary.reassess} (o antes ante cambios en la condición clínica).`,
       ...(summary.carePlan.length
         ? ['Cuidados planeados según riesgo:', ...summary.carePlan.map(item => '• ' + item)]
         : []),
+      ...(standalone ? observations : []),
     ];
     return lines.join('\n');
   }
@@ -354,6 +401,9 @@
   }
 
   root.HhrChecklistBraden = Object.freeze({
+    EVOLUTION_HEADING,
+    isBundledBraden,
+    eligibleTemplate,
     isBradenTemplate,
     hospitalDateTimeNow,
     parseAgeYears,

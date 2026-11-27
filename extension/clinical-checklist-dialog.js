@@ -63,7 +63,7 @@
   }
 
   async function verifyChart(state) {
-    const header = await call(state, { action: 'verify' });
+    const header = await call(state, { action: state.localBraden ? 'braden' : 'verify' });
     if (
       !current(state) ||
       header.episode !== state.episode ||
@@ -72,12 +72,17 @@
     ) {
       throw new Error('Reabre la ficha del mismo paciente con la sesión que aplicó la pauta.');
     }
+    return header;
   }
 
-  async function transcribe(state) {
+  async function transcribe(state, standaloneText) {
     const previousDialog = dialog;
     const active = () => current(state) && dialog === previousDialog && previousDialog?.isConnected;
-    await verifyChart(state);
+    const verify = async () => {
+      const identity = await verifyChart(state);
+      if (standaloneText) validateBradenAge(state, identity);
+    };
+    await verify();
     if (!active()) return false;
     previousDialog.close();
     await nextFrame();
@@ -85,14 +90,20 @@
     try {
       if (!evo.editor()) {
         if (!(await evo.openEditor(active))) return false;
-        await verifyChart(state);
+        await verify();
       }
-      if (active()) inserted = evo.insert(state.record);
+      if (active()) {
+        inserted = standaloneText
+          ? evo.insertStandalone(standaloneText, braden.EVOLUTION_HEADING)
+          : evo.insert(state.record);
+      }
     } finally {
       if (!inserted && active() && !previousDialog.open) previousDialog.showModal();
     }
     if (!inserted) return false;
-    insertedReceipt = { episode: state.episode, code: state.record.code };
+    insertedReceipt = standaloneText
+      ? { episode: state.episode, heading: braden.EVOLUTION_HEADING }
+      : { episode: state.episode, code: state.record.code };
     session = null;
     close();
     refresh();
@@ -257,7 +268,8 @@
       type: 'RAYEN_CLINICAL_CHECKLIST', encId: episode, request: { action: 'verify' },
     });
     if (identity?.episode !== episode || !identity.actor || route() !== episode) return {};
-    const favorite = await readFavorite(identity.actor);
+    const storedFavorite = await readFavorite(identity.actor);
+    const favorite = braden?.isBundledBraden(storedFavorite?.id) ? null : storedFavorite;
     const own = session?.episode === episode && session.catalog?.actor === identity.actor &&
       session.catalog.document === identity.document;
     return { favorite, saved: own && session.record, draft: own && hasDraft(session) };
@@ -275,7 +287,7 @@
     status('Sincronizando plantillas desde HHR…');
     const catalog = await call(state, { action: 'templates' });
     if (dialog !== surface) return false;
-    catalog.templates = catalog.templates.filter(availableTemplate);
+    catalog.templates = catalog.templates.filter(item => availableTemplate(item) && !braden?.isBundledBraden(item.id));
     const favorite = await readFavorite(catalog.actor);
     if (dialog !== surface || !current(state)) return false;
     state.favorite = catalog.templates.find(t => t.id === favorite?.id);
@@ -350,6 +362,84 @@
       state.busy = false;
       group.disabled = false;
     }
+  }
+
+  function validateBradenAge(state, identity) {
+    const eligible = braden.eligibleTemplate(identity, state.answers.fecha);
+    if (eligible.reason) throw new Error(eligible.reason);
+    if (eligible.templateId !== state.templateId) {
+      throw new Error('La fecha de valoración corresponde a otra escala. Revisa la fecha y vuelve a abrir Braden.');
+    }
+  }
+
+  async function submitBraden(state, template, form, group, copyOnly) {
+    if (state.busy || !current(state) || !form.reportValidity()) return;
+    const missing = missingRequiredDimension(template, state.answers);
+    if (missing) {
+      status('Completa primero: ' + missing + '.');
+      return;
+    }
+    const text = braden.buildDraftEvolutionText(template, state.answers);
+    if (!text) {
+      status('Revisa los puntajes de todas las dimensiones.');
+      return;
+    }
+    state.busy = true;
+    group.disabled = true;
+    try {
+      if (copyOnly) {
+        validateBradenAge(state, state.catalog);
+        const copied = await copyEvolutionText(text);
+        if (current(state)) status(copied
+          ? 'Texto copiado. Pégalo en una evolución nueva y guarda en Eloísa.'
+          : 'Selecciona el texto de la vista previa para copiarlo.');
+      } else {
+        status('Comprobando el episodio en Eloísa…');
+        if (!(await transcribe(state, text)) && current(state)) {
+          status('Abre una evolución nueva y vacía para insertar la pauta. También puedes copiar el texto.');
+        }
+      }
+    } catch (error) {
+      if (current(state)) status(error.message);
+    } finally {
+      state.busy = false;
+      group.disabled = false;
+    }
+  }
+
+  function renderBraden(state, form) {
+    const eligible = braden.eligibleTemplate(state.catalog, state.answers.fecha);
+    dialog.querySelector('.identity').textContent = [state.catalog.patientName, state.catalog.document, state.catalog.patientAge]
+      .filter(Boolean).join(' · ');
+    const template = globalThis.HhrBradenTemplates.find(item => item.id === (state.templateId || eligible.templateId));
+    if (!template) {
+      status(eligible.reason || 'No se pudo abrir la pauta Braden.');
+      return;
+    }
+    state.templateId = template.id;
+    const group = make('fieldset');
+    group.className = 'fields';
+    group.style.cssText = 'margin:0;padding:0;border:0;display:grid;gap:10px';
+    const fields = make('div');
+    const actions = make('div');
+    actions.className = 'hhr-checklist-actions';
+    const copy = () => submitBraden(state, template, form, group, true);
+    const save = make('button', 'Insertar en evolución');
+    save.type = 'submit';
+    actions.append(save, button('Copiar texto', event => {
+      if (event.isTrusted && navigator.userActivation.isActive) void copy();
+    }, 'hhr-checklist-copy'));
+    group.append(make('h3', template.title), fields, actions);
+    form.replaceChildren(group);
+    braden.renderMatrix({
+      container: fields, template, bradenTemplates: [template], answers: state.answers,
+      onAnswerChange: () => status(''), onCopyText: copy,
+    });
+    state.initialAnswers ??= { ...state.answers };
+    form.onsubmit = event => {
+      event.preventDefault();
+      if (event.isTrusted && navigator.userActivation.isActive) void submitBraden(state, template, form, group, false);
+    };
   }
 
   function render(state) {
@@ -550,8 +640,10 @@
     const nativeDialogs = evo.dialogs();
     if (nativeDialogs.some(evo.templateDialog)) return;
     const nativeEditor = nativeDialogs.find(evo.evolutionDialog);
-    if (!session || session.episode !== episode) {
-      session = { episode, code: 'PT-' + crypto.randomUUID().toUpperCase(), answers: {}, preferredMode };
+    const localBraden = preferredMode === 'braden';
+    if (!session || session.episode !== episode ||
+      (!session.record && !hasDraft(session) && session.localBraden !== localBraden)) {
+      session = { episode, code: 'PT-' + crypto.randomUUID().toUpperCase(), answers: {}, preferredMode, localBraden };
     } else if (!session.record && preferredMode) {
       session.preferredMode = preferredMode;
       if (!hasDraft(session)) session.templateId = null;
@@ -559,7 +651,7 @@
     const state = session;
     dialog = make('dialog');
     dialog.className = 'hhr-checklist-dialog';
-    dialog.classList.toggle('is-matrix', preferredMode === 'braden');
+    dialog.classList.toggle('is-matrix', state.localBraden);
     dialog.dataset.hhrChecklist = chrome.runtime.id;
     dialog.setAttribute('aria-labelledby', 'hhr-checklist-heading');
     const header = make('header');
@@ -583,6 +675,22 @@
     });
     dialog.showModal();
     const surface = dialog;
+    if (state.localBraden) {
+      status('Comprobando la ficha en Eloísa…');
+      try {
+        const identity = state.catalog ? await verifyChart(state) : await call(state, { action: 'braden' });
+        if (identity.episode !== episode || !identity.actor || !identity.document) {
+          throw new Error('Eloísa no pudo confirmar el paciente y el episodio.');
+        }
+        if (dialog !== surface || !current(state)) return;
+        state.catalog = identity;
+        status('');
+        renderBraden(state, form);
+      } catch (error) {
+        if (dialog === surface && current(state)) status(error.message);
+      }
+      return;
+    }
     if (state.record) {
       try {
         await verifyChart(state);
@@ -626,14 +734,17 @@
     if (!launcher) {
       launcherEpisode = episode;
       launcher = globalThis.HhrChecklistActions.create({
-        button, hasBraden: Boolean(braden), readMenu: () => readMenu(episode), open: mode => {
+        button, hasBraden: Boolean(braden && globalThis.HhrBradenTemplates?.length), readMenu: () => readMenu(episode), open: mode => {
           if (route() === episode) return open(mode);
         },
       });
     }
     if (launcher.root.parentElement !== host) host.append(launcher.root);
     const activeEditor = insertedReceipt && evo.editor();
-    const inserted = Boolean(activeEditor && String(activeEditor.value ?? activeEditor.innerText ?? '').includes(insertedReceipt.code));
+    const activeText = String(activeEditor?.value ?? activeEditor?.innerText ?? '');
+    const inserted = Boolean(activeEditor && (insertedReceipt.heading
+      ? activeText.split(/\r?\n/, 1)[0] === insertedReceipt.heading
+      : activeText.includes(insertedReceipt.code)));
     launcher.update(inserted);
   }
 
