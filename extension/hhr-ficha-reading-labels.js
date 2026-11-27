@@ -410,7 +410,8 @@
       // Below the desk the alert field is not folded, and Eloísa still focuses it as the summary opens: the
       // page followed it far down (seen at 1024 px, 27-11-2026). Nobody has scrolled, pressed or typed yet:
       // the summary opens at its top, as on the desk.
-      if (main && !desktop && lastInput < openedAt) {
+      // Only where the window says it is narrow: without that answer nothing is changed.
+      if (main && globalThis.matchMedia?.('(max-width:1099.98px)').matches === true && lastInput < openedAt) {
         const field = document.activeElement;
         if (field?.matches('textarea,input:not([type="checkbox"])') && field.closest('#alertEntrySection,#shiftChangeEntrySection') && main.contains(field)) {
           field.blur();
