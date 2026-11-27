@@ -142,7 +142,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await worker.evaluate(async () => {
       globalThis.__checklistFetch = globalThis.fetch;
       globalThis.fetch = (input, init) => String(input).includes('/api/encounter/patientHeaderData/')
-        ? Promise.resolve(Response.json({ patID: 91, preferredIdentifierCode: 'TEST-X', firstGivenName: 'Persona', firstFamilyName: 'Sintética', birthDate: '2000-01-01' }))
+        ? Promise.resolve(Response.json({ patID: 91, preferredIdentifierCode: globalThis.__checklistDocument || 'TEST-X', firstGivenName: 'Persona', firstFamilyName: 'Sintética', birthDate: '2000-01-01' }))
         : globalThis.__checklistFetch(input, init);
       await chrome.storage.local.set({ 'hhr-clinical-checklists-enabled': true });
     });
@@ -271,9 +271,23 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await insert.press('Enter');
     await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
     assert.equal(await native.locator('textarea').inputValue(), bradenText);
+
+    await openChecklistAction(native, 'Braden');
+    await modal.getByRole('heading', { name: 'Braden adulto', exact: true }).waitFor();
+    for (const option of await modal.locator('button[data-points="1"]').all()) await option.click();
+    await modal.getByLabel('Observaciones de piel e intervenciones').fill('Otro borrador sintético');
+    await worker.evaluate(() => { globalThis.__checklistDocument = 'TEST-Y'; });
+    await modal.getByRole('button', { name: 'Copiar texto', exact: true }).click();
+    await modal.getByRole('status').filter({ hasText: 'Reabre la ficha del mismo paciente' }).waitFor();
+    assert.equal(await ficha.evaluate(() => navigator.clipboard.readText()), bradenText);
+    await modal.getByRole('button', { name: 'Cerrar', exact: true }).click();
+    await openChecklistAction(native, 'Braden');
+    await modal.locator('.identity').filter({ hasText: 'TEST-Y' }).waitFor();
+    await modal.getByText('0 de 6 dimensiones completas', { exact: true }).waitFor();
   } finally {
     await worker.evaluate(async () => {
       if (globalThis.__checklistFetch) { globalThis.fetch = globalThis.__checklistFetch; delete globalThis.__checklistFetch; }
+      delete globalThis.__checklistDocument;
       await chrome.storage.local.remove('hhr-clinical-checklists-enabled');
     });
     await ficha.evaluate(() => document.getElementById('observationEntrySection')?.remove());

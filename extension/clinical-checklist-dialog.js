@@ -388,7 +388,8 @@
     group.disabled = true;
     try {
       if (copyOnly) {
-        validateBradenAge(state, state.catalog);
+        validateBradenAge(state, await verifyChart(state));
+        if (!group.isConnected) return;
         const copied = await copyEvolutionText(text);
         if (current(state)) status(copied
           ? 'Texto copiado. Pégalo en una evolución nueva y guarda en Eloísa.'
@@ -678,11 +679,19 @@
     if (state.localBraden) {
       status('Comprobando la ficha en Eloísa…');
       try {
-        const identity = state.catalog ? await verifyChart(state) : await call(state, { action: 'braden' });
+        const identity = await call(state, { action: 'braden' });
         if (identity.episode !== episode || !identity.actor || !identity.document) {
           throw new Error('Eloísa no pudo confirmar el paciente y el episodio.');
         }
         if (dialog !== surface || !current(state)) return;
+        if (state.catalog && (identity.actor !== state.catalog.actor || identity.document !== state.catalog.document)) {
+          session = null;
+          insertedReceipt = null;
+          close();
+          refresh();
+          await open('braden');
+          return;
+        }
         state.catalog = identity;
         status('');
         renderBraden(state, form);
