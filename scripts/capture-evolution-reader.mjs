@@ -119,12 +119,21 @@ try {
   assert.deepEqual((await heads()).map(head => head.split(' | ')[0]), ['Enfermera(o)', 'Enfermera(o)', 'Enfermera(o)'], 'Una profesión deja solo sus evoluciones');
   assert.equal(await filters.getByRole('button', {name:/^Enfermera\(o\)/}).evaluate(choice => choice === document.activeElement && choice.getAttribute('aria-pressed')), 'true', 'y el foco sigue en la profesión elegida');
   await page.screenshot({path:path.join(directory, '1440-evoluciones-enfermeria.png')});
-  await filters.getByRole('button', {name:/^Todas/}).click();
+  const feed = page.locator('.hhr-evo-reader-feed');
+  const readerScroll = await feed.evaluate(element => {
+    element.style.maxBlockSize = '90px';
+    element.scrollTop = 60;
+    return element.scrollTop;
+  });
+  assert.ok(readerScroll > 0, 'El historial ficticio permite comprobar el desplazamiento al volver');
 
   await reader.getByRole('button', {name:'Scores', exact:true}).press('Enter');
   const scoresDialog = page.getByRole('dialog', {name:'Scores del episodio'});
   const table = scoresDialog.getByRole('table', {name:'Valoraciones del episodio'});
   const scoreRows = table.locator('tbody tr:not(.hhr-score-detail)');
+  assert.deepEqual(await scoresDialog.locator('.hhr-evo-reader-filters, .hhr-evo-reader-feed').evaluateAll(
+    elements => elements.map(element => [element.hidden, element.childElementCount])
+  ), [[true, 0], [true, 0]], 'Scores solo construye su tabla. Evoluciones queda vacía');
   assert.deepEqual(await table.getByRole('columnheader').allTextContents(),
     ['Escala', 'Fecha de valoración', 'Puntaje', 'Riesgo', 'Próxima valoración']);
   const cells = () => scoreRows.evaluateAll(rows => rows.map(row => [...row.cells].map(cell => cell.innerText.trim())));
@@ -157,6 +166,11 @@ try {
   await page.screenshot({path:path.join(directory, '390-scores.png')});
   await page.setViewportSize({width:1440, height:900});
   await scoresDialog.getByRole('button', {name:'Evoluciones', exact:true}).click();
+  assert.equal(await reader.locator('.hhr-evo-reader-scores').evaluate(element => element.childElementCount), 0);
+  assert.equal(await filters.getByRole('button', {name:/^Enfermera\(o\)/}).getAttribute('aria-pressed'), 'true');
+  assert.equal(await feed.evaluate(element => element.scrollTop), readerScroll, 'Se conserva el punto de lectura al volver de Scores');
+  await feed.evaluate(element => element.style.removeProperty('max-block-size'));
+  await filters.getByRole('button', {name:/^Todas/}).click();
   assert.equal(await shown.count(), 6, 'Las valoraciones válidas no aparecen en Evoluciones');
 
   // Older notes are asked for, never read by default. A failed read says so: it is not «no evolutions».
