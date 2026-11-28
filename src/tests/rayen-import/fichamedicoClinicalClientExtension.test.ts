@@ -504,12 +504,8 @@ describe('Ficha Médico read-only clinical client', () => {
       'utf8'
     );
 
-    expect(background.slice(0, background.indexOf('const REPORT_FILE'))).toContain(
-      "'fichamedico-clinical-client.js'"
-    );
-    expect(background).toContain(
-      'const fichaMedicoClinicalClient = self.HhrFichaMedicoClinicalClient.create({'
-    );
+    // Loaded at startup and stopping the worker with its own words when missing: checked on the running
+    // worker in workerRoutes.test.js.
     expect(background).not.toContain('const fetchEvaluationForms = async');
     expect(background).not.toContain('const fetchScaleHistoryEvents = async');
     expect(background).not.toContain('const fetchActiveEncounterRows = async');

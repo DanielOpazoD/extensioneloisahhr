@@ -369,13 +369,9 @@ describe('extension clinical write protocol', () => {
     const recoveryPolicyOwnerLines = recoveryPolicyOwner.split('\n').length;
     const scoreWriteOwnerLines = scoreWriteOwner.split('\n').length;
 
-    expect(background).toContain("'clinical-write-runtime.js'");
-    expect(background).toContain("'clinical-write-recovery-policy.js'");
+    // Loaded at startup and stopping the worker with its own words when missing: checked on the running
+    // worker in workerRoutes.test.js.
     expect(background).toContain('recoveryPolicy: self.HhrClinicalWriteRecoveryPolicy');
-    expect(background).toContain('self.HhrClinicalWriteRuntime.create({');
-    expect(background).toContain(
-      "throw new Error('No se pudo cargar el runtime de escrituras clínicas.')"
-    );
     expect(background).not.toMatch(/const clinicalWriteLocks|persistClinicalWriteAmbiguity/);
     expect(background).not.toMatch(/transitionClinicalWriteAmbiguity|clearClinicalWriteAmbiguity/);
     expect(background).not.toMatch(

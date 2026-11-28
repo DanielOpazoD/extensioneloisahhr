@@ -525,13 +525,8 @@ describe('Ficha Médico transport runtime', () => {
   it('keeps the owner loaded before background wiring and both files within budget', () => {
     const background = readFileSync(path.resolve('extension/background.js'), 'utf8');
     const owner = readFileSync(path.resolve('extension/fichamedico-transport-runtime.js'), 'utf8');
-    const startup = background.slice(0, background.indexOf('const REPORT_FILE'));
-
-    expect(startup).toContain("'fichamedico-transport-runtime.js'");
-    expect(startup).toContain('No se pudo cargar el runtime de transporte de Ficha Médico.');
-    expect(background).toContain(
-      'const fichaMedicoTransportRuntime = self.HhrFichaMedicoTransportRuntime.create({'
-    );
+    // Loaded at startup and stopping the worker with its own words when missing: checked on the running
+    // worker in workerRoutes.test.js.
     expect(background).not.toContain('const fichaSenderTabId');
     expect(background).not.toContain('const handleOpenEncounter = async');
     expect(background.split('\n').length).toBeLessThanOrEqual(3_850);
