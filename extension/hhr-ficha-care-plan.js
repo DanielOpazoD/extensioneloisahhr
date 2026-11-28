@@ -29,11 +29,16 @@
     const titled = /^programacion de /.test(plain(header?.querySelector('.MuiCardHeader-title')?.textContent));
     const first = plain(headings[0]?.textContent);
     if (!header || headings.length !== 2 || !(first.startsWith('indicacion') || (titled && !first))) return null;
-    // The tools sit between the header and the table: icon buttons and nothing else.
+    // The tools sit between the header and the table: icon buttons and nothing else. In the ficha of Gestión
+    // de cuidados they open once a row is chosen, in a bar that also says how many are chosen and offers
+    // «Cancelar» (read on the page 27-11-2026).
     const tools = [...card.children].find(el => el !== header && el !== content);
-    const buttons = tools ? [...tools.querySelectorAll('button')] : [];
-    const onlyButtons = buttons.length && buttons.length === tools.querySelectorAll(controls).length &&
-      buttons.every(button => button.matches('.MuiIconButton-root') && button.querySelector('svg') && !button.textContent.trim());
+    const all = tools ? [...tools.querySelectorAll('button')] : [];
+    const cancel = all.filter(button => button.matches('.MuiButton-text') && /^cancelar$/i.test(button.textContent.trim()));
+    const count = tools ? [...tools.querySelectorAll('h6,p')].filter(el => /^\d+ item\(s\) seleccionado\(s\)$/i.test(el.textContent.trim())) : [];
+    const buttons = all.filter(button => !cancel.includes(button));
+    const onlyButtons = buttons.length && all.length === tools.querySelectorAll(controls).length && cancel.length <= 1 && count.length <= 1 &&
+      (cancel.length === count.length) && buttons.every(button => button.matches('.MuiIconButton-root') && button.querySelector('svg') && !button.textContent.trim());
     const rows = [...(table.tBodies[0]?.rows || [])];
     // The hours: in the heading, a row of days, each its label and its hours; in each row, one box per hour
     // (read on the page 27-11-2026). Taken only when every row has as many boxes as the heading has hours.
@@ -43,7 +48,13 @@
     const slots = rows.map(row => [...(row.cells[row.cells.length - 1]?.querySelectorAll(':scope > .MuiBox-root > .MuiStack-root') || [])]);
     const grid = hours.length && days.length && rows.length && !(rows.length === 1 && rows[0].cells.length === 1) &&
       slots.every(list => list.length === hours.length) ? {cell:hourCell, row:hourCell.firstElementChild, days, hours, slots:slots.flat()} : null;
-    return {table, select, grid, tools:onlyButtons && card.children.length === 3 ? tools : null, buttons:onlyButtons ? buttons : [],
+    // An indication whose second line repeats its name (Eloísa does so for free indications).
+    const repeats = rows.map(row => row.cells[select ? 1 : 0]).filter(Boolean).map(cell => {
+      const [name, again] = [...cell.children];
+      return name && again && cell.children.length === 2 && again.textContent.trim() && again.textContent.trim() === name.textContent.trim() ? again : null;
+    }).filter(Boolean);
+    return {table, select, grid, repeats, tools:onlyButtons && card.children.length === 3 ? tools : null, buttons:onlyButtons ? buttons : [],
+      selection:onlyButtons && count.length ? {count:count[0], cancel:cancel[0]} : null,
       empty:rows.length === 1 && rows[0].cells.length === 1 && rows[0].cells[0].colSpan > 1};
   }
 
@@ -83,17 +94,20 @@
           if (label.querySelector('input[type="checkbox"]')) filterOf(label);
         }
         if (plan.empty) set(next, plan.table, attribute + '-empty');
-        // The hours take the width the table gives them, not 100 px each: the right half of the card was empty.
+        // The hours are a narrow grid: each hour as wide as its time on one line, the rest of the line for
+        // what is indicated (the owner found 100 px and more per hour wasteful, 27-11-2026). The card says how
+        // many hours it has, so that the column of hours takes just their width.
         if (plan.grid) {
-          const {cell, row, days, hours, slots} = plan.grid;
-          const style = getComputedStyle(cell);
-          const room = cell.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-          const width = Math.max(64, Math.floor(room / hours.length));
-          if (card.style.getPropertyValue('--hhr-plan-hour') !== width + 'px') card.style.setProperty('--hhr-plan-hour', width + 'px');
+          const {row, days, hours, slots} = plan.grid;
+          if (card.style.getPropertyValue('--hhr-plan-hours') !== String(hours.length)) card.style.setProperty('--hhr-plan-hours', String(hours.length));
           sized.add(card);
           set(next, row, attribute + '-days');
           for (const day of days) {
             set(next, day, attribute + '-day', String(day.querySelectorAll(':scope > .MuiStack-root > *').length));
+            // «Sáb (28/11/2026)» reads «Sáb 28/11»: the year is the one of the page; Eloísa's words stay for a screen reader.
+            const label = [...day.querySelectorAll(':scope > :first-child, :scope > :first-child *')].find(el => !el.children.length && /\(\d{2}\/\d{2}\/\d{4}\)$/.test(el.textContent.trim()));
+            const short = label && /^(.+?)\s*\((\d{2})\/(\d{2})\/\d{4}\)$/.exec(label.textContent.trim());
+            if (short) set(next, label, attribute + '-day-label', short[1] + ' ' + short[2] + '/' + short[3]);
           }
           for (const hour of hours) set(next, hour, attribute + '-hour');
           for (const slot of slots) {
@@ -105,6 +119,12 @@
         }
         if (plan.select) set(next, plan.table, attribute + '-select');
         if (plan.tools) set(next, plan.tools, attribute, 'tools');
+        if (plan.selection) {
+          set(next, plan.tools, attribute + '-selection');
+          set(next, plan.selection.count, attribute + '-count');
+          if (plan.selection.cancel) set(next, plan.selection.cancel, attribute + '-cancel');
+        }
+        for (const again of plan.repeats) set(next, again, attribute + '-repeat');
         for (const button of plan.tools ? plan.buttons : []) {
           const name = nativeName(button, hints.has(button));
           const menu = !name && button.querySelector('svg[data-testid^="MoreVert"]');
@@ -118,7 +138,27 @@
           }
         }
       }
-      for (const card of sizedBefore) if (!sized.has(card)) card.style.removeProperty('--hhr-plan-hour');
+      // The windows that plan an indication, and the menu of the other plannings, take the view's language.
+      // They hang from the page, not from the plan: they are read only while the plan is shown.
+      if (found.length) {
+        for (const paper of document.querySelectorAll('.MuiDialog-paper')) {
+          const title = paper.querySelector(':scope > .MuiDialogTitle-root');
+          if (!title || !/^(planificaci[oó]n|planificar)\b/i.test(title.textContent.trim()) || !paper.querySelector('form')) continue;
+          set(next, paper, attribute + '-dialog');
+          for (const button of paper.querySelectorAll('.MuiButton-root')) {
+            const words = button.textContent.replace(/\s+/g, ' ').trim();
+            if (words && words === words.toLocaleUpperCase('es') && /[A-ZÁÉÍÓÚÑ]{2}/.test(words)) {
+              const lower = words.toLocaleLowerCase('es');
+              set(next, button, attribute + '-words', lower[0].toLocaleUpperCase('es') + lower.slice(1));
+            }
+          }
+        }
+        for (const menu of document.querySelectorAll('.MuiMenu-paper, .MuiPopover-paper')) {
+          const items = [...menu.querySelectorAll('[role="menuitem"]')].map(item => item.textContent.trim());
+          if (items.length && items.some(text => /^planifica/i.test(text))) set(next, menu, attribute + '-menu');
+        }
+      }
+      for (const card of sizedBefore) if (!sized.has(card)) card.style.removeProperty('--hhr-plan-hours');
       sizedBefore = sized;
       for (const [element, names] of marks) for (const name of names) if (!next.get(element)?.has(name)) element.removeAttribute(name);
       for (const button of hints) if (!named.has(button)) button.removeAttribute('title');

@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
-import { carePlanPage, careFichaPlanCards, planCards, planDays } from './care-plan-visual-fixture.mjs';
+import { carePlanPage, careFichaChosenCards, careFichaPlanCards, planCards, planDays, planDialog } from './care-plan-visual-fixture.mjs';
 import { assertPalette, assertQuality } from './visual-quality.mjs';
 
 const hours = planDays.flatMap(([, list]) => list);
@@ -34,6 +34,8 @@ const read = page => page.evaluate(() => {
         const texts = [...row.cells[0].querySelectorAll('p')], chips = [...row.querySelectorAll('.MuiChip-root')];
         const written = texts.reduce((sum, p) => sum + box(p).height, 0);
         return {height:box(row).height, top:box(row).top, bottom:box(row).bottom, text:texts.map(p => p.textContent),
+          // A free indication that repeats its name: two boxes with the same text (checked on its own).
+          repeat:row.cells[row.cells.length - 2]?.querySelectorAll(':scope > .MuiBox-root > p').length === 2,
           block:box(row.cells[0].firstElementChild).height, lines:texts.map(p => parseFloat(getComputedStyle(p).lineHeight)),
           // What the block measures beyond its two texts, and whether a marker went to a line of its own under the name.
           spare:box(row.cells[0].firstElementChild).height - written, markersBelow:chips.some(chip => box(chip).top >= box(texts[0]).bottom - 1),
@@ -65,16 +67,22 @@ async function verifyPlan(page, width, native) {
   // One row under what this machine measures (6 and 9 or 10): a wider font of another platform wraps one name more.
   assert.ok(shown.summary.visibleRows >= (width < 1400 ? 5 : 8), 'La primera pantalla muestra la mayoría de las indicaciones: ' + shown.summary.visibleRows);
 
-  // The hours take the width of the table, each over its own box, and a scheduled hour reads in the band
-  // of the headings: not 100 px each with the right half of the card empty, nor Eloísa's salmon (27-11-2026).
-  const spread = await page.evaluate(() => [...document.querySelectorAll('[data-hhr-plan="card"]')].filter(card => card.querySelector('[data-hhr-plan-slot]')).map(card => {
+  // The hours are a narrow grid: 80 px each, their time on one line, each over its own box, the column of
+  // hours as wide as its hours; a scheduled hour reads in the band of the headings (27-11-2026).
+  const grid = await page.evaluate(() => [...document.querySelectorAll('[data-hhr-plan="card"]')].filter(card => card.querySelector('[data-hhr-plan-slot]')).map(card => {
     const at = el => el.getBoundingClientRect(), hours = [...card.querySelectorAll('[data-hhr-plan-hour]')], slots = [...card.querySelector('tbody tr').querySelectorAll('[data-hhr-plan-slot]')];
     const marks = [...card.querySelectorAll('[data-hhr-plan-mark]')].map(mark => getComputedStyle(mark).backgroundColor);
-    return {gap:Math.round(at(card.querySelector('thead th:last-child')).right - at(hours.at(-1)).right), padding:getComputedStyle(card).paddingLeft,
-      aligned:hours.every((hour, i) => Math.abs(at(hour).left - at(slots[i]).left) <= 1 && Math.abs(at(hour).width - at(slots[i]).width) <= 1), marks:[...new Set(marks)]};
+    const column = at(card.querySelector('thead th:last-child'));
+    return {widths:[...new Set(hours.map(hour => Math.round(at(hour).width)))], lines:[...new Set(hours.map(hour => Math.round(at(hour).height)))], column:Math.round(column.width), count:hours.length,
+      padding:getComputedStyle(card).paddingLeft, aligned:hours.every((hour, i) => Math.abs(at(hour).left - at(slots[i]).left) <= 1 && Math.abs(at(hour).width - at(slots[i]).width) <= 1),
+      marks:[...new Set(marks)], days:[...card.querySelectorAll('[data-hhr-plan-day-label]')].map(label => getComputedStyle(label, '::after').content)};
   }));
-  assert.ok(spread.length >= 3 && spread.every(card => card.gap <= 40 && card.padding === '0px' && card.aligned && card.marks.join() === 'rgb(242, 246, 244)'),
-    'Las horas ocupan el ancho de la tabla, cada una sobre su casilla, y una hora programada va en la banda: ' + JSON.stringify(spread));
+  assert.ok(grid.length >= 3 && grid.every(card => card.widths.join() === '80' && card.lines.every(h => h <= 20) && Math.abs(card.column - card.count * 80) <= 2 &&
+    card.padding === '0px' && card.aligned && card.marks.join() === 'rgb(242, 246, 244)' && card.days.map(day => day.split(' / ')[0]).join() === '"Ayer 14/04","Hoy 15/04"'),
+    'Las horas son una grilla angosta (80 px, una línea), cada una sobre su casilla, y el día se lee «Hoy 15/04»: ' + JSON.stringify(grid));
+  // A free indication that repeats its name on its second line reads it once.
+  const repeat = await page.evaluate(() => { const again = document.querySelector('[data-hhr-plan-repeat]'); return again && [again.getClientRects().length, again.previousElementSibling.getClientRects().length]; });
+  assert.deepEqual(repeat, [0, 1], 'El nombre repetido de una indicación libre se lee una vez');
 
   shown.cards.forEach((card, index) => {
     const before = native.cards[index];
@@ -107,6 +115,7 @@ async function verifyPlan(page, width, native) {
     card.rows.forEach((row, at) => {
       const earlier = before.rows[at];
       assert.deepEqual(row.text, earlier.text, 'El texto de la indicación no cambia');
+      if (row.repeat) return;
       if (card.empty) {
         assert.ok(row.height <= 30, 'Una tarjeta sin plan lo dice en una línea: ' + row.height);
         return;
@@ -274,6 +283,31 @@ try {
     await assertQuality(care.page, 'Plan de la ficha de cuidados', assert);
     await care.page.screenshot({path:path.join(directory, '1440-plan-cuidados.png')});
     await Promise.all([medical.page.close(), care.page.close()]);
+    // A chosen row opens a quiet bar across the card: how many, «Cancelar» in words and the plannings with their
+    // names, on one line under the title; and the window of a planning reads like the view (27-11-2026).
+    const chosen = await read(careFichaChosenCards);
+    await chosen.page.evaluate(html => document.body.insertAdjacentHTML('beforeend', html), planDialog);
+    await chosen.page.evaluate(() => document.dispatchEvent(new Event('fixture-refresh')));
+    await settle(chosen.page);
+    const bar = await chosen.page.evaluate(() => {
+      const tools = document.querySelector('[data-hhr-plan-selection]'), band = tools?.querySelector('.MuiCollapse-wrapperInner > .MuiStack-root');
+      const card = tools?.closest('.MuiCard-root'), at = el => el.getBoundingClientRect();
+      return tools && {height:Math.round(at(band).height), band:getComputedStyle(band).backgroundColor, count:[getComputedStyle(tools.querySelector('[data-hhr-plan-count]')).fontSize, getComputedStyle(tools.querySelector('[data-hhr-plan-count]')).color],
+        cancel:getComputedStyle(tools.querySelector('[data-hhr-plan-cancel]')).textTransform, width:Math.round(at(band).width - at(card).width),
+        buttons:[...tools.querySelectorAll('button[data-hhr-plan-caption]')].map(button => button.getAttribute('data-hhr-plan-caption'))};
+    });
+    assert.ok(bar && bar.height <= 40 && bar.band === 'rgb(232, 242, 239)' && bar.count.join() === '13px,rgb(33, 33, 33)' && bar.cancel === 'none' && Math.abs(bar.width) <= 2 &&
+      bar.buttons.join() === 'Planificación estandar,Planificación única', 'La barra de una fila elegida es una banda sobria con sus botones con nombre: ' + JSON.stringify(bar));
+    const dialog = await chosen.page.evaluate(() => {
+      const paper = document.querySelector('[data-hhr-plan-dialog]'), title = paper?.querySelector('.MuiDialogTitle-root'), field = paper?.querySelector('.MuiInputBase-root');
+      const label = paper?.querySelector('.MuiInputLabel-root'), done = paper?.querySelector('.MuiButton-contained');
+      return paper && {title:[getComputedStyle(title).backgroundColor, getComputedStyle(title).fontSize], field:Math.round(field.getBoundingClientRect().height),
+        label:Math.round(field.getBoundingClientRect().top - label.getBoundingClientRect().bottom), done:[getComputedStyle(done, '::after').content, getComputedStyle(done).textTransform]};
+    });
+    assert.ok(dialog && dialog.title.join() === 'rgb(255, 255, 255),15px' && dialog.field === 32 && dialog.label >= 0 && dialog.label <= 6 && dialog.done[0].startsWith('"Listo"'),
+      'La ventana de planificación se lee como la vista: título blanco de 15 px, campos de 32 px con su nombre encima, «Listo»: ' + JSON.stringify(dialog));
+    await chosen.page.screenshot({path:path.join(directory, '1440-plan-planificacion.png')});
+    await chosen.page.close();
   }
 } finally {
   await browser.close();

@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.48.234
+
+- Plan de tratamiento pensado para leer el tiempo (pedido del dueño, 27-11-2026). Las horas son una grilla angosta: 80 px cada una, su hora en una línea («07:00 a. m.») y el día abreviado («Sáb 28/11»), con una línea fina donde empieza un día. La columna de horas mide lo que sus horas y la indicación toma el resto de la línea, así que su nombre y su posología se leen enteros.
+- Indicaciones libres: su nombre va en negrita como el de un medicamento, y cuando Eloísa lo repite en la segunda línea se lee una vez.
+- Barra de una fila elegida (Gestión de cuidados): una banda sobria de 36 px en vez del bloque salmón de 72 px; «1 item(s) seleccionado(s)» en 13 px, «Cancelar» en palabras y cada planificación como botón con su nombre, igual que en la ficha médica.
+- Ventanas de planificación (estándar, única, libre y las del menú): encabezado blanco con el título a 15 px y su cierre, campos de 32 px con su nombre encima, «Listo» y «Agregar programación» en palabras y no en mayúsculas, «Listo» como el botón con línea de la vista. El menú de las otras planificaciones, en filas de 32 px a 13 px. Los campos, reglas y validaciones de Eloísa no cambian.
+
 ## 0.48.233
 
 - Documentos extranjeros y pasaportes numéricos: consulta los identificadores oficiales de Eloísa (`prefferedPeridentId` 3, 9, 10 y 11) en egresos de Gestión de Camas e informes de hospitalización/epicrisis, manteniendo la separación estricta con RUN chileno (ID-01).

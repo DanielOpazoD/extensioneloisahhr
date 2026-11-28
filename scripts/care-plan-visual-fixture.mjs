@@ -11,6 +11,7 @@ const paths = {
   MoreVertIcon:'<circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>',
   CheckRoundedIcon:'<path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
   TimerOffIcon:'<circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 2h6M4 4l16 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  CloseIcon:'<path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
   ChevronLeftRoundedIcon:'<path d="m14.5 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
   ChevronRightRoundedIcon:'<path d="m9.5 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
 };
@@ -23,7 +24,13 @@ const chip = label => `<div class="MuiChip-root MuiChip-sizeSmall"><span class="
 // Seven hours per page, split by day as Eloísa does.
 export const planDays = [['Ayer (14/04/2026)', ['08:00 p. m.', '10:00 p. m.']], ['Hoy (15/04/2026)', ['12:00 a. m.', '02:00 a. m.', '04:00 a. m.', '06:00 a. m.', '08:00 a. m.']]];
 const states = {done:'CheckRoundedIcon', due:'AccessTimeRoundedIcon', off:'TimerOffIcon'};
-const row = ({name, posology, chips = [], slots}, select) => `<tr class="MuiTableRow-root">${select ? selector('td') : ''}
+// A free indication repeats its name on its second line, in two boxes (read on the page 27-11-2026).
+const repeated = ({name, slots}, select) => `<tr class="MuiTableRow-root">${select ? selector('td') : ''}
+  <td class="MuiTableCell-root MuiTableCell-body"><div class="MuiBox-root"><p class="MuiTypography-root MuiTypography-body2">${name}</p></div><div class="MuiBox-root"><p class="MuiTypography-root MuiTypography-body2">${name}</p></div></td>
+  <td class="MuiTableCell-root MuiTableCell-body"><div class="MuiBox-root slots">${slots.map(state =>
+    `<div class="MuiStack-root">${state ? `<div class="MuiBox-root">${iconButton(states[state])}</div>` : ''}</div>`).join('')}</div></td></tr>`;
+const row = (item, select) => item.repeat ? repeated(item, select) : rowWithPosology(item, select);
+const rowWithPosology = ({name, posology, chips = [], slots}, select) => `<tr class="MuiTableRow-root">${select ? selector('td') : ''}
   <td class="MuiTableCell-root MuiTableCell-body"><div class="MuiStack-root"><div class="MuiStack-root"><p class="MuiTypography-root MuiTypography-body1">${name}</p>${chips.map(chip).join('')}</div>
     <div class="MuiBox-root"><p class="MuiTypography-root MuiTypography-body1">${posology}</p></div></div></td>
   <td class="MuiTableCell-root MuiTableCell-body"><div class="MuiBox-root slots">${slots.map(state =>
@@ -40,6 +47,7 @@ export const planCards = [
   ]},
   {title:'Programación de indicaciones libres', filter:'Mostrar Suspendidos', rows:[
     {name:'Levantar al sillón con ayuda', posology:'Dos veces al día', slots:['', '', '', '', '', '', 'due']},
+    {name:'Ronda de seguridad de prueba', repeat:true, slots:['', 'done', '', '', 'done', '', '']},
     {name:'Registrar tolerancia a la alimentación', posology:'En cada comida', chips:['Externo'], slots:['done', '', '', '', '', '', 'due']},
   ]},
   {title:'Programación de medicamentos', filter:'Mostrar Suspendidos', rows:[
@@ -54,12 +62,32 @@ export const planCards = [
 
 // The ficha of Gestión de cuidados: the same cards, all but Programación de procedimientos with their column of checkboxes.
 export const careFichaPlanCards = planCards.map((item, at) => ({...item, select:at > 0}));
+// The same ficha with a medication chosen: its card opens the bar of plannings.
+export const careFichaChosenCards = careFichaPlanCards.map(item => ({...item, chosen:/medicamentos/.test(item.title)}));
 
-const card = ({title, filter, rows, select = false}) => `<div class="MuiPaper-root MuiCard-root">
+// The window «Planificación estandar» as Eloísa draws it (read on the page 27-11-2026), to be added to a page.
+const field = (id, name, value) => `<div class="MuiBox-root"><div class="MuiFormControl-root MuiFormControl-fullWidth"><label id="${id}-label" class="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-shrink">${name}</label>
+  <div class="MuiInputBase-root MuiOutlinedInput-root"><div id="mui-component-select-${id}" role="combobox" tabindex="0" aria-labelledby="${id}-label" class="MuiSelect-select MuiSelect-outlined MuiInputBase-input">${value}</div>
+  <input aria-hidden="true" tabindex="-1" class="MuiSelect-nativeInput" value=""><fieldset aria-hidden="true" class="MuiOutlinedInput-notchedOutline"><legend><span>${name}</span></legend></fieldset></div></div></div>`;
+export const planDialog = `<div class="MuiDialog-root" role="presentation"><div class="MuiPaper-root MuiDialog-paper" role="dialog" aria-labelledby="dialog-title">
+  <h2 id="dialog-title" class="MuiTypography-root MuiTypography-h6 MuiDialogTitle-root">Planificación estandar</h2>
+  <button type="button" class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium" aria-label="close">${icon('CloseIcon')}</button>
+  <div class="MuiDialogContent-root MuiDialogContent-dividers"><form class="MuiStack-root" onsubmit="return false">
+    ${field('periodicity', 'Periodicidad', 'Seleccione una opción')}${field('rule', 'Regla de administración', 'Seleccione una opción')}${field('start', 'Hora de inicio', 'Seleccione una opción')}
+    <div class="MuiBox-root"><button type="submit" class="MuiButtonBase-root MuiButton-root MuiButton-contained Mui-disabled" disabled>LISTO</button></div>
+  </form></div></div></div>`;
+
+// In Gestión de cuidados a chosen row opens a bar: how many are chosen, «Cancelar» and the tools, named on the
+// button, on a salmon band of 72 px (read on the page 27-11-2026).
+const named = (id, name) => `<button type="button" class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium"${name ? ` aria-label="${name}"` : ''}>${icon(id)}</button>`;
+const selectionBar = `<div class="MuiStack-root selection"><div class="MuiStack-root"><h6 class="MuiTypography-root MuiTypography-subtitle1">1 item(s) seleccionado(s)</h6>
+    <button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-text">Cancelar</button></div>
+  <div class="MuiStack-root">${named('AccessTimeRoundedIcon', 'Planificación estandar')}${named('TouchAppIcon', 'Planificación única')}${named('MoreVertIcon')}</div></div>`;
+const card = ({title, filter, rows, select = false, chosen = false}) => `<div class="MuiPaper-root MuiCard-root">
   <div class="MuiCardHeader-root"><div class="MuiCardHeader-content"><span class="MuiTypography-root MuiTypography-h5 MuiCardHeader-title">${title}</span></div>
     <div class="MuiCardHeader-action">${toggle(filter)}</div></div>
-  <div class="MuiBox-root"><div class="MuiCollapse-root MuiCollapse-entered"><div class="MuiCollapse-wrapper"><div class="MuiCollapse-wrapperInner"><div class="MuiStack-root tools">
-    ${iconButton('AccessTimeRoundedIcon', 'Planificación estandar')}${iconButton('TouchAppIcon', 'Planificación única')}${iconButton('MoreVertIcon')}</div></div></div></div></div>
+  <div class="MuiBox-root"><div class="MuiCollapse-root MuiCollapse-entered"><div class="MuiCollapse-wrapper"><div class="MuiCollapse-wrapperInner">${chosen ? selectionBar : `<div class="MuiStack-root tools">
+    ${iconButton('AccessTimeRoundedIcon', 'Planificación estandar')}${iconButton('TouchAppIcon', 'Planificación única')}${iconButton('MoreVertIcon')}</div>`}</div></div></div></div>
   <div class="MuiCardContent-root"><div class="MuiTableContainer-root"><table class="MuiTable-root MuiTable-stickyHeader">
     <thead class="MuiTableHead-root"><tr class="MuiTableRow-root MuiTableRow-head">${select ? selector('th') : ''}
       <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader"><p class="MuiTypography-root MuiTypography-body1">Indicación</p>
@@ -99,6 +127,19 @@ export const carePlanPage = (cards = planCards) => `<!doctype html><html lang="e
   .days{flex-direction:row}.days .MuiTypography-caption{display:block;font-size:12px;line-height:1.66;text-align:center}.hours{flex-direction:row}.hours>.MuiBox-root{flex:none;width:100px;text-align:center}
   td>.MuiStack-root{gap:4px}td>.MuiStack-root>.MuiStack-root{flex-flow:row wrap;align-items:center;gap:8px}
   .MuiChip-root{display:inline-flex;align-items:center;height:24px;border-radius:16px;background:#e4e9e7;color:#344841;font-size:13px}.MuiChip-label{padding:0 8px}
+  .selection{flex-direction:row;justify-content:space-between;align-items:center;margin-top:8px;padding:16px;border-radius:8px;background:rgb(241,216,208)}
+  .selection>.MuiStack-root{flex-direction:row;align-items:center;gap:16px}.selection h6{margin:0;color:rgb(230,74,25);font-size:16px;font-weight:400}
+  .selection .MuiButton-text{text-transform:uppercase;font-size:13px}
+  .MuiDialog-root{position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,.5)}.MuiSelect-nativeInput{position:absolute;bottom:0;left:0;width:100%;opacity:0;pointer-events:none}
+  .MuiDialog-paper{position:fixed;top:120px;left:50%;transform:translateX(-50%);width:600px;border-radius:12px;background:white;box-shadow:0 11px 15px rgba(0,0,0,.2);overflow:hidden}
+  .MuiDialogTitle-root{margin:0;padding:16px 120px 16px 16px;background:rgb(21,149,136);color:white;font-size:20px;font-weight:500}
+  .MuiDialog-paper>.MuiIconButton-root{position:absolute;top:8px;right:8px;color:white}
+  .MuiDialogContent-root{padding:16px 24px;border-top:1px solid rgba(0,0,0,.12);border-bottom:1px solid rgba(0,0,0,.12)}
+  .MuiDialog-paper form{display:flex;flex-direction:column;gap:16px}.MuiDialog-paper .MuiFormControl-root{position:relative;display:flex;flex-direction:column}
+  .MuiDialog-paper .MuiInputLabel-root{position:absolute;left:0;top:0;transform:translate(14px,-9px) scale(.75);transform-origin:top left;color:rgba(0,0,0,.6);font-size:16px}
+  .MuiDialog-paper .MuiInputBase-root{position:relative;display:flex;align-items:center;height:40px;font-size:16px}
+  .MuiDialog-paper .MuiSelect-select{flex:1;padding:8.5px 32px 8.5px 14px;font-style:italic}.MuiDialog-paper .MuiOutlinedInput-notchedOutline{position:absolute;inset:-5px 0 0;margin:0;padding:0 8px;border:1px solid rgba(0,0,0,.23);border-radius:4px;pointer-events:none}
+  .MuiDialog-paper legend{height:11px;padding:0;font-size:.75em;visibility:hidden}.MuiDialog-paper .MuiButton-contained{height:42px;padding:6px 16px;border:0;border-radius:6px;background:rgba(0,0,0,.12);color:rgba(0,0,0,.26);font-size:15px;text-transform:uppercase}
   .slots{display:flex}.slots>.MuiStack-root{flex:none;align-items:center;justify-content:center;width:100px;min-height:49px}
   .slots>.MuiStack-root>.MuiBox-root{display:flex;align-items:center;justify-content:center;width:100px;height:49px;background:rgb(241,216,208);border-right:1px solid rgb(230,74,25)}
 </style><header class="banner">Ficha de hospitalizados <small>Plan de tratamiento · Episodio ficticio</small></header>

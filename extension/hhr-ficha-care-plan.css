@@ -67,6 +67,25 @@
       }
     }
 
+    /* A chosen row opens the bar of plannings across the card (Gestión de cuidados): a quiet band, how many
+       are chosen, «Cancelar» in words, and each planning a button with its name, as in the ficha médica. */
+    > [data-hhr-plan="tools"][data-hhr-plan-selection] {
+      grid-column:1 / -1; grid-row:auto; padding:0 !important;
+      .MuiCollapse-wrapperInner > .MuiStack-root {
+        flex-direction:row; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap;
+        margin:0 !important; padding:4px 6px 4px var(--hhr-ficha-inset) !important; min-block-size:36px; block-size:auto !important;
+        border-block:1px solid var(--hhr-ficha-line); border-radius:0 !important; background:var(--hhr-ficha-action-hover) !important;
+      }
+      .MuiCollapse-wrapperInner > .MuiStack-root > .MuiStack-root { flex-direction:row; align-items:center; gap:8px; padding:0 !important; }
+      [data-hhr-plan-count] { margin:0; color:var(--hhr-ficha-ink) !important; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans) !important; }
+      [data-hhr-plan-cancel] {
+        min-inline-size:0; min-block-size:26px; padding:2px 8px !important; border-radius:var(--hhr-ficha-button-radius);
+        color:var(--hhr-ficha-action) !important; text-transform:none !important; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans) !important;
+        &::first-letter { text-transform:uppercase; }
+        &:hover { background:var(--hhr-ficha-action-pressed); }
+        &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+      }
+    }
     > .MuiCardContent-root { grid-column:1 / -1; min-inline-size:0; padding:0 !important; }
     table :is(th,td) {
       padding:3px var(--hhr-ficha-inset) !important; border-block-end:1px solid var(--hhr-ficha-line-soft);
@@ -126,22 +145,109 @@
     table[data-hhr-plan-empty] td { padding-block:5px !important; color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
     /* Without rows, the hours of the heading have nothing to situate: the heading keeps «Indicación» and its pages. */
     table[data-hhr-plan-empty] thead th:last-child > * { display:none !important; }
-    /* The hours share the width of the table: each day as wide as its hours, each hour as wide as the
-       reader measured (--hhr-plan-hour). A scheduled hour is a box in the band of the headings with a
-       hairline after it, not Eloísa's salmon with an orange edge. */
-    &[style*="--hhr-plan-hour"] {
-      [data-hhr-plan-days] { inline-size:auto !important; }
+    /* The hours are a narrow grid (27-11-2026): each hour 5 rem, its time on one line; the column of hours
+       is as wide as its hours and the indication takes the rest of the line. A day says «Sáb 28/11». */
+    &[style*="--hhr-plan-hours"] {
+      --hhr-plan-hour:5rem;
+      /* Eloísa writes 1000 px on the cell of hours: the grid's own width wins over it. */
+      table :is(th,td):last-child { inline-size:calc(var(--hhr-plan-hours) * var(--hhr-plan-hour)) !important; padding-inline:0 !important; }
+      [data-hhr-plan-days] { inline-size:auto !important; justify-content:flex-start; }
       [data-hhr-plan-day] { flex:none !important; inline-size:auto !important; min-inline-size:0 !important; }
       :is([data-hhr-plan-hour],[data-hhr-plan-slot]) { flex:none !important; inline-size:var(--hhr-plan-hour) !important; min-inline-size:0 !important; max-inline-size:none !important; }
+      [data-hhr-plan-hour] { text-align:center; white-space:nowrap; }
+      /* A new day starts with a hairline in the heading, drawn without taking room from its hours. */
+      [data-hhr-plan-day] + [data-hhr-plan-day] { box-shadow:inset 1px 0 var(--hhr-ficha-line); }
+      [data-hhr-plan-hour] :is(span,p,.MuiTypography-root) { white-space:nowrap; }
       [data-hhr-plan-slot] > [data-hhr-plan-mark] { inline-size:100% !important; }
       /* Eloísa's 49 px box set the height of every row: it is as tall as its mark, the row as its text. */
       :is([data-hhr-plan-slot], [data-hhr-plan-slot] > .MuiBox-root) { block-size:auto !important; min-block-size:0 !important; }
     }
+    [data-hhr-plan-day-label] {
+      font-size:0 !important; white-space:nowrap;
+      &::after { content:attr(data-hhr-plan-day-label) / ''; font-size:var(--hhr-ficha-text-meta); }
+    }
+    /* A free indication is drawn in boxes, not in the stack of a medication: its name reads with the same
+       weight and its second line, when it is not the name again, as what explains it. */
+    :is(table:not([data-hhr-plan-select]) td:first-child, table[data-hhr-plan-select] td:nth-child(2)) {
+      > .MuiBox-root:first-child > p { margin:0; font-weight:var(--hhr-ficha-weight-strong); }
+      > .MuiBox-root + .MuiBox-root > p { margin:0; color:var(--hhr-ficha-muted); font-size:var(--hhr-ficha-text-meta); }
+    }
+    /* Eloísa repeats the name of a free indication on its second line: it is read once. */
+    [data-hhr-plan-repeat] { display:none !important; }
     [data-hhr-plan-mark] {
       background:var(--hhr-ficha-band) !important; border-color:var(--hhr-ficha-line) !important;
     }
     [data-hhr-plan-day] .MuiTypography-caption { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans); }
     /* The native foot has no content. It keeps its place only when it says something. */
     table tfoot:not(:has(td:not(:empty), th:not(:empty))) { display:none; }
+  }
+
+  /* The windows that plan an indication read like the view: a white heading with its title at 15 px and its
+     close, fields with their name above and a line around their value, «Listo» as the one button, in words
+     (27-11-2026, the owner asked for better buttons and forms). Eloísa's fields, rules and checks stay. */
+  html[data-hhr-ficha-theme="compact"] .MuiDialog-paper[data-hhr-plan-dialog] {
+    inline-size:min(34rem, calc(100vw - 32px)); max-inline-size:none; border-radius:var(--hhr-ficha-radius) !important;
+    box-shadow:0 16px 40px rgb(7 27 49 / 22%) !important; color:var(--hhr-ficha-ink);
+    > .MuiDialogTitle-root {
+      padding:14px 52px 10px 20px !important; background:var(--hhr-ficha-surface) !important; color:var(--hhr-ficha-ink) !important;
+      border-block-end:1px solid var(--hhr-ficha-line-soft); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-title)/1.35 var(--hhr-ficha-sans) !important;
+    }
+    > .MuiDialogTitle-root + .MuiIconButton-root {
+      inset-block-start:8px !important; inset-inline-end:10px !important; inline-size:28px; block-size:28px; padding:4px !important;
+      color:var(--hhr-ficha-ink-soft) !important; border-radius:var(--hhr-ficha-button-radius);
+      svg { inline-size:18px; block-size:18px; }
+      &:hover { background:var(--hhr-ficha-action-hover); }
+    }
+    > .MuiDialogContent-root { padding:14px 20px 16px !important; border:0 !important; }
+    form { gap:12px !important; }
+    form > * { margin:0 !important; }
+    form > .MuiBox-root:last-child:has(> button[type="submit"]) { display:flex; justify-content:flex-end; }
+    .MuiFormControl-root:has(> .MuiInputLabel-root) { display:flex; flex-direction:column; gap:3px; margin:0; }
+    .MuiInputLabel-root {
+      position:static !important; transform:none !important; max-inline-size:none !important;
+      color:var(--hhr-ficha-ink-soft) !important; font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans) !important;
+      &.Mui-error { color:var(--hhr-ficha-alarm) !important; }
+    }
+    .MuiOutlinedInput-notchedOutline {
+      inset-block-start:0 !important; border-color:var(--hhr-ficha-button-line) !important; border-width:1px !important; border-radius:var(--hhr-ficha-button-radius) !important;
+      legend { display:none !important; }
+    }
+    .Mui-error .MuiOutlinedInput-notchedOutline { border-color:var(--hhr-ficha-alarm) !important; }
+    .MuiInputBase-root { min-block-size:32px; font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans) !important; color:var(--hhr-ficha-ink); border-radius:var(--hhr-ficha-button-radius) !important; }
+    .MuiInputBase-root:not(.MuiInputBase-multiline) { block-size:32px; }
+    .MuiInputBase-root:hover .MuiOutlinedInput-notchedOutline { border-color:var(--hhr-ficha-action) !important; }
+    .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline { border:2px solid var(--hhr-ficha-focus) !important; }
+    :is(.MuiInputBase-input,.MuiSelect-select) { box-sizing:border-box; min-block-size:0 !important; padding-block:5px !important; padding-inline-start:10px !important; font-style:normal !important; }
+    ::placeholder, .MuiSelect-select em { color:var(--hhr-ficha-muted) !important; opacity:1; font-style:normal !important; }
+    .MuiInputAdornment-root .MuiIconButton-root { padding:4px; color:var(--hhr-ficha-ink-soft); svg { inline-size:18px; block-size:18px; } }
+    .MuiSelect-icon { color:var(--hhr-ficha-ink-soft); }
+    .MuiFormHelperText-root { margin:2px 0 0; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-tag)/1.3 var(--hhr-ficha-sans); }
+    .MuiFormControlLabel-label { color:var(--hhr-ficha-ink); font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans) !important; }
+    .MuiCheckbox-root { padding:4px; svg { inline-size:20px; block-size:20px; } }
+    /* Each button in words, not in capitals; the one that confirms with a line, as every action of the view. */
+    .MuiButton-root {
+      min-inline-size:0; min-block-size:30px; padding:3px 12px !important; border-radius:var(--hhr-ficha-button-radius) !important; box-shadow:none !important;
+      text-transform:none !important; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans) !important;
+      &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
+      /* Eloísa writes its buttons in capitals («LISTO»): the reader gives their words in sentence case. */
+      &[data-hhr-plan-words] {
+        font-size:0 !important;
+        &::after { content:attr(data-hhr-plan-words) / ''; font-size:var(--hhr-ficha-text-body); }
+        :is(.MuiButton-startIcon,.MuiButton-endIcon) { font-size:1.125rem; margin-inline-end:6px; }
+      }
+    }
+    .MuiButton-contained {
+      border:1px solid var(--hhr-ficha-button-line) !important; background:transparent !important; color:var(--hhr-ficha-action) !important;
+      &:hover { background:var(--hhr-ficha-action-hover) !important; }
+      &.Mui-disabled { border-color:var(--hhr-ficha-line-soft) !important; color:var(--hhr-ficha-disabled) !important; }
+    }
+    .MuiButton-text { color:var(--hhr-ficha-action) !important; &:hover { background:var(--hhr-ficha-action-hover) !important; } }
+  }
+  /* The menu of the other plannings: rows of a line at the size of the view. */
+  html[data-hhr-ficha-theme="compact"] [data-hhr-plan-menu] {
+    border-radius:var(--hhr-ficha-radius) !important; box-shadow:0 10px 28px rgb(7 27 49 / 18%) !important;
+    [role="menu"] { padding-block:4px !important; }
+    [role="menuitem"] { min-block-size:32px; padding:4px 14px !important; color:var(--hhr-ficha-ink); font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans) !important; }
+    [role="menuitem"]:hover { background:var(--hhr-ficha-action-hover); }
   }
 }
