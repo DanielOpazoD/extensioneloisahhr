@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.239
+
+- Sin cambios visibles (comprobado con las capturas de todas las vistas y, para cada regla tocada, con las medidas antes y después). Tres reglas del CSS dejan de ganarle a otra con ids escritos solo para pesar más (`:not(#hhr-a)`): la regla que compite ya no se aplica a ese elemento (la PAM redondeada, el formulario de Alertas y Entrega, la primera columna de Indicaciones libres). Quedan dos, en Reposo y Régimen, explicadas. El CI vigila además que ningún archivo CSS sume `!important` ni ids de ese tipo.
+
 ## 0.48.238
 
 - Sin cambios visibles. El worker (`background.js`) se lee mejor: ninguna línea pasa de 160 caracteres (antes 25 de hasta 457) y la autorización por episodio que se repetía en tres lecturas es una sola función con nombre. Las rutas, dependencias y mensajes son los mismos.

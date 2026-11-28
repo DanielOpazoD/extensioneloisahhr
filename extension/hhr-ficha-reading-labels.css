@@ -28,12 +28,14 @@
     }
     :is(#alertEntrySection,#shiftChangeEntrySection) [data-hhr-entry-prompt] {
       display:grid !important; grid-template-columns:minmax(0,1fr) auto; align-items:center;
-      gap:2px 6px !important; min-width:0;
+      gap:3px 6px !important; min-width:0;
       &::before {
         content:attr(data-hhr-entry-prompt) / ''; grid-column:1 / -1;
         color:var(--hhr-ficha-ink-soft); font:600 .75rem/1.2 var(--hhr-ficha-sans);
       }
       > :not(button) { min-width:0; }
+      /* In a narrow window the name of the form and the label on the border of its field do not overlap. */
+      @media (min-width:600px) and (max-width:1099.98px) { row-gap:16px !important; }
     }
     #alertEntrySection {
       :is(.MuiCardHeader-root,.MuiCardContent-root):not(:is(dialog,[role=dialog]) *) {
@@ -44,7 +46,7 @@
         font-size:.8125rem; line-height:1.35; margin-block:0;
       }
       .MuiTypography-caption { font-size:.75rem; line-height:1.25; }
-      .MuiCardContent-root .MuiStack-root:not(:is(dialog,[role=dialog]) *) { row-gap:3px !important; }
+      .MuiCardContent-root .MuiStack-root:not(:is(dialog,[role=dialog]) *):not([data-hhr-entry-prompt]) { row-gap:3px !important; }
       /* In an alert row Eloísa places the author and message together,
          and the timestamp and archive action in a separate column. */
       .MuiCardContent-root > .MuiBox-root:has(> .MuiStack-root .MuiIconButton-sizeSmall) {

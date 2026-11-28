@@ -68,7 +68,7 @@ caracteres, 495 `!important` en el CSS, 275 comprobaciones que buscan texto en e
 | --- | --- | --- |
 | 1 | Orden de carga y forma del código en CI; CI en paralelo; esperas por condición | Hecho en este cambio |
 | 2 | `background.js` legible: sin líneas anchas, la autorización por episodio con nombre; el presupuesto de líneas sube a 1.650 porque el ancho ya lo vigila `check:shape` | Hecho en 0.48.238 (25 → 0 líneas anchas) |
-| 3 | `extension/` por dominio (`ficha/`, `listas/`, `centro/`, `recetas/`, `transporte/`, `contratos/`) | Ningún archivo en la raíz salvo el manifiesto y el worker |
-| 4 | CSS de la vista compacta por capas propias, sobre las marcas `data-hhr-*` y no sobre clases de MUI; sin ids ficticios para ganar peso | `!important` a la mitad |
+| 3 | `extension/` por dominio. Se hace en un solo cambio, cuando no haya PR abiertas que lean rutas de `extension/` (las pruebas de Codex de la etapa 5 las leen): ficha (`hhr-ficha-*`, 26), fichamedico (18), gestion-camas (18), centro (`hhr-center*`, `hhr-lab*`, `hhr-prescription*`, recetas), clinico (`clinical-*`), urgencia (12), syslab (12), salud y relés (`health-*`, `relay-reinjection-*`, `connection-*`), contenido (`content-*`) y contratos. Un guion mueve los archivos y reescribe manifiesto, `importScripts` y rutas de pruebas y guiones | Ningún archivo en la raíz salvo el manifiesto y el worker |
+| 4 | CSS: sin ids ficticios para ganar peso; cada `!important` que sobre, quitado con su medida antes y después | 0.48.239: ids ficticios de 10 a 4; el CI no deja sumar `!important` (745) ni ids ficticios |
 | 5 | Las comprobaciones que leen el código fuente pasan a probar comportamiento | Ninguna prueba busca texto en el código |
 | 6 | Utilidades repetidas (`normalize`, `plain`, `el`) en un módulo común | Una sola definición de cada una |

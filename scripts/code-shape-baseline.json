@@ -17,7 +17,8 @@
   "lines": 818
  },
  "clinical-checklist.css": {
-  "wide": 9
+  "wide": 9,
+  "important": 16
  },
  "clinical-day-runtime.js": {
   "wide": 4
@@ -51,7 +52,8 @@
   "wide": 2
  },
  "extension-status.css": {
-  "wide": 3
+  "wide": 3,
+  "important": 1
  },
  "fichamedico-census-runtime.js": {
   "wide": 1
@@ -87,22 +89,30 @@
   "wide": 1
  },
  "hhr-ficha-care-plan.css": {
-  "wide": 8
+  "wide": 8,
+  "important": 100
  },
  "hhr-ficha-care-plan.js": {
   "wide": 4
  },
  "hhr-ficha-evolution-authors.css": {
-  "wide": 3
+  "wide": 3,
+  "important": 23
  },
  "hhr-ficha-evolution-authors.js": {
   "wide": 1
  },
  "hhr-ficha-history.css": {
-  "wide": 7
+  "wide": 7,
+  "important": 47
  },
  "hhr-ficha-loading.css": {
-  "wide": 3
+  "wide": 3,
+  "important": 8
+ },
+ "hhr-ficha-order-details.css": {
+  "wide": 0,
+  "important": 19
  },
  "hhr-ficha-patient-switcher.css": {
   "wide": 3
@@ -114,7 +124,8 @@
   "wide": 1
  },
  "hhr-ficha-reading-labels.css": {
-  "wide": 6
+  "wide": 6,
+  "important": 48
  },
  "hhr-ficha-reading-labels.js": {
   "wide": 9
@@ -123,7 +134,9 @@
   "wide": 5
  },
  "hhr-ficha-round-layout.css": {
-  "wide": 10
+  "wide": 10,
+  "important": 161,
+  "fakeIds": 4
  },
  "hhr-ficha-round-layout.js": {
   "wide": 4
@@ -132,14 +145,20 @@
   "wide": 2
  },
  "hhr-ficha-themes.css": {
-  "wide": 38,
-  "lines": 901
+  "wide": 37,
+  "lines": 901,
+  "important": 274
  },
  "hhr-ficha-tokens.css": {
   "wide": 14
  },
+ "hhr-ficha-transitions.css": {
+  "wide": 0,
+  "important": 1
+ },
  "hhr-ficha-views.css": {
-  "wide": 3
+  "wide": 3,
+  "important": 25
  },
  "hhr-ficha-vital-strip.js": {
   "wide": 1
@@ -175,7 +194,8 @@
   "wide": 1
  },
  "hhr-nursing-worklist.css": {
-  "wide": 2
+  "wide": 2,
+  "important": 20
  },
  "hhr-nursing-worklist.js": {
   "wide": 1
@@ -206,6 +226,10 @@
  },
  "message-contract.js": {
   "wide": 6
+ },
+ "nursing-handoff-dialog.css": {
+  "wide": 0,
+  "important": 2
  },
  "nursing-handoff-dialog.js": {
   "wide": 1
