@@ -22,6 +22,8 @@ const toggle = label => `<label class="MuiFormControlLabel-root"><span class="Mu
 const chip = label => `<div class="MuiChip-root MuiChip-sizeSmall"><span class="MuiChip-label">${label}</span></div>`;
 
 // Seven hours per page, split by day as Eloísa does.
+// Fourteen hours, as the compact view asks for when the window has room (or the owner chooses so).
+export const planDays14 = [['Ayer (14/04/2026)', ['08:00 p. m.', '10:00 p. m.']], ['Hoy (15/04/2026)', ['12:00 a. m.', '02:00 a. m.', '04:00 a. m.', '06:00 a. m.', '08:00 a. m.', '10:00 a. m.', '12:00 p. m.', '02:00 p. m.', '04:00 p. m.', '06:00 p. m.', '08:00 p. m.']], ['Jue (16/04/2026)', ['12:00 a. m.']]];
 export const planDays = [['Ayer (14/04/2026)', ['08:00 p. m.', '10:00 p. m.']], ['Hoy (15/04/2026)', ['12:00 a. m.', '02:00 a. m.', '04:00 a. m.', '06:00 a. m.', '08:00 a. m.']]];
 const states = {done:'CheckRoundedIcon', due:'AccessTimeRoundedIcon', off:'TimerOffIcon'};
 // A free indication repeats its name on its second line, in two boxes (read on the page 27-11-2026).
@@ -83,7 +85,7 @@ const named = (id, name) => `<button type="button" class="MuiButtonBase-root Mui
 const selectionBar = `<div class="MuiStack-root selection"><div class="MuiStack-root"><h6 class="MuiTypography-root MuiTypography-subtitle1">1 item(s) seleccionado(s)</h6>
     <button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-text">Cancelar</button></div>
   <div class="MuiStack-root">${named('AccessTimeRoundedIcon', 'Planificación estandar')}${named('TouchAppIcon', 'Planificación única')}${named('MoreVertIcon')}</div></div>`;
-const card = ({title, filter, rows, select = false, chosen = false}) => `<div class="MuiPaper-root MuiCard-root">
+const card = ({title, filter, rows, select = false, chosen = false, days = null}) => `<div class="MuiPaper-root MuiCard-root">
   <div class="MuiCardHeader-root"><div class="MuiCardHeader-content"><span class="MuiTypography-root MuiTypography-h5 MuiCardHeader-title">${title}</span></div>
     <div class="MuiCardHeader-action">${toggle(filter)}</div></div>
   <div class="MuiBox-root"><div class="MuiCollapse-root MuiCollapse-entered"><div class="MuiCollapse-wrapper"><div class="MuiCollapse-wrapperInner">${chosen ? selectionBar : `<div class="MuiStack-root tools">
@@ -93,7 +95,7 @@ const card = ({title, filter, rows, select = false, chosen = false}) => `<div cl
       <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader"><p class="MuiTypography-root MuiTypography-body1">Indicación</p>
         <div class="MuiStack-root pages"><button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-text">Ir a Hoy</button>
           ${iconButton('ChevronLeftRoundedIcon', '', 'Small')}<p class="MuiTypography-root MuiTypography-body1">3 / 5</p>${iconButton('ChevronRightRoundedIcon', '', 'Small')}</div></th>
-      <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader" style="width:1000px"><div class="MuiStack-root days">${planDays.map(([day, hours]) =>
+      <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader" style="width:1000px"><div class="MuiStack-root days">${(days || planDays).map(([day, hours]) =>
         `<div class="MuiBox-root day"><div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">${day}</span></div><div class="MuiStack-root hours">${hours.map(hour =>
           `<div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">${hour}</span></div>`).join('')}</div></div>`).join('')}</div></th></tr></thead>
     <tbody class="MuiTableBody-root">${rows.length ? rows.map(item => row(item, select)).join('') : emptyRow}</tbody>
@@ -101,7 +103,7 @@ const card = ({title, filter, rows, select = false, chosen = false}) => `<div cl
   </table></div></div></div>`;
 
 const tabs = [['summary','Resumen'],['antecedents','Antecedentes'],['care-plan','Plan de tratamiento'],['history','Historial'],['discharge','Alta']];
-export const carePlanPage = (cards = planCards) => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
+export const carePlanPage = (cards = planCards, days = null) => `<!doctype html><html lang="es"><meta charset="utf-8"><style>
   *{box-sizing:border-box}body{margin:0;background:#eff1f0;color:#263432;font:16px/1.5 Arial,sans-serif}
   .banner{background:#218b80;color:white;padding:15px 24px;font-size:16px;font-weight:600}.banner small{margin-left:18px;font-size:12px;font-weight:400}
   .MuiAppBar-root{position:sticky;top:0;z-index:20;background:white}
@@ -146,4 +148,4 @@ export const carePlanPage = (cards = planCards) => `<!doctype html><html lang="e
 <div class="MuiAppBar-root"><div class="MuiTabs-root"><div class="MuiTabs-scroller"><div role="tablist">${tabs.map(([id,label]) =>
   `<button role="tab" id="encounter-event-tab-${id}" aria-selected="${id === 'care-plan'}">${label}</button>`).join('')}</div></div></div></div>
 <main class="MuiBox-root"><div class="MuiStack-root"><div class="MuiStack-root plan"><div class="MuiBox-root">${toggle('Mostrar todos los ocultos')}</div>
-${cards.map(card).join('')}</div></div></main></html>`;
+${cards.map(item => card({...item, days, rows:days ? item.rows.map(row => ({...row, slots:[...row.slots, ...row.slots]})) : item.rows})).join('')}</div></div></main></html>`;

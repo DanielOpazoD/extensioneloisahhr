@@ -48,6 +48,9 @@
         <div class="hhr-setting-row"><label for="hhr-setting-ficha-theme">Vista de la ficha clínica</label>
           <select id="hhr-setting-ficha-theme" class="hhr-center-select" disabled></select></div>
         <small role="status" data-ficha-theme-status></small>
+        <div class="hhr-setting-row"><label for="hhr-setting-plan-hours">Horas por página en Plan de tratamiento</label>
+          <select id="hhr-setting-plan-hours" class="hhr-center-select" disabled></select></div>
+        <small role="status" data-plan-hours-status></small>
         <label class="hhr-setting-row"><span>Contraer barra a HHR</span><input type="checkbox" data-setting="collapsed"></label>
         <label class="hhr-setting-row"><span>Entrega de turno en Gestión de cuidados</span><input type="checkbox" data-setting="handoff" disabled></label>
         <small role="status" data-handoff-status></small>
@@ -69,6 +72,24 @@
       catch { theme.value = root.dataset.fichaTheme; message.textContent = 'No se pudo guardar la vista.'; }
       finally { theme.disabled = false; }
     });
+    // Plan de tratamiento: hours asked per page, automatic (as the window allows) or fixed between 7 and 14.
+    const planHours = main.querySelector('#hhr-setting-plan-hours');
+    const planHoursStatus = main.querySelector('[data-plan-hours-status]');
+    const hoursPreference = globalThis.HhrPlanHours;
+    if (hoursPreference) {
+      for (const value of hoursPreference.choices) {
+        planHours.add(new Option(value === 'auto' ? 'Automática, según la ventana (' + hoursPreference.fit(window.innerWidth) + ')' : value + ' horas', String(value)));
+      }
+      hoursPreference.load().then(value => { planHours.value = String(value); planHours.disabled = false; })
+        .catch(() => { planHoursStatus.textContent = 'No se pudo leer el ajuste de horas.'; });
+      planHours.addEventListener('change', async () => {
+        planHours.disabled = true;
+        const value = planHours.value === 'auto' ? 'auto' : Number(planHours.value);
+        try { await hoursPreference.save(value); planHoursStatus.textContent = 'Se aplica al abrir el Plan o al cambiar de página.'; }
+        catch { planHoursStatus.textContent = 'No se pudo guardar el ajuste de horas.'; }
+        finally { planHours.disabled = false; }
+      });
+    } else planHours.closest('.hhr-setting-row').hidden = true;
     const checklist = main.querySelector('[data-checklist-enabled]');
     const checklistStatus = main.querySelector('[data-checklist-status]');
     const checklistKey = 'hhr-clinical-checklists-enabled';
