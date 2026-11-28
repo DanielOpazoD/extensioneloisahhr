@@ -106,6 +106,12 @@ async function verifyOtherProfessional(context, url) {
 }
 
 export async function verifyClinicalChecklists(context, original, worker) {
+  // Each step says when it starts: in CI this phase took 48 s against 6 s on a desk (27-11-2026).
+  const started = Date.now();
+  const mark = name => console.info(`[pautas] ${((Date.now() - started) / 1000).toFixed(1)} s · ${name}`);
+  // The ficha is the page under test: opened before the portal, it went behind it, and a page in the
+  // background draws its frames slowly (the 24 frames of the pencil took 21 s in CI). Each step brings it
+  // to the front, as the person using it would have it.
   const ficha = await context.newPage();
   await ficha.goto('https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse/661733');
   await ficha.waitForFunction(() => document.documentElement.dataset.hhrPrescriptionPrintState === 'ready');
@@ -162,6 +168,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
       pencil.onclick = () => dialog.showModal();
       document.querySelector('#observationEntrySection').append(pencil);
     });
+    await ficha.bringToFront(); mark('acceso con el lápiz');
     await actionsButton(ficha).waitFor();
     await ficha.getByRole('button', { name: 'Editar evolución' }).click();
     const samples = await native.evaluate(async dialog => {
@@ -175,8 +182,10 @@ export async function verifyClinicalChecklists(context, original, worker) {
     assert.ok(samples.every(count => count === 1), 'Acceso inestable al abrir con el lápiz: ' + samples.join(''));
     await ficha.locator('#observationEntrySection [aria-label="Editar evolución"]').evaluate(el => el.remove());
     await actionsButton(native).waitFor();
+    await ficha.bringToFront(); mark('ventanas de pautas');
     await verifyTemplateDialogs(ficha, native, portal);
     await native.evaluate(dialog => dialog.close());
+    await ficha.bringToFront(); mark('continuar pauta y guardar');
     await openChecklistAction(ficha.locator('#observationEntrySection'), 'Continuar pauta');
     const modal = ficha.getByRole('dialog', { name: 'Aplicar pauta' });
     assert.equal(await modal.getByLabel('Observación').inputValue(), 'Selección de prueba');
@@ -196,6 +205,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
       el.selectionStart === el.value.length && el.selectionEnd === el.value.length));
     await ficha.keyboard.type(' fin');
     assert.ok((await editor.inputValue()).endsWith(' fin'));
+    await ficha.bringToFront(); mark('pauta insertada');
     await actionsButton(ficha).click();
     await ficha.getByText('Pauta insertada · guardar en Eloísa', { exact: true }).waitFor();
     await ficha.getByRole('menuitem', { name: 'Pautas' }).press('Escape');
@@ -249,6 +259,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     assert.match(await native.locator('textarea').inputValue(), /Seguimiento diferido de prueba\nCódigo de verificación: PT-/);
     assert.equal(await native.evaluate(dialog => dialog.open), true);
 
+    await ficha.bringToFront(); mark('escala Braden');
     // The bundled scale works with only Eloísa open, and never uses a narrative draft as its destination.
     await openChecklistAction(native, 'Braden');
     await modal.getByRole('heading', { name: 'Braden adulto', exact: true }).waitFor();
@@ -290,6 +301,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await worker.evaluate(() => { globalThis.__checklistBirthDate = '1950-01-01'; });
     await native.locator('textarea').fill('');
     await openChecklistAction(native, 'Caídas en adultos');
+    await ficha.bringToFront(); mark('caídas en adultos');
     await modal.getByRole('heading', { name: 'Caídas en adultos', exact: true }).waitFor();
     await modal.getByLabel('Fecha de valoración').fill('2026-11-27');
     await modal.getByText('Mayor de 75 años (3 pts)', { exact: true }).waitFor();
@@ -312,6 +324,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await worker.evaluate(() => { globalThis.__checklistBirthDate = '2024-06-01'; });
     await native.locator('textarea').fill('');
     await openChecklistAction(native, 'Caídas pediátricas');
+    await ficha.bringToFront(); mark('caídas pediátricas');
     await modal.getByRole('heading', { name: 'Caídas pediátricas', exact: true }).waitFor();
     await modal.getByLabel('Fecha de valoración').fill('2026-11-27');
     await modal.getByRole('radio', { name: /^Lactante mayor o preescolar/ }).check();
