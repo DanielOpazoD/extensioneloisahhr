@@ -39,13 +39,6 @@ describe('CodeRabbit clinical integration hardening', () => {
     );
   });
 
-  it('fails startup closed when patient-flow runtime is missing', () => {
-    expect(backgroundSource).toContain('!self.HhrFichaMedicoPatientFlowRuntime');
-    expect(backgroundSource).toContain(
-      "throw new Error('No se pudo cargar el runtime de trazabilidad de pacientes.')"
-    );
-  });
-
   it('separates expired and forbidden sessions and only forwards approved egreso metadata', () => {
     expect(gestionCamasRuntimeSource).toContain('if (response.status === 401)');
     expect(gestionCamasRuntimeSource).toContain("if (response.status === 403) return 'forbidden'");

@@ -430,7 +430,6 @@ describe('shared Rayen runtime-message contract', () => {
       path.resolve('extension/gestion-camas-statistical-report-fetcher.js'),
       'utf8'
     );
-    expect(background).toContain("'gestion-camas-discharge-report-runtime.js'");
     expect(dischargeReportFetcher).toContain('Informe_Estadistico_Egreso_Hospitalario_CARTA.pdf');
     expect(dischargeReportFetcher).toContain("reportUrl.searchParams.set('ENC_ID', encounterId)");
     expect(dischargeReportFetcher).toContain('await markSessionVerified(record)');

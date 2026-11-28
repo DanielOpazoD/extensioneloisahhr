@@ -108,11 +108,8 @@ const createDependencies = (overrides: RuntimeDependencies = {}) => ({
 
 describe('hospitalized clinical-document batch runtime owner', () => {
   it('loads at worker startup, fails closed and removes inline batch orchestration', () => {
-    const startup = backgroundSource.slice(0, backgroundSource.indexOf('const REPORT_FILE'));
-
-    expect(startup).toContain("'clinical-batch-print-runtime.js'");
-    expect(startup).toContain('No se pudo cargar el runtime batch de documentos hospitalizados.');
-    expect(backgroundSource).toContain('self.HhrClinicalBatchPrintRuntime.create({');
+    // Loaded at startup and stopping the worker with its own words when missing: checked on the running
+    // worker in workerRoutes.test.js.
     expect(backgroundSource).not.toContain('const sweepPrescriptionBatches = async');
     expect(backgroundSource).not.toContain('const fetchHospitalizedRegimenSummaries = async');
     expect(backgroundSource).not.toContain(

@@ -10,9 +10,10 @@ const read = name => readFileSync(path.join(extension, name), 'utf8');
 
 /**
  * Loads the worker. `answers` maps a chrome call (`'chrome.tabs.query'`) to what it resolves to; any other
- * call resolves to undefined and any event only records its listener.
+ * call resolves to undefined and any event only records its listener. `without` names imported files to
+ * leave out, as a broken package would.
  */
-export function loadWorker({ answers = {} } = {}) {
+export function loadWorker({ answers = {}, without = [] } = {}) {
   const listeners = [];
   const defaults = { 'chrome.tabs.query': [], 'chrome.storage.local.get': {}, 'chrome.storage.session.get': {} };
   const known = { ...defaults, ...answers };
@@ -34,7 +35,7 @@ export function loadWorker({ answers = {} } = {}) {
   context.globalThis = context;
   context.chrome = member('chrome');
   context.importScripts = (...names) => {
-    for (const name of names) vm.runInContext(read(name), context, { filename: name });
+    for (const name of names) if (!without.includes(name)) vm.runInContext(read(name), context, { filename: name });
   };
   vm.runInContext(read('background.js'), context, { filename: 'background.js' });
 

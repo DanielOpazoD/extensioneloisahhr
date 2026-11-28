@@ -153,11 +153,8 @@ const seedBatch = (dependencies: RuntimeDependencies, overrides = {}) => {
 
 describe('clinical handoff runtime owner', () => {
   it('loads before routing, fails closed and removes the inline owner from background', () => {
-    const startup = backgroundSource.slice(0, backgroundSource.indexOf('const REPORT_FILE'));
-
-    expect(startup).toContain("'clinical-handoff-runtime.js'");
-    expect(startup).toContain('No se pudo cargar el runtime clínico de entrega de turno.');
-    expect(backgroundSource).toContain('self.HhrClinicalHandoffRuntime.create({');
+    // Loaded at startup and stopping the worker with its own words when missing: checked on the running
+    // worker in workerRoutes.test.js.
     expect(backgroundSource).toContain(
       'return clinicalHandoffRuntime.readRecoveryReview({ encId, info });'
     );
