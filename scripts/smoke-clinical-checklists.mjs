@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { mockSavedChecklistScores } from './smoke-checklist-scores.mjs';
 
 const actionsButton = scope => scope.getByRole('button', { name: 'Acciones de evolución' });
 const openChecklistAction = async (scope, name = 'Pautas') => {
@@ -147,10 +148,25 @@ export async function verifyClinicalChecklists(context, original, worker) {
     assert.equal(await actionsButton(ficha).count(), 0);
     await worker.evaluate(async () => {
       globalThis.__checklistFetch = globalThis.fetch;
-      globalThis.fetch = (input, init) => String(input).includes('/api/encounter/patientHeaderData/')
-        ? Promise.resolve(Response.json({ patID: 91, preferredIdentifierCode: globalThis.__checklistDocument || 'TEST-X',
-          firstGivenName: 'Persona', firstFamilyName: 'Sintética', birthDate: globalThis.__checklistBirthDate || '2000-01-01' }))
-        : globalThis.__checklistFetch(input, init);
+      globalThis.fetch = (input, init) => {
+        const url = String(input);
+        const header = /\/api\/encounter\/patientHeaderData\/(\d+)\//.exec(url);
+        if (header) {
+          const pediatric = header[1] === '661735';
+          return Promise.resolve(Response.json({
+            patID: pediatric ? 92 : 91,
+            preferredIdentifierCode: pediatric ? 'TEST-PEDS' : globalThis.__checklistDocument || 'TEST-X',
+            firstGivenName: 'Persona', firstFamilyName: 'Sintética',
+            birthDate: pediatric ? '2024-06-01' : globalThis.__checklistBirthDate || '2000-01-01',
+          }));
+        }
+        const history = /\/api\/encounter\/(\d+)\/getPatientEncounterHistoryReportServer\//.exec(url);
+        if (history && globalThis.__checklistHistory) {
+          const evolutionResume = globalThis.__checklistHistory[history[1]] || [];
+          return Promise.resolve(Response.json([{ evolutionResume }]));
+        }
+        return globalThis.__checklistFetch(input, init);
+      };
       await chrome.storage.local.set({ 'hhr-clinical-checklists-enabled': true });
     });
     await worker.evaluate(async () => {
@@ -260,9 +276,16 @@ export async function verifyClinicalChecklists(context, original, worker) {
     assert.equal(await native.evaluate(dialog => dialog.open), true);
 
     await ficha.bringToFront(); mark('escala Braden');
+    const scores = await mockSavedChecklistScores(ficha, worker);
+    const dateTime = async time => {
+      await modal.getByLabel('Fecha de valoración').fill('2026-11-27');
+      await modal.getByLabel('Hora de valoración (Rapa Nui)').fill(time);
+    };
+    await worker.evaluate(() => { globalThis.__checklistBirthDate = '1950-01-01'; });
     // The bundled scale works with only Eloísa open, and never uses a narrative draft as its destination.
     await openChecklistAction(native, 'Braden');
     await modal.getByRole('heading', { name: 'Braden adulto', exact: true }).waitFor();
+    await dateTime('16:15');
     const insert = modal.getByRole('button', { name: 'Insertar en evolución', exact: true });
     await insert.click();
     await modal.getByRole('status').filter({ hasText: 'Completa primero' }).waitFor();
@@ -283,6 +306,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await insert.press('Enter');
     await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
     assert.equal(await native.locator('textarea').inputValue(), bradenText);
+    await scores.save(native);
 
     await openChecklistAction(native, 'Braden');
     await modal.getByRole('heading', { name: 'Braden adulto', exact: true }).waitFor();
@@ -298,12 +322,12 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await modal.getByText('0 de 6 dimensiones completas', { exact: true }).waitFor();
     await modal.getByRole('button', { name: 'Cerrar', exact: true }).click();
 
-    await worker.evaluate(() => { globalThis.__checklistBirthDate = '1950-01-01'; });
+    await worker.evaluate(() => { delete globalThis.__checklistDocument; });
     await native.locator('textarea').fill('');
     await openChecklistAction(native, 'Caídas en adultos');
     await ficha.bringToFront(); mark('caídas en adultos');
     await modal.getByRole('heading', { name: 'Caídas en adultos', exact: true }).waitFor();
-    await modal.getByLabel('Fecha de valoración').fill('2026-11-27');
+    await dateTime('23:40');
     await modal.getByText('Mayor de 75 años (3 pts)', { exact: true }).waitFor();
     await modal.getByRole('checkbox', { name: /^Ningún tratamiento/ }).check();
     await insert.click();
@@ -320,13 +344,28 @@ export async function verifyClinicalChecklists(context, original, worker) {
     const adultFalls = await native.locator('textarea').inputValue();
     assert.match(adultFalls, /^#EscalaCaidas\nCaídas en adultos\n2026-11-27 /);
     assert.match(adultFalls, /Puntaje: 4 \/ 30\nRiesgo de caídas según escala: Medio \(medio\)/);
+    await scores.save(native);
 
-    await worker.evaluate(() => { globalThis.__checklistBirthDate = '2024-06-01'; });
+    await ficha.evaluate(() => {
+      history.pushState({}, '', '/dashboard/encounter-list-nurse/661735');
+      document.querySelector('#observationEntrySection').append(document.createElement('span'));
+    });
+    await native.locator('textarea').fill('');
+    await openChecklistAction(native, 'Braden');
+    await modal.getByRole('heading', { name: 'Braden Q', exact: true }).waitFor();
+    await dateTime('08:15');
+    for (const option of await modal.locator('button[data-points="1"]').all()) await option.click();
+    await modal.getByText('Total: 7 / 28', { exact: true }).waitFor();
+    await insert.press('Enter');
+    await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
+    assert.match(await native.locator('textarea').inputValue(), /^#EscalaBraden\nBraden Q\n2026-11-27 08:15\n/);
+    await scores.save(native);
+
     await native.locator('textarea').fill('');
     await openChecklistAction(native, 'Caídas pediátricas');
     await ficha.bringToFront(); mark('caídas pediátricas');
     await modal.getByRole('heading', { name: 'Caídas pediátricas', exact: true }).waitFor();
-    await modal.getByLabel('Fecha de valoración').fill('2026-11-27');
+    await dateTime('23:45');
     await modal.getByRole('radio', { name: /^Lactante mayor o preescolar/ }).check();
     for (const label of ['Antecedentes de caídas previas', 'Compromiso de conciencia']) {
       await modal.getByRole('group', { name: label, exact: true }).getByRole('radio', { name: /^Sí/ }).check();
@@ -350,11 +389,24 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await insert.press('Enter');
     await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
     assert.equal(await native.locator('textarea').inputValue(), pediatricFalls);
+    await scores.save(native);
+
+    mark('Scores tras guardar y recargar');
+    await scores.verify('661735', [
+      ['Caídas pediátricas', '27-11-2026 · 23:45', '10 / 10', 'Alto', '28-11-2026'],
+      ['Braden Q', '27-11-2026 · 08:15', '7 / 28', 'Alto', '28-11-2026'],
+    ], 'pediatrico');
+    await scores.verify('661734', [
+      ['Caídas en adultos', '27-11-2026 · 23:40', '4 / 30', 'Medio', '30-11-2026'],
+      ['Braden adulto', '27-11-2026 · 16:15', '6 / 23', 'Alto', '28-11-2026'],
+    ], 'adulto');
+    mark('Braden, Braden Q y ambas pautas de caídas verificadas en Scores');
   } finally {
     await worker.evaluate(async () => {
       if (globalThis.__checklistFetch) { globalThis.fetch = globalThis.__checklistFetch; delete globalThis.__checklistFetch; }
       delete globalThis.__checklistDocument;
       delete globalThis.__checklistBirthDate;
+      delete globalThis.__checklistHistory;
       await chrome.storage.local.remove('hhr-clinical-checklists-enabled');
     });
     await ficha.evaluate(() => document.getElementById('observationEntrySection')?.remove());

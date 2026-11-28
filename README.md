@@ -67,6 +67,21 @@ nativo de DAU; HHR verifica además su configuración actual.
 La huella identifica una compilación; tras editar una carpeta descomprimida hay que volver
 a empaquetar y recargar Chrome. Una carpeta fuente sin empaquetar no afirma una identidad.
 
+### Pruebas de GitHub Actions en OrbStack
+
+Con OrbStack abierto, ejecuta `bash scripts/test-orbstack.sh` desde el repositorio.
+El comando prueba el commit local `HEAD` con Ubuntu 24.04 (x86-64), el Node de
+`.nvmrc` y el Chromium de Playwright fijado por `package-lock.json`. Usa
+`origin/main` local para comprobar la versión. La imagen reutiliza el Chromium
+instalado mientras se mantenga la versión de Playwright. Cada ejecución usa un
+contenedor sin acceso a la red, con datos sintéticos.
+
+El comando ejecuta en paralelo las comprobaciones unitarias, las pruebas de la
+extensión empaquetada en Chromium y las capturas de la CI. El ZIP, las capturas y
+los registros de las pruebas quedan bajo `dist/orbstack/`.
+Para ejecutar una parte, pasa el comando al final, por ejemplo
+`bash scripts/test-orbstack.sh npm run test:runtime`.
+
 ### Entrega de turno con equipo registrado
 
 El ZIP publicado abre HHR Hospitalizados para registrar el equipo una sola vez.
