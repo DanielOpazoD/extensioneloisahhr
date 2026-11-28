@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.236
+
+- «Acciones de evolución» incorpora las pautas institucionales de caídas en adultos (desde los 15 años) y pediátricas. Cada formulario calcula el puntaje y el riesgo y prepara una nota `#EscalaCaidas` para guardar en Eloísa.
+- «Scores» reúne las valoraciones de caídas y de Braden del episodio. Muestra la próxima valoración en hora de Rapa Nui según el protocolo HHR y deja en «Evoluciones» las notas de caídas incompletas o inconsistentes.
+
 ## 0.48.235
 
 - Plan de tratamiento muestra más horas a la vez. Eloísa pide al servidor siete horas por página (`limit=7`, leído en la página el 27-11-2026); en la vista compacta la extensión pide las que caben en la ventana con la grilla angosta: 10 a 1280 px, 12 a 1440 px y hasta 14. Eloísa dibuja lo que recibe: sus páginas, sus flechas e «Ir a Hoy» siguen funcionando (comprobado en la página). Solo cambia el tamaño de página de las cuatro lecturas del Plan; nada más va distinto al servidor.

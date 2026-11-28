@@ -36,7 +36,9 @@ En «Acciones de evolución», «Continuar pauta» recupera las respuestas al ce
 
 «Acciones de evolución → Braden» abre la pauta incluida en la extensión. En la fecha de valoración, desde los 30 días y hasta antes de los 15 años corresponde Braden Q, y desde los 15 años corresponde Braden adulto. La extensión comprueba la ficha y prepara una evolución dedicada cuya primera línea es `#EscalaBraden`. «Insertar en evolución» requiere un editor vacío. Revisa y guarda el texto con los controles de Eloísa.
 
-En «Ver evoluciones → Scores» aparecen las valoraciones Braden válidas de ese episodio, ordenadas por fecha de valoración. El nombre de la escala abre la nota original con sus observaciones. La próxima valoración se calcula desde la fecha y hora registradas en Rapa Nui, según el riesgo. Las notas tachadas y archivadas figuran con su estado. Las notas que se muestran en Scores se omiten de Evoluciones en este lector. «Ver más antiguas» amplía el período para ambas vistas.
+«Acciones de evolución» incluye «Caídas en adultos» y «Caídas pediátricas». Las pautas de HHR suman los factores de los formularios institucionales y clasifican el puntaje en riesgo bajo (0–3), medio (4–7) o alto (8 o más). La pauta adulta aplica desde los 15 años y calcula el factor de edad con los datos de la ficha. La pauta pediátrica aplica desde el nacimiento hasta antes de los 15 años y permite marcar los antecedentes que correspondan. La nota empieza con `#EscalaCaidas` y se guarda con los controles de Eloísa.
+
+En «Ver evoluciones → Scores» aparecen las valoraciones válidas de Braden y caídas del episodio, ordenadas por fecha de valoración. El nombre de la escala abre la nota original con sus observaciones. La próxima valoración se calcula desde la fecha y hora registradas en Rapa Nui, según el riesgo. Para caídas se aplica la frecuencia del protocolo HHR GCL 2.2, página 5 (cada día, cada 3 días o cada 7 días). Las notas tachadas y archivadas figuran con su estado. Las notas que se muestran en Scores se omiten de Evoluciones en este lector. «Ver más antiguas» amplía el período para ambas vistas.
 
 ## Preparar un cambio
 

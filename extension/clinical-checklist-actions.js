@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  function create({ button, open, hasBraden, readMenu }) {
+  function create({ button, open, hasBraden, fallsTemplates, readMenu }) {
     const root = document.createElement('span');
     root.className = 'hhr-checklist-launcher';
     root.dataset.hhrChecklist = chrome.runtime.id;
@@ -36,11 +36,13 @@
     const pautas = addItem('Pautas', null);
     pautas.autofocus = true;
     const braden = addItem('Braden', 'braden');
+    const falls = (fallsTemplates || []).map(template => addItem(template.title, template.id));
     let favoriteMode;
     const shortcut = addItem('', () => favoriteMode);
     const showMenu = ({ saved, draft, favorite } = {}) => {
       pautas.textContent = saved ? 'Insertar pauta guardada' : draft ? 'Continuar pauta' : 'Pautas';
       braden.hidden = Boolean(saved || draft || !hasBraden);
+      for (const assessment of falls) assessment.hidden = Boolean(saved || draft);
       favoriteMode = favorite ? { templateId: favorite.id } : null;
       shortcut.textContent = favorite?.title || '';
       shortcut.hidden = Boolean(saved || draft || !favorite);

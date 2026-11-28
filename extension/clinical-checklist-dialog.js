@@ -8,6 +8,8 @@
   const route = () => globalThis.HhrPrescriptionPrint.resolveEncounterId(location.href);
   const evo = globalThis.HhrChecklistEvolution;
   const braden = globalThis.HhrChecklistBraden;
+  const falls = globalThis.HhrChecklistFalls;
+  const fallsView = globalThis.HhrChecklistFallsView;
   let enabled = false,
     launcher,
     launcherEpisode,
@@ -63,7 +65,7 @@
   }
 
   async function verifyChart(state) {
-    const header = await call(state, { action: state.localBraden ? 'braden' : 'verify' });
+    const header = await call(state, { action: state.assessment ? 'assessmentIdentity' : 'verify' });
     if (
       !current(state) ||
       header.episode !== state.episode ||
@@ -75,12 +77,12 @@
     return header;
   }
 
-  async function transcribe(state, standaloneText) {
+  async function transcribe(state, standalone) {
     const previousDialog = dialog;
     const active = () => current(state) && dialog === previousDialog && previousDialog?.isConnected;
     const verify = async () => {
       const identity = await verifyChart(state);
-      if (standaloneText) validateBradenAge(state, identity);
+      standalone?.validate(identity);
     };
     await verify();
     if (!active()) return false;
@@ -93,16 +95,16 @@
         await verify();
       }
       if (active()) {
-        inserted = standaloneText
-          ? evo.insertStandalone(standaloneText, braden.EVOLUTION_HEADING)
+        inserted = standalone
+          ? evo.insertStandalone(standalone.text, standalone.heading)
           : evo.insert(state.record);
       }
     } finally {
       if (!inserted && active() && !previousDialog.open) previousDialog.showModal();
     }
     if (!inserted) return false;
-    insertedReceipt = standaloneText
-      ? { episode: state.episode, heading: braden.EVOLUTION_HEADING }
+    insertedReceipt = standalone
+      ? { episode: state.episode, heading: standalone.heading }
       : { episode: state.episode, code: state.record.code };
     session = null;
     close();
@@ -372,23 +374,37 @@
     }
   }
 
-  async function submitBraden(state, template, form, group, copyOnly) {
+  function validateFallsAge(state, template, identity) {
+    const eligible = falls.eligibility(template, identity, state.answers.fecha);
+    if (eligible.reason) throw new Error(eligible.reason);
+    if (eligible.adultAge && eligible.adultAge !== state.answers.edad) {
+      throw new Error('Cambió la edad de la ficha. Reabre la pauta para confirmar el puntaje por edad.');
+    }
+  }
+
+  async function submitLocalAssessment(state, template, form, group, copyOnly) {
     if (state.busy || !current(state) || !form.reportValidity()) return;
-    const missing = missingRequiredDimension(template, state.answers);
-    if (missing) {
-      status('Completa primero: ' + missing + '.');
-      return;
-    }
-    const text = braden.buildDraftEvolutionText(template, state.answers);
-    if (!text) {
-      status('Revisa los puntajes de todas las dimensiones.');
-      return;
-    }
-    state.busy = true;
-    group.disabled = true;
+    const isBraden = state.assessment === 'braden';
+    const validate = isBraden
+      ? identity => validateBradenAge(state, identity)
+      : identity => validateFallsAge(state, template, identity);
+    const model = isBraden ? braden : falls;
     try {
+      validate(state.catalog);
+      const missing = isBraden ? missingRequiredDimension(template, state.answers) : falls.evaluate(template, state.answers).missing;
+      if (missing) {
+        status('Completa primero: ' + missing + '.');
+        return;
+      }
+      const text = isBraden ? braden.buildDraftEvolutionText(template, state.answers) : falls.buildEvolutionText(template, state.answers);
+      if (!text) {
+        status('Revisa la fecha, la hora y los factores de la valoración.');
+        return;
+      }
+      state.busy = true;
+      group.disabled = true;
       if (copyOnly) {
-        validateBradenAge(state, await verifyChart(state));
+        validate(await verifyChart(state));
         if (!group.isConnected) return;
         const copied = await copyEvolutionText(text);
         if (current(state)) status(copied
@@ -396,7 +412,7 @@
           : 'Selecciona el texto de la vista previa para copiarlo.');
       } else {
         status('Comprobando el episodio en Eloísa…');
-        if (!(await transcribe(state, text)) && current(state)) {
+        if (!(await transcribe(state, {text, heading: model.EVOLUTION_HEADING, validate})) && current(state)) {
           status('Abre una evolución nueva y vacía para insertar la pauta. También puedes copiar el texto.');
         }
       }
@@ -408,13 +424,16 @@
     }
   }
 
-  function renderBraden(state, form) {
-    const eligible = braden.eligibleTemplate(state.catalog, state.answers.fecha);
+  function renderLocalAssessment(state, form) {
     dialog.querySelector('.identity').textContent = [state.catalog.patientName, state.catalog.document, state.catalog.patientAge]
       .filter(Boolean).join(' · ');
-    const template = globalThis.HhrBradenTemplates.find(item => item.id === (state.templateId || eligible.templateId));
+    const isBraden = state.assessment === 'braden';
+    const eligible = isBraden ? braden.eligibleTemplate(state.catalog, state.answers.fecha) : null;
+    const template = isBraden
+      ? globalThis.HhrBradenTemplates.find(item => item.id === (state.templateId || eligible.templateId))
+      : falls.templateFor(state.assessment);
     if (!template) {
-      status(eligible.reason || 'No se pudo abrir la pauta Braden.');
+      status(eligible?.reason || 'No se pudo abrir la pauta.');
       return;
     }
     state.templateId = template.id;
@@ -424,7 +443,7 @@
     const fields = make('div');
     const actions = make('div');
     actions.className = 'hhr-checklist-actions';
-    const copy = () => submitBraden(state, template, form, group, true);
+    const copy = () => submitLocalAssessment(state, template, form, group, true);
     const save = make('button', 'Insertar en evolución');
     save.type = 'submit';
     actions.append(save, button('Copiar texto', event => {
@@ -432,14 +451,13 @@
     }, 'hhr-checklist-copy'));
     group.append(make('h3', template.title), fields, actions);
     form.replaceChildren(group);
-    braden.renderMatrix({
-      container: fields, template, bradenTemplates: [template], answers: state.answers,
-      onAnswerChange: () => status(''), onCopyText: copy,
-    });
+    const fieldsContext = { container: fields, template, answers: state.answers, onAnswerChange: () => status('') };
+    if (isBraden) braden.renderMatrix({ ...fieldsContext, bradenTemplates: [template], onCopyText: copy });
+    else fallsView.render({ ...fieldsContext, identity: state.catalog });
     state.initialAnswers ??= { ...state.answers };
     form.onsubmit = event => {
       event.preventDefault();
-      if (event.isTrusted && navigator.userActivation.isActive) void submitBraden(state, template, form, group, false);
+      if (event.isTrusted && navigator.userActivation.isActive) void submitLocalAssessment(state, template, form, group, false);
     };
   }
 
@@ -641,10 +659,10 @@
     const nativeDialogs = evo.dialogs();
     if (nativeDialogs.some(evo.templateDialog)) return;
     const nativeEditor = nativeDialogs.find(evo.evolutionDialog);
-    const localBraden = preferredMode === 'braden';
+    const assessment = preferredMode === 'braden' ? 'braden' : falls?.templateFor(preferredMode)?.id || null;
     if (!session || session.episode !== episode ||
-      (!session.record && !hasDraft(session) && session.localBraden !== localBraden)) {
-      session = { episode, code: 'PT-' + crypto.randomUUID().toUpperCase(), answers: {}, preferredMode, localBraden };
+      (!session.record && !hasDraft(session) && session.assessment !== assessment)) {
+      session = { episode, code: 'PT-' + crypto.randomUUID().toUpperCase(), answers: {}, preferredMode, assessment };
     } else if (!session.record && preferredMode) {
       session.preferredMode = preferredMode;
       if (!hasDraft(session)) session.templateId = null;
@@ -652,7 +670,8 @@
     const state = session;
     dialog = make('dialog');
     dialog.className = 'hhr-checklist-dialog';
-    dialog.classList.toggle('is-matrix', state.localBraden);
+    dialog.classList.toggle('is-matrix', state.assessment === 'braden');
+    dialog.classList.toggle('is-falls', Boolean(falls?.templateFor(state.assessment)));
     dialog.dataset.hhrChecklist = chrome.runtime.id;
     dialog.setAttribute('aria-labelledby', 'hhr-checklist-heading');
     const header = make('header');
@@ -676,10 +695,10 @@
     });
     dialog.showModal();
     const surface = dialog;
-    if (state.localBraden) {
+    if (state.assessment) {
       status('Comprobando la ficha en Eloísa…');
       try {
-        const identity = await call(state, { action: 'braden' });
+        const identity = await call(state, { action: 'assessmentIdentity' });
         if (identity.episode !== episode || !identity.actor || !identity.document) {
           throw new Error('Eloísa no pudo confirmar el paciente y el episodio.');
         }
@@ -689,12 +708,12 @@
           insertedReceipt = null;
           close();
           refresh();
-          await open('braden');
+          await open(state.assessment);
           return;
         }
         state.catalog = identity;
         status('');
-        renderBraden(state, form);
+        renderLocalAssessment(state, form);
       } catch (error) {
         if (dialog === surface && current(state)) status(error.message);
       }
@@ -743,7 +762,8 @@
     if (!launcher) {
       launcherEpisode = episode;
       launcher = globalThis.HhrChecklistActions.create({
-        button, hasBraden: Boolean(braden && globalThis.HhrBradenTemplates?.length), readMenu: () => readMenu(episode), open: mode => {
+        button, hasBraden: Boolean(braden && globalThis.HhrBradenTemplates?.length),
+        fallsTemplates: fallsView ? falls?.templates : null, readMenu: () => readMenu(episode), open: mode => {
           if (route() === episode) return open(mode);
         },
       });

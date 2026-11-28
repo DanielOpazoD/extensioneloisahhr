@@ -242,8 +242,9 @@
       .hhr-evo-reader-scores { padding-inline:8px; }
       .hhr-scores-table {
         font-size:.75rem;
-        :is(th,td) { padding-inline:4px; }
+        :is(th,td) { padding-inline:2px; }
         tbody :is(th,time) { white-space:normal; }
+        .hhr-score-note-link { text-align:start; }
         .hhr-score-date { white-space:nowrap; }
         .hhr-score-hour { display:block; }
         .hhr-score-time-separator { display:none; }

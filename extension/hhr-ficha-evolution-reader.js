@@ -33,7 +33,7 @@
     const evolutions = [], scores = [];
     for (const note of notes) {
       const text = readable(note.note);
-      const value = globalThis.HhrClinicalBradenNotes?.parse(text, note);
+      const value = globalThis.HhrClinicalBradenNotes?.parse(text, note) || globalThis.HhrChecklistFalls?.parse(text, note);
       if (value) scores.push({ ...value, note, text });
       else evolutions.push({ ...note, text });
     }
@@ -44,7 +44,7 @@
 
   function scoresTable(scores) {
     const table = el('table', 'hhr-scores-table');
-    table.createCaption().textContent = 'Valoraciones Braden del episodio';
+    table.createCaption().textContent = 'Valoraciones del episodio';
     const header = table.createTHead().insertRow();
     for (const label of scoreColumns) header.append(Object.assign(el('th', '', label), { scope: 'col' }));
     const rows = table.createTBody();
@@ -143,7 +143,7 @@
       scoreFeed.hidden = !showingScores || !scores.length;
       scoreFeed.replaceChildren(...(showingScores && scores.length ? [scoresTable(scores)] : []));
       const hasResults = showingScores ? scores.length : notes.length;
-      const subject = showingScores ? 'valoraciones Braden' : 'evoluciones';
+      const subject = showingScores ? 'valoraciones' : 'evoluciones';
       const period = (WINDOW_LABELS.get(days) || '').toLowerCase();
       const message = state === 'loading' ? 'Cargando ' + subject + '…' : state === 'failed' ? failure :
         hasResults ? '' : 'Sin ' + subject + ' en ' + (days === 365 ? 'el ' : 'los ') + period + '.';

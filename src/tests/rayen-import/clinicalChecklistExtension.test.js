@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import '../../../extension/hhr-origin-policy.js';
 import '../../../extension/clinical-checklist-evolution.js';
+import '../../../extension/clinical-assessment-clock.js';
 import '../../../extension/clinical-checklist-braden-templates.js';
 import '../../../extension/clinical-checklist-braden.js';
 import '../../../extension/clinical-checklist-broker.js';

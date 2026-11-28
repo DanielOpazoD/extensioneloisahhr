@@ -1,7 +1,7 @@
 // Fast NT 234 Braden adulto / Braden Q pediátrico matrix view and live scoring helpers.
 (root => {
   'use strict';
-  const HOSPITAL_TIME_ZONE = 'Pacific/Easter';
+  const { hospitalDateTimeNow, calendarDay, birthDayOf, completedYears } = root.HhrClinicalAssessmentClock;
   const EVOLUTION_HEADING = '#EscalaBraden';
   const ADULT_ID = 'hhr-lpp-braden-adulto';
   const PEDIATRIC_ID = 'hhr-lpp-braden-q';
@@ -35,23 +35,6 @@
     return el;
   };
 
-  function hospitalDateTimeNow(now = new Date()) {
-    const parts = new Intl.DateTimeFormat('en-CA', {
-      timeZone: HOSPITAL_TIME_ZONE,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hourCycle: 'h23',
-    }).formatToParts(now);
-    const part = type => parts.find(entry => entry.type === type)?.value || '';
-    return {
-      date: `${part('year')}-${part('month')}-${part('day')}`,
-      time: `${part('hour')}:${part('minute')}`,
-    };
-  }
-
   function isBradenTemplate(template) {
     if (!template) return false;
     return (
@@ -65,26 +48,15 @@
     return id === ADULT_ID || id === PEDIATRIC_ID;
   }
 
-  // Birthdays and evaluation dates are calendar dates. UTC is used only to count days.
-  function calendarDay(value) {
-    const text = String(value || '');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
-    const day = new Date(text + 'T00:00:00Z');
-    return Number.isFinite(day.getTime()) && day.toISOString().startsWith(text) ? day : null;
-  }
-
   function eligibleTemplate(catalog, date = hospitalDateTimeNow().date) {
     const evaluation = calendarDay(date);
     if (!evaluation) return { reason: 'Ingresa una fecha de valoración válida.' };
-    const birthDate = String(catalog?.patientBirthDate || '').trim();
-    const birth = calendarDay(birthDate.match(/^\d{4}-\d{2}-\d{2}(?=$|[T ])/i)?.[0]);
+    const birth = birthDayOf(catalog?.patientBirthDate);
     if (birth) {
       const days = (evaluation - birth) / 86400000;
       if (days < 0) return { reason: 'La fecha de valoración es anterior al nacimiento.' };
       if (days < 30) return { reason: 'Braden Q se aplica desde los 30 días. Para menores de 30 días corresponde NSRAS.' };
-      const years = evaluation.getUTCFullYear() - birth.getUTCFullYear();
-      const beforeBirthday = date.slice(5) < birth.toISOString().slice(5, 10);
-      return { templateId: years - Number(beforeBirthday) >= 15 ? ADULT_ID : PEDIATRIC_ID };
+      return { templateId: completedYears(birth, evaluation) >= 15 ? ADULT_ID : PEDIATRIC_ID };
     }
     // A current age label cannot establish eligibility on a different evaluation date.
     if (date === hospitalDateTimeNow().date) {

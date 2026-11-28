@@ -26,6 +26,7 @@
 .hhr-checklist-dialog button:hover,.hhr-checklist-dialog a:hover{background:#e3f1ed}
 .hhr-checklist-dialog{--hhr-checklist-inset:clamp(8px,6dvh,48px);box-sizing:border-box;width:min(540px,94vw);max-height:calc(100dvh - 2 * var(--hhr-checklist-inset));overflow:auto;overscroll-behavior:contain;margin:var(--hhr-checklist-inset) auto auto;border:0;border-radius:12px;padding:18px;color:#193a35;background:white;box-shadow:0 16px 60px #123c3540;font:14px/1.4 system-ui}
 .hhr-checklist-dialog.is-matrix{width:min(860px,96vw)}
+.hhr-checklist-dialog.is-falls{width:min(780px,96vw)}
 .hhr-checklist-dialog::backdrop{background:#102f2b66}
 .hhr-checklist-dialog header,.hhr-checklist-dialog footer,.hhr-checklist-actions,.hhr-braden-switcher,.hhr-braden-summary-head,.hhr-braden-preview-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .hhr-checklist-actions,.hhr-braden-switcher,.hhr-braden-summary-head{justify-content:flex-start}
@@ -81,6 +82,18 @@
 .hhr-braden-preview-wrap{display:grid;gap:5px;margin-top:8px}
 .hhr-braden-preview-title{font-size:12px;font-weight:600;color:#37574f}
 .hhr-braden-copy-inline{padding:3px 9px!important;font-size:12px!important}
+.hhr-falls-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start}
+.hhr-falls-group{margin:0;padding:4px 8px 8px;border:1px solid #cfe0db;border-radius:8px}
+.hhr-falls-group legend{padding:0 4px;color:#1d4741;font-size:13px;font-weight:700}
+.hhr-falls-adult-age{grid-column:1/-1}
+.hhr-falls-age{margin:2px 4px;color:#37574f}
+.hhr-checklist-dialog .hhr-falls-option{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:7px;min-height:30px;padding:3px 4px;cursor:pointer}
+.hhr-checklist-dialog .hhr-falls-option:hover{background:#f0f7f5;border-radius:4px}
+.hhr-checklist-dialog .hhr-falls-option input{width:16px;height:16px;min-height:0;margin:0;accent-color:#17665e;padding:0}
+.hhr-falls-weight{white-space:nowrap;font-size:12px;color:#4a6b64;font-variant-numeric:tabular-nums}
+.hhr-falls-preview summary{cursor:pointer;font-weight:600;color:#37574f}
+.hhr-falls-preview[open] summary{margin-block-end:6px}
+@media(max-width:560px){.hhr-falls-sections{grid-template-columns:minmax(0,1fr)}}
 
 .hhr-checklist-action-menu [hidden]{display:none}
 /* Changing the template with answers asks first, in the window: a question, the way back in words only and
