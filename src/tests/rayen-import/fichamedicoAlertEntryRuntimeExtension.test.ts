@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
-import '../../../extension/fichamedico-alert-entry-runtime.js';
+import '../../../extension/fichamedico/fichamedico-alert-entry-runtime.js';
 
 const { create } = (
   globalThis as typeof globalThis & {

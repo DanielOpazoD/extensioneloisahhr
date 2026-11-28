@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-center-preferences.js';
-import '../../../extension/hhr-center-panel-runtime.js';
-import '../../../extension/hhr-center-shell-runtime.js';
-import '../../../extension/hhr-center-patient-context.js';
-import '../../../extension/hhr-request-forms.js';
-import '../../../extension/hhr-lab-request-patient.js';
-import '../../../extension/hhr-lab-center.js';
-import '../../../extension/hhr-lab-selection-runtime.js';
-import '../../../extension/hhr-document-preview-runtime.js';
+import '../../../extension/centro/hhr-center-preferences.js';
+import '../../../extension/centro/hhr-center-panel-runtime.js';
+import '../../../extension/centro/hhr-center-shell-runtime.js';
+import '../../../extension/centro/hhr-center-patient-context.js';
+import '../../../extension/centro/hhr-request-forms.js';
+import '../../../extension/centro/hhr-lab-request-patient.js';
+import '../../../extension/centro/hhr-lab-center.js';
+import '../../../extension/centro/hhr-lab-selection-runtime.js';
+import '../../../extension/centro/hhr-document-preview-runtime.js';
 
 const preferencesOwner = globalThis.HhrCenterPreferences;
 const setupPreferences = () => {

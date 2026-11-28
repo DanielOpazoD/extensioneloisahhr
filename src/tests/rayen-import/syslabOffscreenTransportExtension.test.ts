@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/syslab-offscreen-transport.js';
+import '../../../extension/syslab/syslab-offscreen-transport.js';
 
 type Relay = {
   request: (

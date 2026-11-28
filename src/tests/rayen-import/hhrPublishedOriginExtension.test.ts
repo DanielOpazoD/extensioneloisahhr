@@ -44,31 +44,31 @@ const rejectedOrigins = [
 ];
 const routes = [
   [
-    'content-hhr-epicrisis.js',
+    'contenido/content-hhr-epicrisis.js',
     'HHR_RAYEN_EPICRISIS_DOWNLOAD_REQUEST',
     'RAYEN_NURSING_MEDICAL_EPICRISIS_PRINT_REQUEST',
   ],
   [
-    'content-hhr-patient-flow.js',
+    'contenido/content-hhr-patient-flow.js',
     'HHR_RAYEN_PATIENT_FLOW_REQUEST',
     'RAYEN_PATIENT_FLOW_REPORT_REQUEST',
   ],
   [
-    'content-hhr-patient-documents.js',
+    'contenido/content-hhr-patient-documents.js',
     'HHR_RAYEN_PATIENT_DOCUMENT_OPEN_REQUEST',
     'RAYEN_PATIENT_DOCUMENT_MANAGER_REQUEST',
   ],
   [
-    'content-hhr-statistical-discharge.js',
+    'contenido/content-hhr-statistical-discharge.js',
     'HHR_RAYEN_STATISTICAL_DISCHARGE_DOWNLOAD_REQUEST',
     'RAYEN_STATISTICAL_DISCHARGE_REPORT_REQUEST',
   ],
   [
-    'content-hhr-statistical-evidence.js',
+    'contenido/content-hhr-statistical-evidence.js',
     'HHR_RAYEN_STATISTICAL_DISCHARGE_EVIDENCE_REQUEST',
     'RAYEN_STATISTICAL_DISCHARGE_EVIDENCE_REQUEST',
   ],
-  ['content-hhr-syslab.js', 'HHR_RAYEN_SYSLAB_STATUS_REQUEST', 'RAYEN_SYSLAB_STATUS_REQUEST'],
+  ['contenido/content-hhr-syslab.js', 'HHR_RAYEN_SYSLAB_STATUS_REQUEST', 'RAYEN_SYSLAB_STATUS_REQUEST'],
 ];
 
 function harness(file: string, origin: string) {
@@ -86,8 +86,8 @@ function harness(file: string, origin: string) {
     window,
     chrome: { runtime: { id: 'fixture', sendMessage, onMessage: { addListener: vi.fn() } } },
   });
-  vm.runInContext(read('hhr-origin-policy.js'), context);
-  vm.runInContext(read('message-contract.js'), context);
+  vm.runInContext(read('contratos/hhr-origin-policy.js'), context);
+  vm.runInContext(read('contratos/message-contract.js'), context);
   vm.runInContext(read(file), context);
   const dispatch = (type: string, eventOrigin = origin, source: object = window) =>
     listeners.forEach(listener =>
@@ -103,8 +103,8 @@ function harness(file: string, origin: string) {
 describe('published HHR origin contract', () => {
   it('does not probe unrelated Netlify tabs as HHR', async () => {
     const context = vm.createContext({});
-    vm.runInContext(read('hhr-origin-policy.js'), context);
-    vm.runInContext(read('health-check.js'), context);
+    vm.runInContext(read('contratos/hhr-origin-policy.js'), context);
+    vm.runInContext(read('salud/health-check.js'), context);
     const createProbe = vm.runInContext('HhrExtensionHealth.createHhrProbe', context);
     const isTargetTab = vm.runInContext('tab => HhrAppOrigins.matchesUrl(tab.url)', context);
     const sendMessage = vi.fn(async () => ({ ready: true }));
@@ -132,7 +132,7 @@ describe('published HHR origin contract', () => {
   it('declares exactly the supported HHR sites for injection and host access', () => {
     const manifest = JSON.parse(read('manifest.json'));
     const hhrScripts = manifest.content_scripts.filter((entry: { js: string[] }) =>
-      entry.js.includes('content-hhr.js')
+      entry.js.includes('contenido/content-hhr.js')
     );
     expect(hhrScripts).toHaveLength(1);
     expect(hhrScripts[0].matches).toEqual([
@@ -140,16 +140,16 @@ describe('published HHR origin contract', () => {
       ...publishedOrigins.map(origin => `${origin}/*`),
       'https://*.netlify.app/*',
     ]);
-    expect(hhrScripts[0].js.indexOf('hhr-origin-policy.js')).toBeLessThan(
-      hhrScripts[0].js.indexOf('content-hhr.js')
+    expect(hhrScripts[0].js.indexOf('contratos/hhr-origin-policy.js')).toBeLessThan(
+      hhrScripts[0].js.indexOf('contenido/content-hhr.js')
     );
     for (const match of hhrScripts[0].matches) expect(manifest.host_permissions).toContain(match);
   });
 
   describe.each([
-    'content-hhr.js',
-    'content-hhr-sync-bundle.js',
-    'content-hhr-connection-repair.js',
+    'contenido/content-hhr.js',
+    'contenido/content-hhr-sync-bundle.js',
+    'contenido/content-hhr-connection-repair.js',
   ])('%s shared relays', file => {
     it.each(rejectedOrigins)('does not install on %s', origin => {
       expect(harness(file, origin).listeners).toHaveLength(0);
@@ -158,7 +158,7 @@ describe('published HHR origin contract', () => {
 
   it('keeps wildcard candidates restricted to the approved Netlify projects', () => {
     const context = vm.createContext({});
-    vm.runInContext(read('hhr-origin-policy.js'), context);
+    vm.runInContext(read('contratos/hhr-origin-policy.js'), context);
     const matches = vm.runInContext('HhrAppOrigins.matchesPattern', context);
     for (const origin of deploymentOrigins)
       expect(matches(`${origin}/census`, 'https://*.netlify.app/*')).toBe(true);

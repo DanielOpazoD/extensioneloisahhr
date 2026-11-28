@@ -155,7 +155,7 @@ export async function verifyClinicalChecklists(context, original, worker) {
     });
     await worker.evaluate(async () => {
       const [tab] = await chrome.tabs.query({ url: 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse/661733' });
-      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['clinical-checklist-dialog.js'] });
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['clinico/clinical-checklist-dialog.js'] });
     });
     const native = ficha.locator('#test-evolution-dialog');
     await ficha.evaluate(() => {

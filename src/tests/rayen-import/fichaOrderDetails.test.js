@@ -1,6 +1,6 @@
 import {afterEach, expect, it, vi} from 'vitest';
-import '../../../extension/hhr-ficha-order-details.js';
-import '../../../extension/hhr-ficha-reading-surfaces.js';
+import '../../../extension/ficha/hhr-ficha-order-details.js';
+import '../../../extension/ficha/hhr-ficha-reading-surfaces.js';
 
 const detail = (label, open = false) => '<div class="MuiBox-root"><p class="MuiTypography-root">' +
   label + (open ? ' final ficticio.' : '…') + '</p><button type="button" class="MuiButton-root">' +

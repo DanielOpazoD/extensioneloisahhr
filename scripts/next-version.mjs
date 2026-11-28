@@ -41,7 +41,7 @@ execFileSync(
 manifest.version = version;
 delete manifest.version_name;
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
-for (const name of ["inject-fichamedico.js", "inject-gestioncamas.js"]) {
+for (const name of ["fichamedico/inject-fichamedico.js", "gestion-camas/inject-gestioncamas.js"]) {
   const file = `extension/${name}`;
   const content = fs.readFileSync(file, "utf8");
   if ((content.match(/const INJECT_VERSION = '[^']+'/g) || []).length !== 1)

@@ -15,7 +15,7 @@
         (chromeApi.runtime.getManifest().content_scripts || [])
           .filter(entry =>
             (entry.js || []).some(file =>
-              ['content-hhr.js', 'content-fichamedico.js', 'content-gestioncamas.js'].includes(file)
+              ['contenido/content-hhr.js', 'contenido/content-fichamedico.js', 'contenido/content-gestioncamas.js'].includes(file)
             )
           )
           .flatMap(entry => entry.matches || [])

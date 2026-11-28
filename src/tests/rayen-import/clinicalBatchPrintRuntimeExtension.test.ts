@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { describe, expect, it, vi } from 'vitest';
 
 const runtimeSource = readFileSync(
-  path.resolve('extension/clinical-batch-print-runtime.js'),
+  path.resolve('extension/clinico/clinical-batch-print-runtime.js'),
   'utf8'
 );
 const backgroundSource = readFileSync(path.resolve('extension/background.js'), 'utf8');
@@ -32,7 +32,7 @@ const loadFactory = () => {
     Number,
     String,
   });
-  vm.runInContext(runtimeSource, context, { filename: 'clinical-batch-print-runtime.js' });
+  vm.runInContext(runtimeSource, context, { filename: 'clinico/clinical-batch-print-runtime.js' });
   return (
     context as unknown as {
       HhrClinicalBatchPrintRuntime: {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-ficha-transitions.js';
+import '../../../extension/ficha/hhr-ficha-transitions.js';
 
 const page = `<main><header class="MuiAppBar-root"><div role="tablist">
   <button role="tab" id="encounter-event-tab-summary" aria-selected="true">Resumen</button>

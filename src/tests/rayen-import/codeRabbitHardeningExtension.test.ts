@@ -8,26 +8,26 @@ const readExtension = (file: string): string =>
   readFileSync(path.resolve('extension', file), 'utf8');
 
 const backgroundSource = readExtension('background.js');
-const clinicalHandoffRuntimeSource = readExtension('clinical-handoff-runtime.js');
-const gestionCamasRuntimeSource = readExtension('gestion-camas-runtime.js');
-const gestionCamasHealthSource = readExtension('gestion-camas-health.js');
-const gestionCamasSessionHealthSource = readExtension('gestion-camas-session-health.js');
-const gestionCamasEgresoLookupSource = readExtension('gestion-camas-egreso-lookup.js');
-const syslabRuntimeSource = readExtension('syslab-runtime.js');
-const fichaMedicoTransportSource = readExtension('fichamedico-transport-runtime.js');
-const fichaMedicoPatientContextSource = readExtension('fichamedico-patient-context.js');
+const clinicalHandoffRuntimeSource = readExtension('clinico/clinical-handoff-runtime.js');
+const gestionCamasRuntimeSource = readExtension('gestion-camas/gestion-camas-runtime.js');
+const gestionCamasHealthSource = readExtension('gestion-camas/gestion-camas-health.js');
+const gestionCamasSessionHealthSource = readExtension('gestion-camas/gestion-camas-session-health.js');
+const gestionCamasEgresoLookupSource = readExtension('gestion-camas/gestion-camas-egreso-lookup.js');
+const syslabRuntimeSource = readExtension('syslab/syslab-runtime.js');
+const fichaMedicoTransportSource = readExtension('fichamedico/fichamedico-transport-runtime.js');
+const fichaMedicoPatientContextSource = readExtension('fichamedico/fichamedico-patient-context.js');
 const contentSource = [
-  'content-prescription-print.js',
-  'hhr-center-shell-runtime.js',
-  'hhr-prescription-center.js',
-  'hhr-hospitalized-documents-center.js',
-  'hhr-lab-center.js',
-  'hhr-discharge-actions-runtime.js',
-  'hhr-connection-center-runtime.js',
+  'contenido/content-prescription-print.js',
+  'centro/hhr-center-shell-runtime.js',
+  'centro/hhr-prescription-center.js',
+  'centro/hhr-hospitalized-documents-center.js',
+  'centro/hhr-lab-center.js',
+  'centro/hhr-discharge-actions-runtime.js',
+  'salud/hhr-connection-center-runtime.js',
 ]
   .map(readExtension)
   .join('\n');
-const fichaSource = readExtension('inject-fichamedico.js');
+const fichaSource = readExtension('fichamedico/inject-fichamedico.js');
 const readmeSource = readExtension('README.md');
 
 describe('CodeRabbit clinical integration hardening', () => {
@@ -134,7 +134,7 @@ describe('CodeRabbit clinical integration hardening', () => {
 
   it('keeps prescription batches reusable for the verified Ficha session', () => {
     const prescriptionBatch = readFileSync(
-      new URL('../../../extension/clinical-batch-print-runtime.js', import.meta.url),
+      new URL('../../../extension/clinico/clinical-batch-print-runtime.js', import.meta.url),
       'utf8'
     );
     const prescriptionHandlers = prescriptionBatch.slice(

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/hhr-lab-request-patient.js';
-import '../../../extension/hhr-lab-center.js';
+import '../../../extension/centro/hhr-lab-request-patient.js';
+import '../../../extension/centro/hhr-lab-center.js';
 
 type Runtime = {
   renderLabCenter: (root: HTMLElement, encId: string) => void;
@@ -233,7 +233,7 @@ describe('Centro HHR Laboratorio runtime', () => {
         diagnosis: 'Neumonía',
         procedencia: 'Hospitalización',
         selected: [],
-        logoUrl: 'chrome-extension://test/hhr-logo.svg',
+        logoUrl: 'chrome-extension://test/icons/hhr-logo.svg',
       })
     );
     expect(fakePrintWindow.print).toHaveBeenCalledTimes(1);

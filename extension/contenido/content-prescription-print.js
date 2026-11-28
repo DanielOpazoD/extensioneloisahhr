@@ -761,7 +761,7 @@
         <div class="tip" role="tooltip"><strong></strong><span></span></div>
       `;
       try {
-        shadow.querySelector('.brand-logo').src = chrome.runtime.getURL('hhr-logo.svg');
+        shadow.querySelector('.brand-logo').src = chrome.runtime.getURL('icons/hhr-logo.svg');
       } catch (_error) {
         shadow.querySelector('.brand-logo').remove();
       }

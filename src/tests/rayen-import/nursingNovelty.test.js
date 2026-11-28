@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import '../../../extension/hhr-nursing-novelty.js';
+import '../../../extension/listas/hhr-nursing-novelty.js';
 
 const { classify, createReader } = globalThis.HhrNursingNovelty;
 const stamp = '2026-11-20T09:10:00-05:00';

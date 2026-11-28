@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 const context = vm.createContext({ Uint8Array, Date });
 vm.runInContext(
   readFileSync(
-    new URL('../../../extension/gestion-camas-monthly-cudyr-runtime.js', import.meta.url),
+    new URL('../../../extension/gestion-camas/gestion-camas-monthly-cudyr-runtime.js', import.meta.url),
     'utf8'
   ),
   context

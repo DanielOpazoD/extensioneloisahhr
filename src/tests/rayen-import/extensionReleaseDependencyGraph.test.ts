@@ -44,12 +44,12 @@ describe('Rayen extension release dependency graph', () => {
     const background = path.join(root, 'extension/background.js');
     fs.writeFileSync(
       background,
-      fs.readFileSync(background, 'utf8').replace("'exalab-background.js',", '')
+      fs.readFileSync(background, 'utf8').replace("'exalab/exalab-background.js',", '')
     );
     const manifestPath = path.join(root, 'extension/manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     for (const script of manifest.content_scripts) {
-      script.js = script.js.filter((name: string) => name !== 'content-hhr-exalab.js');
+      script.js = script.js.filter((name: string) => name !== 'contenido/content-hhr-exalab.js');
     }
     fs.writeFileSync(manifestPath, JSON.stringify(manifest));
     const result = runChecker(root);
@@ -70,7 +70,7 @@ describe('Rayen extension release dependency graph', () => {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     manifest.minimum_chrome_version = '111';
     fs.writeFileSync(manifestPath, JSON.stringify(manifest), 'utf8');
-    fs.appendFileSync(path.join(root, 'extension/print-pdf.js'), '\nconst invalidFixture = ;\n');
+    fs.appendFileSync(path.join(root, 'extension/documentos/print-pdf.js'), '\nconst invalidFixture = ;\n');
 
     const result = runChecker(root);
 
@@ -81,21 +81,21 @@ describe('Rayen extension release dependency graph', () => {
 
   it('rejects all script syntax errors in an otherwise valid package', () => {
     const root = createPackageFixture();
-    for (const file of ['print-pdf.js', 'background.js']) {
+    for (const file of ['documentos/print-pdf.js', 'background.js']) {
       fs.appendFileSync(path.join(root, 'extension', file), '\nconst invalidFixture = ;\n');
     }
 
     const result = runChecker(root);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('Sintaxis inválida en extension/print-pdf.js');
+    expect(result.stderr).toContain('Sintaxis inválida en extension/documentos/print-pdf.js');
     expect(result.stderr).toContain('Sintaxis inválida en extension/background.js');
   }, wholePackage);
 
   it('accepts inline scripts and commented references without executing packaged scripts', () => {
     const root = createPackageFixture();
     fs.appendFileSync(
-      path.join(root, 'extension/print-pdf.js'),
+      path.join(root, 'extension/documentos/print-pdf.js'),
       "\nthrow new Error('Packaged scripts must not execute during validation');\n"
     );
     const htmlPath = path.join(root, 'extension/print-pdf.html');
@@ -132,7 +132,7 @@ describe('Rayen extension release dependency graph', () => {
     const lockPath = path.join(root, 'extension/vendor-lock.json');
     const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
     const pdfVendor = lock.vendors.find(
-      (vendor: { file?: string }) => vendor.file === 'pdf.min.mjs'
+      (vendor: { file?: string }) => vendor.file === 'vendor/pdf.min.mjs'
     );
     pdfVendor.variant = 'modern';
     pdfVendor.source = 'pdfjs-dist/build/pdf.min.mjs';
@@ -142,14 +142,14 @@ describe('Rayen extension release dependency graph', () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
-      'extension/pdf.min.mjs debe provenir del build legacy de pdfjs-dist 5.5.207.'
+      'extension/vendor/pdf.min.mjs debe provenir del build legacy de pdfjs-dist 5.5.207.'
     );
   });
 
   it('rejects a startup runtime that was renamed without updating importScripts', () => {
     const root = createPackageFixture();
     fs.renameSync(
-      path.join(root, 'extension/clinical-handoff-runtime.js'),
+      path.join(root, 'extension/clinico/clinical-handoff-runtime.js'),
       path.join(root, 'extension/clinical-handoff-runtime-renamed.js')
     );
 
@@ -157,14 +157,14 @@ describe('Rayen extension release dependency graph', () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
-      'Falta la dependencia de background.js importScripts(): extension/clinical-handoff-runtime.js'
+      'Falta la dependencia de background.js importScripts(): extension/clinico/clinical-handoff-runtime.js'
     );
   });
 
   it('rejects a missing script referenced by packaged HTML', () => {
     const root = createPackageFixture();
     fs.renameSync(
-      path.join(root, 'extension/print-pdf.js'),
+      path.join(root, 'extension/documentos/print-pdf.js'),
       path.join(root, 'extension/print-pdf-renamed.js')
     );
 
@@ -172,7 +172,7 @@ describe('Rayen extension release dependency graph', () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
-      'Falta la dependencia de print-pdf.html <script src>: extension/print-pdf.js'
+      'Falta la dependencia de print-pdf.html <script src>: extension/documentos/print-pdf.js'
     );
   });
 
@@ -183,8 +183,8 @@ describe('Rayen extension release dependency graph', () => {
     fs.writeFileSync(
       backgroundPath,
       background.replace(
-        "  'message-contract.js',",
-        "  'message-contract.js',\n  'message-contract.js',"
+        "  'contratos/message-contract.js',",
+        "  'contratos/message-contract.js',\n  'contratos/message-contract.js',"
       ),
       'utf8'
     );
@@ -193,7 +193,7 @@ describe('Rayen extension release dependency graph', () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
-      'Referencia duplicada en background.js importScripts(): extension/message-contract.js'
+      'Referencia duplicada en background.js importScripts(): extension/contratos/message-contract.js'
     );
   });
 
@@ -203,7 +203,7 @@ describe('Rayen extension release dependency graph', () => {
     const html = fs.readFileSync(htmlPath, 'utf8');
     fs.writeFileSync(
       htmlPath,
-      html.replace('src="print-pdf.js"', 'src="https://example.test/print-pdf.js"'),
+      html.replace('src="documentos/print-pdf.js"', 'src="https://example.test/print-pdf.js"'),
       'utf8'
     );
 
@@ -236,7 +236,7 @@ describe('Rayen extension release dependency graph', () => {
     fs.writeFileSync(
       htmlPath,
       html.replace(
-        '<script src="print-pdf.js"></script>',
+        '<script src="documentos/print-pdf.js"></script>',
         '<script data-note=">" src="missing-after-quote.js"></script>'
       ),
       'utf8'
@@ -257,7 +257,7 @@ describe('Rayen extension release dependency graph', () => {
     fs.writeFileSync(
       htmlPath,
       html.replace(
-        '<script src="print-pdf.js"></script>',
+        '<script src="documentos/print-pdf.js"></script>',
         '<script data-note=" src=print-pdf.js" src="missing-real-src.js"></script>'
       ),
       'utf8'
@@ -275,8 +275,8 @@ describe('Rayen extension release dependency graph', () => {
     const root = createPackageFixture();
     const backgroundPath = path.join(root, 'extension/background.js');
     const background = fs.readFileSync(backgroundPath, 'utf8');
-    fs.writeFileSync(backgroundPath, background.replace("  'runtime-loader.js',\n", ''), 'utf8');
-    fs.rmSync(path.join(root, 'extension/runtime-loader.js'));
+    fs.writeFileSync(backgroundPath, background.replace("  'salud/runtime-loader.js',\n", ''), 'utf8');
+    fs.rmSync(path.join(root, 'extension/salud/runtime-loader.js'));
 
     const result = runChecker(root);
 
@@ -293,8 +293,8 @@ describe('Rayen extension release dependency graph', () => {
     fs.writeFileSync(
       backgroundPath,
       background.replace(
-        "  'runtime-loader.js',\n);",
-        "  'runtime-loader.js',\n);\nimportScripts('missing-second-call.js');"
+        "  'salud/runtime-loader.js',\n);",
+        "  'salud/runtime-loader.js',\n);\nimportScripts('missing-second-call.js');"
       ),
       'utf8'
     );

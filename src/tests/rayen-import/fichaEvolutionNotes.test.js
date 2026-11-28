@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-Function(readFileSync('extension/ficha-evolution-notes.js', 'utf8'))();
+Function(readFileSync('extension/ficha/ficha-evolution-notes.js', 'utf8'))();
 const { create, project, windows } = globalThis.HhrFichaEvolutionNotes;
 
 const history = [

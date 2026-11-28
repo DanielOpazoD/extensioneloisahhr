@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-document-preview-runtime.js';
-import '../../../extension/hhr-prescription-center.js';
+import '../../../extension/centro/hhr-document-preview-runtime.js';
+import '../../../extension/centro/hhr-prescription-center.js';
 
 const messages = {
   PRESCRIPTION_OPTIONS_REQUEST: 'options',

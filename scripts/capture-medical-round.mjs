@@ -67,7 +67,7 @@ try {
       if (width === 1366) assert.equal(metrics.vitalsRows,2);
       assert.equal(await page.locator('.vitals-grid [data-hhr-vital-elapsed]').count(),0);
     }
-    if (assets.scripts.includes('hhr-ficha-round-layout.js') && (!comparison || comparison === 'despues')) {
+    if (assets.scripts.includes('ficha/hhr-ficha-round-layout.js') && (!comparison || comparison === 'despues')) {
       const vitals = await page.evaluate(() => {
         const grid = document.querySelector('.vitals-grid');
         const elapsed = grid.querySelector('[data-hhr-vital-elapsed]');

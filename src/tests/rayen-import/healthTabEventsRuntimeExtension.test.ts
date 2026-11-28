@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/health-tab-events-runtime.js';
+import '../../../extension/salud/health-tab-events-runtime.js';
 
 type UpdatedListener = (
   tabId: number,
@@ -27,9 +27,9 @@ const createFixture = () => {
     runtime: {
       getManifest: vi.fn(() => ({
         content_scripts: [
-          { matches: [sources[0]], js: ['content-fichamedico.js'] },
-          { matches: [sources[1]], js: ['content-gestioncamas.js'] },
-          { matches: ['http://localhost:3000/*'], js: ['content-hhr.js'] },
+          { matches: [sources[0]], js: ['contenido/content-fichamedico.js'] },
+          { matches: [sources[1]], js: ['contenido/content-gestioncamas.js'] },
+          { matches: ['http://localhost:3000/*'], js: ['contenido/content-hhr.js'] },
         ],
       })),
     },

@@ -16,8 +16,8 @@ describe('PDF.js extension Chrome compatibility contract', () => {
 
     expect(manifest.minimum_chrome_version).toBe('118');
     for (const [file, source] of [
-      ['pdf.min.mjs', 'pdfjs-dist/legacy/build/pdf.min.mjs'],
-      ['pdf.worker.min.mjs', 'pdfjs-dist/legacy/build/pdf.worker.min.mjs'],
+      ['vendor/pdf.min.mjs', 'pdfjs-dist/legacy/build/pdf.min.mjs'],
+      ['vendor/pdf.worker.min.mjs', 'pdfjs-dist/legacy/build/pdf.worker.min.mjs'],
     ]) {
       const vendor = vendors.get(file) as {
         package: string;
@@ -39,7 +39,7 @@ describe('PDF.js extension Chrome compatibility contract', () => {
         `${file} must exactly match the legacy artifact`
       ).toBe(true);
       expect(
-        packaged.equals(readFileSync(path.resolve(`node_modules/pdfjs-dist/build/${file}`))),
+        packaged.equals(readFileSync(path.resolve(`node_modules/pdfjs-dist/build/${path.basename(file)}`))),
         `${file} must not match the modern artifact`
       ).toBe(false);
     }
@@ -94,8 +94,8 @@ describe('PDF.js extension Chrome compatibility contract', () => {
       Object.defineProperty(Promise, 'withResolvers', { value: undefined, configurable: true, writable: true });
       Object.defineProperty(AbortSignal, 'any', { value: undefined, configurable: true, writable: true });
       Object.defineProperty(Uint8Array, 'fromBase64', { value: undefined, configurable: true, writable: true });
-      const mainUrl = pathToFileURL(path.resolve('extension/pdf.min.mjs')).href + '?compat-test';
-      const workerUrl = pathToFileURL(path.resolve('extension/pdf.worker.min.mjs')).href;
+      const mainUrl = pathToFileURL(path.resolve('extension/vendor/pdf.min.mjs')).href + '?compat-test';
+      const workerUrl = pathToFileURL(path.resolve('extension/vendor/pdf.worker.min.mjs')).href;
       const pdfjs = await import(mainUrl);
       pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
       const legacyResults = await extract(pdfjs, ${JSON.stringify(files)});

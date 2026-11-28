@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/clinical-panel-fetch.js';
+import '../../../extension/clinico/clinical-panel-fetch.js';
 
 const clinicalPanelFetch = (
   globalThis as typeof globalThis & {

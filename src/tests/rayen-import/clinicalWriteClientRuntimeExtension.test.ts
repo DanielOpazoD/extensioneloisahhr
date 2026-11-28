@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/hhr-clinical-write-client-runtime.js';
+import '../../../extension/centro/hhr-clinical-write-client-runtime.js';
 
 type ClinicalWriteClientRuntime = {
   acknowledgeClinicalWrite: (
@@ -117,11 +117,11 @@ describe('HHR clinical write client runtime', () => {
 
   it('owns coordination, fails closed and loads before the content orchestrator', () => {
     const runtimeSource = readFileSync(
-      path.resolve('extension/hhr-clinical-write-client-runtime.js'),
+      path.resolve('extension/centro/hhr-clinical-write-client-runtime.js'),
       'utf8'
     );
     const contentSource = readFileSync(
-      path.resolve('extension/content-prescription-print.js'),
+      path.resolve('extension/contenido/content-prescription-print.js'),
       'utf8'
     );
     const manifest = JSON.parse(readFileSync(path.resolve('extension/manifest.json'), 'utf8')) as {
@@ -135,9 +135,9 @@ describe('HHR clinical write client runtime', () => {
     expect(() => owner().create({})).toThrow(
       'No se pudo inicializar el coordinador de escrituras clínicas HHR.'
     );
-    expect(scripts.indexOf('hhr-clinical-write-client-runtime.js')).toBeGreaterThanOrEqual(0);
-    expect(scripts.indexOf('hhr-clinical-write-client-runtime.js')).toBeLessThan(
-      scripts.indexOf('content-prescription-print.js')
+    expect(scripts.indexOf('centro/hhr-clinical-write-client-runtime.js')).toBeGreaterThanOrEqual(0);
+    expect(scripts.indexOf('centro/hhr-clinical-write-client-runtime.js')).toBeLessThan(
+      scripts.indexOf('contenido/content-prescription-print.js')
     );
     expect(contentSource).toContain(
       'const clinicalWriteClientOwner = globalThis.HhrClinicalWriteClientRuntime'

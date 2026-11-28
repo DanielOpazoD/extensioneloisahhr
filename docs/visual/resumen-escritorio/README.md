@@ -421,7 +421,7 @@ El responsable revisó la 0.48.199 en su pantalla y pidió tres cosas. Estrechar
 
 **Por qué la fila no subía sola.** La estructura exportada de la página el 26-11-2026 ([`estructura-eloisa.md`](../../estructura-eloisa.md)) mostró la fila en su propia línea de 30 px, con la vista activa y a 1303 px de ancho. La ficha ficticia lo reproduce: la barra flotante de Centro HHR, de 350 px, tapa el final de la línea de secciones, y entre el último enlace y esa barra no caben la fecha y sus dos botones. En la línea de pestañas sí caben, a cualquier ancho desde 1100 px. Ahí la fila deja de contar como línea de la ronda.
 
-La rejilla coloca cada sección sin datos en el primer hueco junto a los signos (`grid-auto-flow: dense`), y `hhr-ficha-round-layout.js` cuenta las líneas que ocupa esa columna para que Signos vitales las abarque. No se mueve ningún nodo: la fila diaria se sitúa con `position: fixed`, como ya hacía en la línea de secciones.
+La rejilla coloca cada sección sin datos en el primer hueco junto a los signos (`grid-auto-flow: dense`), y `ficha/hhr-ficha-round-layout.js` cuenta las líneas que ocupa esa columna para que Signos vitales las abarque. No se mueve ningún nodo: la fila diaria se sitúa con `position: fixed`, como ya hacía en la línea de secciones.
 
 ## Lo vacío junto, las tablas con un ritmo y el Resumen desde arriba, en 0.48.199
 

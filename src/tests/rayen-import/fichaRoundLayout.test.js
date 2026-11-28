@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-ficha-round-layout.js';
+import '../../../extension/ficha/hhr-ficha-round-layout.js';
 
 const slot = (id, content) => '<div class="MuiGrid-item MuiGrid-grid-xs-12"><section id="'+id+'">'+content+'</section></div>';
 const layout = globalThis.HhrFichaRoundLayout.create();

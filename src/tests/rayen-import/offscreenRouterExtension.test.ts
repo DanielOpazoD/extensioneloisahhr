@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/offscreen-contract.js';
-import '../../../extension/offscreen-router.js';
+import '../../../extension/contratos/offscreen-contract.js';
+import '../../../extension/syslab/offscreen-router.js';
 
 type Response = {
   version: number;

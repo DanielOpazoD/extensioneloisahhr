@@ -66,9 +66,9 @@ const page = (
     },
     fetch: fetchMock,
   });
-  vm.runInContext(source('hhr-origin-policy.js'), context);
-  vm.runInContext(source('exalab-session-transport.js'), context);
-  vm.runInContext(source('exalab-connect.js'), context);
+  vm.runInContext(source('contratos/hhr-origin-policy.js'), context);
+  vm.runInContext(source('exalab/exalab-session-transport.js'), context);
+  vm.runInContext(source('exalab/exalab-connect.js'), context);
   return { clickHandlers, elements, cookies, permission, fetchMock, store };
 };
 describe('Exalab personal-session consent', () => {
@@ -157,9 +157,9 @@ describe('Exalab personal-session consent', () => {
         tabs: { create },
       },
     });
-    vm.runInContext(source('hhr-origin-policy.js'), context);
+    vm.runInContext(source('contratos/hhr-origin-policy.js'), context);
     context.self = context;
-    vm.runInContext(source('exalab-background.js'), context);
+    vm.runInContext(source('exalab/exalab-background.js'), context);
     listener(
       { type: 'HHR_EXALAB_OPEN_CONNECT', pair },
       { frameId: 1, tab: { url: 'https://hhr-hospitalizados.app/', id: 1 } },

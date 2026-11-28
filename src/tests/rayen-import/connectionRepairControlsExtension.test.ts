@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/hhr-connection-repair-controls.js';
+import '../../../extension/salud/hhr-connection-repair-controls.js';
 
 type ControlsOwner = {
   diagnosticText: (report: unknown) => string;

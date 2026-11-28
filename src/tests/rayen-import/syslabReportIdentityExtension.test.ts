@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { TextDecoder, TextEncoder } from 'node:util';
 import { describe, expect, it, vi } from 'vitest';
-import '../../../extension/lab-result-parser.js';
-import '../../../extension/lab-viewer.js';
+import '../../../extension/syslab/lab-result-parser.js';
+import '../../../extension/syslab/lab-viewer.js';
 
-const source = readFileSync('extension/syslab-bridge.js', 'utf8');
+const source = readFileSync('extension/syslab/syslab-bridge.js', 'utf8');
 const readReport = async (input: string | string[]) => {
   const pages = Array.isArray(input) ? input : [input];
   let listener: (message: unknown, sender: unknown, reply: (value: unknown) => void) => void;

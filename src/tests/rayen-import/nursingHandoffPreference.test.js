@@ -15,8 +15,8 @@ it('guarda el ajuste desde Centro HHR y aplica cambios de otra pestaña aunque l
   vi.stubGlobal('HhrCenterPreferences', { get:()=>({}), load:async()=>{} });
   vi.stubGlobal('HhrFavoriteLinks', { create:()=>document.createElement('div') });
   try {
-    for (const file of ['nursing-handoff-preference','hhr-ficha-themes','hhr-center-settings']) {
-      Function(readFileSync('extension/' + file + '.js', 'utf8'))();
+    for (const file of ['entrega-enfermeria/nursing-handoff-preference.js','ficha/hhr-ficha-themes.js','centro/hhr-center-settings.js']) {
+      Function(readFileSync('extension/' + file, 'utf8'))();
     }
     globalThis.HhrCenterSettings.render({ root });
     const input = root.querySelector('[data-setting="handoff"]');

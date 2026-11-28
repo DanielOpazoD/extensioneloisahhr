@@ -6,12 +6,12 @@ import vm from 'node:vm';
 import { describe, expect, it, vi } from 'vitest';
 
 const extensionSource = (file: string) => readFileSync(path.resolve('extension', file), 'utf8');
-const runtimeSource = extensionSource('clinical-report-runtime.js');
+const runtimeSource = extensionSource('clinico/clinical-report-runtime.js');
 const hospitalizationReportSearchSource = extensionSource(
-  'hospitalization-report-search-runtime.js'
+  'documentos/hospitalization-report-search-runtime.js'
 );
-const hospitalizationReportsSource = extensionSource('hospitalization-reports-runtime.js');
-const epicrisisDownloadSource = extensionSource('epicrisis-download-runtime.js');
+const hospitalizationReportsSource = extensionSource('documentos/hospitalization-reports-runtime.js');
+const epicrisisDownloadSource = extensionSource('documentos/epicrisis-download-runtime.js');
 type RuntimeDependencies = Record<string, unknown>;
 
 const loadFactory = () => {
@@ -23,16 +23,16 @@ const loadFactory = () => {
     encodeURIComponent,
   });
   vm.runInContext(hospitalizationReportSearchSource, context, {
-    filename: 'hospitalization-report-search-runtime.js',
+    filename: 'documentos/hospitalization-report-search-runtime.js',
   });
   vm.runInContext(hospitalizationReportsSource, context, {
-    filename: 'hospitalization-reports-runtime.js',
+    filename: 'documentos/hospitalization-reports-runtime.js',
   });
-  vm.runInContext(extensionSource('epicrisis-pdf-download.js'), context, {
-    filename: 'epicrisis-pdf-download.js',
+  vm.runInContext(extensionSource('documentos/epicrisis-pdf-download.js'), context, {
+    filename: 'documentos/epicrisis-pdf-download.js',
   });
-  vm.runInContext(epicrisisDownloadSource, context, { filename: 'epicrisis-download-runtime.js' });
-  vm.runInContext(runtimeSource, context, { filename: 'clinical-report-runtime.js' });
+  vm.runInContext(epicrisisDownloadSource, context, { filename: 'documentos/epicrisis-download-runtime.js' });
+  vm.runInContext(runtimeSource, context, { filename: 'clinico/clinical-report-runtime.js' });
   return (
     context as unknown as {
       HhrClinicalReportRuntime: { create: (dependencies: RuntimeDependencies) => RuntimeApi };
@@ -538,7 +538,7 @@ describe('clinical report runtime direct episodes and history', () => {
   it('fails safely when complete-history browser dependencies are unavailable', async () => {
     const context = vm.createContext({ URL, Date });
     vm.runInContext(hospitalizationReportsSource, context, {
-      filename: 'hospitalization-reports-runtime.js',
+      filename: 'documentos/hospitalization-reports-runtime.js',
     });
     const reports = (
       context as unknown as {

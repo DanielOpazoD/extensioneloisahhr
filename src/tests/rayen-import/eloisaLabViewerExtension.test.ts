@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import '../../../extension/lab-result-parser.js';
-import '../../../extension/lab-viewer.js';
+import '../../../extension/syslab/lab-result-parser.js';
+import '../../../extension/syslab/lab-viewer.js';
 
 interface LabFinding {
   section: string;

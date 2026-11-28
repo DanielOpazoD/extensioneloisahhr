@@ -99,7 +99,7 @@
 
     const applyCenterShellLogo = root => {
       try {
-        root.querySelector('.hhr-center-header img').src = chrome.runtime.getURL('hhr-logo.svg');
+        root.querySelector('.hhr-center-header img').src = chrome.runtime.getURL('icons/hhr-logo.svg');
       } catch (_error) {
         const img = root.querySelector('.hhr-center-header img');
         if (img) img.remove();

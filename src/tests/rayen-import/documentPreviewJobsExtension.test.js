@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import '../../../extension/document-preview-jobs.js';
+import '../../../extension/documentos/document-preview-jobs.js';
 
 const setup = () => {
   const stored = {};

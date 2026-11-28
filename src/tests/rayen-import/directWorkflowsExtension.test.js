@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-request-drafts.js';
-import '../../../extension/hhr-read-recovery.js';
-import '../../../extension/hhr-request-forms.js';
-import '../../../extension/hhr-lab-request-patient.js';
-import '../../../extension/hhr-lab-center.js';
-import '../../../extension/hhr-lab-selection-runtime.js';
-import '../../../extension/hhr-imaging-request-view.js';
-import '../../../extension/hhr-imaging-center.js';
-import '../../../extension/hhr-document-preview-runtime.js';
+import '../../../extension/centro/hhr-request-drafts.js';
+import '../../../extension/centro/hhr-read-recovery.js';
+import '../../../extension/centro/hhr-request-forms.js';
+import '../../../extension/centro/hhr-lab-request-patient.js';
+import '../../../extension/centro/hhr-lab-center.js';
+import '../../../extension/centro/hhr-lab-selection-runtime.js';
+import '../../../extension/centro/hhr-imaging-request-view.js';
+import '../../../extension/centro/hhr-imaging-center.js';
+import '../../../extension/centro/hhr-document-preview-runtime.js';
 
 const originalUrl = location.href;
 const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');

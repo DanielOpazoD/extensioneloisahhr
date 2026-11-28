@@ -7,10 +7,10 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { extensionSource, fichaAssets, mountFicha, settle } from './ficha-capture-harness.mjs';
 import { summaryPage } from './summary-visual-fixture.mjs';
-import '../extension/clinical-assessment-clock.js';
-import '../extension/clinical-checklist-braden-templates.js';
-import '../extension/clinical-checklist-braden.js';
-import '../extension/clinical-checklist-falls.js';
+import '../extension/clinico/clinical-assessment-clock.js';
+import '../extension/clinico/clinical-checklist-braden-templates.js';
+import '../extension/clinico/clinical-checklist-braden.js';
+import '../extension/clinico/clinical-checklist-falls.js';
 
 const [revision, directory] = process.argv.slice(2);
 if (!revision || !directory) throw Error('Uso: node scripts/capture-evolution-reader.mjs <ref|WORKTREE> <directorio>');
@@ -72,7 +72,7 @@ try {
   await page.setContent(summaryPage());
   await settle(page);
   // What the worker would answer: its own projection of the invented history.
-  await page.addScriptTag({content:await extensionSource(revision)('ficha-evolution-notes.js')});
+  await page.addScriptTag({content:await extensionSource(revision)('ficha/ficha-evolution-notes.js')});
   const notes = await page.evaluate(([recent, older]) => ({14:window.HhrFichaEvolutionNotes.project(recent), 60:window.HhrFichaEvolutionNotes.project(older), 365:'El servidor de Ficha Médico respondió HTTP 500.'}), [recent, older]);
   assert.deepEqual(notes[14].filter(note => Number(note.id) < 50).map(note => [note.id, note.day, note.time, note.role, note.author]), [
     ['41', '15-04-2026', '09:12', 'Médico', 'Tomás Ejemplo'], ['40', '15-04-2026', '07:40', 'Enfermera(o)', 'Elena Ejemplo'],

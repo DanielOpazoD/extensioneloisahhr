@@ -8,11 +8,11 @@ type BuildClinicalAge = (birthDate: string, referenceDate: Date) => string;
 
 const loadBuildClinicalAge = (): BuildClinicalAge => {
   const source = readFileSync(
-    new URL('../../../extension/clinical-score-write-runtime.js', import.meta.url),
+    new URL('../../../extension/clinico/clinical-score-write-runtime.js', import.meta.url),
     'utf8'
   );
   const context = vm.createContext({});
-  vm.runInContext(source, context, { filename: 'clinical-score-write-runtime.js' });
+  vm.runInContext(source, context, { filename: 'clinico/clinical-score-write-runtime.js' });
   return (
     context as unknown as {
       HhrClinicalScoreWriteRuntime: { buildClinicalAge: BuildClinicalAge };

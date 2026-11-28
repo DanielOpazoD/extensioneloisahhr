@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/health-check.js';
+import '../../../extension/salud/health-check.js';
 
 const health = (
   globalThis as typeof globalThis & {

@@ -8,7 +8,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/hhr-lab-request-patient.js';
+import '../../../extension/centro/hhr-lab-request-patient.js';
 
 type Controller = {
   printablePatient: () => Record<string, string> | null;

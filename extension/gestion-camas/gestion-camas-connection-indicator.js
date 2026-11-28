@@ -231,7 +231,7 @@
           <div class="actions"><button class="primary" type="button" hidden></button></div>
         </section>`;
       try {
-        part('.brand img').src = chromeApi.runtime.getURL('hhr-logo.svg');
+        part('.brand img').src = chromeApi.runtime.getURL('icons/hhr-logo.svg');
       } catch (_error) {
         part('.brand img').remove();
       }

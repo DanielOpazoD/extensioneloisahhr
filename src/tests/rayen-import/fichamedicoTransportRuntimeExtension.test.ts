@@ -4,10 +4,10 @@ import path from 'node:path';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/health-check.js';
-import '../../../extension/encounter-navigation.js';
-import '../../../extension/connection-relay-recovery.js';
-import '../../../extension/fichamedico-transport-runtime.js';
+import '../../../extension/salud/health-check.js';
+import '../../../extension/clinico/encounter-navigation.js';
+import '../../../extension/salud/connection-relay-recovery.js';
+import '../../../extension/fichamedico/fichamedico-transport-runtime.js';
 
 type Tab = {
   id?: number;
@@ -524,7 +524,7 @@ describe('Ficha Médico transport runtime', () => {
 
   it('keeps the owner loaded before background wiring and both files within budget', () => {
     const background = readFileSync(path.resolve('extension/background.js'), 'utf8');
-    const owner = readFileSync(path.resolve('extension/fichamedico-transport-runtime.js'), 'utf8');
+    const owner = readFileSync(path.resolve('extension/fichamedico/fichamedico-transport-runtime.js'), 'utf8');
     // Loaded at startup and stopping the worker with its own words when missing: checked on the running
     // worker in workerRoutes.test.js.
     expect(background).not.toContain('const fichaSenderTabId');

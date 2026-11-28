@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import '../../../extension/extension-release-check.js';
+import '../../../extension/estado/extension-release-check.js';
 
 const { create, newer, project, storageKey } = globalThis.HhrExtensionReleaseCheck;
 const ficha = { frameId: 0, url: 'https://fichamedico.rayensalud.cl/dashboard/encounter-list/1' };

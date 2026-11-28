@@ -43,11 +43,13 @@ it("prepares one version from the actual base, updates the lock and readers, and
       path.join(root, "extension/manifest.json"),
       JSON.stringify({ version: "0.48.88" }),
     );
-    for (const name of ["inject-fichamedico.js", "inject-gestioncamas.js"])
+    for (const name of ["fichamedico/inject-fichamedico.js", "gestion-camas/inject-gestioncamas.js"]) {
+      fs.mkdirSync(path.join(root, "extension", path.dirname(name)), { recursive: true });
       fs.writeFileSync(
         path.join(root, "extension", name),
         "const INJECT_VERSION = '0.48.88';\n",
       );
+    }
     fs.writeFileSync(
       path.join(root, "CHANGELOG.md"),
       "# Cambios\n\n## 0.48.88\n\n- Base sintética.\n",
@@ -61,7 +63,7 @@ it("prepares one version from the actual base, updates the lock and readers, and
     expect(json("package.json").version).toBe("0.48.89");
     expect(json("package-lock.json").version).toBe("0.48.89");
     expect(json("package-lock.json").packages[""].version).toBe("0.48.89");
-    for (const name of ["inject-fichamedico.js", "inject-gestioncamas.js"])
+    for (const name of ["fichamedico/inject-fichamedico.js", "gestion-camas/inject-gestioncamas.js"])
       expect(
         fs.readFileSync(path.join(root, "extension", name), "utf8"),
       ).toContain("INJECT_VERSION = '0.48.89'");

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import '../../../extension/clinical-assessment-clock.js';
-import '../../../extension/clinical-checklist-braden-templates.js';
-import '../../../extension/clinical-checklist-braden.js';
-import '../../../extension/clinical-braden-notes.js';
-import '../../../extension/hhr-ficha-evolution-reader.js';
+import '../../../extension/clinico/clinical-assessment-clock.js';
+import '../../../extension/clinico/clinical-checklist-braden-templates.js';
+import '../../../extension/clinico/clinical-checklist-braden.js';
+import '../../../extension/clinico/clinical-braden-notes.js';
+import '../../../extension/ficha/hhr-ficha-evolution-reader.js';
 
 const { parse } = globalThis.HhrClinicalBradenNotes;
 const { buildDraftEvolutionText } = globalThis.HhrChecklistBraden;

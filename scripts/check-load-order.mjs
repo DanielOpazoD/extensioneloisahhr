@@ -16,7 +16,7 @@ const uses = text => new Set([...text.matchAll(new RegExp(String.raw`\b${OWNER}\
 // Known and explained: a file shared by two worlds whose use of the object is only in a function that one
 // world calls.
 const explained = new Map([
-  ['health-request-runtime.js HhrHealthReportCacheRuntime', 'HHR pages use only runtimeRequest(); create() runs in the worker, which loads the cache.'],
+  ['salud/health-request-runtime.js HhrHealthReportCacheRuntime', 'HHR pages use only runtimeRequest(); create() runs in the worker, which loads the cache.'],
 ]);
 
 // The worlds: the worker with its imports, and per set of pages and world the content scripts in their order.

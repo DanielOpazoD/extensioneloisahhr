@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/connection-repair-runtime.js';
+import '../../../extension/salud/connection-repair-runtime.js';
 
 type Source = { status: string; reason: string };
 type Report = { fichaMedico: Source; gestionCamas: Source; hhr: Source };

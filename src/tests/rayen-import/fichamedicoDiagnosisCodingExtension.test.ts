@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import '../../../extension/fichamedico-diagnosis-coding.js';
+import '../../../extension/fichamedico/fichamedico-diagnosis-coding.js';
 
 type Diagnosis = { code: string; classificationId: number | null; name: string };
 type Encounter = { diagnosis?: string; diagnosisCode?: string; diagnosisDescription?: string };

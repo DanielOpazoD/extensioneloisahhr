@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-history-date-navigation.js';
-import '../../../extension/hhr-ficha-order-details.js';
-import '../../../extension/hhr-ficha-reading-surfaces.js';
-import '../../../extension/hhr-ficha-vital-strip.js';
-import '../../../extension/hhr-ficha-summary-density.js';
-import '../../../extension/hhr-ficha-reading-labels.js';
-import '../../../extension/hhr-ficha-round-layout.js';
-import '../../../extension/hhr-ficha-care-plan.js';
-import '../../../extension/hhr-ficha-note-reader.js';
-import '../../../extension/hhr-native-ficha-presentation.js';
+import '../../../extension/ficha/hhr-history-date-navigation.js';
+import '../../../extension/ficha/hhr-ficha-order-details.js';
+import '../../../extension/ficha/hhr-ficha-reading-surfaces.js';
+import '../../../extension/ficha/hhr-ficha-vital-strip.js';
+import '../../../extension/ficha/hhr-ficha-summary-density.js';
+import '../../../extension/ficha/hhr-ficha-reading-labels.js';
+import '../../../extension/ficha/hhr-ficha-round-layout.js';
+import '../../../extension/ficha/hhr-ficha-care-plan.js';
+import '../../../extension/ficha/hhr-ficha-note-reader.js';
+import '../../../extension/ficha/hhr-native-ficha-presentation.js';
 
 const event = (role, category, note = '') => `<div class="MuiCard-root">
   <div class="MuiCardHeader-root"><span class="MuiCardHeader-title">Autor de prueba</span><span class="MuiCardHeader-subheader">${role}</span></div>

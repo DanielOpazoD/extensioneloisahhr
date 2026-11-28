@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import '../../../extension/clinical-assessment-clock.js';
-import '../../../extension/clinical-checklist-falls.js';
-import '../../../extension/hhr-ficha-evolution-reader.js';
+import '../../../extension/clinico/clinical-assessment-clock.js';
+import '../../../extension/clinico/clinical-checklist-falls.js';
+import '../../../extension/ficha/hhr-ficha-evolution-reader.js';
 
 const { templates: [adult, pediatric], eligibility, evaluate, buildEvolutionText, parse } = globalThis.HhrChecklistFalls;
 const { readable } = globalThis.HhrFichaEvolutionReader;

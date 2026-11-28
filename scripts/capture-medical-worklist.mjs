@@ -4,15 +4,14 @@
 // node scripts/capture-medical-worklist.mjs <ref|WORKTREE> <directory>
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { execFileSync } from 'node:child_process';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
+import { extensionSource } from './ficha-capture-harness.mjs';
 import path from 'node:path';
 
 const [revision, directory] = process.argv.slice(2);
 if (!revision || !directory) throw Error('Uso: node scripts/capture-medical-worklist.mjs <ref|WORKTREE> <directorio>');
-const source = file => revision === 'WORKTREE' ? readFile(path.join('extension', file), 'utf8') :
-  execFileSync('git', ['show', revision + ':extension/' + file], {encoding:'utf8'});
-const [adapter, presentation] = await Promise.all(['hhr-worklist-print-column.js', 'hhr-native-worklist-presentation.js'].map(source));
+const source = extensionSource(revision);
+const [adapter, presentation] = await Promise.all(['listas/hhr-worklist-print-column.js', 'listas/hhr-native-worklist-presentation.js'].map(source));
 
 // Invented patients. The second and the fourth are new, as Eloísa marks them.
 const patients = [['Paciente Sintético Ejemplo', false], ['Persona De Prueba Larga', true], ['Caso Ficticio', false],
@@ -97,7 +96,7 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.setContent(html);
     // The worklist pages load the ficha's tokens too (manifest), and the lists read in them.
-    if (revision === 'WORKTREE') await page.addStyleTag({content:await source('hhr-ficha-tokens.css')});
+    if (revision === 'WORKTREE') await page.addStyleTag({content:await source('ficha/hhr-ficha-tokens.css')});
     await page.addScriptTag({content:adapter});
     await page.addScriptTag({content:presentation});
     await page.evaluate(`(${draw})(${JSON.stringify(patients)}, '/dashboard/encounter-list')`);

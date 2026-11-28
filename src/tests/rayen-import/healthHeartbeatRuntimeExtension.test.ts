@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/health-push-ordering-runtime.js';
-import '../../../extension/health-heartbeat-runtime.js';
+import '../../../extension/salud/health-push-ordering-runtime.js';
+import '../../../extension/salud/health-heartbeat-runtime.js';
 
 type HeartbeatRuntime = {
   create: (deps: Record<string, unknown>) => {

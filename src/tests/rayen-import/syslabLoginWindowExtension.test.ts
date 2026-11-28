@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/syslab-login-window.js';
+import '../../../extension/syslab/syslab-login-window.js';
 
 interface SyslabLoginWindowFactory {
   create: (dependencies: { chrome: unknown }) => { open: () => Promise<Record<string, unknown>> };

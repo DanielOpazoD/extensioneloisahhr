@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/health-report-cache-runtime.js';
+import '../../../extension/salud/health-report-cache-runtime.js';
 
 type Runtime = {
   create: (deps: Record<string, unknown>) => {

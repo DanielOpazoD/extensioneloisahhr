@@ -2,12 +2,12 @@
 import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/clinical-day-runtime.js';
-import '../../../extension/clinical-history-coverage.js';
-import '../../../extension/fichamedico-history-read-model.js';
-import '../../../extension/fichamedico-device-evidence-runtime.js';
-import '../../../extension/clinical-read-error-contract.js';
-import '../../../extension/fichamedico-clinical-client.js';
+import '../../../extension/clinico/clinical-day-runtime.js';
+import '../../../extension/clinico/clinical-history-coverage.js';
+import '../../../extension/fichamedico/fichamedico-history-read-model.js';
+import '../../../extension/fichamedico/fichamedico-device-evidence-runtime.js';
+import '../../../extension/contratos/clinical-read-error-contract.js';
+import '../../../extension/fichamedico/fichamedico-clinical-client.js';
 
 type SessionInfo = {
   [key: string]: string | undefined;
@@ -500,7 +500,7 @@ describe('Ficha Médico read-only clinical client', () => {
       'utf8'
     );
     const source = readFileSync(
-      new URL('../../../extension/fichamedico-clinical-client.js', import.meta.url),
+      new URL('../../../extension/fichamedico/fichamedico-clinical-client.js', import.meta.url),
       'utf8'
     );
 

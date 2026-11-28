@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, it, vi } from 'vitest';
 
-Function(readFileSync('extension/nursing-handoff-pilot.js', 'utf8'))();
+Function(readFileSync('extension/entrega-enfermeria/nursing-handoff-pilot.js', 'utf8'))();
 
 const source = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse';
 const extensionOrigin = 'chrome-extension://demo/';

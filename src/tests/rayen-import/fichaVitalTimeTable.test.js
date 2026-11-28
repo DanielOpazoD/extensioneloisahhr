@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it } from 'vitest';
-import '../../../extension/hhr-ficha-vital-strip.js';
+import '../../../extension/ficha/hhr-ficha-vital-strip.js';
 
 afterEach(() => {
   document.body.replaceChildren();

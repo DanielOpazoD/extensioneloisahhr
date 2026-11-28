@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import '../../../extension/hhr-daily-births.js';
+import '../../../extension/listas/hhr-daily-births.js';
 
 const births = [{ year:1901, pages:[{ titles:{ normalized:'Figura sintética' }, description:'Descripción pública' }] }];
 const birthFeed = () => Response.json({births});

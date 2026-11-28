@@ -5,7 +5,7 @@ import { webcrypto } from 'node:crypto';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/fichamedico-patient-context.js';
+import '../../../extension/fichamedico/fichamedico-patient-context.js';
 
 type PatientContext = {
   normalizeHospitalizedEncounter: (
@@ -145,14 +145,14 @@ describe('Ficha Médico patient-context owner', () => {
       'utf8'
     );
     const source = readFileSync(
-      new URL('../../../extension/fichamedico-patient-context.js', import.meta.url),
+      new URL('../../../extension/fichamedico/fichamedico-patient-context.js', import.meta.url),
       'utf8'
     );
     const startup = background.slice(0, background.indexOf('const REPORT_FILE'));
 
-    expect(startup).toContain("'fichamedico-patient-context.js'");
-    expect(startup.indexOf("'fichamedico-patient-context.js'")).toBeLessThan(
-      startup.indexOf("'clinical-panel-runtime.js'")
+    expect(startup).toContain("'fichamedico/fichamedico-patient-context.js'");
+    expect(startup.indexOf("'fichamedico/fichamedico-patient-context.js'")).toBeLessThan(
+      startup.indexOf("'clinico/clinical-panel-runtime.js'")
     );
     expect(startup).toContain(
       'No se pudo cargar el contexto clínico de pacientes de Ficha Médico.'
@@ -450,7 +450,7 @@ describe('Ficha Médico patient-context owner', () => {
       .mockResolvedValueOnce({ forms: [{ formCodigo: 'VITAL_SIGNS' }] })
       .mockResolvedValueOnce({ error: 'Lectura no disponible.' });
     const self: Record<string, any> = {};
-    runInNewContext(readFileSync('extension/prescription-print.js', 'utf8'), { self });
+    runInNewContext(readFileSync('extension/centro/prescription-print.js', 'utf8'), { self });
     const { context } = createHarness({
       prescriptionPrint: self.HhrPrescriptionPrint,
       fetchActiveEncounterRows: vi.fn(async () => ({ rows })),
@@ -490,7 +490,7 @@ describe('Ficha Médico patient-context owner', () => {
       hdeShortName: 'MED',
     };
     const self: Record<string, any> = {};
-    runInNewContext(readFileSync('extension/prescription-print.js', 'utf8'), { self });
+    runInNewContext(readFileSync('extension/centro/prescription-print.js', 'utf8'), { self });
     const { context } = createHarness({
       prescriptionPrint: self.HhrPrescriptionPrint,
       fetchActiveEncounterRows: vi.fn(async () => ({ rows })),

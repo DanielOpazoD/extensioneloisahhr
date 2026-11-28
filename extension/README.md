@@ -51,7 +51,7 @@ y recargar HHR/Eloísa. La prueba sintética del iframe, MFA y PDF se ejecuta co
 El puente admite `https://hhr-hospitalizados.app`, los sitios `testinghhr.netlify.app` y
 `hhr-entorno-prueba.netlify.app`, sus deploy previews, despliegues por rama y enlaces permanentes
 de deploy. En desarrollo admite HTTP en `localhost` y `127.0.0.1`, puertos 3000–3020 inclusive.
-`hhr-origin-policy.js` mantiene la misma autorización en los puentes, la trazabilidad y la
+`contratos/hhr-origin-policy.js` mantiene la misma autorización en los puentes, la trazabilidad y la
 recuperación de pestañas. El patrón Netlify del manifiesto se restringe en ejecución a esos dos
 proyectos; otros sitios de Netlify no instalan el puente ni reciben consultas o mensajes.
 Actualizar/recargar la extensión y las pestañas HHR para aplicar las nuevas direcciones.
@@ -156,10 +156,10 @@ HHR (localhost / testinghhr)                 Rayen (fichamedico)
   segundos. Una respuesta rápida continúa inmediatamente y un timeout real mantiene el
   reintento disponible. Los resultados se asignan por la fecha/turno de registro en Rapa
   Nui: una categoría antigua visible en Eloísa no prueba que exista para el censo elegido.
-- `patient-clinical-bundle-runtime.js` coordina dispositivos, historial de escalas,
+- `censo/patient-clinical-bundle-runtime.js` coordina dispositivos, historial de escalas,
   formularios y alertas de la ficha; cada sección falla de forma independiente. No decide qué
   persistir en HHR.
-- `fichamedico-alert-entry-runtime.js` lee las **Alertas** del episodio
+- `fichamedico/fichamedico-alert-entry-runtime.js` lee las **Alertas** del episodio
   (`entrySummary/alertEntry`) solo para el día clínico en curso, porque Eloísa entrega las
   vigentes al momento de leer. Otro día responde `skipped` sin consultar Eloísa.
 - El canal HHR negocia `acceptEntries: true` también en el paquete clínico. Para el día
@@ -196,57 +196,60 @@ sin desplazar las acciones ni la tabla al iniciar una lectura.
 
 ## Archivos
 
+Cada archivo está en la carpeta de su tema (`ficha/`, `centro/`, `salud/`…); el reparto está en
+[docs/arquitectura.md](../docs/arquitectura.md#carpetas-de-extension).
+
 | Archivo | Rol |
 | --- | --- |
 | `manifest.json` | MV3: permisos de host, content scripts (MAIN + ISOLATED), service worker |
-| `inject-fichamedico.js` | MAIN world en Rayen: captura token, lee y **normaliza** al snapshot |
-| `fichamedico-diagnosis-coding.js` | Resuelve por ID exacto el CIE-10 oficial de diagnósticos de ingreso sin codificación en el episodio |
-| `fichamedico-normalization.js` | Normaliza los episodios y sus campos clínicos para HHR |
-| `content-fichamedico.js` | ISOLATED en Rayen: relé background ⇄ mundo principal |
-| `fichamedico-clinical-client.js` | Cliente read-only: valida la sesión, construye rutas relativas y centraliza GET JSON/PDF autenticados de Ficha Médico |
-| `fichamedico-patient-context.js` | Contexto clínico read-only: caché de cabeceras, modelo normalizado de hospitalizados y revalidación de episodios activos |
-| `eloisa-patient-code-contract.js` | Serializa en UTF-8 y agrega un checksum SHA-256 contra daños accidentales; el código no está cifrado ni autentica criptográficamente su origen |
-| `hhr-nursing-worklist.js` | Combina las tres fuentes de hospitalizados en una tabla con los controles originales de cada episodio. |
-| `hhr-continuous-worklist-main.js` | Permite al componente nativo dibujar todas las filas después de aplicar sus filtros |
-| `worklist-patient-editor.js` y `content-worklist-editor-destination.js` | Abren el editor nativo desde una fila de enfermería y retoman el acceso tras el inicio de sesión en Gestión de Camas. |
-| `hhr-worklist-print-column.js` | Sustituye GES por las dos acciones de impresión del episodio en las tablas nativas. En interconsultas añade la columna junto al paciente. |
-| `hhr-native-worklist-presentation.js` | Compacta las ocho subsecciones médicas y de cuidados. Oculta el pie de páginas cuando coincide el número de filas con el total indicado |
-| `fichamedico-manual-patient-code-runtime.js` | Revalida el episodio y reúne cabecera y dispositivos mediante los lectores autenticados existentes |
-| `hhr-ui.js` | Design system de la extensión: tokens (paleta navy/teal), iconos de trazo, estilos de la barra (Shadow DOM), tooltips y foco por teclado |
-| `hhr-center-styles.js` | Estilos light-DOM del Centro HHR y sus avisos; reutiliza los tokens de `hhr-ui.js` |
+| `fichamedico/inject-fichamedico.js` | MAIN world en Rayen: captura token, lee y **normaliza** al snapshot |
+| `fichamedico/fichamedico-diagnosis-coding.js` | Resuelve por ID exacto el CIE-10 oficial de diagnósticos de ingreso sin codificación en el episodio |
+| `fichamedico/fichamedico-normalization.js` | Normaliza los episodios y sus campos clínicos para HHR |
+| `contenido/content-fichamedico.js` | ISOLATED en Rayen: relé background ⇄ mundo principal |
+| `fichamedico/fichamedico-clinical-client.js` | Cliente read-only: valida la sesión, construye rutas relativas y centraliza GET JSON/PDF autenticados de Ficha Médico |
+| `fichamedico/fichamedico-patient-context.js` | Contexto clínico read-only: caché de cabeceras, modelo normalizado de hospitalizados y revalidación de episodios activos |
+| `contratos/eloisa-patient-code-contract.js` | Serializa en UTF-8 y agrega un checksum SHA-256 contra daños accidentales; el código no está cifrado ni autentica criptográficamente su origen |
+| `listas/hhr-nursing-worklist.js` | Combina las tres fuentes de hospitalizados en una tabla con los controles originales de cada episodio. |
+| `listas/hhr-continuous-worklist-main.js` | Permite al componente nativo dibujar todas las filas después de aplicar sus filtros |
+| `gestion-camas/worklist-patient-editor.js` y `contenido/content-worklist-editor-destination.js` | Abren el editor nativo desde una fila de enfermería y retoman el acceso tras el inicio de sesión en Gestión de Camas. |
+| `listas/hhr-worklist-print-column.js` | Sustituye GES por las dos acciones de impresión del episodio en las tablas nativas. En interconsultas añade la columna junto al paciente. |
+| `listas/hhr-native-worklist-presentation.js` | Compacta las ocho subsecciones médicas y de cuidados. Oculta el pie de páginas cuando coincide el número de filas con el total indicado |
+| `fichamedico/fichamedico-manual-patient-code-runtime.js` | Revalida el episodio y reúne cabecera y dispositivos mediante los lectores autenticados existentes |
+| `centro/hhr-ui.js` | Design system de la extensión: tokens (paleta navy/teal), iconos de trazo, estilos de la barra (Shadow DOM), tooltips y foco por teclado |
+| `centro/hhr-center-styles.js` | Estilos light-DOM del Centro HHR y sus avisos; reutiliza los tokens de `centro/hhr-ui.js` |
 | `hhr-vitals.js` | Parser de formularios `VITAL_SIGNS` de Ficha Médico + umbrales de alerta (port de HHR) para el módulo de signos vitales |
-| `hhr-request-forms.js` | Formularios de solicitud (imágenes: overlays % + coordenadas PDF; laboratorio: catálogo de exámenes y HTML imprimible), port de HHR |
+| `centro/hhr-request-forms.js` | Formularios de solicitud (imágenes: overlays % + coordenadas PDF; laboratorio: catálogo de exámenes y HTML imprimible), port de HHR |
 | `forms/` | PDF de impresión y PNG de vista previa de los tres formularios de Imágenes. Para actualizar el consentimiento, editar su [original en Word](../docs/formularios/consentimiento.docx), exportarlo directamente a `forms/consentimiento.pdf` en A4 y generar `forms/consentimiento.png` desde ese PDF. Revisar las posiciones de los datos y las marcas si se mueve algún campo. |
-| `prescription-print.js` | Reglas puras para episodio y agrupación de fármacos por profesional |
-| `prescription-pdf.js` | Genera recetas con RUN del prescriptor y fecha/hora de emisión; la compacta total conserva el folio oficial |
-| `jspdf.umd.min.js` | jsPDF vendorizado para generar el PDF dentro de la extensión |
-| `pdf-print.js`, `print-pdf.*` | Abren la receta en el visor PDF de Chrome y activan el diálogo nativo de impresión |
-| `runtime-loader.js` | Verifica que PDF y planillas hayan quedado registrados durante el arranque permitido por MV3 |
+| `centro/prescription-print.js` | Reglas puras para episodio y agrupación de fármacos por profesional |
+| `centro/prescription-pdf.js` | Genera recetas con RUN del prescriptor y fecha/hora de emisión; la compacta total conserva el folio oficial |
+| `vendor/jspdf.umd.min.js` | jsPDF vendorizado para generar el PDF dentro de la extensión |
+| `documentos/pdf-print.js`, `print-pdf.*` | Abren la receta en el visor PDF de Chrome y activan el diálogo nativo de impresión |
+| `salud/runtime-loader.js` | Verifica que PDF y planillas hayan quedado registrados durante el arranque permitido por MV3 |
 | `vendor-lock.json` | Versiones, licencias y SHA-256 de las librerías vendorizadas del paquete |
-| `hhr-prescription-center.js` | Superficie de Recetas del Centro HHR: paciente actual, hospitalizados, selección e impresión repetible |
-| `hhr-hospitalized-documents-center.js` | Superficie hospitalizada de Indicaciones |
+| `centro/hhr-prescription-center.js` | Superficie de Recetas del Centro HHR: paciente actual, hospitalizados, selección e impresión repetible |
+| `centro/hhr-hospitalized-documents-center.js` | Superficie hospitalizada de Indicaciones |
 | `hhr-scores-presentation.js` | Modelo puro de presentación de Scores: normaliza historiales y deriva valores, etiquetas y estados de acción |
-| `hhr-lab-center.js` | Superficies de Laboratorio: consulta y análisis Syslab, solicitud imprimible y navegación entre ambos flujos |
-| `hhr-connection-center-runtime.js` | Ciclo de vida del panel de conexiones y su badge: solicitudes vigentes, sondeo cancelable e invalidación al cerrar o cambiar de módulo |
-| `hhr-connection-action-model.js` | Deriva una única acción contextual compartida por Ficha Médico y Gestión de Camas, sin duplicar el motor de reparación |
-| `gestion-camas-connection-indicator.js` | Barra compacta de estado HHR en Gestión de Camas; muestra las tres fuentes y ejecuta conexión dirigida o reparación limpia |
-| `gestion-camas-connection-indicator-bootstrap.js` | Monta la barra compacta sin acoplarla al relé clínico de Gestión de Camas |
-| `content-prescription-print.js` | Orquesta el shell, navegación, contexto de paciente y montaje de los owners del Centro HHR |
+| `centro/hhr-lab-center.js` | Superficies de Laboratorio: consulta y análisis Syslab, solicitud imprimible y navegación entre ambos flujos |
+| `salud/hhr-connection-center-runtime.js` | Ciclo de vida del panel de conexiones y su badge: solicitudes vigentes, sondeo cancelable e invalidación al cerrar o cambiar de módulo |
+| `salud/hhr-connection-action-model.js` | Deriva una única acción contextual compartida por Ficha Médico y Gestión de Camas, sin duplicar el motor de reparación |
+| `gestion-camas/gestion-camas-connection-indicator.js` | Barra compacta de estado HHR en Gestión de Camas; muestra las tres fuentes y ejecuta conexión dirigida o reparación limpia |
+| `gestion-camas/gestion-camas-connection-indicator-bootstrap.js` | Monta la barra compacta sin acoplarla al relé clínico de Gestión de Camas |
+| `contenido/content-prescription-print.js` | Orquesta el shell, navegación, contexto de paciente y montaje de los owners del Centro HHR |
 | `background.js` | Coordina rutas, transforma respuestas para la UI y conecta los runtimes de Eloísa |
-| `content-hhr.js` | ISOLATED en el HHR: relé página (puente) ⇄ background |
-| `content-hhr-connection-repair.js` | Puente mínimo para invocar desde el censo el runtime seguro de reparación ya existente |
-| `encounter-navigation.js` | Valida el episodio y construye la ruta segura para abrirlo en Ficha Médico |
-| `health-check.js` | Comprueba relés activos en Ficha Médico/Gestión de Camas sin leer tokens ni datos clínicos |
-| `gestion-camas-session.js` | Valida y reduce la sesión temporal de Gestión de Camas, incluida su expiración |
-| `gestion-camas-runtime.js` | Conserva, verifica, renueva y desconecta la sesión temporal de Gestión de Camas; administra su ventana oficial de acceso |
-| `clinical-panel-fetch.js` | Pagina estados farmacológicos y evita presentar fallas parciales como datos vacíos |
-| `clinical-panel-runtime.js` | Lee y normaliza el historial, plan de cuidados, estados farmacológicos y validación vigente del panel clínico |
-| `clinical-handoff-runtime.js` | Orquesta lectura, escritura verificada, recuperación e informe oficial de Entrega de turno |
-| `clinical-score-runtime.js` | Reconcilia fuentes, lotes y formularios de lectura para CUDYR, Braden y Downton |
-| `clinical-score-write-runtime.js` | Orquesta escritura verificada y recuperación de CUDYR, Braden y Downton |
-| `lab-viewer.js` | Parser clínico y organización pura de comparación, alertas y tendencias |
-| `syslab-bridge.js` | Navega la sesión oficial de Syslab y extrae/valida informes dentro de la red local |
-| `pdf.min.mjs`, `pdf.worker.min.mjs` | PDF.js vendorizado para extraer el texto de informes sin servicios auxiliares |
+| `contenido/content-hhr.js` | ISOLATED en el HHR: relé página (puente) ⇄ background |
+| `contenido/content-hhr-connection-repair.js` | Puente mínimo para invocar desde el censo el runtime seguro de reparación ya existente |
+| `clinico/encounter-navigation.js` | Valida el episodio y construye la ruta segura para abrirlo en Ficha Médico |
+| `salud/health-check.js` | Comprueba relés activos en Ficha Médico/Gestión de Camas sin leer tokens ni datos clínicos |
+| `gestion-camas/gestion-camas-session.js` | Valida y reduce la sesión temporal de Gestión de Camas, incluida su expiración |
+| `gestion-camas/gestion-camas-runtime.js` | Conserva, verifica, renueva y desconecta la sesión temporal de Gestión de Camas; administra su ventana oficial de acceso |
+| `clinico/clinical-panel-fetch.js` | Pagina estados farmacológicos y evita presentar fallas parciales como datos vacíos |
+| `clinico/clinical-panel-runtime.js` | Lee y normaliza el historial, plan de cuidados, estados farmacológicos y validación vigente del panel clínico |
+| `clinico/clinical-handoff-runtime.js` | Orquesta lectura, escritura verificada, recuperación e informe oficial de Entrega de turno |
+| `clinico/clinical-score-runtime.js` | Reconcilia fuentes, lotes y formularios de lectura para CUDYR, Braden y Downton |
+| `clinico/clinical-score-write-runtime.js` | Orquesta escritura verificada y recuperación de CUDYR, Braden y Downton |
+| `syslab/lab-viewer.js` | Parser clínico y organización pura de comparación, alertas y tendencias |
+| `syslab/syslab-bridge.js` | Navega la sesión oficial de Syslab y extrae/valida informes dentro de la red local |
+| `vendor/pdf.min.mjs`, `vendor/pdf.worker.min.mjs` | PDF.js vendorizado para extraer el texto de informes sin servicios auxiliares |
 
 ## Instalar (modo desarrollador)
 
@@ -375,7 +378,7 @@ El estado de conexión se sostiene sobre seis reglas. Cambiarlas rompe la estabi
    `tabs.sendMessage` antiguo ya había comenzado y termina después de una transición más nueva.
 
 Al instalar, actualizar o recargar la extensión, los relés de las pestañas ya abiertas quedan
-huérfanos. `relay-reinjection-runtime.js` los vuelve a inyectar desde el arranque del worker y empuja
+huérfanos. `salud/relay-reinjection-runtime.js` los vuelve a inyectar desde el arranque del worker y empuja
 el estado fresco de inmediato; una marca en `chrome.storage.session` impide repetir esa reparación
 en cada despertar normal del worker. Cada relé nuevo reclama la propiedad de su mundo ISOLATED y
 deja inertes los listeners supervivientes antes de atender mensajes. La
@@ -446,7 +449,7 @@ Entre los dos tramos, el historial unido lleva ahora, por cada día que el servi
 1. El **Resumen diario del paciente** oficial de ese día (`api/report/Resumen_diario_paciente.pdf`,
    otro motor de informes, que sí lo genera). Trae signos, indicaciones, medicamentos, dispositivos
    y riesgos, pero no evoluciones.
-2. Un **anexo HHR no oficial** (`audit-day-annex.js`) que reproduce sin resumir los registros de
+2. Un **anexo HHR no oficial** (`documentos/audit-day-annex.js`) que reproduce sin resumir los registros de
    ese día desde el historial clínico JSON de Ficha Médico: evoluciones, entregas de turno,
    administración de medicamentos, signos, escalas, indicaciones, dispositivos y exámenes.
 
@@ -462,7 +465,7 @@ periodo que incluya el 06-09-2026, el día en que Chile continental se saltó la
 horario de verano. Ningún formato de fecha lo evita, y la pantalla Informes de Eloísa envía la misma
 petición, así que también falla ahí. Un periodo que termina el día anterior a las 23:59:59 y otro que
 empieza el día siguiente a las 00:00 sí se generan. Por eso, si el historial completo falla y la estadía
-cruza un día así, `audit-history-segments.js` lo pide en tramos que lo esquivan y los une con pdf-lib.
+cruza un día así, `documentos/audit-history-segments.js` lo pide en tramos que lo esquivan y los une con pdf-lib.
 El archivo y `00 Resumen.csv` dicen qué día falta, porque ese día no se puede obtener. Los días se
 calculan con la zona de Chile continental, que es la que usa el servidor de informes, y no con fechas
 fijas. Lo corrige de fondo Rayen.
@@ -691,7 +694,7 @@ el visor original. La versión 0.48.78 enviaba el token sin este esquema y segu�
 recibiendo HTTP 401.
 El lector HTTP autenticado conserva el token en un cierre propio del historial
 efímero verificado por paciente, episodio y autorización, dentro de
-`clinical-antecedents-transport.js`; no lo comparte como estado global ni lo envía a HHR.
+`clinico/clinical-antecedents-transport.js`; no lo comparte como estado global ni lo envía a HHR.
 La actualización conserva los permisos existentes y requiere recargar la extensión.
 
 Desde v0.48.80, el lector incorpora también `ResumenHistorial.ResumenHistorial` de
@@ -748,7 +751,7 @@ Eloísa. Recargar manualmente la extensión y las pestañas conectadas para util
 el nuevo contrato; una extensión anterior conserva compatibilidad y se identifica
 como cobertura desconocida. No acredita recuperación histórica completa.
 
-El módulo `cudyr-capture-support.js` concentra el historial y lectura de metadatos
+El módulo `gestion-camas/cudyr-capture-support.js` concentra el historial y lectura de metadatos
 opcionales. Owner: sincronización HHR/Eloísa. Su registro nuevo en el ratchet de
 extensión no aumenta límites de archivos existentes ni admite hotspots nuevos.
 
@@ -757,7 +760,7 @@ extensión no aumenta límites de archivos existentes ni admite hotspots nuevos.
 El historial captura además la asignación original de cama/servicio con su intervalo,
 ID y versión. Los mapeos anidados antiguos se conservan como evidencia, sin anunciar
 ocupación vigente. La fecha centinela de término no se interpreta como alta. El nuevo
-helper `cudyr-placement-support.js` carga después de los normalizadores de camas/cunas.
+helper `gestion-camas/cudyr-placement-support.js` carga después de los normalizadores de camas/cunas.
 
 ### Puente 0.48.48: dominio publicado de HHR de pruebas
 
@@ -805,7 +808,7 @@ un `errorCode` estable además del mensaje `error` existente. HHR anterior puede
 el campo adicional; HHR actualizado admite extensiones anteriores sin ese campo.
 El contrato y la recuperación compatible se documentan en
 [`rayen-import`](../src/features/rayen-import/README.md#códigos-estables-de-errores-de-lectura).
-El módulo `clinical-read-error-contract.js` se carga antes del cliente de Ficha Médico.
+El módulo `contratos/clinical-read-error-contract.js` se carga antes del cliente de Ficha Médico.
 No cambian permisos, vigencia de autorización, escrituras ni reglas de CUDYR.
 
 ### Recuperación acotada de captura (0.48.55)
@@ -843,7 +846,7 @@ contenido PDF y autorización hospitalaria antes de descargar. No copia credenci
 no persiste datos clínicos y no entrega el PDF ni enlaces de acceso a la página HHR.
 Si Urgencias no está abierto, el botón explica que debe iniciarse esa sesión.
 Los DAU con identificadores secundarios opacos quedan fuera de este contrato: no se
-elige una atención por cercanía de fecha. Owner: `urgency-dau-runtime.js`; rollback:
+elige una atención por cercanía de fecha. Owner: `urgencia/urgency-dau-runtime.js`; rollback:
 retirar su import, acción `dau`, botón y permiso juntos.
 
 El panel reduce separaciones y rellenos, manteniendo todos los campos visibles.
@@ -856,7 +859,7 @@ el lector ejecuta `PatientCareService.loadFull(admission, true)` antes de compro
 los vínculos y generar el DAU. Conserva el RUN y la atención exactos del listado y
 los identificadores originales de paciente/admisión; un cambio durante la carga se
 rechaza. Toda la lectura comparte el límite de 60 segundos y verifica de nuevo la
-sesión. El adaptador de página vive en `urgency-dau-page.js`, cargado antes del runtime.
+sesión. El adaptador de página vive en `urgencia/urgency-dau-page.js`, cargado antes del runtime.
 
 El DAU pregunta dónde guardar el PDF (`saveAs=true`) para que el usuario elija un
 destino explícito. Los demás informes mantienen su descarga habitual por defecto.

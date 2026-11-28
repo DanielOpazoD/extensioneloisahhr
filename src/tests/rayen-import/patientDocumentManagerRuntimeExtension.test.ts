@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/patient-document-manager-runtime.js';
+import '../../../extension/documentos/patient-document-manager-runtime.js';
 
 const globals = globalThis as typeof globalThis & {
   HhrPatientDocumentManagerRuntime: {

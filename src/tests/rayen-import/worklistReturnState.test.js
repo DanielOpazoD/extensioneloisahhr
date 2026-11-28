@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import vm from 'node:vm';
 import { expect, it } from 'vitest';
 
-const source = readFileSync('extension/worklist-return-state.js', 'utf8');
+const source = readFileSync('extension/listas/worklist-return-state.js', 'utf8');
 const url = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list-nurse';
 const sender = { url, id: 'extension', frameId: 0, tab: { id: 7 } };
 const snapshot = { entryKey: 'list-a', episode: '2013', query: 'sintético', tab: 'Egresos',

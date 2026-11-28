@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import '../../../extension/health-push-ordering-runtime.js';
+import '../../../extension/salud/health-push-ordering-runtime.js';
 
 type OrderingRuntime = {
   createReceiver: () => { accept: (message: Record<string, unknown>) => boolean };

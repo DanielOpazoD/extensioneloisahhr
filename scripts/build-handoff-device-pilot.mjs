@@ -26,7 +26,7 @@ manifest.key = manifestKey;
 manifest.host_permissions.push(endpoint.origin + '/*');
 manifest.name = 'Eloísa HHR · Equipo de enfermería (pruebas)';
 manifest.version_name = manifest.version + ' · Equipo de enfermería (pruebas)';
-manifest.content_scripts.find(entry => entry.js.includes('nursing-handoff-hhr-relay.js')).matches = [origin + '/*'];
+manifest.content_scripts.find(entry => entry.js.includes('entrega-enfermeria/nursing-handoff-hhr-relay.js')).matches = [origin + '/*'];
 const worker = manifest.background.service_worker;
 files[worker] = Buffer.concat([
   Buffer.from(`'use strict';\nglobalThis.HhrNursingHandoffDevice = ${JSON.stringify(config)};\n`),

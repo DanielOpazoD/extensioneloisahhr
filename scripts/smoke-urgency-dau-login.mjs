@@ -13,27 +13,28 @@ const temporary = await fs.mkdtemp(
 const extension = path.join(temporary, "extension");
 await fs.mkdir(extension);
 const files = [
-  "message-contract.js",
-  "hhr-origin-policy.js",
-  "exalab-background.js",
-  "urgency-api.js",
-  "urgency-auth-model.js",
-  "urgency-auth-state.js",
-  "urgency-auth-runtime.js",
-  "urgency-dau-api.js",
-  "urgency-dau-page.js",
-  "urgency-dau-source.js",
-  "urgency-session-page.js",
-  "urgency-dau-runtime.js",
-  "hospitalization-reports-runtime.js",
+  "contratos/message-contract.js",
+  "contratos/hhr-origin-policy.js",
+  "exalab/exalab-background.js",
+  "urgencia/urgency-api.js",
+  "urgencia/urgency-auth-model.js",
+  "urgencia/urgency-auth-state.js",
+  "urgencia/urgency-auth-runtime.js",
+  "urgencia/urgency-dau-api.js",
+  "urgencia/urgency-dau-page.js",
+  "urgencia/urgency-dau-source.js",
+  "urgencia/urgency-session-page.js",
+  "urgencia/urgency-dau-runtime.js",
+  "documentos/hospitalization-reports-runtime.js",
   "urgency-login.html",
-  "urgency-login.js",
-  "urgency-login.css",
+  "urgencia/urgency-login.js",
+  "urgencia/urgency-login.css",
 ];
 await Promise.all(
-  files.map((file) =>
-    fs.copyFile(path.join(root, "extension", file), path.join(extension, file)),
-  ),
+  files.map(async (file) => {
+    await fs.mkdir(path.dirname(path.join(extension, file)), { recursive: true });
+    await fs.copyFile(path.join(root, "extension", file), path.join(extension, file));
+  }),
 );
 const productionManifest = JSON.parse(
   await fs.readFile(path.join(root, "extension/manifest.json"), "utf8"),
@@ -49,7 +50,7 @@ await fs.writeFile(
     background: { service_worker: "fixture-worker.js" },
     web_accessible_resources: [
       {
-        resources: ["urgency-login.html", "urgency-login.css"],
+        resources: ["urgency-login.html", "urgencia/urgency-login.css"],
         matches: ["http://localhost:3001/*"],
       },
     ],
@@ -59,7 +60,7 @@ await fs.writeFile(
   path.join(extension, "fixture-worker.js"),
   `
 importScripts(${files
-    .filter((file) => file.endsWith(".js") && file !== "urgency-login.js")
+    .filter((file) => file.endsWith(".js") && file !== "urgencia/urgency-login.js")
     .map((file) => JSON.stringify(file))
     .join(",")});
 globalThis.syntheticRequests = [];

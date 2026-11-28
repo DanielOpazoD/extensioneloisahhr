@@ -68,7 +68,7 @@ const worker = ({
     },
   });
   context.self = context;
-  for (const file of ['hhr-origin-policy.js', 'exalab-session-transport.js', 'exalab-auto-runtime.js'])
+  for (const file of ['contratos/hhr-origin-policy.js', 'exalab/exalab-session-transport.js', 'exalab/exalab-auto-runtime.js'])
     vm.runInContext(source(file), context);
   const ask = (message: unknown, sender: unknown = hhr) =>
     new Promise(resolve => {
@@ -183,8 +183,8 @@ describe('HHR page relay for Exalab reconnection', () => {
       },
     });
     context.globalThis = context;
-    vm.runInContext(source('hhr-origin-policy.js'), context);
-    vm.runInContext(source('content-hhr-exalab-auto.js'), context);
+    vm.runInContext(source('contratos/hhr-origin-policy.js'), context);
+    vm.runInContext(source('contenido/content-hhr-exalab-auto.js'), context);
     const send = (data: unknown, from = window) =>
       Promise.all(pageListeners.map(handler => handler({ source: from, origin, data })));
     return { send, posted, sendMessage, notify: (message: unknown) => runtimeListener(message) };

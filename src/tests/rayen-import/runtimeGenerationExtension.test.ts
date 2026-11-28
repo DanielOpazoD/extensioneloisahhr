@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/runtime-generation-recovery.js';
-import '../../../extension/runtime-generation.js';
-import '../../../extension/bridge-generation-main.js';
+import '../../../extension/salud/runtime-generation-recovery.js';
+import '../../../extension/salud/runtime-generation.js';
+import '../../../extension/salud/bridge-generation-main.js';
 
 type Owner = {
   MAIN_WORLD_GENERATION_KEY: string;
@@ -86,10 +86,10 @@ describe('runtime generation (extension)', () => {
         .flatMap(entry => entry.js || [])
     );
 
-    expect(mainFiles).toContain('bridge-generation-main.js');
-    expect(isolatedFiles).toContain('bridge-generation.js');
-    expect(mainFiles).not.toContain('bridge-generation.js');
-    expect(isolatedFiles).not.toContain('bridge-generation-main.js');
+    expect(mainFiles).toContain('salud/bridge-generation-main.js');
+    expect(isolatedFiles).toContain('salud/bridge-generation.js');
+    expect(mainFiles).not.toContain('salud/bridge-generation.js');
+    expect(isolatedFiles).not.toContain('salud/bridge-generation-main.js');
   });
 
   it('reuses one generation across service-worker runtimes in the same loaded lifecycle', async () => {

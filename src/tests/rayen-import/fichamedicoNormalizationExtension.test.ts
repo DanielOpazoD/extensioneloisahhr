@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import '../../../extension/fichamedico-isolation-normalization.js';
-import '../../../extension/fichamedico-treating-physician-dom.js';
-import '../../../extension/fichamedico-treating-physician-sources.js';
-import '../../../extension/fichamedico-treating-physician-normalization.js';
-import '../../../extension/fichamedico-diagnosis-coding.js';
-import '../../../extension/fichamedico-normalization.js';
-import '../../../extension/fichamedico-capture-cache.js';
-import '../../../extension/fichamedico-census-runtime.js';
+import '../../../extension/fichamedico/fichamedico-isolation-normalization.js';
+import '../../../extension/fichamedico/fichamedico-treating-physician-dom.js';
+import '../../../extension/fichamedico/fichamedico-treating-physician-sources.js';
+import '../../../extension/fichamedico/fichamedico-treating-physician-normalization.js';
+import '../../../extension/fichamedico/fichamedico-diagnosis-coding.js';
+import '../../../extension/fichamedico/fichamedico-normalization.js';
+import '../../../extension/fichamedico/fichamedico-capture-cache.js';
+import '../../../extension/fichamedico/fichamedico-census-runtime.js';
 
 const treatingPhysicianNormalization = (
   globalThis as typeof globalThis & {

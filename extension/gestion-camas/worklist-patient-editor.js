@@ -152,7 +152,7 @@
           if (existing && !existing.discarded) {
             try {
               // Refresh listeners in tabs that predate the current extension version.
-              await chrome.scripting.executeScript({ target: { tabId: dest.id }, files: ['content-worklist-editor-destination.js'] });
+              await chrome.scripting.executeScript({ target: { tabId: dest.id }, files: ['contenido/content-worklist-editor-destination.js'] });
             } catch (error) {
               const tab = await chrome.tabs.get(dest.id);
               if (tab.status === 'complete' || !(tab.pendingUrl || tab.url)?.startsWith(origin + '/')) throw error;

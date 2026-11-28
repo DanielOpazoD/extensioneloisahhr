@@ -428,7 +428,7 @@ async function verifyTableConnection(context, origin, worker) {
     }));
     await worker.evaluate(async url => {
       const [tab] = await chrome.tabs.query({ url });
-      await chrome.scripting.executeScript({ target:{ tabId:tab.id }, files:['nursing-handoff-dialog.js'] });
+      await chrome.scripting.executeScript({ target:{ tabId:tab.id }, files:['entrega-enfermeria/nursing-handoff-dialog.js'] });
       await chrome.scripting.executeScript({ target:{ tabId:tab.id }, func:() => {
         const original = chrome.runtime.sendMessage.bind(chrome.runtime);
         self.__handoffOpens = 0;

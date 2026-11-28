@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, expect, it } from 'vitest';
-import '../../../extension/hhr-ficha-care-plan.js';
+import '../../../extension/ficha/hhr-ficha-care-plan.js';
 
 const tool = (icon, name = '') => `<button class="MuiIconButton-root"><svg data-testid="${icon}"${name ? ` aria-label="${name}"` : ''}></svg></button>`;
 const tools = (extra = '') => `<div class="MuiBox-root"><div class="MuiCollapse-root"><div class="MuiStack-root">

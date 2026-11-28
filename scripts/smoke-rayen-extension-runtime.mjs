@@ -1497,7 +1497,7 @@ try {
   );
   const fichaMainFiles = manifest.content_scripts.find(
     (entry) =>
-      entry.world === "MAIN" && entry.js.includes("inject-fichamedico.js"),
+      entry.world === "MAIN" && entry.js.includes("fichamedico/inject-fichamedico.js"),
   )?.js;
   assert.ok(fichaMainFiles, "Ficha MAIN manifest entry is missing");
   await reloadedStatusPage.evaluate(async (files) => {
