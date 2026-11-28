@@ -41,3 +41,34 @@ Para cada cambio, ubicar la entrada, el responsable del estado, la fuente autori
 y una prueba que compruebe el resultado visible. Ante cambios de Rayen desconocidos,
 probar que la vista nativa sigue disponible. Para una acción clínica, probar también
 identidad ambigua y cambio de sesión o episodio con datos sintéticos.
+
+## Comprobaciones de estructura
+
+La extensión no tiene un sistema de módulos: cada archivo publica un objeto (`globalThis.HhrX`) y el
+manifiesto, o `importScripts` del worker, decide dónde y en qué orden se carga. Dos comprobaciones sin
+dependencias corren primero en CI:
+
+- `npm run check:load-order` ([script](../scripts/check-load-order.mjs)) lee cada mundo del manifiesto (worker,
+  páginas, MAIN y aislado) y falla si un archivo usa un miembro de un objeto que ningún archivo de su mundo
+  define. Una lectura que tolera la ausencia (`HhrX?.`, `HhrX ?? …`) no cuenta.
+- `npm run check:shape` ([script](../scripts/check-code-shape.mjs)) es un trinquete: las líneas de más de 160
+  caracteres y los archivos de más de 800 líneas pueden bajar, nunca subir, respecto de
+  [la línea base](../scripts/code-shape-baseline.json). Al mejorar, `node scripts/check-code-shape.mjs --update`.
+
+El CI corre en tres trabajos a la vez (unitarias y paquete, extensión en Chromium, capturas de las vistas) y
+`extension-ci`, la comprobación que piden `main` y la publicación, pasa solo si los tres pasaron.
+
+## Plan de mejora técnica (27-11-2026)
+
+Medido en 0.48.237: 246 archivos JS en una carpeta plana, 203 objetos globales, 442 líneas de más de 160
+caracteres, 495 `!important` en el CSS, 275 comprobaciones que buscan texto en el código fuente y un CI de
+4 min 40 s. Cada etapa es un cambio propio, con las capturas como red.
+
+| Etapa | Qué | Meta |
+| --- | --- | --- |
+| 1 | Orden de carga y forma del código en CI; CI en paralelo; esperas por condición | Hecho en este cambio |
+| 2 | `background.js` como raíz de composición legible: la tabla de rutas a su propio módulo, sin el presupuesto de líneas que empuja a escribir líneas de 300 caracteres | `background.js` sin líneas anchas |
+| 3 | `extension/` por dominio (`ficha/`, `listas/`, `centro/`, `recetas/`, `transporte/`, `contratos/`) | Ningún archivo en la raíz salvo el manifiesto y el worker |
+| 4 | CSS de la vista compacta por capas propias, sobre las marcas `data-hhr-*` y no sobre clases de MUI; sin ids ficticios para ganar peso | `!important` a la mitad |
+| 5 | Las comprobaciones que leen el código fuente pasan a probar comportamiento | Ninguna prueba busca texto en el código |
+| 6 | Utilidades repetidas (`normalize`, `plain`, `el`) en un módulo común | Una sola definición de cada una |
