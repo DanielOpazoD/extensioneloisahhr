@@ -1,7 +1,7 @@
 // Read the dedicated Braden notes as scores; leave unrecognized or mixed notes readable in Evoluciones.
 (() => {
   'use strict';
-  const { parseValuationStamp, nextValuation } = globalThis.HhrClinicalAssessmentClock;
+  const { parseValuationStamp, nextValuationDate } = globalThis.HhrClinicalAssessmentClock;
   const detailsLabel = 'Observaciones de piel e intervenciones:';
 
   function parse(text, note = {}) {
@@ -40,7 +40,7 @@
     const voided = note.crossedOut || note.archived;
     return {
       scale, valuation, points: score.points, maximum: score.maximum, risk: score.riskLabel,
-      next: voided ? null : nextValuation(valuation, braden.REASSESS_BY_RISK[score.risk]),
+      nextDate: voided ? null : nextValuationDate(valuation.date, braden.REASSESS_BY_RISK[score.risk].days),
     };
   }
 

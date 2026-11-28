@@ -129,12 +129,14 @@ try {
     ['Escala', 'Fecha de valoración', 'Puntaje', 'Riesgo', 'Próxima valoración']);
   const cells = () => scoreRows.evaluateAll(rows => rows.map(row => [...row.cells].map(cell => cell.innerText.trim())));
   assert.deepEqual(await cells(), [
-    ['Caídas en adultos', '15-04-2026 · 09:00', '8 / 30', 'Alto', '16-04-2026 · 09:00'],
-    ['Braden Q', '15-04-2026 · 08:30', '7 / 28', 'Alto', '16-04-2026 · 08:30'],
-    ['Braden adulto', '14-04-2026 · 23:40', '15 / 23', 'Moderado', '17-04-2026 · 23:40'],
+    ['Caídas en adultos', '15-04-2026 · 09:00', '8 / 30', 'Alto', '16-04-2026'],
+    ['Braden Q', '15-04-2026 · 08:30', '7 / 28', 'Alto', '16-04-2026'],
+    ['Braden adulto', '14-04-2026 · 23:40', '15 / 23', 'Moderado', '17-04-2026'],
     ['Braden adulto\nArchivada', '14-04-2026 · 08:00', '16 / 23', 'Bajo', '—'],
-    ['Caídas pediátricas', '14-04-2026 · 07:50', '4 / 10', 'Medio', '17-04-2026 · 07:50'],
-  ], 'El orden y los plazos se calculan desde la fecha de valoración, no desde su publicación');
+    ['Caídas pediátricas', '14-04-2026 · 07:50', '4 / 10', 'Medio', '17-04-2026'],
+  ], 'La próxima valoración muestra solo la fecha del turno de día');
+  assert.deepEqual(await scoreRows.locator('td:last-child time').evaluateAll(times => times.map(time => time.dateTime)),
+    ['2026-04-16', '2026-04-16', '2026-04-17', '2026-04-17'], 'Las fechas de reevaluación se marcan sin hora');
   assert.deepEqual(await page.evaluate(() => window.fichaNoteRequests), [['1', 14]], 'Scores y Evoluciones comparten la lectura');
   const noteLink = table.getByRole('button', {name:'Braden adulto, nota del 14-04-2026 · 23:40', exact:true});
   await noteLink.press('Enter');
@@ -167,7 +169,7 @@ try {
   assert.equal(await reader.locator('small').textContent(), 'Últimos 60 días · hora de Rapa Nui');
   await reader.getByRole('button', {name:'Scores', exact:true}).click();
   assert.equal(await scoreRows.count(), 6);
-  assert.deepEqual((await cells()).at(-1), ['Braden adulto', '02-03-2026 · 08:30', '16 / 23', 'Bajo', '09-03-2026 · 08:30']);
+  assert.deepEqual((await cells()).at(-1), ['Braden adulto', '02-03-2026 · 08:30', '16 / 23', 'Bajo', '09-03-2026']);
   await scoresDialog.getByRole('button', {name:'Evoluciones', exact:true}).click();
   await reader.getByRole('button', {name:'Ver más antiguas (último año)', exact:true}).click();
   const status = reader.getByRole('status');

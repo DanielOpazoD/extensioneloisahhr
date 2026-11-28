@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.237
+
+- «Próxima valoración» en Scores muestra la fecha del turno de día. Para Braden, Braden Q y ambas pautas de caídas se suman 1, 3 o 7 días calendario a la fecha de valoración, según el riesgo.
+
 ## 0.48.236
 
 - «Acciones de evolución» incorpora las pautas institucionales de caídas en adultos (desde los 15 años) y pediátricas. Cada formulario calcula el puntaje y el riesgo y prepara una nota `#EscalaCaidas` para guardar en Eloísa.

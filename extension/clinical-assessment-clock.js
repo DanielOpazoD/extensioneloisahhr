@@ -1,8 +1,6 @@
-// Valuation dates are Rapa Nui wall clocks. Calendar-day and elapsed-hour schedules differ at DST.
+// Assessments record Rapa Nui dates and times. Reassessments are scheduled by calendar date.
 (() => {
   'use strict';
-  const HOUR_MS = 3_600_000;
-  const DAY_MS = 24 * HOUR_MS;
   const STAMP = /^(\d{4}-\d{2}-\d{2}) ((?:[01]\d|2[0-3]):[0-5]\d)(?: · [^\n]+)?$/;
   const hospitalClock = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Pacific/Easter', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -35,30 +33,15 @@
     return stamp && calendarDay(stamp[1]) ? { date: stamp[1], time: stamp[2] } : null;
   }
 
-  const wallTime = ({ date, time }) => Date.parse(date + 'T' + time + ':00Z');
-
-  function localInstants(stamp) {
-    const wall = wallTime(stamp);
-    const candidates = new Set();
-    for (const probe of [wall - DAY_MS, wall + DAY_MS]) {
-      const offset = wallTime(hospitalDateTimeNow(new Date(probe))) - probe;
-      const instant = wall - offset;
-      if (wallTime(hospitalDateTimeNow(new Date(instant))) === wall) candidates.add(instant);
-    }
-    return [...candidates];
-  }
-
-  function nextValuation(stamp, cadence) {
-    if (cadence.days) {
-      const date = new Date(wallTime(stamp) + cadence.days * DAY_MS).toISOString().slice(0, 10);
-      const next = { date, time: stamp.time };
-      return localInstants(next).length ? next : { date, time: '' };
-    }
-    const instants = localInstants(stamp);
-    return instants.length === 1 ? hospitalDateTimeNow(new Date(instants[0] + cadence.hours * HOUR_MS)) : null;
+  function nextValuationDate(date, days) {
+    const day = calendarDay(date);
+    if (!day) return null;
+    // UTC provides calendar arithmetic without changes in the Rapa Nui clock.
+    day.setUTCDate(day.getUTCDate() + days);
+    return day.toISOString().split('T')[0];
   }
 
   globalThis.HhrClinicalAssessmentClock = Object.freeze({
-    hospitalDateTimeNow, calendarDay, birthDayOf, completedYears, parseValuationStamp, nextValuation,
+    hospitalDateTimeNow, calendarDay, birthDayOf, completedYears, parseValuationStamp, nextValuationDate,
   });
 })();
