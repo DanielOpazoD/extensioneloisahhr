@@ -3,50 +3,45 @@
 
 // MV3 requires initial imports. Excel/PDF stay here until their separate offscreen migrations.
 importScripts(
-  'message-contract.js', 'build-identity.js', 'hhr-origin-policy.js', 'exalab-background.js', 'exalab-session-transport.js', 'exalab-auto-runtime.js', 'eloisa-patient-code-contract.js', 'fichamedico-manual-patient-code-runtime.js',
-  'encounter-navigation.js', 'worklist-return-state.js', 'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js', 'rapa-nui-weather.js', 'hhr-daily-births.js', 'extension-release-check.js',
-  'hhr-request-forms.js', 'hhr-imaging-print.js',
-  'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js', 'hospitalized-roster-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js', 'sync-bundle-cancellation-runtime.js',
-  'connection-relay-recovery.js', 'fichamedico-transport-runtime.js', 'fichamedico-history-read-model.js', 'fichamedico-device-evidence-runtime.js', 'clinical-read-error-contract.js', 'fichamedico-clinical-client.js', 'tab-encounter-authorization.js', 'fichamedico-patient-flow-runtime.js',
-  'fichamedico-patient-context.js',
-  'patient-document-manager-runtime.js',
-  'gestion-camas-session.js', 'gestion-camas-session-health.js', 'gestion-camas-health.js',
-  'gestion-camas-session-verification.js',
-  'gestion-camas-runtime.js',
-  'gestion-camas-egreso-lookup.js', 'gestion-camas-egreso-query-runtime.js', 'gestion-camas-egreso-report-runtime.js', 'gestion-camas-monthly-cudyr-runtime.js', 'gestion-camas-active-beds.js', 'gestion-camas-clinical-cribs.js',
-  'gestion-camas-statistical-report-fetcher.js', 'gestion-camas-discharge-report-runtime.js', 'gestion-camas-statistical-evidence-runtime.js',
+  'message-contract.js', 'build-identity.js', 'hhr-origin-policy.js', 'exalab-background.js',
+  'exalab-session-transport.js', 'exalab-auto-runtime.js', 'eloisa-patient-code-contract.js',
+  'fichamedico-manual-patient-code-runtime.js', 'encounter-navigation.js', 'worklist-return-state.js',
+  'worklist-patient-editor.js', 'nursing-handoff-connection.js', 'nursing-handoff-pilot.js', 'rapa-nui-weather.js',
+  'hhr-daily-births.js', 'extension-release-check.js', 'hhr-request-forms.js', 'hhr-imaging-print.js',
+  'health-check.js', 'clinical-day-runtime.js', 'clinical-history-coverage.js', 'census-sync-horizon-runtime.js',
+  'hospitalized-roster-runtime.js', 'capture-read-recovery.js', 'rayen-sync-bundle-runtime.js',
+  'sync-bundle-cancellation-runtime.js', 'connection-relay-recovery.js', 'fichamedico-transport-runtime.js',
+  'fichamedico-history-read-model.js', 'fichamedico-device-evidence-runtime.js', 'clinical-read-error-contract.js',
+  'fichamedico-clinical-client.js', 'tab-encounter-authorization.js', 'fichamedico-patient-flow-runtime.js',
+  'fichamedico-patient-context.js', 'patient-document-manager-runtime.js', 'gestion-camas-session.js',
+  'gestion-camas-session-health.js', 'gestion-camas-health.js', 'gestion-camas-session-verification.js',
+  'gestion-camas-runtime.js', 'gestion-camas-egreso-lookup.js', 'gestion-camas-egreso-query-runtime.js',
+  'gestion-camas-egreso-report-runtime.js', 'gestion-camas-monthly-cudyr-runtime.js', 'gestion-camas-active-beds.js',
+  'gestion-camas-clinical-cribs.js', 'gestion-camas-statistical-report-fetcher.js',
+  'gestion-camas-discharge-report-runtime.js', 'gestion-camas-statistical-evidence-runtime.js',
   'cudyr-capture-support.js', 'cudyr-placement-support.js', 'gestion-camas-cudyr.js',
   'patient-clinical-bundle-runtime.js', 'fichamedico-alert-entry-runtime.js', 'fichamedico-fluid-balance-runtime.js',
   'runtime-generation-recovery.js', 'runtime-generation.js', 'connection-repair-runtime.js',
-  'health-report-cache-runtime.js', 'health-request-runtime.js', 'health-push-ordering-runtime.js', 'health-heartbeat-runtime.js', 'health-tab-events-runtime.js', 'health-relay-self-repair.js',
-  'relay-reinjection-manifest.js', 'relay-reinjection-health.js', 'relay-reinjection-operations.js', 'relay-reinjection-session.js', 'relay-reinjection-tab-events.js', 'relay-reinjection-runtime.js',
-  'clinical-panel-fetch.js',
-  'clinical-panel-history.js', 'clinical-panel-runtime.js', 'ficha-evolution-notes.js',
-  'clinical-antecedents-attachment.js', 'clinical-antecedents-fields.js', 'clinical-antecedents-cache.js', 'clinical-antecedents-detail.js', 'clinical-antecedents-window.js',
-  'clinical-antecedents-transport.js', 'clinical-antecedents-sources.js', 'clinical-antecedents-runtime.js', 'urgency-dau-page.js', 'urgency-dau-source.js', 'urgency-session-page.js', 'urgency-dau-runtime.js', 'urgency-api.js', 'urgency-auth-model.js', 'urgency-auth-state.js', 'urgency-dau-api.js', 'urgency-auth-runtime.js',
-  'clinical-write-recovery-policy.js', 'clinical-write-runtime.js',
-  'clinical-handoff-runtime.js', 'clinical-checklist-broker.js',
-  'clinical-score-runtime.js',
-  'clinical-score-write-model.js',
-  'clinical-score-write-runtime.js',
-  'hospitalization-report-search-runtime.js', 'hospitalization-reports-runtime.js',
-  'epicrisis-pdf-download.js', 'epicrisis-download-runtime.js',
-  'zip-store-writer.js', 'audit-history-segments.js', 'audit-day-annex.js', 'audit-history-reconstruction.js', 'audit-documents-runtime.js',
-  'clinical-report-runtime.js', 'document-preview-jobs.js',
-  'clinical-batch-print-runtime.js',
-  'prescription-print.js',
-  'lab-result-parser.js', 'lab-viewer.js',
-  'offscreen-contract.js', 'offscreen-coordinator.js',
-  'syslab-login-window.js', 'syslab-session-transport.js', 'syslab-pdf-filename.js', 'syslab-pdf-bundle.js', 'syslab-runtime.js',
-  'exam-request-print.js',
-  'xlsx.full.min.js',
-  'report-parser.js',
-  'jspdf.umd.min.js',
-  'pdf-lib.min.js',
-  'prescription-pdf.js',
-  'epicrisis-pdf.js',
-  'exam-request-pdf.js',
-  'pdf-print.js',
+  'health-report-cache-runtime.js', 'health-request-runtime.js', 'health-push-ordering-runtime.js',
+  'health-heartbeat-runtime.js', 'health-tab-events-runtime.js', 'health-relay-self-repair.js',
+  'relay-reinjection-manifest.js', 'relay-reinjection-health.js', 'relay-reinjection-operations.js',
+  'relay-reinjection-session.js', 'relay-reinjection-tab-events.js', 'relay-reinjection-runtime.js',
+  'clinical-panel-fetch.js', 'clinical-panel-history.js', 'clinical-panel-runtime.js', 'ficha-evolution-notes.js',
+  'clinical-antecedents-attachment.js', 'clinical-antecedents-fields.js', 'clinical-antecedents-cache.js',
+  'clinical-antecedents-detail.js', 'clinical-antecedents-window.js', 'clinical-antecedents-transport.js',
+  'clinical-antecedents-sources.js', 'clinical-antecedents-runtime.js', 'urgency-dau-page.js', 'urgency-dau-source.js',
+  'urgency-session-page.js', 'urgency-dau-runtime.js', 'urgency-api.js', 'urgency-auth-model.js',
+  'urgency-auth-state.js', 'urgency-dau-api.js', 'urgency-auth-runtime.js', 'clinical-write-recovery-policy.js',
+  'clinical-write-runtime.js', 'clinical-handoff-runtime.js', 'clinical-checklist-broker.js',
+  'clinical-score-runtime.js', 'clinical-score-write-model.js', 'clinical-score-write-runtime.js',
+  'hospitalization-report-search-runtime.js', 'hospitalization-reports-runtime.js', 'epicrisis-pdf-download.js',
+  'epicrisis-download-runtime.js', 'zip-store-writer.js', 'audit-history-segments.js', 'audit-day-annex.js',
+  'audit-history-reconstruction.js', 'audit-documents-runtime.js', 'clinical-report-runtime.js',
+  'document-preview-jobs.js', 'clinical-batch-print-runtime.js', 'prescription-print.js', 'lab-result-parser.js',
+  'lab-viewer.js', 'offscreen-contract.js', 'offscreen-coordinator.js', 'syslab-login-window.js',
+  'syslab-session-transport.js', 'syslab-pdf-filename.js', 'syslab-pdf-bundle.js', 'syslab-runtime.js',
+  'exam-request-print.js', 'xlsx.full.min.js', 'report-parser.js', 'jspdf.umd.min.js', 'pdf-lib.min.js',
+  'prescription-pdf.js', 'epicrisis-pdf.js', 'exam-request-pdf.js', 'pdf-print.js',
   'runtime-loader.js',
 );
 if (!self.HhrClinicalWriteRecoveryPolicy || !self.HhrClinicalWriteRuntime || typeof self.HhrClinicalWriteRuntime.create !== 'function') {
@@ -74,7 +69,9 @@ if (!self.HhrClinicalHandoffRuntime || typeof self.HhrClinicalHandoffRuntime.cre
 if (!self.HhrClinicalPanelRuntime || typeof self.HhrClinicalPanelRuntime.create !== 'function') {
   throw new Error('No se pudo cargar el runtime de lectura del panel clínico.');
 }
-if (!self.HhrPatientDocumentManagerRuntime || typeof self.HhrPatientDocumentManagerRuntime.create !== 'function') throw new Error('No se pudo cargar el runtime del Gestor documental.');
+if (!self.HhrPatientDocumentManagerRuntime || typeof self.HhrPatientDocumentManagerRuntime.create !== 'function') {
+  throw new Error('No se pudo cargar el runtime del Gestor documental.');
+}
 if (!self.HhrClinicalReportRuntime || typeof self.HhrClinicalReportRuntime.create !== 'function') {
   throw new Error('No se pudo cargar el runtime de informes clínicos.');
 }
@@ -100,7 +97,10 @@ if (
 ) {
   throw new Error('No se pudo cargar el runtime de transporte de Ficha Médico.');
 }
-if (typeof self.HhrFichaMedicoHistoryReadModel?.project !== 'function' || typeof self.HhrFichaMedicoDeviceEvidenceRuntime?.create !== 'function') throw new Error('No se pudieron cargar los modelos de lectura clínica de Ficha Médico.');
+if (typeof self.HhrFichaMedicoHistoryReadModel?.project !== 'function' ||
+    typeof self.HhrFichaMedicoDeviceEvidenceRuntime?.create !== 'function') {
+  throw new Error('No se pudieron cargar los modelos de lectura clínica de Ficha Médico.');
+}
 if (
   !self.HhrFichaMedicoClinicalClient ||
   typeof self.HhrFichaMedicoClinicalClient.create !== 'function'
@@ -239,8 +239,15 @@ const {
   handleCensusListRequest,
   handleVitalsCensusRequest,
 } = fichaMedicoPatientContext;
-const patientDocumentManagerRuntime = self.HhrPatientDocumentManagerRuntime.create({ chrome, getClinicalReportContext, readJson: fichaMedicoClinicalClient.readJson, fetchClaims: info => fetchFichaClaims(info), hasClaim: (claims, name) => hasFichaClaim(claims, name) });
-const handleManualPatientCodeRequest = self.HhrFichaMedicoManualPatientCodeRuntime.create({ resolveSession: resolveFichaClinicalSession, fetchActiveEncounterRows, fetchPatientHeader, fetchDeviceEvidence, normalizePatient: fichaMedicoPatientContext.normalizeHospitalizedEncounter, clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, codeContract: self.HhrEloisaPatientCodeContract, cryptoApi: crypto, now: () => Date.now() });
+const patientDocumentManagerRuntime = self.HhrPatientDocumentManagerRuntime.create({
+  chrome, getClinicalReportContext, readJson: fichaMedicoClinicalClient.readJson,
+  fetchClaims: info => fetchFichaClaims(info), hasClaim: (claims, name) => hasFichaClaim(claims, name),
+});
+const handleManualPatientCodeRequest = self.HhrFichaMedicoManualPatientCodeRuntime.create({
+  resolveSession: resolveFichaClinicalSession, fetchActiveEncounterRows, fetchPatientHeader, fetchDeviceEvidence,
+  normalizePatient: fichaMedicoPatientContext.normalizeHospitalizedEncounter, clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt,
+  codeContract: self.HhrEloisaPatientCodeContract, cryptoApi: crypto, now: () => Date.now(),
+});
 const gestionCamasRuntime = self.HhrGestionCamasRuntime.create({
   chrome,
   session: self.HhrGestionCamasSession,
@@ -250,7 +257,8 @@ const gestionCamasRuntime = self.HhrGestionCamasRuntime.create({
   fetchWithTimeout,
   backendRequestTimeoutMs: BACKEND_REQUEST_TIMEOUT_MS,
   tabMessageTimeoutMs: TAB_MESSAGE_TIMEOUT_MS,
-  healthProbeTimeoutMs: HEALTH_PROBE_TIMEOUT_MS, recoverMissingReceiver: tabId => relayReinjectionRuntime?.reinjectTab({ tabId, requiredFile: 'content-gestioncamas.js' }),
+  healthProbeTimeoutMs: HEALTH_PROBE_TIMEOUT_MS,
+  recoverMissingReceiver: tabId => relayReinjectionRuntime?.reinjectTab({ tabId, requiredFile: 'content-gestioncamas.js' }),
 });
 
 const {
@@ -263,7 +271,8 @@ const {
   connect: handleConnectGestionCamas,
   disconnect: handleDisconnectGestionCamas,
 } = gestionCamasRuntime;
-const handleGestionCamasHealth = self.HhrConnectionRelayRecovery.repairHealth(readGestionCamasHealth, () => relayReinjectionRuntime?.reinjectRelay('content-gestioncamas.js'));
+const handleGestionCamasHealth = self.HhrConnectionRelayRecovery.repairHealth(
+  readGestionCamasHealth, () => relayReinjectionRuntime?.reinjectRelay('content-gestioncamas.js'));
 // Chrome discovers candidates from the manifest; the shared policy restricts preview sites.
 const HHR_TAB_MATCH_PATTERNS = (chrome.runtime.getManifest().content_scripts || [])
   .filter(entry => (entry.js || []).includes('content-hhr.js'))
@@ -313,7 +322,10 @@ const connectionRepairRuntime = self.HhrConnectionRepairRuntime.create({
   // Repair must probe the tabs it just opened; the 3 s cache would keep answering for the old ones.
   readHealth: targets => readExtensionHealthUncached(targets),
 });
-const healthHeartbeat = self.HhrHealthHeartbeatRuntime.create({ chromeApi: chrome, readHealth: () => healthReportCache.read({ force: true }), invalidateHealth: healthReportCache.invalidate, isTargetTab: tab => self.HhrAppOrigins.matchesRelayUrl(tab.url) });
+const healthHeartbeat = self.HhrHealthHeartbeatRuntime.create({
+  chromeApi: chrome, readHealth: () => healthReportCache.read({ force: true }), invalidateHealth: healthReportCache.invalidate,
+  isTargetTab: tab => self.HhrAppOrigins.matchesRelayUrl(tab.url),
+});
 healthHeartbeat.start();
 self.HhrHealthTabEventsRuntime.create({ chromeApi: chrome, pushHealth: healthHeartbeat.pushNow }).start();
 relayReinjectionRuntime = self.HhrRelayReinjectionRuntime.create({
@@ -447,7 +459,9 @@ const handleDeviceReportSave = async args => {
 // practitionerId is the logged-in viewer (from the list URL).
 const handleScalesReportRequest = async ({ encId, sender }) => {
   await patientFlowRuntime.authorizationReady;
-  if (!patientFlowRuntime.canRequestClinicalEpisode(sender, encId)) return { error: 'Las escalas no fueron autorizadas para el episodio de esta pestaña.', errorCode: 'episode_not_authorized' };
+  if (!patientFlowRuntime.canRequestClinicalEpisode(sender, encId)) {
+    return { error: 'Las escalas no fueron autorizadas para el episodio de esta pestaña.', errorCode: 'episode_not_authorized' };
+  }
   const infoResult = await resolveFichaClinicalSession({ sender });
   return infoResult.error ? { error: infoResult.error, errorCode: 'session_required' } : fetchScalesReportWithInfo(encId, infoResult.info);
 };
@@ -1149,8 +1163,14 @@ const handleIndicationsPrintRequest = async ({ encId }) => {
 };
 const offscreenCoordinator = self.HhrOffscreenCoordinator.create({ chrome });
 const syslabRuntime = self.HhrSyslabPdfBundle.createRuntime({ chrome, downloadPdfBuffer, withTimeout, offscreenCoordinator });
-const clinicalAuthorizationKey = async sender => { const session = await resolveFichaClinicalSession({ sender }); if (session.error) throw new Error(session.error); return fichaSessionCacheKey(session.info, sender); };
-const urgencyAuth = self.HhrUrgencyAuth.register({ chrome, fetchImpl: fetch, getAuthorizationKey: clinicalAuthorizationKey, normalizeRun: self.HhrHospitalizationReportsRuntime.normalizeRun });
+const clinicalAuthorizationKey = async sender => {
+  const session = await resolveFichaClinicalSession({ sender });
+  if (session.error) throw new Error(session.error);
+  return fichaSessionCacheKey(session.info, sender);
+};
+const urgencyAuth = self.HhrUrgencyAuth.register({
+  chrome, fetchImpl: fetch, getAuthorizationKey: clinicalAuthorizationKey, normalizeRun: self.HhrHospitalizationReportsRuntime.normalizeRun,
+});
 const urgencyDauRuntime = self.HhrUrgencyDau.create({ chrome, downloadPdfBuffer, native: urgencyAuth });
 const clinicalAntecedentsRuntime = self.HhrClinicalAntecedents.create({
   getContext: getClinicalReportContext, readJson: options => fichaMedicoClinicalClient.readJson(options),
@@ -1161,10 +1181,21 @@ const runtimeRoute = (handle, fallback) => Object.freeze({ handle, fallback });
 const releaseCheck = self.HhrExtensionReleaseCheck.create({
   storage: chrome.storage.local, request: (...args) => fetch(...args), installed: chrome.runtime.getManifest().version,
 });
+// A read of one episode is answered only to the tab that has that episode open.
+const authorizeEpisode = async (sender, encId) => {
+  await patientFlowRuntime.authorizationReady;
+  return patientFlowRuntime.canRequestClinicalEpisode(sender, encId);
+};
+// What the per-episode clinical reads share: who may read, the session, the reader and the clinical day.
+const episodeReadOptions = Object.freeze({
+  authorize: authorizeEpisode, resolveSession: resolveFichaClinicalSession,
+  readJson: options => fichaMedicoClinicalClient.readJson(options),
+  clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify,
+});
 const handlePatientClinicalBundleRequest = self.HhrPatientClinicalBundleRuntime.create({
   readDevices: handleDeviceReportRequest, readHistory: handleHistoryScalesRequest, readForms: handleScalesReportRequest,
-  readAlerts: self.HhrFichaMedicoAlertEntryRuntime.create({ authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); }, resolveSession: resolveFichaClinicalSession, readJson: options => fichaMedicoClinicalClient.readJson(options), clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify }).fetchAlertEntries,
-  readFluidBalance: self.HhrFichaMedicoFluidBalanceRuntime.create({ authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); }, resolveSession: resolveFichaClinicalSession, readJson: options => fichaMedicoClinicalClient.readJson(options), clinicalDayAt: self.HhrClinicalDayRuntime.clinicalDayAt, classify: self.HhrClinicalReadErrors.classify }).fetchFluidBalance,
+  readAlerts: self.HhrFichaMedicoAlertEntryRuntime.create(episodeReadOptions).fetchAlertEntries,
+  readFluidBalance: self.HhrFichaMedicoFluidBalanceRuntime.create(episodeReadOptions).fetchFluidBalance,
 });
 const worklistPatientEditor = self.HhrWorklistPatientEditor.create({
   chrome, getContext: getClinicalReportContext, getInfo: getFichaFetchInfo, checkAccess: checkWorklistChartAccess,
@@ -1176,10 +1207,16 @@ const nursingHandoffPilot = self.HhrNursingHandoffPilot.create({
 const clinicalChecklists = self.HhrClinicalChecklistBroker.create({ chrome, resolveSession: resolveFichaClinicalSession,
   getContext: getClinicalReportContext, encounterFromUrl: self.HhrPrescriptionPrint.resolveEncounterId });
 // The reader on the Evolución card: the evolutions of the episode its own tab has open, read only.
-const evolutionNotes = self.HhrFichaEvolutionNotes.create({ resolveSession: resolveFichaClinicalSession, readJson: fichaMedicoClinicalClient.readJson, encounterOf: self.HhrPrescriptionPrint.resolveEncounterId,
-  authorize: async (sender, encId) => { await patientFlowRuntime.authorizationReady; return patientFlowRuntime.canRequestClinicalEpisode(sender, encId); } });
+const evolutionNotes = self.HhrFichaEvolutionNotes.create({
+  resolveSession: resolveFichaClinicalSession, readJson: fichaMedicoClinicalClient.readJson,
+  encounterOf: self.HhrPrescriptionPrint.resolveEncounterId, authorize: authorizeEpisode,
+});
 const runtimeMessageRoutes = Object.freeze({
-  [RUNTIME_MESSAGES.HOSPITALIZED_ROSTER_REQUEST]: runtimeRoute(self.HhrHospitalizedRosterRuntime.create({ resolveSession: resolveFichaClinicalSession, fetchActiveEncounterRows, normalizeHospitalizedEncounter: fichaMedicoPatientContext.normalizeHospitalizedEncounter, activeHospitalizedEncounters: self.HhrPrescriptionPrint.activeHospitalizedEncounters }), 'No se pudo leer la lista de hospitalizados.'),
+  [RUNTIME_MESSAGES.HOSPITALIZED_ROSTER_REQUEST]: runtimeRoute(self.HhrHospitalizedRosterRuntime.create({
+    resolveSession: resolveFichaClinicalSession, fetchActiveEncounterRows,
+    normalizeHospitalizedEncounter: fichaMedicoPatientContext.normalizeHospitalizedEncounter,
+    activeHospitalizedEncounters: self.HhrPrescriptionPrint.activeHospitalizedEncounters,
+  }), 'No se pudo leer la lista de hospitalizados.'),
   [RUNTIME_MESSAGES.EVOLUTION_NOTES_REQUEST]: runtimeRoute(evolutionNotes.handle, 'No se pudieron leer las evoluciones.'),
   [RUNTIME_MESSAGES.CLINICAL_CHECKLIST]: runtimeRoute(clinicalChecklists.handle, 'No se pudo conectar la pauta con HHR.'),
   [RUNTIME_MESSAGES.RAPA_NUI_WEATHER]: runtimeRoute(self.HhrRapaNuiWeather.fetchForecast, 'Pronóstico no disponible.'),
@@ -1244,7 +1281,8 @@ const runtimeMessageRoutes = Object.freeze({
     message => handleOpenEncounter(message.encId, message.routeHint),
     'No se pudo abrir el episodio clínico.'
   ),
-  [RUNTIME_MESSAGES.PATIENT_DOCUMENT_MANAGER_REQUEST]: runtimeRoute((message, sender) => patientDocumentManagerRuntime.handleRequest({ ...message, sender }), 'No se pudo consultar el Gestor documental.'),
+  [RUNTIME_MESSAGES.PATIENT_DOCUMENT_MANAGER_REQUEST]: runtimeRoute(
+    (message, sender) => patientDocumentManagerRuntime.handleRequest({ ...message, sender }), 'No se pudo consultar el Gestor documental.'),
   [RUNTIME_MESSAGES.EGRESO_LOOKUP_REQUEST]: runtimeRoute(
     async (message, sender) => ({ ...(await handleEgresoLookup(message.runs, message.targets, sender)), reqId: message.reqId }),
     'No se pudo consultar el egreso.'
@@ -1282,7 +1320,8 @@ const runtimeMessageRoutes = Object.freeze({
     (message, sender) => handlePatientHeaderRequest({ encId: message.encId, sender }),
     'No se pudo identificar al paciente.'
   ),
-  [RUNTIME_MESSAGES.MANUAL_PATIENT_CODE_REQUEST]: runtimeRoute((message, sender) => handleManualPatientCodeRequest({ encId: message.encId, sender }), 'No se pudo preparar el código manual del paciente.'),
+  [RUNTIME_MESSAGES.MANUAL_PATIENT_CODE_REQUEST]: runtimeRoute(
+    (message, sender) => handleManualPatientCodeRequest({ encId: message.encId, sender }), 'No se pudo preparar el código manual del paciente.'),
   [RUNTIME_MESSAGES.CENSUS_LIST_REQUEST]: runtimeRoute(
     (message, sender) =>
       handleCensusListRequest({ currentEncId: message.currentEncId, sender }),
