@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.242
+
+- Sin cambios visibles (el estilo calculado de cada elemento del Plan, también al apuntar, con foco, en la barra de selección, la ventana de planificación y su menú, es el mismo antes y después; las capturas del Plan son iguales píxel a píxel). El CSS del Plan de tratamiento (`hhr-ficha-care-plan.css`) deja de usar `!important`: 100 → 0 (745 → 645 en total). En la página real, las reglas de Eloísa para el Plan y sus ventanas son clases de emotion (`sx`) sin `!important` ni estilos en línea, y pesan menos que las de la vista. El rótulo del día («Sáb 28/11») ya no recibe la regla de los rótulos de hora, que le daba tamaño; dice él mismo su letra. La ficha de prueba del Plan da los 1000 px de la celda de horas con una clase, como Eloísa, y no con `style`.
+
 ## 0.48.241
 
 - Sin cambios visibles. La presentación de la ficha (`hhr-native-ficha-presentation.js`) escribe su CSS con una regla por bloque, y sus etiquetas (`hhr-ficha-reading-labels.js`) no tienen líneas de más de 160 caracteres: la expresión de los cargos de una firma se arma desde una lista (comprobada igual a la anterior) y las condiciones largas tienen nombre. Cinco selectores largos de la presentación quedan en una línea: partidos en sus comas, aunque Chrome los lee igual, la prueba de la extensión en Chromium se detiene. Líneas anchas: 284 → 267.
