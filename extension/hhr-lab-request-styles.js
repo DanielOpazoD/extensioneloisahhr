@@ -16,30 +16,48 @@
   if (root.HhrLabRequestStyles) return;
 
   const css = `
-      #hhr-prescription-print-modal .hhr-syslab-access { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; padding: 10px 12px; border: 1px solid #ead18d; border-radius: 9px; background: #fffaf0; }
+      #hhr-prescription-print-modal .hhr-syslab-access {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; padding: 10px 12px; border: 1px solid #ead18d;
+        border-radius: 9px; background: #fffaf0;
+      }
       #hhr-prescription-print-modal .hhr-syslab-access[hidden] { display: none; }
       #hhr-prescription-print-modal .hhr-syslab-access > div { display: grid; gap: 3px; min-width: 0; }
       #hhr-prescription-print-modal .hhr-syslab-access strong { color: #594719; font-size: 11.5px; }
       #hhr-prescription-print-modal .hhr-syslab-access-message { color: #765c15; font-size: 10.5px; line-height: 1.35; }
       #hhr-prescription-print-modal .hhr-syslab-access-form { display: flex; gap: 7px; flex: 1 1 420px; justify-content: flex-end; }
-      #hhr-prescription-print-modal .hhr-syslab-access-form input { width: min(180px,30%); min-width: 110px; padding: 0 9px; border: 1px solid #d7c58f; border-radius: 7px; background: #fff; color: var(--hhr-ink-900); font: inherit; }
+      #hhr-prescription-print-modal .hhr-syslab-access-form input {
+        width: min(180px,30%); min-width: 110px; padding: 0 9px; border: 1px solid #d7c58f; border-radius: 7px; background: #fff;
+        color: var(--hhr-ink-900); font: inherit;
+      }
       #hhr-prescription-print-modal .hhr-labreq-content { padding: 10px clamp(12px,2vw,26px) 22px; }
       #hhr-prescription-print-modal .hhr-labreq-count { color: #64716f; font-size: 11.5px; white-space: nowrap; }
-      #hhr-prescription-print-modal .hhr-labreq-copies { display: inline-flex; align-items: center; gap: 4px; margin-inline-end: 6px; color: var(--hhr-ink-700); font-size: 12px; }
-      #hhr-prescription-print-modal .hhr-labreq-copies input { box-sizing: border-box; width: 5ch; min-width: 42px; height: 28px; padding-inline-start: 4px; border: 1px solid #cfd9d7; border-radius: 6px; background: white; color: var(--hhr-ink-900); font: inherit; }
+      #hhr-prescription-print-modal .hhr-labreq-copies {
+        display: inline-flex; align-items: center; gap: 4px; margin-inline-end: 6px; color: var(--hhr-ink-700); font-size: 12px;
+      }
+      #hhr-prescription-print-modal .hhr-labreq-copies input {
+        box-sizing: border-box; width: 5ch; min-width: 42px; height: 28px; padding-inline-start: 4px; border: 1px solid #cfd9d7; border-radius: 6px;
+        background: white; color: var(--hhr-ink-900); font: inherit;
+      }
       #hhr-prescription-print-modal .hhr-labreq-copies input:invalid { border-color: #a6382e; }
       #hhr-prescription-print-modal .hhr-labreq-patient { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px; margin-bottom: 4px; }
       #hhr-prescription-print-modal .hhr-labreq-patient-source { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
       #hhr-prescription-print-modal .hhr-labreq-patient-summary { color: #46534f; font-size: 11.5px; line-height: 1.4; }
-      #hhr-prescription-print-modal .hhr-labreq-manual-fields { display: grid; flex-basis: 100%; grid-template-columns: repeat(auto-fit, minmax(min(128px, 100%), 1fr)); gap: 4px 8px; }
+      #hhr-prescription-print-modal .hhr-labreq-manual-fields {
+        display: grid; flex-basis: 100%; grid-template-columns: repeat(auto-fit, minmax(min(128px, 100%), 1fr)); gap: 4px 8px;
+      }
       #hhr-prescription-print-modal .hhr-labreq-manual-fields label { display: grid; gap: 4px; color: #55635f; font-size: 10.5px; font-weight: 650; }
       #hhr-prescription-print-modal .hhr-labreq-manual-fields label { min-width: 0; }
-      #hhr-prescription-print-modal .hhr-labreq-manual-fields input { min-width: 0; height: 30px; border: 1px solid #cfd9d7; border-radius: 7px; padding: 0 9px; background: #fff; color: #263331; font: inherit; font-size: 12px; }
+      #hhr-prescription-print-modal .hhr-labreq-manual-fields input {
+        min-width: 0; height: 30px; border: 1px solid #cfd9d7; border-radius: 7px; padding: 0 9px; background: #fff; color: #263331; font: inherit;
+        font-size: 12px;
+      }
       #hhr-prescription-print-modal .hhr-labreq-meta {
         display: flex; flex-wrap: wrap; gap: 1px 12px; padding: 0; margin: 0 0 4px;
       }
       #hhr-prescription-print-modal .hhr-labreq-meta-group { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
-      #hhr-prescription-print-modal .hhr-labreq-meta-label { margin-right: 2px; color: #55635f; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+      #hhr-prescription-print-modal .hhr-labreq-meta-label {
+        margin-right: 2px; color: #55635f; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+      }
       #hhr-prescription-print-modal .hhr-labreq-chip {
         display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid #d7e0de;
         border-radius: 999px; background: #fff; color: #46534f; cursor: pointer; font-size: 11px; font-weight: 600;
@@ -56,7 +74,9 @@
         font-size:11.5px; line-height:1.25; font-weight:700;
       }
       #hhr-prescription-print-modal .hhr-labreq-section header small { color:#506661; font-size:11px; font-weight: 600; }
-      #hhr-prescription-print-modal .hhr-labreq-exam { display: flex; align-items: center; gap:6px; padding:2px 8px; cursor:pointer; color:#30433f; font-size:13px; line-height:1.12; }
+      #hhr-prescription-print-modal .hhr-labreq-exam {
+        display: flex; align-items: center; gap:6px; padding:2px 8px; cursor:pointer; color:#30433f; font-size:13px; line-height:1.12;
+      }
       #hhr-prescription-print-modal .hhr-labreq-exam:hover { background: #f7fbfa; }
       #hhr-prescription-print-modal .hhr-labreq-exam input { width: 14px; height: 14px; margin: 0; flex: 0 0 auto; }
       #hhr-prescription-print-modal .hhr-labreq-footer { display: flex; gap: 8px; margin-top: 12px; }

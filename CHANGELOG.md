@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.240
+
+- Sin cambios visibles. El CSS escrito dentro de JavaScript (Centro HHR, laboratorio, espacio de trabajo y la barra) tiene una regla por bloque en vez de reglas de hasta 1.762 caracteres en una línea; se comprobó que el CSS resultante es el mismo. Las bibliotecas de terceros (jsPDF, pdf-lib, xlsx) dejan de contar en la forma del código. Líneas anchas: 416 → 284.
+
 ## 0.48.239
 
 - Sin cambios visibles (comprobado con las capturas de todas las vistas y, para cada regla tocada, con las medidas antes y después). Tres reglas del CSS dejan de ganarle a otra con ids escritos solo para pesar más (`:not(#hhr-a)`): la regla que compite ya no se aplica a ese elemento (la PAM redondeada, el formulario de Alertas y Entrega, la primera columna de Indicaciones libres). Quedan dos, en Reposo y Régimen, explicadas. El CI vigila además que ningún archivo CSS sume `!important` ni ids de ese tipo.
