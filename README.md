@@ -82,6 +82,15 @@ los registros de las pruebas quedan bajo `dist/orbstack/`.
 Para ejecutar una parte, pasa el comando al final, por ejemplo
 `bash scripts/test-orbstack.sh npm run test:runtime`.
 
+La medición de Scores usa 20, 200 y 1.000 notas ficticias y guarda las muestras,
+la mediana y el percentil 95. Cada volumen tiene 3 aperturas de calentamiento y
+30 mediciones. El historial se entrega desde memoria y se mide su preparación
+por separado de los clics en Evoluciones y Scores.
+
+```bash
+bash scripts/test-orbstack.sh bash -c 'node scripts/bench-scores.mjs WORKTREE "$RUNNER_TEMP/scores-benchmark.json"'
+```
+
 ### Entrega de turno con equipo registrado
 
 El ZIP publicado abre HHR Hospitalizados para registrar el equipo una sola vez.
