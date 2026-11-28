@@ -185,7 +185,10 @@ describe('Ficha Médico patient-context owner', () => {
     // de cableado y su comentario); la lógica sigue en connection-repair-runtime.js.
     // 1531: instancia y dos rutas del piloto. La lógica vive en nursing-handoff-pilot.js.
     // 1532: cableado de la comprobación de acceso a la tabla, resuelta en el mismo piloto.
-    expect(background.split('\n').length).toBeLessThanOrEqual(1_532);
+    // 1650 (27-11-2026): el presupuesto contaba líneas y empujaba a escribir líneas de 300 a 450
+    // caracteres. Ahora npm run check:shape impide líneas de más de 160 en este archivo; el
+    // cableado se partió en líneas legibles (1.565) y el presupuesto deja margen para seguir así.
+    expect(background.split('\n').length).toBeLessThanOrEqual(1_650);
     expect(source.split('\n').length).toBeLessThanOrEqual(380);
     expect(() => factory.create({})).toThrow('Falta la dependencia resolveSession.');
   });

@@ -1,6 +1,7 @@
 // A ratchet for what makes the code hard to read: lines wider than 160 characters and files longer than
 // 800 lines. Today's counts are kept in scripts/code-shape-baseline.json; a change may lower them, never
-// raise them, and a new file starts at zero. When a change lowers a count, refresh the baseline with
+// raise them (a long file may grow only while its wide lines go down), and a new file starts at zero.
+// When a change lowers a count, refresh the baseline with
 // `node scripts/check-code-shape.mjs --update`, so that the gain is kept.
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 
@@ -26,7 +27,8 @@ const worse = [], better = [];
 for (const name of files) {
   const now = shape[name] || {wide:0}, before = baseline[name] || {wide:0};
   if (now.wide > before.wide) worse.push(`${name}: ${now.wide} líneas de más de ${WIDE} caracteres (antes ${before.wide})`);
-  if ((now.lines || 0) > Math.max(before.lines || 0, LONG)) worse.push(`${name}: ${now.lines} líneas (antes ${before.lines || 'menos de ' + LONG})`);
+  // Splitting wide lines adds lines: a long file may grow when its wide lines went down in the same change.
+  if ((now.lines || 0) > Math.max(before.lines || 0, LONG) && now.wide >= before.wide) worse.push(`${name}: ${now.lines} líneas (antes ${before.lines || 'menos de ' + LONG})`);
   if (now.wide < before.wide || (now.lines || 0) < (before.lines || 0)) better.push(name);
 }
 if (worse.length) {
