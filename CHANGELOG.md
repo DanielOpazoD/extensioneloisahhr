@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.246
+
+- Sin cambios visibles. El estilo calculado de cada elemento en las 40 capturas del CI es el mismo antes y después, y pasan las medidas que esas capturas verifican. El CSS de temas (`hhr-ficha-themes.css`) pasa de 274 a 180 `!important` (en total, de 576 a 482). Se quitó en las declaraciones que ganan en todos los nodos sin él, según DevTools. Para evitar que alguna pierda contra otra de la misma hoja, se buscó el conjunto que no cambia ningún ganador. Además, el selector de cada declaración que perdió su `!important` pesa más que cualquier regla de Eloísa: el `sx` más pesado de su código y de sus hojas pesa (0,3,0) o (0,3,1). Siguen con `!important` las que compiten con el CSS que escribe la presentación, con un estilo en línea o con otra hoja, y las que ninguna ficha de prueba alcanza o cuyo selector es liviano.
+
 ## 0.48.245
 
 - Sin cambios visibles. Se comprobó el estilo calculado de cada elemento en las 40 capturas del CI, más las medidas que esas capturas verifican: es el mismo antes y después, y las imágenes son iguales byte a byte. El CSS de la ronda (`hhr-ficha-round-layout.css`) pasa de 161 a 92 `!important` (en total, de 645 a 576). Para cada declaración se usó DevTools para ver qué regla gana en cada nodo, con y sin `!important`. Se quitaron las que ganan igual sin él. Quedan las que compiten con un `!important` de `hhr-ficha-themes.css`, `hhr-ficha-reading-labels.css` o del CSS que escribe la presentación, o con un estilo en línea; también las que ninguna ficha de prueba alcanza. En la página real, el código del Resumen de Eloísa no declara estilos en línea ni `!important` para estas propiedades.

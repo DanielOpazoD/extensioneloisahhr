@@ -170,9 +170,9 @@
   "wide": 2
  },
  "ficha/hhr-ficha-themes.css": {
-  "wide": 37,
+  "wide": 33,
   "lines": 901,
-  "important": 274
+  "important": 180
  },
  "ficha/hhr-ficha-tokens.css": {
   "wide": 14

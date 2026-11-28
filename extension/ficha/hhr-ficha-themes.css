@@ -38,7 +38,7 @@
         > .MuiCardHeader-root { display:contents; }
         > .MuiCardHeader-root > .MuiCardHeader-content { order:1; flex:none; }
         > .MuiCardContent-root { order:2; }
-        > .MuiCardHeader-root > .MuiCardHeader-action { order:3; margin:0 0 0 auto !important; align-self:center; }
+        > .MuiCardHeader-root > .MuiCardHeader-action { order:3; margin:0 0 0 auto; align-self:center; }
       }
     }
   }
@@ -96,11 +96,11 @@
     }
     /* A measurement is not a box: the numbers stand on the card, apart by a hairline. */
     [data-hhr-reading="vital-tile"] {
-      border:0 !important; border-inline-start:1px solid var(--hhr-ficha-line) !important; border-radius:0 !important;
-      background:transparent; box-shadow:none !important;
+      border:0; border-inline-start:1px solid var(--hhr-ficha-line); border-radius:0 !important;
+      background:transparent; box-shadow:none;
     }
     [data-hhr-reading="vital-inner"] { background:transparent; }
-    [data-hhr-reading="vital-pressure-group"] { display:contents !important; }
+    [data-hhr-reading="vital-pressure-group"] { display:contents; }
     [data-hhr-reading="vital-pressure-group"] > [data-hhr-reading="vital-value"] {
       display:flex; align-items:baseline; gap:0 !important; grid-column:2; grid-row:1;
     }
@@ -110,12 +110,12 @@
     [data-hhr-reading="vital-pressure-group"] + [data-hhr-reading="vital-time"] { grid-column:2; grid-row:2; }
     :is([data-hhr-reading="vital-label"],[data-hhr-reading="vital-pam"],[data-hhr-reading="vital-value"])
       /* Not the PAM the view rounds: it draws its own figure (see «PAM as a whole number»). */
-      :is(.MuiTypography-root,h5,p,span):not([data-hhr-vital-rounded]) { font-size:inherit !important; line-height:inherit !important; margin:0 !important; }
+      :is(.MuiTypography-root,h5,p,span):not([data-hhr-vital-rounded]) { font-size:inherit; line-height:inherit !important; margin:0 !important; }
     /* Keep the native name in the accessibility tree. The adjacent MUI caption may carry a unit. */
     :is([data-hhr-reading="vital-label"],[data-hhr-reading="vital-label"] *)[data-hhr-vital-short] {
       font-size:0 !important;
       &::before { content:attr(data-hhr-vital-short) / ""; font-size:.75rem; line-height:1.15; }
-      > .MuiBox-root { font-size:.75rem !important; }
+      > .MuiBox-root { font-size:.75rem; }
       > :is(sub,sup,span,strong,b,em):not(.MuiBox-root) { font-size:0 !important; }
     }
     /* The Box beside a name carries its unit. Without one it is an empty line. */
@@ -139,14 +139,14 @@
        the PAM or the time. The values of a row start at the same place and stand on the same line.
        Only recognised cells; extra clinical details keep their native layout. */
     :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-label"]):not(:has(> :not([data-hhr-reading]))) {
-      display:grid !important; grid-template-columns:auto minmax(0,1fr) !important; grid-template-rows:auto auto 1fr;
+      display:grid !important; grid-template-columns:auto minmax(0,1fr); grid-template-rows:auto auto 1fr;
       justify-items:start; align-items:baseline; align-content:start; gap:0 6px !important;
       > [data-hhr-reading="vital-label"] { grid-area:1 / 1 / 2 / -1; color:var(--hhr-ficha-ink-soft); }
       > [data-hhr-reading="vital-value"], > [data-hhr-reading="vital-pressure-group"] > [data-hhr-reading="vital-value"] {
         grid-area:2 / 1 / 3 / -1; justify-self:start; line-height:1.15 !important;
         /* On a phone the value keeps the size Eloísa's narrow band gives it. */
         @media (min-width:600px) { font-size:var(--hhr-ficha-text-lead) !important; }
-        &, :is(h5,h6,p,span,.MuiTypography-root) { font-weight:var(--hhr-ficha-weight-strong) !important; }
+        &, :is(h5,h6,p,span,.MuiTypography-root) { font-weight:var(--hhr-ficha-weight-strong); }
       }
       /* The PAM and the time share the line under the value: the PAM at its start, the time after it. */
       > [data-hhr-reading="vital-pam"], > [data-hhr-reading="vital-pressure-group"] > [data-hhr-reading="vital-pam"] { grid-area:3 / 1; justify-self:start; }
@@ -157,7 +157,7 @@
       }
     }
     @container hhr-vital-band (min-width:50rem) {
-      [data-hhr-reading="vital-tile"] { background:transparent; border-inline-start:1px solid var(--hhr-ficha-line) !important; }
+      [data-hhr-reading="vital-tile"] { background:transparent; border-inline-start:1px solid var(--hhr-ficha-line); }
       :is([data-hhr-reading="vital-tile"],[data-hhr-reading="vital-inner"]):has(> [data-hhr-reading="vital-inner"]) {
         display:grid; align-items:stretch;
       }
@@ -235,25 +235,25 @@
     /* Balance Hídrico: its filter at the height of a line, like the daily form. Each field keeps its
        label, its menu and its calendar; the switch and the print icon keep their place. */
     #inputOutputHydricBalanceEntrySection:has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) > .MuiCard-root {
-      > .MuiCardHeader-root { min-height:0 !important; padding-block:3px !important; }
+      > .MuiCardHeader-root { min-height:0; padding-block:3px; }
       > .MuiCardHeader-root > .MuiCardHeader-action { margin:0 !important; align-self:center; }
       > .MuiCardHeader-root .MuiFormControlLabel-root { margin-block:0; }
       > .MuiCardHeader-root .MuiSwitch-root { zoom:.75; }
       > .MuiCardHeader-root .MuiFormControlLabel-label { color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans); }
-      .MuiIconButton-root { padding:4px !important; svg { inline-size:18px; block-size:18px; } }
+      .MuiIconButton-root { padding:4px; svg { inline-size:18px; block-size:18px; } }
       /* The label of a field rides on its upper border: the content keeps room for it. */
-      > .MuiCardContent-root { padding-block:10px 8px !important; }
+      > .MuiCardContent-root { padding-block:10px 8px; }
       .MuiInputBase-root { block-size:30px; font-size:var(--hhr-ficha-text-body); }
-      :is(.MuiInputBase-input,.MuiSelect-select) { box-sizing:border-box; block-size:30px; min-height:0 !important; padding-block:0 !important; font-size:inherit; line-height:30px; }
+      :is(.MuiInputBase-input,.MuiSelect-select) { box-sizing:border-box; block-size:30px; min-height:0; padding-block:0; font-size:inherit; line-height:30px; }
       .MuiButton-root {
-        min-block-size:0; block-size:30px; padding-block:0 !important; box-shadow:none;
+        min-block-size:0; block-size:30px; padding-block:0; box-shadow:none;
         font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/30px var(--hhr-ficha-sans); text-transform:none;
       }
       > .MuiCardContent-root > p { margin-block:6px 0 !important; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans); }
     }
     /* Care orders keep the vertical rhythm of the prescription tables above them. */
     :is(#procedureOrderEntrySection,#procedureEntrySection,#referralRequestEntrySection,#diagnosisTestEntrySection,#operationTheaterRequestEntrySection,#invasiveDeviceEntrySection):has(> .MuiCard-root:only-child:not([data-hhr-reading="status-card"])) > .MuiCard-root > :is(.MuiCardHeader-root,.MuiCardContent-root) {
-      min-height:0 !important; padding-block:2px !important;
+      min-height:0; padding-block:2px !important;
     }
     /* Empty, Diagnóstico and Órdenes de atención are a status line like RAM: no inset of their own. */
     :is(#diagnosisEntrySection,#procedureOrderEntrySection):has(> [data-hhr-reading="status-card"]:only-child) {
@@ -287,16 +287,16 @@
     table:not(:is(dialog,[role=dialog],table) *) {
       width:100%; table-layout:auto;
       :is(th,td) {
-        padding:var(--hhr-ficha-cell-y,3px) 7px !important; height:auto !important;
-        font-size:.8125rem; line-height:1.35 !important; vertical-align:middle;
+        padding:var(--hhr-ficha-cell-y,3px) 7px !important; height:auto;
+        font-size:.8125rem; line-height:1.35; vertical-align:middle;
       }
       th { font-size:.75rem; }
-      tr { height:auto !important; }
+      tr { height:auto; }
       :is(p,.MuiTypography-body1,.MuiTypography-body2) { margin-block:0; font-size:inherit; line-height:inherit; }
       [data-hhr-reading="narrow"] { width:1%; white-space:nowrap; }
-      td .MuiIconButton-root { padding:4px !important; min-width:24px; min-height:24px; }
+      td .MuiIconButton-root { padding:4px; min-width:24px; min-height:24px; }
       td .MuiIconButton-root svg { width:16px; height:16px; }
-      td :is(.MuiSelect-select,select:not([multiple],[size])) { padding-block:3px !important; min-height:20px; font-size:.8125rem; }
+      td :is(.MuiSelect-select,select:not([multiple],[size])) { padding-block:3px; min-height:20px; font-size:.8125rem; }
       td .MuiInputBase-root:has(.MuiSelect-select) { height:auto !important; min-height:26px; }
       td .MuiFormControl-root { margin-block:0; }
     }
@@ -366,11 +366,11 @@
     .MuiSwitch-root { position:relative; flex:none; inline-size:100% !important; block-size:100% !important; margin:0 !important; padding:0 !important; zoom:1; }
     .MuiSwitch-root > :not(.MuiSwitch-switchBase,.PrivateSwitchBase-root) { opacity:0; }
     .MuiSwitch-root > :is(.MuiSwitch-switchBase,.PrivateSwitchBase-root) {
-      position:absolute !important; inset:0 !important; inline-size:auto; block-size:auto; padding:0 !important; background:none !important; transform:none !important;
+      position:absolute; inset:0; inline-size:auto; block-size:auto; padding:0; background:none; transform:none;
       > :not(input) { opacity:0; }
       > input {
-        position:absolute !important; inset:0 !important; inline-size:100% !important; block-size:100% !important; margin:0 !important;
-        appearance:none; opacity:1 !important; border:0; border-radius:5px; background:transparent; cursor:pointer;
+        position:absolute; inset:0; inline-size:100%; block-size:100%; margin:0;
+        appearance:none; opacity:1; border:0; border-radius:5px; background:transparent; cursor:pointer;
         &:checked { background:var(--hhr-ficha-action-pressed); }
         &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
         @media (forced-colors:active) { &:checked { outline:2px solid Highlight; } }
@@ -399,7 +399,7 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     [data-hhr-reading-toggle]:not([data-hhr-reading-toggle="suspended"]) .MuiSwitch-root { zoom:.75; }
     /* MUI leaves 16 px after a switch's label. Closing a heading, the label ends on the reading edge like any other action. */
-    .MuiCardHeader-action .MuiFormControlLabel-root:last-child { margin-inline-end:0 !important; }
+    .MuiCardHeader-action .MuiFormControlLabel-root:last-child { margin-inline-end:0; }
     :is(#medicationEntrySection,#dilutionEntrySection,#noPharmaEntrySection,#freeIndicationEntrySection) > .MuiCard-root > .MuiCardHeader-root > .MuiCardHeader-action .MuiButton-root,
     > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root {
       /* A block, so that its first letter can be a capital: Eloísa writes «validar tratamiento» and shows it in capitals. */
@@ -443,20 +443,20 @@
     /* The state of a diagnosis, of a procedure or of an examination order is a native select. It keeps its
        arrow and its menu, at the height of a line of its table. */
     :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) td .MuiInputBase-root:has([role="combobox"]) {
-      block-size:auto !important; min-block-size:26px; font-size:var(--hhr-ficha-text-body);
-      [role="combobox"] { min-block-size:0 !important; padding-block:3px !important; }
+      block-size:auto; min-block-size:26px; font-size:var(--hhr-ficha-text-body);
+      [role="combobox"] { min-block-size:0; padding-block:3px; }
     }
     /* At rest it reads as the text of its column: no box and no arrow, its word on the reading edge of the cell.
        Pointed at, or with the keyboard on its row, it shows its box and its arrow again, in the same place: the
        word does not move. Open, it keeps them. Eloísa's select, its menu and what it writes do not change. */
     :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) td .MuiInputBase-root:has([role="combobox"]) {
       margin-inline-start:-6px; background:transparent;
-      [role="combobox"] { padding-inline-start:6px !important; color:var(--hhr-ficha-ink); }
+      [role="combobox"] { padding-inline-start:6px; color:var(--hhr-ficha-ink); }
     }
     /* Written from the select to its siblings, and the arrow shown with visibility: an opacity that follows the
        focus of the row changed the order Chrome gives the Tab key in the round (measured 27-11-2026). */
     :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) td [role="combobox"] {
-      ~ .MuiOutlinedInput-notchedOutline { border-color:transparent !important; transition:none; }
+      ~ .MuiOutlinedInput-notchedOutline { border-color:transparent; transition:none; }
       ~ .MuiSelect-icon { visibility:hidden; }
     }
     :is(#diagnosisEntrySection,#procedureEntrySection,#diagnosisTestEntrySection) :is(tr:hover, tr:focus-within) td [role="combobox"],
@@ -516,11 +516,11 @@
     [data-hhr-reading="status-card"], &[data-hhr-reading="status-card"] {
       display:flex; align-items:baseline; flex-wrap:wrap; justify-content:space-between; gap:1px 8px;
       border-radius:0 !important; margin:0 !important; padding:4px var(--hhr-ficha-inset) !important;
-      :is(.MuiCardHeader-root,.MuiCardContent-root) { padding:0 !important; margin:0 !important; }
+      :is(.MuiCardHeader-root,.MuiCardContent-root) { padding:0 !important; margin:0; }
       /* Short visual labels apply only to the recognized read-only empty message.
          Keep the full native wording for screen readers and printed records. */
       :is([data-hhr-reading="empty-section-title"],[data-hhr-reading="status-message"]) {
-        font-size:0 !important; line-height:1 !important; margin:0 !important;
+        font-size:0 !important; line-height:1 !important; margin:0;
       }
       [data-hhr-reading="empty-section-title"]::after { content:var(--hhr-request-label) / ''; font:600 .8125rem/1.35 var(--hhr-ficha-sans); }
       [data-hhr-reading="status-message"]::after { content:"Sin solicitudes" / ''; font:normal .75rem/1.35 var(--hhr-ficha-sans); color:var(--hhr-ficha-muted); }
@@ -545,8 +545,8 @@
      links were seen for some 160 ms and everything under them moved 60 px). What holds it is known by
      its place: the item right before the round, with nothing but a grid inside. */
   html[data-hhr-ficha-theme="compact"] main .MuiGrid-item:has(> .MuiGrid-container:only-child):has(+ [data-hhr-round="frame"]) {
-    min-height:0 !important;
-    > .MuiGrid-container { display:none !important; }
+    min-height:0;
+    > .MuiGrid-container { display:none; }
   }
   /* Who wrote an alert, or asked for a prescription: a first name and a first surname. The whole name
      stays in the page. */
@@ -569,17 +569,17 @@
     > .MuiCardHeader-root > .MuiCardHeader-content { order:1; flex:none; }
     > .MuiCardHeader-root > .MuiCardHeader-content > .MuiCardHeader-subheader:empty { display:none; }
     > .MuiCardContent-root > .MuiStack-root {
-      order:2; flex:0 1 auto; flex-flow:row wrap; align-items:center; gap:6px 8px; margin:0 !important; min-inline-size:0;
+      order:2; flex:0 1 auto; flex-flow:row wrap; align-items:center; gap:6px 8px; margin:0; min-inline-size:0;
       > .MuiBox-root { flex:0 1 auto; inline-size:auto; block-size:auto; min-inline-size:0; }
       .MuiFormControl-root { inline-size:11rem; min-inline-size:0; }
       .MuiFormControl-root:has(.MuiSelect-select) { inline-size:9.5rem; }
       .MuiSelect-select { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
     }
     > .MuiCardContent-root > [data-hhr-balance] {
-      order:3; flex:none; margin:0 !important; font-size:0 !important; line-height:1 !important;
+      order:3; flex:none; margin:0 !important; font-size:0; line-height:1;
       &::after { content:'Sin registros' / ''; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
     }
-    > .MuiCardContent-root > [data-hhr-balance-folded] { display:none !important; }
+    > .MuiCardContent-root > [data-hhr-balance-folded] { display:none; }
     > .MuiCardContent-root > button[data-hhr-balance-filter] {
       order:4; position:relative; flex:none; box-sizing:border-box; inline-size:26px; block-size:26px; margin:0; padding:0;
       border:0; border-radius:var(--hhr-ficha-button-radius); background:transparent; color:var(--hhr-ficha-ink-soft); cursor:pointer;
@@ -601,18 +601,18 @@
    still stops clear of it. */
 @media screen and (min-width:1100px) {
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"][data-hhr-ficha-dock] {
-    position:fixed !important; z-index:26;
+    position:fixed; z-index:26;
     /* An out-of-flow item would otherwise be the last stop of the round for the Tab key. */
     reading-order:-1;
     inset-block-start:var(--hhr-dock-top); inset-inline-end:var(--hhr-dock-right);
     /* The line keeps its lower rule under the row. */
     box-sizing:border-box; block-size:calc(var(--hhr-dock-height) - 1px); min-height:0 !important;
-    inline-size:max-content !important; max-inline-size:none !important;
-    display:flex !important; align-items:center; justify-content:flex-end; gap:8px;
+    inline-size:max-content; max-inline-size:none;
+    display:flex; align-items:center; justify-content:flex-end; gap:8px;
     /* On the line of tabs it takes that line's surface and paints above it. */
-    margin:0 !important; padding:0 6px 0 10px !important; background:transparent;
+    margin:0; padding:0 6px 0 10px !important; background:transparent;
     z-index:var(--hhr-dock-layer,26);
-    > [data-hhr-update-label] { margin:0 !important; white-space:nowrap; }
+    > [data-hhr-update-label] { margin:0; white-space:nowrap; }
     > :not([data-hhr-update-label]) { display:inline-flex; align-items:center; gap:6px; }
   }
 }
@@ -624,7 +624,7 @@
     /* The row says what it prints, not who last updated the summary: the note carries its own byline.
        The native one stays in the page for a screen reader. */
     > [data-hhr-update-label] {
-      position:absolute !important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;
+      position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;
       & + * { margin-inline-start:auto; }
     }
     /* The name of the field is read before it, whole. On the upper border of a field this low it was cut. */
@@ -632,11 +632,11 @@
        drawn over the date (seen 26-11-2026): the field takes the width of what it holds. */
     .MuiFormControl-root:has(> .MuiInputLabel-root) {
       display:inline-flex; flex:none; flex-direction:row; align-items:center; gap:6px;
-      inline-size:auto !important; min-inline-size:0; max-inline-size:none;
+      inline-size:auto; min-inline-size:0; max-inline-size:none;
     }
     .MuiInputLabel-root {
-      position:static !important; transform:none !important; max-inline-size:none !important; overflow:visible;
-      padding:0; background:none !important; color:var(--hhr-ficha-ink-soft); white-space:nowrap; pointer-events:auto;
+      position:static; transform:none; max-inline-size:none; overflow:visible;
+      padding:0; background:none; color:var(--hhr-ficha-ink-soft); white-space:nowrap; pointer-events:auto;
       font:400 var(--hhr-ficha-text-meta)/1.3 var(--hhr-ficha-sans);
     }
     .MuiOutlinedInput-notchedOutline legend { max-inline-size:0 !important; }
@@ -650,7 +650,7 @@
     /* The field is as wide as a date. Left to the width of its line, on the page it shrank to its calendar
        and the date was not read (seen 26-11-2026). */
     .MuiInputBase-root { flex:none; }
-    .MuiInputBase-input { box-sizing:border-box; flex:none; inline-size:6.75rem !important; min-inline-size:6.75rem; block-size:28px; padding-block:2px; font-size:inherit; }
+    .MuiInputBase-input { box-sizing:border-box; flex:none; inline-size:6.75rem; min-inline-size:6.75rem; block-size:28px; padding-block:2px; font-size:inherit; }
     input:not(.MuiInputBase-input) { box-sizing:border-box; min-height:26px; padding-block:1px; }
     button { min-height:26px; padding-block:2px; }
     .MuiIconButton-root { inline-size:28px; block-size:28px; padding:4px; }
@@ -676,7 +676,7 @@
       content:'· medidos hace ' attr(data-hhr-vital-shared) / ''; color:var(--hhr-ficha-muted); font:normal .75rem/1.35 var(--hhr-ficha-sans);
     }
     #vitalSignsEntry [data-hhr-reading="vital-time"][data-hhr-vital-shared=""] {
-      position:absolute !important; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
+      position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
     }
     th[data-hhr-actions-heading] { font-size:0 !important; }
   }
@@ -694,14 +694,14 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root {
     box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; min-inline-size:0;
     min-block-size:var(--hhr-ficha-button) !important; padding:0 10px !important;
-    border:1px solid var(--hhr-ficha-button-line) !important; border-radius:var(--hhr-ficha-button-radius) !important;
-    background:transparent !important; color:var(--hhr-ficha-action) !important; box-shadow:none !important;
-    font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans) !important; text-transform:none !important; white-space:nowrap;
+    border:1px solid var(--hhr-ficha-button-line); border-radius:var(--hhr-ficha-button-radius) !important;
+    background:transparent; color:var(--hhr-ficha-action); box-shadow:none;
+    font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans) !important; text-transform:none; white-space:nowrap;
     &::first-letter { text-transform:uppercase; }
     &:hover:not(:disabled, .Mui-disabled) { background:var(--hhr-ficha-action-hover) !important; border-color:#9dbfb5 !important; }
     &:active:not(:disabled, .Mui-disabled) { background:var(--hhr-ficha-action-pressed) !important; }
     &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
-    &:is(:disabled, .Mui-disabled) { border-color:var(--hhr-ficha-line-soft) !important; color:var(--hhr-ficha-disabled) !important; cursor:default; }
+    &:is(:disabled, .Mui-disabled) { border-color:var(--hhr-ficha-line-soft) !important; color:var(--hhr-ficha-disabled); cursor:default; }
     /* An icon inside takes the ink of the words. */
     svg { color:inherit; fill:currentColor; }
     @media (forced-colors:active) { border-color:ButtonText !important; }
@@ -709,7 +709,7 @@
   /* Its first letter is a capital only where the button is a block of text: Eloísa writes «validar tratamiento». */
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] .MuiCardHeader-action :is(.MuiButton-contained, .MuiButton-outlined):not(:has(svg)),
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"][data-hhr-round] > .MuiGrid-item[data-hhr-round="before"] form .MuiButton-root:not(:has(svg)) {
-    display:inline-block; block-size:var(--hhr-ficha-button) !important; line-height:calc(var(--hhr-ficha-button) - 2px) !important;
+    display:inline-block; block-size:var(--hhr-ficha-button); line-height:calc(var(--hhr-ficha-button) - 2px) !important;
   }
 }
 
@@ -726,7 +726,7 @@
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] :is(button, #hhr-print-caption)[data-hhr-print-caption]:not(:is(dialog,[role=dialog],td,th) *) {
     box-sizing:border-box; display:inline-flex; align-items:center; gap:5px;
     inline-size:auto !important; block-size:26px !important; padding:0 8px 0 6px !important;
-    border-radius:var(--hhr-ficha-radius); background:transparent; color:var(--hhr-ficha-action) !important; white-space:nowrap;
+    border-radius:var(--hhr-ficha-radius); background:transparent; color:var(--hhr-ficha-action); white-space:nowrap;
     > svg { inline-size:16px !important; block-size:16px !important; font-size:1rem; }
     &::after { content:attr(data-hhr-print-caption) / ''; font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1 var(--hhr-ficha-sans); }
     &:hover { background:var(--hhr-ficha-action-hover); }
@@ -756,7 +756,7 @@
 /* Centro HHR rides on the line of tabs as part of it: a hairline, no floating shadow. */
 @media screen and (min-width:1100px) {
   html[data-hhr-ficha-theme="compact"] #hhr-clinical-operations-bar {
-    box-shadow:none !important; border-color:var(--hhr-ficha-line) !important; border-radius:8px !important;
+    box-shadow:none; border-color:var(--hhr-ficha-line) !important; border-radius:8px;
   }
   /* Docked on the white line of tabs, it is the end of that line: no edge, no corner, no shadow. */
   html[data-hhr-ficha-theme="compact"] #hhr-clinical-operations-bar[data-hhr-ops-docked] {
@@ -796,13 +796,13 @@
     }
     > .MuiDialogActions-root {
       gap:8px; padding:16px 20px !important;
-      > :not(:first-child) { margin-inline-start:0 !important; }
+      > :not(:first-child) { margin-inline-start:0; }
       .MuiButton-root {
-        min-inline-size:0; min-block-size:30px !important; padding:0 12px !important;
+        min-inline-size:0; min-block-size:30px; padding:0 12px !important;
         border:1px solid transparent !important; border-radius:var(--hhr-ficha-button-radius) !important;
-        background:transparent !important; box-shadow:none !important; color:var(--hhr-ficha-ink-soft) !important;
+        background:transparent !important; box-shadow:none; color:var(--hhr-ficha-ink-soft) !important;
         /* Eloísa writes some of these words in capitals («CONTINUAR», «SALIR»): they read as words. */
-        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans) !important; text-transform:lowercase !important;
+        font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-meta)/1.35 var(--hhr-ficha-sans) !important; text-transform:lowercase;
         &::first-letter { text-transform:uppercase; }
         &:hover:not(:disabled, .Mui-disabled) { background:var(--hhr-ficha-action-hover) !important; }
         &:focus-visible { outline:2px solid var(--hhr-ficha-focus); outline-offset:1px; }
@@ -849,7 +849,7 @@
 @media screen and (min-width:600px) and (max-width:1099.98px) {
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     row-gap:var(--hhr-ficha-block-gap) !important;
-    > .MuiGrid-item:is([data-hhr-round]) { flex:0 0 100% !important; max-inline-size:100% !important; inline-size:100% !important; margin-block:0 !important; padding-block:0 !important; }
+    > .MuiGrid-item:is([data-hhr-round]) { flex:0 0 100%; max-inline-size:100%; inline-size:100%; margin-block:0; padding-block:0; }
     /* Eloísa's order is kept in the page; these orders only draw it as the desk reads. */
     > [data-hhr-round="before"] { order:-9 !important; }
     > [data-hhr-round="diagnosis"] { order:-8 !important; }
@@ -859,14 +859,14 @@
     > [data-hhr-round="vitals"] { order:-4 !important; }
     > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) { order:-3 !important; }
     > :is([data-hhr-round="peer"],[data-hhr-round="empty-request"]):has(> section > [data-hhr-reading="status-card"]:only-child, > [data-hhr-reading="status-card"]:only-child) {
-      order:-2 !important;
+      order:-2;
       /* What has no data reads as a list: one line each, close together, without a surface of its own. */
-      margin-block-start:calc(2px - var(--hhr-ficha-block-gap)) !important;
-      [data-hhr-reading="status-card"] { background:transparent !important; border-radius:0 !important; }
+      margin-block-start:calc(2px - var(--hhr-ficha-block-gap));
+      [data-hhr-reading="status-card"] { background:transparent; border-radius:0; }
     }
     > :is([data-hhr-round="peer"],[data-hhr-round="print"]) { order:-1; }
     /* Inside the item of the note, the note takes the line; the date of discharge keeps its own. */
-    > [data-hhr-round="note"] .MuiGrid-item:has(#observationEntrySection) { flex:0 0 100% !important; max-inline-size:100% !important; }
+    > [data-hhr-round="note"] .MuiGrid-item:has(#observationEntrySection) { flex:0 0 100%; max-inline-size:100%; }
     /* The gap between the name of a form and its field in a narrow window is set with its grid, in
        hhr-ficha-reading-labels.css. */
     /* The daily row does not repeat the byline the note below carries, as on the desk. */
@@ -875,16 +875,16 @@
     #diagnosisEntrySection td:not(:nth-child(2)) { inline-size:1%; white-space:nowrap; }
     /* Reposo and Régimen read at the size of the summary: their name, their value and their byline. */
     > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
-      .MuiCard-root { box-shadow:none !important; border-radius:var(--hhr-ficha-radius) !important; }
+      .MuiCard-root { box-shadow:none; border-radius:var(--hhr-ficha-radius) !important; }
       .MuiCardHeader-root { padding:6px var(--hhr-ficha-inset) 0 !important; }
       .MuiCardHeader-title { color:var(--hhr-ficha-ink); font:var(--hhr-ficha-weight-strong) var(--hhr-ficha-text-body)/1.35 var(--hhr-ficha-sans) !important; }
       .MuiCardContent-root { padding:2px var(--hhr-ficha-inset) 6px !important; }
-      .MuiCardContent-root :is(p,span,strong,b,.MuiTypography-root):not(.MuiChip-label) { margin:0; font-size:var(--hhr-ficha-text-body) !important; line-height:1.4; }
+      .MuiCardContent-root :is(p,span,strong,b,.MuiTypography-root):not(.MuiChip-label) { margin:0; font-size:var(--hhr-ficha-text-body); line-height:1.4; }
     }
     /* Reposo and Régimen share their line, half each. */
     > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) > .MuiGrid-container {
-      column-gap:var(--hhr-ficha-block-gap); flex-wrap:nowrap; margin:0 !important; inline-size:100% !important;
-      > .MuiGrid-item { flex:1 1 0 !important; max-inline-size:none !important; min-inline-size:0; padding:0 !important; }
+      column-gap:var(--hhr-ficha-block-gap); flex-wrap:nowrap; margin:0; inline-size:100%;
+      > .MuiGrid-item { flex:1 1 0; max-inline-size:none; min-inline-size:0; padding:0; }
     }
   }
 }
