@@ -2,7 +2,9 @@
 (() => {
   'use strict';
   const stampPattern = /^Última actualización:\s*(\d{2}[-/]\d{2}[-/]\d{4})(?:,\s*|\s+)(\d{1,2}:\d{2})(?::\d{2})?\s*(?:,|[-–·])\s*(.+)$/i;
-  const role = /^(?:médic[oa](?:\s+(?:cirujan[oa]|tratante|especialista))?|enfermer[oa]|paramédic[oa]|kinesiólog[oa]|matr[oó]n(?:a)?|nutricionista|terapeuta ocupacional|fonoaudiólog[oa]|psicólog[oa]|técnic[oa] de enfermería|tens|dra?\.)(?:\([oa]\))?\s+/i;
+  const roles = ['médic[oa](?:\\s+(?:cirujan[oa]|tratante|especialista))?', 'enfermer[oa]', 'paramédic[oa]', 'kinesiólog[oa]', 'matr[oó]n(?:a)?',
+    'nutricionista', 'terapeuta ocupacional', 'fonoaudiólog[oa]', 'psicólog[oa]', 'técnic[oa] de enfermería', 'tens', 'dra?\\.'];
+  const role = new RegExp('^(?:' + roles.join('|') + ')(?:\\([oa]\\))?\\s+', 'i');
 
   const shortName = raw => globalThis.HhrFichaProfessionalName?.short(raw) ?? String(raw).trim().replace(/\s+/g, ' ');
   // The name keeps the spaces Eloísa wrote: they say which of its fields are empty.
@@ -38,7 +40,8 @@
   // while it is open: that is not a reason to give the summary behind it another shape.
   const outsideSummary = 'dialog,[role=dialog],#hhr-prescription-print-modal,main [aria-hidden=true],[hidden]';
   const entrySections = [
-    { id:'shiftChangeEntrySection', field:'Observación de entrega', placeholder:'Escribir entrega…', action:'Agregar a entrega', suffix:'a entrega', open:'Agregar observación' },
+    { id:'shiftChangeEntrySection', field:'Observación de entrega', placeholder:'Escribir entrega…',
+      action:'Agregar a entrega', suffix:'a entrega', open:'Agregar observación' },
     { id:'alertEntrySection', field:'Nueva alerta', placeholder:'Escribir alerta…', action:'Agregar alerta', suffix:'alerta', open:'Agregar alerta' },
   ];
 
@@ -56,7 +59,9 @@
     return (!required || labels.length > 0) && labels.every(text => name.test(text.trim()));
   }
 
-  const pendingEntry = '[aria-busy=true],[aria-invalid=true],[aria-errormessage],[role=alert],[role=status],[role=progressbar],[aria-live],.Mui-error,.MuiAlert-root,.MuiSkeleton-root,.MuiCircularProgress-root,.MuiLinearProgress-root,.MuiLoadingButton-loading,.MuiButton-loading';
+  const pendingEntry = ['[aria-busy=true]', '[aria-invalid=true]', '[aria-errormessage]', '[role=alert]', '[role=status]',
+    '[role=progressbar]', '[aria-live]', '.Mui-error', '.MuiAlert-root', '.MuiSkeleton-root', '.MuiCircularProgress-root',
+    '.MuiLinearProgress-root', '.MuiLoadingButton-loading', '.MuiButton-loading'].join(',');
   // Collapse only the native pair. Extra text, feedback, links or controls
   // inside either branch make this row unsuitable for a disclosure.
   function isolatedEntry(row, field, action, entry) {
@@ -269,7 +274,8 @@
     // The alerts and handoffs this view opened, each with the text it had when it was opened. Without the
     // view, those still open are cut again, as Eloísa drew them.
     const opened = new Map();
-    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set(), fold = null, openedAt = performance.now(), seenFields = new WeakSet();
+    let previous = new Map(), editors = new Map(), episode, watchedMain, arrived = new Set(), fold = null;
+    let openedAt = performance.now(), seenFields = new WeakSet();
     const observer = new MutationObserver(() => refresh(watchedMain, episode));
     const refresh = (main, encounter) => {
       observer.disconnect();
@@ -315,12 +321,14 @@
         // «Imprimir selección (n órdenes)», over the table of exam requests: the owner asked for the summary
         // without it. Each order keeps its own print action in its row.
         for (const button of main.querySelectorAll('#diagnosisTestEntrySection .MuiCardContent-root button')) {
-          if (!button.closest('table,dialog,[role=dialog]') && /^imprimir selecci[oó]n\b/i.test(button.textContent.trim())) label(button, 'data-hhr-print-selection', '');
+          const printsSelection = /^imprimir selecci[oó]n\b/i.test(button.textContent.trim());
+          if (!button.closest('table,dialog,[role=dialog]') && printsSelection) label(button, 'data-hhr-print-selection', '');
         }
         // Each print says what it prints, in one look: an icon and its words (read on the page 27-11-2026).
         // Eloísa names the icon of the daily row only «Imprimir»: it prints the report of the evolution.
         // The one at the end of Fármacos prints the recetón. Their own names stay theirs.
-        const iconName = button => (button.getAttribute('aria-label') || button.querySelector(':scope > svg[aria-label]')?.getAttribute('aria-label') || '').trim();
+        const iconName = button => (button.getAttribute('aria-label') ||
+          button.querySelector(':scope > svg[aria-label]')?.getAttribute('aria-label') || '').trim();
         const printed = button => button?.matches('button.MuiIconButton-root') && !button.textContent.trim() &&
           button.querySelector(':scope > svg[data-testid="LocalPrintshopRoundedIcon"]');
         const dailyPrint = main.querySelector('.MuiGrid-item > .MuiStack-root:has(> form input) > hr.MuiDivider-vertical + button:last-child');
@@ -338,10 +346,12 @@
             read.date + ' · ' + read.time + ' · ' + read.author);
         }
         // Who wrote an alert and who asked for a prescription read as a first name and a first surname.
-        const authors = [...main.querySelectorAll('#alertEntrySection .MuiCardContent-root > .MuiBox-root > .MuiStack-root > .MuiStack-root:first-child > p.MuiTypography-body2:first-child')];
+        const authors = [...main.querySelectorAll('#alertEntrySection .MuiCardContent-root > .MuiBox-root > .MuiStack-root' +
+          ' > .MuiStack-root:first-child > p.MuiTypography-body2:first-child')];
         for (const cell of main.querySelectorAll('td[data-hhr-reading="order-requester"]')) {
           let leaf = cell;
-          while (leaf.children.length === 1 && ![...leaf.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) leaf = leaf.firstElementChild;
+          const ownText = node => [...node.childNodes].some(child => child.nodeType === Node.TEXT_NODE && child.textContent.trim());
+          while (leaf.children.length === 1 && !ownText(leaf)) leaf = leaf.firstElementChild;
           if (!leaf.children.length) authors.push(leaf);
         }
         for (const el of authors) {
@@ -428,7 +438,8 @@
       // page followed it far down (seen at 1024 px, 27-11-2026). On a field's first appearance for this patient,
       // with nobody having scrolled, pressed or typed, the summary opens at its top, as on the desk. A field
       // seen before keeps the focus of whoever had it.
-      for (const field of main?.querySelectorAll('#alertEntrySection :is(textarea,input:not([type="checkbox"])), #shiftChangeEntrySection :is(textarea,input:not([type="checkbox"]))') || []) {
+      const entryInputs = ':is(#alertEntrySection,#shiftChangeEntrySection) :is(textarea,input:not([type="checkbox"]))';
+      for (const field of main?.querySelectorAll(entryInputs) || []) {
         const first = !seenFields.has(field);
         seenFields.add(field);
         if (!first || desktop !== false || field !== document.activeElement || lastInput >= openedAt) continue;

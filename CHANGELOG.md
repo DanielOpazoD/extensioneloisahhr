@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.241
+
+- Sin cambios visibles. La presentación de la ficha (`hhr-native-ficha-presentation.js`) escribe su CSS con una regla por bloque, y sus etiquetas (`hhr-ficha-reading-labels.js`) no tienen líneas de más de 160 caracteres: la expresión de los cargos de una firma se arma desde una lista (comprobada igual a la anterior) y las condiciones largas tienen nombre. Cinco selectores largos de la presentación quedan en una línea: partidos en sus comas, aunque Chrome los lee igual, la prueba de la extensión en Chromium se detiene. Líneas anchas: 284 → 267.
+
 ## 0.48.240
 
 - Sin cambios visibles. El CSS escrito dentro de JavaScript (Centro HHR, laboratorio, espacio de trabajo y la barra) tiene una regla por bloque en vez de reglas de hasta 1.762 caracteres en una línea; se comprobó que el CSS resultante es el mismo. Las bibliotecas de terceros (jsPDF, pdf-lib, xlsx) dejan de contar en la forma del código. Líneas anchas: 416 → 284.
