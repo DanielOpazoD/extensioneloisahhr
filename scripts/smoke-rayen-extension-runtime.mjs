@@ -409,6 +409,9 @@ const context = await chromium.launchPersistentContext("", {
   ],
 });
 
+// Where the time goes: each phase says when it starts, so that a slow CI points at its phase.
+const smokeStarted = Date.now();
+const phase = name => console.info(`[tiempo] ${((Date.now() - smokeStarted) / 1000).toFixed(1)} s · ${name}`);
 try {
   const serviceWorker =
     context.serviceWorkers()[0] ||
@@ -576,6 +579,7 @@ try {
       document.documentElement.dataset.hhrPrescriptionPrintState === "ready",
   );
   // Leaves the installed version as the published one: the rest of the smoke runs without the notice.
+  phase("aviso de versión y barra");
   await verifyReleaseNotice(page, serviceWorker, manifest.version);
 
   const initialRuntime = await page.evaluate(() => {
@@ -614,7 +618,9 @@ try {
 
   await verifyCompactOperationsBar(page);
   await verifyHistoryNavigation(page);
+  phase("ficha nativa");
   await verifyNativeFicha(page, serviceWorker);
+  phase("listas nativas");
   await verifyNativeWorklists(context, new URL(fixtureUrl).origin, serviceWorker);
 
   await page.locator("#hhr-clinical-operations-bar .brand").click();
@@ -653,6 +659,7 @@ try {
     assert.equal(await home.getAttribute('data-active-module'), module);
     await home.locator('.hhr-center-nav-button[data-module="home"]').click();
   }
+  phase("panel lateral y recetas");
   await verifyDockedPanel(page);
   await home.locator(".hhr-rx-close").click();
   await verifyPrescriptionFormats(page, extensionPath);
@@ -680,9 +687,12 @@ try {
     .locator("#hhr-prescription-print-modal .hhr-labreq-print")
     .waitFor();
 
+  phase("laboratorio");
   await verifyLabActionLayout(page, serviceWorker);
   await verifyLabWorkspace(page, serviceWorker);
+  phase("flujos directos (órdenes, imágenes)");
   await verifyDirectWorkflows(page, serviceWorker);
+  phase("pautas clínicas");
   await verifyClinicalChecklists(context, page, serviceWorker);
 
   const manualPatient = page.locator(
@@ -714,6 +724,7 @@ try {
     "A blank laboratory order should be printable for a named manual patient",
   );
 
+  phase("ruta y consulta en conflicto");
   // A conflicting route/query pair must clear all patient-specific actions.
   await page.evaluate(() => {
     history.pushState(
@@ -736,6 +747,7 @@ try {
     "",
   );
 
+  phase("actualización de la extensión con páginas abiertas");
   // Updating an unpacked MV3 extension invalidates the old ISOLATED worlds while the
   // source documents and their MAIN readers survive. The new worker must recover the
   // original generation and reconnect all three pages without navigating any of them.
@@ -906,6 +918,7 @@ try {
   assert.notEqual(hhrHealthResult.report.fichaMedico.reason, "outdated_tab");
   assert.equal(hhrHealthResult.report.fichaMedico.status, "ready");
 
+  phase("lector MAIN anterior a 0.48.115");
   // A Ficha tab opened before 0.48.115 keeps its compatible MAIN reader across the update,
   // and that reader's health carries no facility. The Camas pairing must not depend on it.
   await page.evaluate(() => {
@@ -922,6 +935,7 @@ try {
   assert.equal(previousReaderHealth.report.fichaMedico.status, "ready");
   assert.equal(previousReaderHealth.report.fichaMedico.identity.facilityId, undefined);
 
+  phase("verificación previa de HHR");
   // Exercise the packaged HHR → ISOLATED → MV3 preflight contract with a fresh cached
   // green report. A revoked GC connection must bypass that report and its 15-minute lease.
   sessionExpired = true;
