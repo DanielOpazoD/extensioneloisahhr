@@ -2,7 +2,7 @@
  * content-fichamedico.js  (ISOLATED world, document_start)
  *
  * Relay on the Rayen Ficha Médico page. Bridges the background service worker
- * (chrome.runtime) and the MAIN-world reader (`inject-fichamedico.js`, a world:MAIN
+ * (chrome.runtime) and the MAIN-world reader (`fichamedico/inject-fichamedico.js`, a world:MAIN
  * content script) via window.postMessage, since the two cannot talk directly.
  */
 (() => {

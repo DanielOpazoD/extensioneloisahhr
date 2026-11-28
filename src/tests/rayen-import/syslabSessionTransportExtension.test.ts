@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/syslab-session-transport.js';
+import '../../../extension/syslab/syslab-session-transport.js';
 
 interface TestSessionTransport {
   resolve: () => Promise<Record<string, unknown>>;

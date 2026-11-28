@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import '../../../extension/clinical-write-recovery-policy.js';
+import '../../../extension/clinico/clinical-write-recovery-policy.js';
 
 type RecoveryPolicy = {
   RECOVERY_DELAY_MS: number;

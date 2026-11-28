@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import '../../../extension/hhr-lab-request-patient.js';
-import '../../../extension/hhr-favorite-links.js';
-import '../../../extension/hhr-imaging-request-view.js';
-import '../../../extension/hhr-imaging-center.js';
+import '../../../extension/centro/hhr-lab-request-patient.js';
+import '../../../extension/listas/hhr-favorite-links.js';
+import '../../../extension/centro/hhr-imaging-request-view.js';
+import '../../../extension/centro/hhr-imaging-center.js';
 
 type Runtime = {
   renderImagingCenter: (root: HTMLElement, encId: string, flow?: 'request' | 'reports') => void;
@@ -95,17 +95,17 @@ describe('Centro HHR imaging runtime', () => {
       content_scripts?: Array<{ js?: string[] }>;
     };
     const scripts =
-      manifest.content_scripts?.find(entry => entry.js?.includes('content-prescription-print.js'))
+      manifest.content_scripts?.find(entry => entry.js?.includes('contenido/content-prescription-print.js'))
         ?.js || [];
     const contentSource = readFileSync(
-      path.resolve('extension/content-prescription-print.js'),
+      path.resolve('extension/contenido/content-prescription-print.js'),
       'utf8'
     );
-    const ownerSource = readFileSync(path.resolve('extension/hhr-imaging-center.js'), 'utf8');
+    const ownerSource = readFileSync(path.resolve('extension/centro/hhr-imaging-center.js'), 'utf8');
 
-    expect(scripts.indexOf('hhr-imaging-center.js')).toBeGreaterThan(-1);
-    expect(scripts.indexOf('hhr-imaging-center.js')).toBeLessThan(
-      scripts.indexOf('content-prescription-print.js')
+    expect(scripts.indexOf('centro/hhr-imaging-center.js')).toBeGreaterThan(-1);
+    expect(scripts.indexOf('centro/hhr-imaging-center.js')).toBeLessThan(
+      scripts.indexOf('contenido/content-prescription-print.js')
     );
     expect(contentSource).toContain('const imagingCenterRuntime = imagingCenterOwner');
     expect(contentSource).toContain('if (!imagingCenterRuntime) {');

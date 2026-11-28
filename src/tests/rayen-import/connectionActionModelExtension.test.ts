@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import '../../../extension/hhr-connection-action-model.js';
+import '../../../extension/salud/hhr-connection-action-model.js';
 
 type ActionModel = {
   derive: (report: unknown) => Record<string, unknown>;

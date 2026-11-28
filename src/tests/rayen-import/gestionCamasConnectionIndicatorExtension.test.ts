@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import '../../../extension/hhr-connection-action-model.js';
-import '../../../extension/hhr-connection-presentation.js';
-import '../../../extension/health-push-ordering-runtime.js';
-import '../../../extension/gestion-camas-connection-indicator.js';
+import '../../../extension/salud/hhr-connection-action-model.js';
+import '../../../extension/salud/hhr-connection-presentation.js';
+import '../../../extension/salud/health-push-ordering-runtime.js';
+import '../../../extension/gestion-camas/gestion-camas-connection-indicator.js';
 
 type Indicator = { mount: () => boolean; refresh: () => Promise<unknown>; dispose: () => void };
 type IndicatorOwner = {
@@ -104,7 +104,7 @@ describe('indicador de conexiones en Gestión de Camas', () => {
 
     expect(part('.summary')?.textContent).toBe('Conectado');
     expect(part<HTMLButtonElement>('.primary')?.hidden).toBe(true);
-    expect(part<HTMLImageElement>('.brand img')?.src).toContain('hhr-logo.svg');
+    expect(part<HTMLImageElement>('.brand img')?.src).toContain('icons/hhr-logo.svg');
     expect(part('.copy strong')?.textContent).toBe('Eloísa');
     expect(part('.trigger')?.getAttribute('aria-label')).toBe('Extensión Eloísa: Conectado');
     expect(host().getAttribute('aria-label')).toBe('Estado de conexión de la extensión Eloísa');
@@ -353,18 +353,18 @@ describe('indicador de conexiones en Gestión de Camas', () => {
       manifest.content_scripts.find(
         entry =>
           entry.matches.includes('https://hospitalizado.rayensalud.cl/*') &&
-          entry.js.includes('content-gestioncamas.js')
+          entry.js.includes('contenido/content-gestioncamas.js')
       )?.js ?? [];
-    expect(scripts.indexOf('hhr-connection-action-model.js')).toBeLessThan(
-      scripts.indexOf('gestion-camas-connection-indicator.js')
+    expect(scripts.indexOf('salud/hhr-connection-action-model.js')).toBeLessThan(
+      scripts.indexOf('gestion-camas/gestion-camas-connection-indicator.js')
     );
-    expect(scripts.indexOf('gestion-camas-connection-indicator.js')).toBeLessThan(
-      scripts.indexOf('content-gestioncamas.js')
+    expect(scripts.indexOf('gestion-camas/gestion-camas-connection-indicator.js')).toBeLessThan(
+      scripts.indexOf('contenido/content-gestioncamas.js')
     );
     expect(
       manifest.web_accessible_resources.some(
         entry =>
-          entry.resources.includes('hhr-logo.svg') &&
+          entry.resources.includes('icons/hhr-logo.svg') &&
           entry.matches.includes('https://hospitalizado.rayensalud.cl/*')
       )
     ).toBe(true);

@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/clinical-panel-fetch.js';
-import '../../../extension/clinical-panel-history.js';
-import '../../../extension/clinical-panel-runtime.js';
+import '../../../extension/clinico/clinical-panel-fetch.js';
+import '../../../extension/clinico/clinical-panel-history.js';
+import '../../../extension/clinico/clinical-panel-runtime.js';
 
 type FetchInput = {
   info: typeof info;
@@ -351,7 +351,7 @@ describe('clinical panel read runtime', () => {
       'utf8'
     );
     const runtime = readFileSync(
-      new URL('../../../extension/clinical-panel-runtime.js', import.meta.url),
+      new URL('../../../extension/clinico/clinical-panel-runtime.js', import.meta.url),
       'utf8'
     );
 

@@ -723,7 +723,7 @@
         const fonasa = main.querySelector('input[name="hhr-labreq-fonasa"]:checked');
         const procedencia = main.querySelector('input[name="hhr-labreq-procedencia"]:checked');
         let logoUrl = '';
-        try { logoUrl = chrome.runtime.getURL('hhr-logo.svg'); } catch (_error) {}
+        try { logoUrl = chrome.runtime.getURL('icons/hhr-logo.svg'); } catch (_error) {}
         const html = requestForms.buildLabRequestPrintHtml({
           copies: copiesInput.valueAsNumber,
           patient: { name: patient.name, run: patient.run, birthDate: patient.birthDate && requestForms.formatDateCL ? requestForms.formatDateCL(patient.birthDate) : patient.birthDate },

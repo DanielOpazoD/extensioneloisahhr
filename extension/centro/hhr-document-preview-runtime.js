@@ -4,8 +4,8 @@
   let library;
   const loadLibrary = () => library || (library = (async () => {
     // Reuse PDF.js's supported main-thread transport, avoiding page-origin worker CSP.
-    globalThis.pdfjsWorker = await import(chrome.runtime.getURL('pdf.worker.min.mjs'));
-    return import(chrome.runtime.getURL('pdf.min.mjs'));
+    globalThis.pdfjsWorker = await import(chrome.runtime.getURL('vendor/pdf.worker.min.mjs'));
+    return import(chrome.runtime.getURL('vendor/pdf.min.mjs'));
   })().catch(error => { library = null; throw error; }));
   const printHtml = html => new Promise((resolve, reject) => {
     const popup = window.open('', '_blank');

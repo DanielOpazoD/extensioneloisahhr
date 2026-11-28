@@ -5,9 +5,9 @@ import vm from 'node:vm';
 
 import { describe, expect, it, vi } from 'vitest';
 
-const bridgeSource = readFileSync(path.resolve('extension/bridge-generation-main.js'), 'utf8');
-const recoverySource = readFileSync(path.resolve('extension/connection-relay-recovery.js'), 'utf8');
-const gestionSource = readFileSync(path.resolve('extension/inject-gestioncamas.js'), 'utf8');
+const bridgeSource = readFileSync(path.resolve('extension/salud/bridge-generation-main.js'), 'utf8');
+const recoverySource = readFileSync(path.resolve('extension/salud/connection-relay-recovery.js'), 'utf8');
+const gestionSource = readFileSync(path.resolve('extension/gestion-camas/inject-gestioncamas.js'), 'utf8');
 const manifest = JSON.parse(readFileSync(path.resolve('extension/manifest.json'), 'utf8')) as {
   version: string;
 };
@@ -59,11 +59,11 @@ const createGestionWorld = (marker?: unknown) => {
     URL,
     encodeURIComponent,
   });
-  vm.runInContext(bridgeSource, context, { filename: 'bridge-generation-main.js' });
-  vm.runInContext(recoverySource, context, { filename: 'connection-relay-recovery.js' });
+  vm.runInContext(bridgeSource, context, { filename: 'salud/bridge-generation-main.js' });
+  vm.runInContext(recoverySource, context, { filename: 'salud/connection-relay-recovery.js' });
 
   const run = (source = gestionSource) =>
-    vm.runInContext(source, context, { filename: 'inject-gestioncamas.js' });
+    vm.runInContext(source, context, { filename: 'gestion-camas/inject-gestioncamas.js' });
   const requestStatus = (reqId: string) => {
     for (const listener of [...listeners]) {
       listener({

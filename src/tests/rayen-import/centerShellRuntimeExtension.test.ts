@@ -4,8 +4,8 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/hhr-center-shell-runtime.js';
-import '../../../extension/hhr-lab-request-patient.js';
+import '../../../extension/centro/hhr-center-shell-runtime.js';
+import '../../../extension/centro/hhr-lab-request-patient.js';
 
 type Runtime = {
   openCenterModule: (module: string | undefined, encId: string, trigger?: HTMLElement) => void;
@@ -208,12 +208,12 @@ describe('Centro HHR shared shell runtime', () => {
     };
     const scripts =
       (manifest.content_scripts || []).find(entry =>
-        entry.js?.includes('content-prescription-print.js')
+        entry.js?.includes('contenido/content-prescription-print.js')
       )?.js || [];
-    const source = readFileSync(path.resolve('extension/hhr-center-shell-runtime.js'), 'utf8');
+    const source = readFileSync(path.resolve('extension/centro/hhr-center-shell-runtime.js'), 'utf8');
 
-    expect(scripts.indexOf('hhr-center-shell-runtime.js')).toBeLessThan(
-      scripts.indexOf('content-prescription-print.js')
+    expect(scripts.indexOf('centro/hhr-center-shell-runtime.js')).toBeLessThan(
+      scripts.indexOf('contenido/content-prescription-print.js')
     );
     expect(source.split('\n').length).toBeLessThanOrEqual(400);
     expect(Object.isFrozen(owner())).toBe(true);

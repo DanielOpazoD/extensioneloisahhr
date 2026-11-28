@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 import { describe, expect, it, vi } from 'vitest';
 
-const runtimeSource = readFileSync(path.resolve('extension/clinical-handoff-runtime.js'), 'utf8');
+const runtimeSource = readFileSync(path.resolve('extension/clinico/clinical-handoff-runtime.js'), 'utf8');
 const backgroundSource = readFileSync(path.resolve('extension/background.js'), 'utf8');
 const readmeSource = readFileSync(path.resolve('extension/README.md'), 'utf8');
 
@@ -33,7 +33,7 @@ const loadFactory = () => {
     RegExp,
     encodeURIComponent,
   });
-  vm.runInContext(runtimeSource, context, { filename: 'clinical-handoff-runtime.js' });
+  vm.runInContext(runtimeSource, context, { filename: 'clinico/clinical-handoff-runtime.js' });
   return (
     context as unknown as {
       HhrClinicalHandoffRuntime: {
@@ -165,7 +165,7 @@ describe('clinical handoff runtime owner', () => {
   });
 
   it('documents the current UI owners and the extracted runtime without the removed owner', () => {
-    expect(readmeSource).toContain('`clinical-handoff-runtime.js`');
+    expect(readmeSource).toContain('`clinico/clinical-handoff-runtime.js`');
     expect(readmeSource).not.toContain('`hhr-handoff-scores-center.js`');
   });
 

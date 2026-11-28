@@ -3,7 +3,7 @@
  *
  * Capa visual de la solicitud de exámenes y del acceso a Syslab dentro del Centro HHR.
  *
- * Vive aparte de `hhr-center-styles.js` porque esa hoja concentraba todas las superficies
+ * Vive aparte de `centro/hhr-center-styles.js` porque esa hoja concentraba todas las superficies
  * del Centro y sus reglas de laboratorio terminaron escritas en líneas únicas de cientos de
  * caracteres para no crecer de tamaño. Separarla permite escribirlas de forma legible sin
  * subir ningún presupuesto y deja el estilo de esta pantalla donde se busca.

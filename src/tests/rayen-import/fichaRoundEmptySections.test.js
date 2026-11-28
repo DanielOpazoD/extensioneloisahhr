@@ -1,8 +1,8 @@
 import { afterEach, expect, it } from 'vitest';
-import '../../../extension/hhr-ficha-order-details.js';
-import '../../../extension/hhr-ficha-reading-surfaces.js';
-import '../../../extension/hhr-ficha-vital-strip.js';
-import '../../../extension/hhr-ficha-summary-density.js';
+import '../../../extension/ficha/hhr-ficha-order-details.js';
+import '../../../extension/ficha/hhr-ficha-reading-surfaces.js';
+import '../../../extension/ficha/hhr-ficha-vital-strip.js';
+import '../../../extension/ficha/hhr-ficha-summary-density.js';
 
 const makeCard = (id,title,body,action='') => `<div class="MuiGrid-item"><div class="MuiGrid-item">
   <div ${id ? 'id="'+id+'"' : ''} class="MuiCard-root"><div class="MuiCardHeader-root">

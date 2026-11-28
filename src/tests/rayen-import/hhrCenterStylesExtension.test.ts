@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import '../../../extension/hhr-center-styles.js';
+import '../../../extension/centro/hhr-center-styles.js';
 
 describe('Centro HHR style owner', () => {
   beforeEach(() => {

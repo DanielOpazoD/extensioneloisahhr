@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/health-relay-self-repair.js';
+import '../../../extension/salud/health-relay-self-repair.js';
 
 type SelfRepair = {
   create: (options: {
@@ -26,7 +26,7 @@ describe('health relay self-repair', () => {
     runtime.schedule({ fichaMedico: connected, gestionCamas: disconnected, hhr: connected });
 
     await vi.waitFor(() =>
-      expect(repairRelay).toHaveBeenCalledExactlyOnceWith('content-gestioncamas.js')
+      expect(repairRelay).toHaveBeenCalledExactlyOnceWith('contenido/content-gestioncamas.js')
     );
   });
 
@@ -146,6 +146,6 @@ describe('health relay self-repair', () => {
     runtime.schedule({ hhr: disconnected });
 
     await vi.waitFor(() => expect(publishHealth).toHaveBeenCalledTimes(1));
-    expect(repairRelay).toHaveBeenCalledExactlyOnceWith('content-hhr.js');
+    expect(repairRelay).toHaveBeenCalledExactlyOnceWith('contenido/content-hhr.js');
   });
 });

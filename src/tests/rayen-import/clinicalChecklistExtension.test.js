@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-origin-policy.js';
-import '../../../extension/clinical-checklist-evolution.js';
-import '../../../extension/clinical-assessment-clock.js';
-import '../../../extension/clinical-checklist-braden-templates.js';
-import '../../../extension/clinical-checklist-braden.js';
-import '../../../extension/clinical-checklist-broker.js';
+import '../../../extension/contratos/hhr-origin-policy.js';
+import '../../../extension/clinico/clinical-checklist-evolution.js';
+import '../../../extension/clinico/clinical-assessment-clock.js';
+import '../../../extension/clinico/clinical-checklist-braden-templates.js';
+import '../../../extension/clinico/clinical-checklist-braden.js';
+import '../../../extension/clinico/clinical-checklist-broker.js';
 
 const code = 'PT-00000000-0000-4000-8000-000000000001';
 const record = { code, evolution: 'Aplicación pauta IAAS\nCódigo de verificación: ' + code };
@@ -227,7 +227,7 @@ it('reinyecta el relé si la pestaña HHR ya estaba abierta y prueba varias pest
   expect(result.templates).toHaveLength(1);
   expect(executeScript).toHaveBeenCalledWith({
     target: { tabId: 3, frameIds: [0] },
-    files: ['hhr-origin-policy.js', 'clinical-checklist-hhr.js'],
+    files: ['contratos/hhr-origin-policy.js', 'clinico/clinical-checklist-hhr.js'],
   });
 });
 

@@ -1,12 +1,12 @@
 /**
- * Guards the extension's exam-request forms module (extension/hhr-request-forms.js):
+ * Guards the extension's exam-request forms module (extension/centro/hhr-request-forms.js):
  * patient-view derivation, the imaging documents' overlay/PDF field maps (HHR parity)
  * and the printable laboratory request HTML (selection marks + escaping).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-import '../../../extension/hhr-request-forms.js';
+import '../../../extension/centro/hhr-request-forms.js';
 
 type Coord = { x: number; y: number; maxWidth?: number };
 type ImagingDocument = {

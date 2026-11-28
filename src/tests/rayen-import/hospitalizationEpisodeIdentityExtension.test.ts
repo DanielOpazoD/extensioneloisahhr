@@ -5,7 +5,7 @@ import { expect, it } from 'vitest';
 
 it('forwards only index identity metadata, separating own and maternal RUN episodes', () => {
   const context = vm.createContext({ URL });
-  vm.runInContext(readFileSync('extension/hospitalization-reports-runtime.js', 'utf8'), context);
+  vm.runInContext(readFileSync('extension/documentos/hospitalization-reports-runtime.js', 'utf8'), context);
   const runtime = context.HhrHospitalizationReportsRuntime as {
     listEpisodes: (input: unknown) => unknown;
   };

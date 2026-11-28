@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-ficha-evolution-authors.js';
+import '../../../extension/ficha/hhr-ficha-evolution-authors.js';
 
 function event(id, title, sub, kind) {
   return `<article id="${id}" class="MuiCard-root"><header class="MuiCardHeader-root">

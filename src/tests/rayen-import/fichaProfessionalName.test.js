@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-Function(readFileSync('extension/hhr-ficha-professional-name.js', 'utf8'))();
+Function(readFileSync('extension/ficha/hhr-ficha-professional-name.js', 'utf8'))();
 const { short } = globalThis.HhrFichaProfessionalName;
 
 describe('nombre corto de un profesional', () => {

@@ -3,20 +3,31 @@
 import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 
-/** Reads one extension file from a git revision, or from the working tree with WORKTREE. */
-export const extensionSource = revision => filename => revision === 'WORKTREE'
-  ? readFile('extension/' + filename, 'utf8')
-  : execFileSync('git', ['show', revision + ':extension/' + filename], {encoding:'utf8'});
+/** Reads one extension file from a git revision, or from the working tree with WORKTREE. A revision from
+ * before the folders of 0.48.242 kept every file in the root of extension/: `ficha/x.css` is `x.css` there. */
+export const extensionSource = revision => filename => {
+  if (revision === 'WORKTREE') return readFile('extension/' + filename, 'utf8');
+  const show = name => execFileSync('git', ['show', revision + ':extension/' + name], {encoding:'utf8', stdio:['ignore', 'pipe', 'ignore']});
+  try { return show(filename); } catch (error) {
+    if (!filename.includes('/')) throw error;
+    return show(fileName(filename));
+  }
+};
+
+/** The name of a file without its folder. The presentation of the ficha is chosen by name, so that a revision
+ * from before the folders (every file in the root) and one after them (ficha/, clinico/) give the same files. */
+const fileName = file => file.split('/').pop();
 
 /** The presentation files of the ficha that the revision ships, in manifest order. */
 export async function fichaAssets(revision) {
   const source = extensionSource(revision);
   const manifest = JSON.parse(await source('manifest.json'));
-  const entry = manifest.content_scripts.find(group => group.js?.includes('hhr-native-ficha-presentation.js'));
+  const entry = manifest.content_scripts.find(group => group.js?.some(name => /^hhr-native-ficha-presentation\.js$/.test(fileName(name))));
   return {
     source, version:manifest.version,
-    styles:entry.css.filter(name => name.startsWith('hhr-ficha-') || name === 'clinical-checklist.css'),
-    scripts:entry.js.filter(name => /^(hhr-ficha-|hhr-(history-date-navigation|native-ficha-presentation)\.js$|clinical-(assessment-clock|braden-notes|checklist-(falls|braden(?:-templates)?))\.js$)/.test(name)),
+    styles:entry.css.filter(name => /^(hhr-ficha-|clinical-checklist\.css$)/.test(fileName(name))),
+    scripts:entry.js.filter(name => /^(hhr-ficha-|hhr-(history-date-navigation|native-ficha-presentation)\.js$|clinical-(assessment-clock|braden-notes|checklist-(falls|braden(?:-templates)?))\.js$)/
+      .test(fileName(name))),
   };
 }
 

@@ -2,7 +2,7 @@
  * content-gestioncamas.js  (ISOLATED world, document_start)
  *
  * Relay on the Eloísa Gestión de Camas page. Bridges the background service worker
- * (chrome.runtime) and the MAIN-world lookup (`inject-gestioncamas.js`) via
+ * (chrome.runtime) and the MAIN-world lookup (`gestion-camas/inject-gestioncamas.js`) via
  * window.postMessage, since the two cannot talk directly.
  */
 (() => {

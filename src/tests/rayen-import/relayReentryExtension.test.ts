@@ -88,16 +88,16 @@ const createWorld = (
       expectedAnnouncementSequence = announcementSequence + 1;
     if (dependencies) {
       for (const file of [
-        'message-contract.js',
-        'hhr-origin-policy.js',
-        'bridge-generation.js',
-        'health-push-ordering-runtime.js',
-        'gestion-camas-bridge-health.js',
+        'contratos/message-contract.js',
+        'contratos/hhr-origin-policy.js',
+        'salud/bridge-generation.js',
+        'salud/health-push-ordering-runtime.js',
+        'gestion-camas/gestion-camas-bridge-health.js',
       ]) {
         vm.runInContext(source(file), context, { filename: file });
       }
     }
-    vm.runInContext(source(`content-${relay}.js`), context, { filename: `content-${relay}.js` });
+    vm.runInContext(source(`contenido/content-${relay}.js`), context, { filename: `contenido/content-${relay}.js` });
   };
   const dispatchPage = (data: Message) => {
     for (const listener of [...pageListeners]) {

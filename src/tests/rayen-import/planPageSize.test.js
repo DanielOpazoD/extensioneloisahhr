@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it } from 'vitest';
-import '../../../extension/hhr-plan-page-size-main.js';
-import '../../../extension/hhr-plan-hours.js';
+import '../../../extension/ficha/hhr-plan-page-size-main.js';
+import '../../../extension/ficha/hhr-plan-hours.js';
 
 const { rewrite, chosen } = globalThis.HhrPlanPageSize;
 const base = 'https://fichamedico.rayensalud.cl/dashboard/encounter-list/101';

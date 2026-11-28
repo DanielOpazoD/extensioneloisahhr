@@ -65,7 +65,7 @@
     try {
       await chrome.scripting.executeScript({
         target: { tabId, frameIds: [0] },
-        files: ['hhr-origin-policy.js', 'clinical-checklist-hhr.js'],
+        files: ['contratos/hhr-origin-policy.js', 'clinico/clinical-checklist-hhr.js'],
       });
       return true;
     } catch {

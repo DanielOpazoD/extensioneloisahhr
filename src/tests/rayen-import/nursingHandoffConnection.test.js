@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, it, vi } from 'vitest';
 
-Function(readFileSync('extension/nursing-handoff-connection.js', 'utf8'))();
+Function(readFileSync('extension/entrega-enfermeria/nursing-handoff-connection.js', 'utf8'))();
 
 const host = 'https://hhr-hospitalizados.app';
 const session = () => {
@@ -79,7 +79,7 @@ it('keeps the existing HHR tab untouched when a connection is cancelled', async 
 
 it('conserva la llave individual al iniciar de nuevo y solo la usa con el RUN confirmado', async () => {
   const namespace = { HhrNursingHandoffDevice: { origin: host, endpoint: host + '/pruebas' } };
-  Function('globalThis', readFileSync('extension/nursing-handoff-connection.js', 'utf8'))(namespace);
+  Function('globalThis', readFileSync('extension/entrega-enfermeria/nursing-handoff-connection.js', 'utf8'))(namespace);
   const api = namespace.HhrNursingHandoffConnection;
   const keys = new Map();
   const persistent = {

@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import '../../../extension/hospitalized-roster-runtime.js';
+import '../../../extension/censo/hospitalized-roster-runtime.js';
 
 const ficha = { frameId:0, url:'https://fichamedico.rayensalud.cl/dashboard/encounter-list/101' };
 const setup = () => {

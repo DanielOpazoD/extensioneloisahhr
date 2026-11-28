@@ -4,7 +4,7 @@
   const create = ({ chromeApi, operations, whenIdle, notify, log }) => {
     const { resolveRelay, matchesPattern } = root.HhrRelayReinjectionManifest.create(chromeApi);
     const restoredPatterns = [
-      'content-fichamedico.js', 'content-gestioncamas.js', 'content-hhr.js',
+      'contenido/content-fichamedico.js', 'contenido/content-gestioncamas.js', 'contenido/content-hhr.js',
     ].flatMap(file => resolveRelay(file)?.isolatedEntry.matches || []);
     const pending = new Map();
     const repairTab = tabId => {

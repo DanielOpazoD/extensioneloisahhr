@@ -3,7 +3,7 @@
   'use strict';
   const create = ({ chromeApi, withTimeout, timeoutMs, log, requiredFiles, resolveRelay, reinjectTab, matchesPattern }) => {
     const verifyRelay = async (tabId, requiredFile, relay) => {
-      if (requiredFile === 'syslab-bridge.js') {
+      if (requiredFile === 'syslab/syslab-bridge.js') {
         const frames = await withTimeout(chromeApi.scripting.executeScript({
           target: { tabId, allFrames: true },
           func: () => location.href,
@@ -43,7 +43,7 @@
         }
         return main?.mainReady === true;
       }
-      if (requiredFile === 'content-gestioncamas.js') {
+      if (requiredFile === 'contenido/content-gestioncamas.js') {
         const indicator = await withTimeout(
           chromeApi.tabs.sendMessage(tabId, { type: 'RAYEN_EXTENSION_INDICATOR_PING' }),
           timeoutMs, 'El indicador de Camas no confirmó su conexión.'

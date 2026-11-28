@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-ficha-patient-switcher.js';
+import '../../../extension/ficha/hhr-ficha-patient-switcher.js';
 
 const bar = `<header id="menu-app-bar-element" class="MuiAppBar-root"><div class="MuiToolbar-root"><div class="MuiStack-root">
   <div class="MuiStack-root"><div class="MuiStack-root"><svg></svg><div class="MuiStack-root"><p class="MuiTypography-root">Paciente Actual</p></div></div></div>

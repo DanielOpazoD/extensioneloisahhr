@@ -21,9 +21,14 @@ export function packageRayenExtension(root) {
     "vendor-lock.json",
     ...Object.values(manifest.icons || {}),
     ...Object.values(manifest.action?.default_icon || {}),
+    // Every page, script and stylesheet of the root and of its folders (`ficha/…`), named as the
+    // manifest names them; never a hidden file or folder.
     ...fs
-      .readdirSync(directory)
-      .filter((name) => /^(?!\.)[\w.-]+\.(?:js|mjs|html|css)$/.test(name)),
+      .readdirSync(directory, { recursive: true })
+      .map((name) => name.split(path.sep).join("/"))
+      .filter((name) =>
+        /^(?:(?!\.)[\w-]+\/)*(?!\.)[\w.-]+\.(?:js|mjs|html|css)$/.test(name),
+      ),
     ...manifest.web_accessible_resources.flatMap((group) => group.resources),
   ]);
   if (files.has("installation.html")) {

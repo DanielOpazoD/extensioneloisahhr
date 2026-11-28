@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const workerSource = readFileSync(path.resolve('extension/extension-worker-status.js'), 'utf8');
+const workerSource = readFileSync(path.resolve('extension/estado/extension-worker-status.js'), 'utf8');
 const currentManifest = JSON.parse(readFileSync(path.resolve('extension/manifest.json'), 'utf8'));
 const renderWorker = (sendMessage: () => Promise<unknown>) => {
   const worker = { textContent: '', dataset: { state: '' } };
@@ -30,8 +30,8 @@ afterEach(() => {
 
 describe('extension version popup', () => {
   it('shows the packaged content identity separately from the version and rejects stale labels', () => {
-    const identitySource = readFileSync(path.resolve('extension/build-identity.js'), 'utf8');
-    const popupSource = readFileSync(path.resolve('extension/extension-status.js'), 'utf8');
+    const identitySource = readFileSync(path.resolve('extension/estado/build-identity.js'), 'utf8');
+    const popupSource = readFileSync(path.resolve('extension/estado/extension-status.js'), 'utf8');
     for (const matching of [true, false]) {
       const elements = {
         'extension-version': { textContent: '', title: '' },
@@ -61,7 +61,7 @@ describe('extension version popup', () => {
         ...(version ? { version } : {}),
       };
       const background = readFileSync(path.resolve('extension/background.js'), 'utf8');
-      const source = readFileSync(path.resolve('extension/extension-status.js'), 'utf8');
+      const source = readFileSync(path.resolve('extension/estado/extension-status.js'), 'utf8');
       const html = readFileSync(path.resolve('extension/extension-status.html'), 'utf8');
       const versionElement = { textContent: '' };
       const getElementById = vi.fn((id: string) =>
@@ -75,7 +75,7 @@ describe('extension version popup', () => {
           chrome: { runtime: { getManifest: () => manifest } },
           document: documentObject,
         }),
-        { filename: 'extension-status.js' }
+        { filename: 'estado/extension-status.js' }
       );
 
       expect(manifest.action).toEqual({
@@ -84,9 +84,9 @@ describe('extension version popup', () => {
         default_popup: 'extension-status.html',
       });
       expect(html).toContain('href="installation.html"');
-      expect(html).toContain('src="extension-release-status.js"');
+      expect(html).toContain('src="estado/extension-release-status.js"');
       expect(html).toContain('id="worker-status"');
-      expect(html).toContain('src="extension-worker-status.js"');
+      expect(html).toContain('src="estado/extension-worker-status.js"');
       expect(background).toContain("'patient-document-manager'");
       expect(versionElement.textContent).toBe(`v${manifest.version}`);
       expect(documentObject.title).toBe(`Puente Eloísa → HHR · v${manifest.version}`);

@@ -32,7 +32,7 @@ it('conserva el turno nocturno, espera la confirmación y mantiene ambos textos 
     return server;
   });
   vi.stubGlobal('chrome', { runtime:{ sendMessage } });
-  Function(readFileSync('extension/nursing-handoff-editor.js', 'utf8'))();
+  Function(readFileSync('extension/entrega-enfermeria/nursing-handoff-editor.js', 'utf8'))();
 
   const id = value => document.getElementById(value);
   const type = text => {

@@ -4,19 +4,19 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const clinicalClientSource = readFileSync(
-  new URL('../../../extension/fichamedico-clinical-client.js', import.meta.url),
+  new URL('../../../extension/fichamedico/fichamedico-clinical-client.js', import.meta.url),
   'utf8'
 );
 const clinicalScoreRuntimeSource = readFileSync(
-  new URL('../../../extension/clinical-score-runtime.js', import.meta.url),
+  new URL('../../../extension/clinico/clinical-score-runtime.js', import.meta.url),
   'utf8'
 );
 const clinicalScoreWriteRuntimeSource = readFileSync(
-  new URL('../../../extension/clinical-score-write-runtime.js', import.meta.url),
+  new URL('../../../extension/clinico/clinical-score-write-runtime.js', import.meta.url),
   'utf8'
 );
 const clinicalBatchPrintRuntimeSource = readFileSync(
-  new URL('../../../extension/clinical-batch-print-runtime.js', import.meta.url),
+  new URL('../../../extension/clinico/clinical-batch-print-runtime.js', import.meta.url),
   'utf8'
 );
 const sliceBetween = (source: string, startMarker: string, endMarker: string) => {

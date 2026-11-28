@@ -21,8 +21,8 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   document.documentElement.setAttribute('data-hhr-handoff-enabled', '');
   history.replaceState(null, '', path + '?tab=2');
-  for (const file of ['hhr-worklist-print-column','hhr-nursing-novelty','hhr-nursing-worklist','hhr-continuous-worklist-main']) {
-    Function(readFileSync('extension/' + file + '.js', 'utf8'))();
+  for (const file of ['listas/hhr-worklist-print-column.js','listas/hhr-nursing-novelty.js','listas/hhr-nursing-worklist.js','listas/hhr-continuous-worklist-main.js']) {
+    Function(readFileSync('extension/' + file, 'utf8'))();
   }
   let setUrl, setFilter, setReady, ready, filter = '', activeUrl;
   const action = vi.fn();
@@ -219,8 +219,8 @@ it('combina las tres fuentes por episodio, filtra, conserva acciones y abre Egre
 it.each(['missing', 'changed'])('mantiene los imports nativos cuando la tabla interna de Rayen está %s', (kind) => {
   const context = { location:{ pathname:path } };
   context.self = context;
-  for (const file of ['hhr-worklist-print-column','hhr-nursing-worklist','hhr-continuous-worklist-main']) {
-    runInNewContext(readFileSync('extension/' + file + '.js', 'utf8'), context);
+  for (const file of ['listas/hhr-worklist-print-column.js','listas/hhr-nursing-worklist.js','listas/hhr-continuous-worklist-main.js']) {
+    runInNewContext(readFileSync('extension/' + file, 'utf8'), context);
   }
   const navigation = { useSearchParams:() => new URLSearchParams(), useRouter:() => ({ replace() {} }) };
   const modules = {
@@ -247,7 +247,7 @@ it.each(['missing', 'changed'])('mantiene los imports nativos cuando la tabla in
 });
 
 it('ordena las camas visibles y mantiene ambos episodios cuando comparten ubicación', () => {
-  Function(readFileSync('extension/hhr-worklist-print-column.js', 'utf8'))();
+  Function(readFileSync('extension/listas/hhr-worklist-print-column.js', 'utf8'))();
   const { jsx } = runtime;
   const codes = ['R1', 'R2', 'R3', 'R4', 'Neo 1', 'NEO2', 'H1C1', 'H1C2',
     'H2C1', 'H2C2', 'H3C1', 'H3C2', 'H4C1', 'H4C2', 'H5C1', 'H5C2', 'H6C1', 'H6C2',
@@ -268,8 +268,8 @@ it('ordena las camas visibles y mantiene ambos episodios cuando comparten ubicac
 });
 
 it('usa el episodio del enlace nativo para imprimir y editar la entrega, incluso si cambia la clave de React', () => {
-  Function(readFileSync('extension/hhr-worklist-print-column.js', 'utf8'))();
-  Function(readFileSync('extension/hhr-nursing-worklist.js', 'utf8'))();
+  Function(readFileSync('extension/listas/hhr-worklist-print-column.js', 'utf8'))();
+  Function(readFileSync('extension/listas/hhr-nursing-worklist.js', 'utf8'))();
   const { jsx } = runtime;
   const columns = ['location', 'patient', 'ges', 'link'].map(id => ({ id, label:id }));
   const row = (key, patient, chart = patient) => jsx('tr', { children: [
@@ -301,7 +301,7 @@ it('usa el episodio del enlace nativo para imprimir y editar la entrega, incluso
 });
 
 it('marca «Nuevo» también en la lista médica, sea cual sea su tamaño, y solo el pequeño en Gestión de cuidados', () => {
-  Function(readFileSync('extension/hhr-worklist-print-column.js', 'utf8'))();
+  Function(readFileSync('extension/listas/hhr-worklist-print-column.js', 'utf8'))();
   const jsx = (type, props, key) => ({ type, props, key });
   const Chip = () => null;
   const marked = (route, size) => {

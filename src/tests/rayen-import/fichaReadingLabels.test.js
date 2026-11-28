@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-ficha-reading-labels.js';
+import '../../../extension/ficha/hhr-ficha-reading-labels.js';
 
 it('abrevia la fecha de origen y omite únicamente el cargo reconocido', () => {
   const { stamp } = globalThis.HhrFichaReadingLabels;

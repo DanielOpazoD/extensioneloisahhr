@@ -168,7 +168,7 @@ if (manifest.minimum_chrome_version !== "118") {
 }
 // El inject de mundo principal no puede leer el manifest: publica una constante que el relay
 // compara con la versión instalada. Si divergen, TODA pestaña fresca quedaría «versión anterior».
-const injectPath = path.join(extensionDir, "inject-fichamedico.js");
+const injectPath = path.join(extensionDir, "fichamedico/inject-fichamedico.js");
 const injectVersion = existsSync(injectPath)
   ? (readFileSync(injectPath, "utf8").match(
       /const INJECT_VERSION = '([^']+)'/,
@@ -183,7 +183,7 @@ if (injectVersion !== manifest.version) {
 // bump that forgets it marks every open GC tab as `outdated_tab`.
 const gestionCamasInjectPath = path.join(
   extensionDir,
-  "inject-gestioncamas.js",
+  "gestion-camas/inject-gestioncamas.js",
 );
 const gestionCamasInjectVersion = existsSync(gestionCamasInjectPath)
   ? (readFileSync(gestionCamasInjectPath, "utf8").match(
@@ -211,8 +211,8 @@ for (const [index, script] of (manifest.content_scripts || []).entries()) {
 if (
   !(manifest.content_scripts || []).some(
     (script) =>
-      script.js?.includes("content-hhr.js") &&
-      script.js.includes("content-hhr-exalab.js"),
+      script.js?.includes("contenido/content-hhr.js") &&
+      script.js.includes("contenido/content-hhr-exalab.js"),
   )
 )
   fail("El relé de HHR debe conservar la conexión personal Exalab.");
@@ -232,7 +232,7 @@ const mandatoryPackageRoots = [
   "print-pdf.html",
   "syslab-offscreen.html",
   "exalab-connect.html",
-  "exalab-connect.css",
+  "exalab/exalab-connect.css",
 ];
 validateFileReferences(
   "raíces obligatorias del paquete",
@@ -242,19 +242,19 @@ validateFileReferences(
 // Preserve the pre-existing core-feature contract as required graph edges. File existence remains
 // derived by validateFileReferences(), while removing an edge and its target together still fails.
 const mandatoryStartupRuntimes = [
-  "exalab-background.js",
-  "runtime-loader.js",
-  "prescription-print.js",
-  "prescription-pdf.js",
-  "pdf-print.js",
-  "report-parser.js",
-  "jspdf.umd.min.js",
-  "pdf-lib.min.js",
-  "xlsx.full.min.js",
+  "exalab/exalab-background.js",
+  "salud/runtime-loader.js",
+  "centro/prescription-print.js",
+  "centro/prescription-pdf.js",
+  "documentos/pdf-print.js",
+  "documentos/report-parser.js",
+  "vendor/jspdf.umd.min.js",
+  "vendor/pdf-lib.min.js",
+  "vendor/xlsx.full.min.js",
 ];
 const mandatoryHtmlScripts = new Map([
-  ["print-pdf.html", ["print-pdf.js"]],
-  ["exalab-connect.html", ["hhr-origin-policy.js", "exalab-connect.js"]],
+  ["print-pdf.html", ["documentos/print-pdf.js"]],
+  ["exalab-connect.html", ["contratos/hhr-origin-policy.js", "exalab/exalab-connect.js"]],
 ]);
 
 const vendorLockPath = path.join(extensionDir, "vendor-lock.json");
@@ -279,8 +279,8 @@ if (existsSync(vendorLockPath)) {
       }
     }
     const expectedPdfJsSources = new Map([
-      ["pdf.min.mjs", "pdfjs-dist/legacy/build/pdf.min.mjs"],
-      ["pdf.worker.min.mjs", "pdfjs-dist/legacy/build/pdf.worker.min.mjs"],
+      ["vendor/pdf.min.mjs", "pdfjs-dist/legacy/build/pdf.min.mjs"],
+      ["vendor/pdf.worker.min.mjs", "pdfjs-dist/legacy/build/pdf.worker.min.mjs"],
     ]);
     for (const [file, source] of expectedPdfJsSources) {
       const vendor = vendorLock.vendors.find(
@@ -424,7 +424,7 @@ for (const runtime of mandatoryStartupRuntimes) {
     );
   }
 }
-const runtimeLoaderPath = path.join(extensionDir, "runtime-loader.js");
+const runtimeLoaderPath = path.join(extensionDir, "salud/runtime-loader.js");
 const runtimeLoaderSource = isRegularFile(runtimeLoaderPath)
   ? readFileSync(runtimeLoaderPath, "utf8")
   : "";

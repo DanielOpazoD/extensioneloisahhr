@@ -3,9 +3,9 @@
   'use strict';
 
   const SOURCES = Object.freeze({
-    fichaMedico: 'content-fichamedico.js',
-    gestionCamas: 'content-gestioncamas.js',
-    hhr: 'content-hhr.js',
+    fichaMedico: 'contenido/content-fichamedico.js',
+    gestionCamas: 'contenido/content-gestioncamas.js',
+    hhr: 'contenido/content-hhr.js',
   });
 
   const create = ({ repairRelay, publishHealth = () => undefined,

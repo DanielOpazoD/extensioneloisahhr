@@ -9,13 +9,13 @@ const readExtensionSource = (fileName: string): string =>
 
 describe('extension clinical content static safeguards', () => {
   it('keeps hospitalized indications print retries usable', () => {
-    const source = readExtensionSource('hhr-hospitalized-documents-center.js');
+    const source = readExtensionSource('centro/hhr-hospitalized-documents-center.js');
     expect(source).toContain("submit.textContent = 'Reintentar impresión'");
   });
 
   it('keeps credentials on the official Rayen page and exposes session controls in Centro HHR', () => {
-    const contentSource = readExtensionSource('content-prescription-print.js');
-    const connectionCenterSource = readExtensionSource('hhr-connection-center-runtime.js');
+    const contentSource = readExtensionSource('contenido/content-prescription-print.js');
+    const connectionCenterSource = readExtensionSource('salud/hhr-connection-center-runtime.js');
 
     expect(connectionCenterSource).toContain('type: runtimeMessages.GC_CONNECT_REQUEST');
     expect(connectionCenterSource).toContain('type: runtimeMessages.GC_DISCONNECT_REQUEST');

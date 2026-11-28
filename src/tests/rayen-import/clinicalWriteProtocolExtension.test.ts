@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import '../../../extension/clinical-write-recovery-policy.js';
-import '../../../extension/clinical-write-runtime.js';
+import '../../../extension/clinico/clinical-write-recovery-policy.js';
+import '../../../extension/clinico/clinical-write-runtime.js';
 
 type WriteGuard = {
   generationId: string;
@@ -276,7 +276,7 @@ describe('extension clinical write protocol', () => {
 
   it('does not verify a handoff readback unless the POST was positively acknowledged', () => {
     const source = readFileSync(
-      new URL('../../../extension/clinical-handoff-runtime.js', import.meta.url),
+      new URL('../../../extension/clinico/clinical-handoff-runtime.js', import.meta.url),
       'utf8'
     );
     const start = source.indexOf('const performSaveRequest = async');
@@ -298,7 +298,7 @@ describe('extension clinical write protocol', () => {
 
   it('finishes the Eloisa encounter event after verifying a handoff readback', () => {
     const source = readFileSync(
-      new URL('../../../extension/clinical-handoff-runtime.js', import.meta.url),
+      new URL('../../../extension/clinico/clinical-handoff-runtime.js', import.meta.url),
       'utf8'
     );
     const helperStart = source.indexOf('const readFinishRegisterEvent = async');
@@ -328,7 +328,7 @@ describe('extension clinical write protocol', () => {
 
   it('revalidates score attribution and both history sources before beginWrite', () => {
     const source = readFileSync(
-      new URL('../../../extension/clinical-score-write-runtime.js', import.meta.url),
+      new URL('../../../extension/clinico/clinical-score-write-runtime.js', import.meta.url),
       'utf8'
     );
     const requestStart = source.indexOf('const performScoreSaveRequest = async');
@@ -353,15 +353,15 @@ describe('extension clinical write protocol', () => {
       'utf8'
     );
     const owner = readFileSync(
-      new URL('../../../extension/clinical-write-runtime.js', import.meta.url),
+      new URL('../../../extension/clinico/clinical-write-runtime.js', import.meta.url),
       'utf8'
     );
     const recoveryPolicyOwner = readFileSync(
-      new URL('../../../extension/clinical-write-recovery-policy.js', import.meta.url),
+      new URL('../../../extension/clinico/clinical-write-recovery-policy.js', import.meta.url),
       'utf8'
     );
     const scoreWriteOwner = readFileSync(
-      new URL('../../../extension/clinical-score-write-runtime.js', import.meta.url),
+      new URL('../../../extension/clinico/clinical-score-write-runtime.js', import.meta.url),
       'utf8'
     );
     const backgroundLines = background.split('\n').length;

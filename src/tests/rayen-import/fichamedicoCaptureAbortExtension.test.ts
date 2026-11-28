@@ -80,15 +80,15 @@ const createAbortHarness = (
   });
 
   for (const file of [
-    'fichamedico-isolation-normalization.js',
-    'fichamedico-diagnosis-coding.js',
-    'fichamedico-normalization.js',
-    'fichamedico-read-resilience.js',
-    'fichamedico-capture-cache.js',
-    'fichamedico-census-runtime.js',
-    'bridge-generation-main.js',
-    'connection-relay-recovery.js',
-    'inject-fichamedico.js',
+    'fichamedico/fichamedico-isolation-normalization.js',
+    'fichamedico/fichamedico-diagnosis-coding.js',
+    'fichamedico/fichamedico-normalization.js',
+    'fichamedico/fichamedico-read-resilience.js',
+    'fichamedico/fichamedico-capture-cache.js',
+    'fichamedico/fichamedico-census-runtime.js',
+    'salud/bridge-generation-main.js',
+    'salud/connection-relay-recovery.js',
+    'fichamedico/inject-fichamedico.js',
   ]) {
     vm.runInContext(readExt(file), mainContext, { filename: file });
   }
@@ -126,9 +126,9 @@ const createAbortHarness = (
     Array,
     Promise,
   });
-  vm.runInContext('var globalThis = window; ' + readExt('message-contract.js'), isolatedContext);
-  vm.runInContext(readExt('bridge-generation.js'), isolatedContext);
-  vm.runInContext(readExt('content-fichamedico.js'), isolatedContext);
+  vm.runInContext('var globalThis = window; ' + readExt('contratos/message-contract.js'), isolatedContext);
+  vm.runInContext(readExt('salud/bridge-generation.js'), isolatedContext);
+  vm.runInContext(readExt('contenido/content-fichamedico.js'), isolatedContext);
 
   const sendMain = (request: Record<string, unknown>, responseType: string) =>
     new Promise<Record<string, unknown>>(resolve => {

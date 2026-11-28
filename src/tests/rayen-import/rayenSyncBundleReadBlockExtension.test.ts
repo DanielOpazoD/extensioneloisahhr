@@ -1,11 +1,11 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/clinical-day-runtime.js';
-import '../../../extension/census-sync-horizon-runtime.js';
-import '../../../extension/capture-read-recovery.js';
-import '../../../extension/rayen-sync-bundle-runtime.js';
-import '../../../extension/fichamedico-read-resilience.js';
+import '../../../extension/clinico/clinical-day-runtime.js';
+import '../../../extension/censo/census-sync-horizon-runtime.js';
+import '../../../extension/censo/capture-read-recovery.js';
+import '../../../extension/censo/rayen-sync-bundle-runtime.js';
+import '../../../extension/fichamedico/fichamedico-read-resilience.js';
 
 type Health = Record<string, { status: string; message: string; usingBackgroundSession?: boolean }>;
 

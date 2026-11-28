@@ -4,10 +4,10 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/hhr-center-shell-runtime.js';
-import '../../../extension/hhr-prescription-center.js';
-import '../../../extension/hhr-hospitalized-documents-center.js';
-import '../../../extension/hhr-lab-center.js';
+import '../../../extension/centro/hhr-center-shell-runtime.js';
+import '../../../extension/centro/hhr-prescription-center.js';
+import '../../../extension/centro/hhr-hospitalized-documents-center.js';
+import '../../../extension/centro/hhr-lab-center.js';
 
 type RuntimeOwner = {
   create: (dependencies: Record<string, unknown>) => { open: (...args: unknown[]) => unknown };
@@ -30,20 +30,20 @@ const dependencies = {
 const manifest = JSON.parse(readFileSync(path.resolve('extension/manifest.json'), 'utf8')) as {
   content_scripts?: Array<{ matches?: string[]; js?: string[] }>;
 };
-const contentSource = readFileSync(path.resolve('extension/content-prescription-print.js'), 'utf8');
+const contentSource = readFileSync(path.resolve('extension/contenido/content-prescription-print.js'), 'utf8');
 const centerShellSource = readFileSync(
-  path.resolve('extension/hhr-center-shell-runtime.js'),
+  path.resolve('extension/centro/hhr-center-shell-runtime.js'),
   'utf8'
 );
 const prescriptionSource = readFileSync(
-  path.resolve('extension/hhr-prescription-center.js'),
+  path.resolve('extension/centro/hhr-prescription-center.js'),
   'utf8'
 );
 const hospitalizedDocumentsSource = readFileSync(
-  path.resolve('extension/hhr-hospitalized-documents-center.js'),
+  path.resolve('extension/centro/hhr-hospitalized-documents-center.js'),
   'utf8'
 );
-const labCenterSource = readFileSync(path.resolve('extension/hhr-lab-center.js'), 'utf8');
+const labCenterSource = readFileSync(path.resolve('extension/centro/hhr-lab-center.js'), 'utf8');
 const lineCount = (source: string) => source.split('\n').length;
 
 describe('Centro HHR prescription runtime ownership', () => {
@@ -72,25 +72,25 @@ describe('Centro HHR prescription runtime ownership', () => {
     const fichaEntry = (manifest.content_scripts || []).find(
       entry =>
         entry.matches?.includes('https://fichamedico.rayensalud.cl/*') &&
-        entry.js?.includes('content-prescription-print.js')
+        entry.js?.includes('contenido/content-prescription-print.js')
     );
     const scripts = fichaEntry?.js || [];
 
-    expect(scripts.indexOf('hhr-prescription-center.js')).toBeGreaterThan(-1);
-    expect(scripts.indexOf('hhr-center-shell-runtime.js')).toBeGreaterThan(-1);
-    expect(scripts.indexOf('hhr-hospitalized-documents-center.js')).toBeGreaterThan(-1);
-    expect(scripts.indexOf('hhr-lab-center.js')).toBeGreaterThan(-1);
-    expect(scripts.indexOf('hhr-prescription-center.js')).toBeLessThan(
-      scripts.indexOf('content-prescription-print.js')
+    expect(scripts.indexOf('centro/hhr-prescription-center.js')).toBeGreaterThan(-1);
+    expect(scripts.indexOf('centro/hhr-center-shell-runtime.js')).toBeGreaterThan(-1);
+    expect(scripts.indexOf('centro/hhr-hospitalized-documents-center.js')).toBeGreaterThan(-1);
+    expect(scripts.indexOf('centro/hhr-lab-center.js')).toBeGreaterThan(-1);
+    expect(scripts.indexOf('centro/hhr-prescription-center.js')).toBeLessThan(
+      scripts.indexOf('contenido/content-prescription-print.js')
     );
-    expect(scripts.indexOf('hhr-center-shell-runtime.js')).toBeLessThan(
-      scripts.indexOf('content-prescription-print.js')
+    expect(scripts.indexOf('centro/hhr-center-shell-runtime.js')).toBeLessThan(
+      scripts.indexOf('contenido/content-prescription-print.js')
     );
-    expect(scripts.indexOf('hhr-hospitalized-documents-center.js')).toBeLessThan(
-      scripts.indexOf('content-prescription-print.js')
+    expect(scripts.indexOf('centro/hhr-hospitalized-documents-center.js')).toBeLessThan(
+      scripts.indexOf('contenido/content-prescription-print.js')
     );
-    expect(scripts.indexOf('hhr-lab-center.js')).toBeLessThan(
-      scripts.indexOf('content-prescription-print.js')
+    expect(scripts.indexOf('centro/hhr-lab-center.js')).toBeLessThan(
+      scripts.indexOf('contenido/content-prescription-print.js')
     );
     expect(contentSource).toContain('prescriptionCenterOwner.create({');
     expect(contentSource).toContain('hospitalizedDocumentsCenterOwner.create({');

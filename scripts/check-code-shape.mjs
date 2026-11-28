@@ -10,7 +10,8 @@ const dir = new URL('../extension/', import.meta.url);
 const baselineUrl = new URL('./code-shape-baseline.json', import.meta.url);
 // Third-party libraries, minified and pinned in vendor-lock.json, are not code to read.
 const vendored = new Set(JSON.parse(await readFile(new URL('vendor-lock.json', dir), 'utf8')).vendors.map(vendor => vendor.file));
-const files = (await readdir(dir)).filter(name => /\.(js|css)$/.test(name) && !vendored.has(name)).sort();
+// Paths are relative to extension/ (`ficha/hhr-ficha-themes.css`), as the manifest names them.
+const files = (await readdir(dir, {recursive:true})).filter(name => /\.(js|css)$/.test(name) && !vendored.has(name)).sort();
 
 const shape = {};
 for (const name of files) {

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/message-contract.js';
+import '../../../extension/contratos/message-contract.js';
 
 interface ValidationResult {
   ok: boolean;
@@ -387,33 +387,33 @@ describe('shared Rayen runtime-message contract', () => {
     const background = readFileSync(path.resolve('extension/background.js'), 'utf8');
     const syslabLogin = readFileSync(path.resolve('extension/syslab-login.html'), 'utf8');
     const runtimeCallers = new Set([
-      'content-fichamedico.js',
-      'content-gestioncamas.js',
-      'content-hhr.js',
-      'content-hhr-patient-flow.js',
-      'content-hhr-epicrisis.js',
-      'content-hhr-patient-documents.js',
-      'content-hhr-statistical-discharge.js',
-      'content-hhr-statistical-evidence.js',
-      'content-hhr-syslab.js',
-      'content-exam-request-print.js',
-      'content-prescription-print.js',
+      'contenido/content-fichamedico.js',
+      'contenido/content-gestioncamas.js',
+      'contenido/content-hhr.js',
+      'contenido/content-hhr-patient-flow.js',
+      'contenido/content-hhr-epicrisis.js',
+      'contenido/content-hhr-patient-documents.js',
+      'contenido/content-hhr-statistical-discharge.js',
+      'contenido/content-hhr-statistical-evidence.js',
+      'contenido/content-hhr-syslab.js',
+      'contenido/content-exam-request-print.js',
+      'contenido/content-prescription-print.js',
     ]);
 
     for (const entry of manifest.content_scripts || []) {
       const scripts = entry.js || [];
       if (!scripts.some(script => runtimeCallers.has(script))) continue;
-      expect(scripts[0]).toBe('message-contract.js');
+      expect(scripts[0]).toBe('contratos/message-contract.js');
     }
-    expect(background.indexOf("'message-contract.js'")).toBeLessThan(
-      background.indexOf("'encounter-navigation.js'")
+    expect(background.indexOf("'contratos/message-contract.js'")).toBeLessThan(
+      background.indexOf("'clinico/encounter-navigation.js'")
     );
     expect(background).toContain(
       'chrome.runtime.onMessage.addListener(messageContract.createRuntimeRouter(runtimeMessageRoutes))'
     );
     expect(background).not.toMatch(/msg\.type\s*===\s*['"]RAYEN_/);
     const patientFlowEntry = manifest.content_scripts?.find(entry =>
-      entry.js?.includes('content-hhr-patient-flow.js')
+      entry.js?.includes('contenido/content-hhr-patient-flow.js')
     );
     expect(patientFlowEntry?.matches).toEqual([
       ...['localhost', '127.0.0.1'].flatMap(host =>
@@ -427,14 +427,14 @@ describe('shared Rayen runtime-message contract', () => {
     expect(background).toContain('const readAuthorizedSnapshot = sender =>');
     expect(background).toContain('patientFlowRuntime.authorizeSnapshotResponse(');
     const dischargeReportFetcher = readFileSync(
-      path.resolve('extension/gestion-camas-statistical-report-fetcher.js'),
+      path.resolve('extension/gestion-camas/gestion-camas-statistical-report-fetcher.js'),
       'utf8'
     );
     expect(dischargeReportFetcher).toContain('Informe_Estadistico_Egreso_Hospitalario_CARTA.pdf');
     expect(dischargeReportFetcher).toContain("reportUrl.searchParams.set('ENC_ID', encounterId)");
     expect(dischargeReportFetcher).toContain('await markSessionVerified(record)');
-    expect(syslabLogin.indexOf('message-contract.js')).toBeLessThan(
-      syslabLogin.indexOf('syslab-login.js')
+    expect(syslabLogin.indexOf('contratos/message-contract.js')).toBeLessThan(
+      syslabLogin.indexOf('syslab/syslab-login.js')
     );
   });
 });

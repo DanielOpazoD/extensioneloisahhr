@@ -5,13 +5,13 @@ import vm from 'node:vm';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/lab-result-parser.js';
-import '../../../extension/lab-viewer.js';
+import '../../../extension/syslab/lab-result-parser.js';
+import '../../../extension/syslab/lab-viewer.js';
 
 const bridgeSource =
-  readFileSync('extension/syslab-network-probe.js', 'utf8') +
+  readFileSync('extension/syslab/syslab-network-probe.js', 'utf8') +
   '\n' +
-  readFileSync(path.resolve('extension/syslab-bridge.js'), 'utf8');
+  readFileSync(path.resolve('extension/syslab/syslab-bridge.js'), 'utf8');
 
 describe('Syslab login bridge', () => {
   afterEach(() => {
@@ -46,7 +46,7 @@ describe('Syslab login bridge', () => {
       },
     };
 
-    vm.runInThisContext(bridgeSource, { filename: 'syslab-bridge.js' });
+    vm.runInThisContext(bridgeSource, { filename: 'syslab/syslab-bridge.js' });
     const transientCredential = ['temporal', 123].join('-');
     const response = await new Promise<Record<string, unknown>>(resolve => {
       expect(
@@ -99,7 +99,7 @@ describe('Syslab login bridge', () => {
     frameWindow.window = frameWindow;
     frameWindow.self = frameWindow;
     frameWindow.chrome = { runtime: frameWindow.runtime };
-    vm.runInNewContext(bridgeSource, frameWindow, { filename: 'syslab-bridge.js' });
+    vm.runInNewContext(bridgeSource, frameWindow, { filename: 'syslab/syslab-bridge.js' });
     expect(frameListeners.message).toBeTypeOf('function');
     const request = {
       type: 'HHR_SYSLAB_FRAME_REQUEST',
@@ -171,7 +171,7 @@ describe('Syslab login bridge', () => {
       },
     };
 
-    vm.runInThisContext(bridgeSource, { filename: 'syslab-bridge.js' });
+    vm.runInThisContext(bridgeSource, { filename: 'syslab/syslab-bridge.js' });
     const response = await new Promise<Record<string, unknown>>(resolve => {
       listener({ type: 'RAYEN_SYSLAB_SUBMIT_SEARCH', rutBody: '12345678' }, {}, value =>
         resolve(value as Record<string, unknown>)

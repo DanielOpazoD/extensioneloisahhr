@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import '../../../extension/clinical-write-recovery-policy.js';
-import '../../../extension/clinical-write-runtime.js';
+import '../../../extension/clinico/clinical-write-recovery-policy.js';
+import '../../../extension/clinico/clinical-write-runtime.js';
 
 type RecoveryMarker = {
   state: string;
@@ -45,7 +45,7 @@ const backgroundSource = readFileSync(
   'utf8'
 );
 const contentSource = readFileSync(
-  new URL('../../../extension/hhr-clinical-write-client-runtime.js', import.meta.url),
+  new URL('../../../extension/centro/hhr-clinical-write-client-runtime.js', import.meta.url),
   'utf8'
 );
 type RuntimeOwner = {

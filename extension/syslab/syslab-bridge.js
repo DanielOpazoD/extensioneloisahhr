@@ -172,8 +172,8 @@
   let pdfModulePromise = null;
   const loadPdfModule = async () => {
     if (!pdfModulePromise) {
-      pdfModulePromise = import(chrome.runtime.getURL('pdf.min.mjs')).then(module => {
-        module.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('pdf.worker.min.mjs');
+      pdfModulePromise = import(chrome.runtime.getURL('vendor/pdf.min.mjs')).then(module => {
+        module.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('vendor/pdf.worker.min.mjs');
         return module;
       });
     }

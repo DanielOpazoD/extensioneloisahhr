@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { beforeEach, expect, it, vi } from 'vitest';
 
-const source = readFileSync('extension/worklist-patient-editor.js', 'utf8');
+const source = readFileSync('extension/gestion-camas/worklist-patient-editor.js', 'utf8');
 const request = { episode: '21', patient: '41', professional: '17', facility: '8' };
 let bed, groups, view, dialog, api;
 

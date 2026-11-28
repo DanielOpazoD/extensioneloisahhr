@@ -74,14 +74,17 @@ const currentMoves = () => {
 
 const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** Rewrites the references of one text. `code` also rewrites the names between quotes. */
+/** Rewrites the references of one text. In code the names between quotes or backticks are paths; in
+ * Markdown only the ones between backticks are (a quoted name there is prose). */
 export function rewriteReferences(text, moves, { code = true } = {}) {
   let out = text;
+  const quotes = code ? `['"\`]` : '`';
   for (const [name, target] of moves) {
     const word = escape(name);
-    // `extension/<name>`, not followed by more of a file name (pdf.min.mjs vs pdf.min.mjs.map).
-    out = out.replace(new RegExp(`(extension/)${word}(?![\\w.-])`, 'g'), `$1${target}`);
-    if (code) out = out.replace(new RegExp(`(['"\`])${word}\\1`, 'g'), `$1${target}$1`);
+    // `extension/<name>`, not followed by more of a file name (pdf.min.mjs vs pdf.min.mjs.map), nor
+    // inside another package's folder (node_modules/pdfjs-dist/legacy/build/pdf.min.mjs).
+    out = out.replace(new RegExp(`(^|[^\\w/.-])((?:\\.\\./)*extension/)${word}(?![\\w.-])`, 'gm'), `$1$2${target}`);
+    out = out.replace(new RegExp(`(${quotes})${word}\\1`, 'g'), `$1${target}$1`);
   }
   return out;
 }

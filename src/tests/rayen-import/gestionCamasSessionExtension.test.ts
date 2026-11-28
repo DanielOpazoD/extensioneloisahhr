@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import '../../../extension/gestion-camas-session.js';
+import '../../../extension/gestion-camas/gestion-camas-session.js';
 
 interface SessionRecord {
   token: string;

@@ -3,11 +3,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import '../../../extension/cudyr-capture-support.js';
-import '../../../extension/gestion-camas-active-beds.js';
-import '../../../extension/gestion-camas-clinical-cribs.js';
-import '../../../extension/cudyr-placement-support.js';
-import '../../../extension/gestion-camas-cudyr.js';
+import '../../../extension/gestion-camas/cudyr-capture-support.js';
+import '../../../extension/gestion-camas/gestion-camas-active-beds.js';
+import '../../../extension/gestion-camas/gestion-camas-clinical-cribs.js';
+import '../../../extension/gestion-camas/cudyr-placement-support.js';
+import '../../../extension/gestion-camas/gestion-camas-cudyr.js';
 
 const cudyr = (
   globalThis as typeof globalThis & {
@@ -41,17 +41,17 @@ const activeBeds = (
 ).HhrGestionCamasActiveBeds;
 
 const clinicalScoreRuntimeSource = readFileSync(
-  new URL('../../../extension/clinical-score-runtime.js', import.meta.url),
+  new URL('../../../extension/clinico/clinical-score-runtime.js', import.meta.url),
   'utf8'
 );
 
 const loadClinicalScoreRuntime = () => {
   const context = vm.createContext({ URL, Date, Set, Map, Promise, encodeURIComponent });
   vm.runInContext(
-    readFileSync(new URL('../../../extension/cudyr-capture-support.js', import.meta.url), 'utf8'),
+    readFileSync(new URL('../../../extension/gestion-camas/cudyr-capture-support.js', import.meta.url), 'utf8'),
     context
   );
-  vm.runInContext(clinicalScoreRuntimeSource, context, { filename: 'clinical-score-runtime.js' });
+  vm.runInContext(clinicalScoreRuntimeSource, context, { filename: 'clinico/clinical-score-runtime.js' });
   return (
     context as unknown as {
       HhrClinicalScoreRuntime: {

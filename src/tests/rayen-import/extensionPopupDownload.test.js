@@ -8,7 +8,7 @@ it.each([true, false])('mantiene la guía abierta al solicitar una descarga (éx
   document.body.innerHTML = readFileSync('extension/installation.html', 'utf8');
   const download = vi.fn(async () => { if (!success) throw Error(); return 1; });
   vi.stubGlobal('chrome', { downloads: { download } });
-  Function(readFileSync('extension/extension-download.js', 'utf8'))();
+  Function(readFileSync('extension/estado/extension-download.js', 'utf8'))();
   const link = document.querySelector('[data-download]');
   const click = new MouseEvent('click', { bubbles: true, cancelable: true });
   expect(link.dispatchEvent(click)).toBe(false);

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/hhr-connection-repair-controls.js';
-import '../../../extension/hhr-connection-action-model.js';
-import '../../../extension/hhr-connection-presentation.js';
-import '../../../extension/hhr-connection-center-runtime.js';
+import '../../../extension/salud/hhr-connection-repair-controls.js';
+import '../../../extension/salud/hhr-connection-action-model.js';
+import '../../../extension/salud/hhr-connection-presentation.js';
+import '../../../extension/salud/hhr-connection-center-runtime.js';
 
 type Message = { type?: string };
 type Runtime = {

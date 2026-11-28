@@ -6,7 +6,7 @@ import vm from 'node:vm';
 
 import { describe, expect, it } from 'vitest';
 
-const source = readFileSync(path.resolve('extension/clinical-score-write-model.js'), 'utf8');
+const source = readFileSync(path.resolve('extension/clinico/clinical-score-write-model.js'), 'utf8');
 
 type ScoreWriteModel = {
   prepareEvaluationSubmission: (input: Record<string, unknown>) => Record<string, unknown>;
@@ -18,7 +18,7 @@ type ScoreWriteModel = {
 
 const loadModel = () => {
   const context = vm.createContext({ Map });
-  vm.runInContext(source, context, { filename: 'clinical-score-write-model.js' });
+  vm.runInContext(source, context, { filename: 'clinico/clinical-score-write-model.js' });
   return (context as unknown as { HhrClinicalScoreWriteModel: ScoreWriteModel })
     .HhrClinicalScoreWriteModel;
 };

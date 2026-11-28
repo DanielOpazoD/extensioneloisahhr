@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import '../../../extension/clinical-day-runtime.js';
-import '../../../extension/gestion-camas-egreso-lookup.js';
-import '../../../extension/gestion-camas-egreso-query-runtime.js';
+import '../../../extension/clinico/clinical-day-runtime.js';
+import '../../../extension/gestion-camas/gestion-camas-egreso-lookup.js';
+import '../../../extension/gestion-camas/gestion-camas-egreso-query-runtime.js';
 
 const lookup = (
   globalThis as typeof globalThis & {

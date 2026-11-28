@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import '../../../extension/urgency-session-page.js';
+import '../../../extension/urgencia/urgency-session-page.js';
 
 declare global {
   var HhrUrgencySessionPage: { isUsable: () => Promise<boolean> };

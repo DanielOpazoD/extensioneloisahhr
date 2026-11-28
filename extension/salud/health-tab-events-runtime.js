@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
 
-  const SOURCE_RELAY_FILES = new Set(['content-fichamedico.js', 'content-gestioncamas.js']);
+  const SOURCE_RELAY_FILES = new Set(['contenido/content-fichamedico.js', 'contenido/content-gestioncamas.js']);
 
   const patternsFromManifest = manifest =>
     (manifest.content_scripts || [])

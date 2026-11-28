@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.242
+
+- Sin cambios visibles. Los archivos de `extension/` están en carpetas por tema (`ficha/`, `listas/`, `centro/`, `clinico/`, `fichamedico/`, `gestion-camas/`, `censo/`, `documentos/`, `entrega-enfermeria/`, `urgencia/`, `syslab/`, `exalab/`, `salud/`, `contenido/`, `contratos/`, `estado/`, `vendor/`) en vez de 267 archivos en una sola carpeta. En la raíz quedan el manifiesto, el worker, `vendor-lock.json` y las páginas, que se abren por su dirección. El manifiesto, `importScripts` y las páginas cargan los mismos archivos en el mismo orden; el paquete tiene los mismos 293 archivos, cambian solo sus rutas (y con ellas la huella). El reparto está en `docs/arquitectura.md` y lo hizo `scripts/move-extension-files.mjs`.
+
 ## 0.48.241
 
 - Sin cambios visibles. La presentación de la ficha (`hhr-native-ficha-presentation.js`) escribe su CSS con una regla por bloque, y sus etiquetas (`hhr-ficha-reading-labels.js`) no tienen líneas de más de 160 caracteres: la expresión de los cargos de una firma se arma desde una lista (comprobada igual a la anterior) y las condiciones largas tienen nombre. Cinco selectores largos de la presentación quedan en una línea: partidos en sus comas, aunque Chrome los lee igual, la prueba de la extensión en Chromium se detiene. Líneas anchas: 284 → 267.

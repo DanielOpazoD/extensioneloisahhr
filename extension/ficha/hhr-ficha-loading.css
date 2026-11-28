@@ -22,7 +22,7 @@
     > .MuiCardContent-root > .MuiSkeleton-root ~ .MuiSkeleton-root { display:none; }
   }
 
-  /* The round is laid out from the placeholders (`hhr-ficha-round-layout.js` knows each by its title), so
+  /* The round is laid out from the placeholders (`ficha/hhr-ficha-round-layout.js` knows each by its title), so
      each section arrives where it is read. There, a placeholder holds the room of what replaces it:
      the note its lines, the signs their two rows, the alerts what the handoff leaves beside the note, and the
      diagnosis two of its rows. */
