@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fichaAssets, mountFicha, settle, wideSans } from './ficha-capture-harness.mjs';
-import { carePlanPage, careFichaChosenCards, careFichaPlanCards, planCards, planDays, planDialog } from './care-plan-visual-fixture.mjs';
+import { carePlanPage, careFichaChosenCards, careFichaPlanCards, planCards, planDays, planDays14, planDialog } from './care-plan-visual-fixture.mjs';
 import { assertPalette, assertQuality } from './visual-quality.mjs';
 
 const hours = planDays.flatMap(([, list]) => list);
@@ -274,6 +274,25 @@ try {
       });
       return {page, shape};
     };
+    // Fourteen hours a page, as the compact view asks for when the window has room: the grid stays one line,
+    // each hour over its box, and the card within the window.
+    {
+      const page = await browser.newPage({viewport:{width:1440, height:900}, deviceScaleFactor:1, locale:'es-CL', timezoneId:'Pacific/Easter'});
+      await page.setContent(carePlanPage(careFichaPlanCards, planDays14));
+      await settle(page);
+      await mountFicha(page, assets, {});
+      await settle(page);
+      const wide = await page.evaluate(() => [...document.querySelectorAll('[data-hhr-plan="card"]')].filter(card => card.querySelector('[data-hhr-plan-slot]')).map(card => {
+        const at = el => el.getBoundingClientRect(), hours = [...card.querySelectorAll('[data-hhr-plan-hour]')], slots = [...card.querySelector('tbody tr').querySelectorAll('[data-hhr-plan-slot]')];
+        return {count:hours.length, right:Math.round(at(hours.at(-1)).right - at(card).right), lines:Math.max(...hours.map(hour => Math.round(at(hour).height))),
+          aligned:hours.every((hour, i) => Math.abs(at(hour).left - at(slots[i]).left) <= 1), indication:Math.round(at(card.querySelector('thead th:nth-last-child(2)')).width)};
+      }).concat([{page:document.documentElement.scrollWidth}]));
+      const cards = wide.filter(card => card.count);
+      assert.ok(cards.length >= 3 && cards.every(card => card.count === 14 && card.right <= 1 && card.lines <= 20 && card.aligned && card.indication >= 224) && wide.at(-1).page === 1440,
+        'Con catorce horas la grilla sigue en una línea, alineada y dentro de la ventana: ' + JSON.stringify(wide));
+      await page.screenshot({path:path.join(directory, '1440-plan-14-horas.png')});
+      await page.close();
+    }
     const medical = await read(planCards), care = await read(careFichaPlanCards);
     assert.deepEqual(care.shape.map(card => [card.mark, card.select]), [['card', false], ['card', true], ['card', true], ['card', true]],
       'En la ficha de Gestión de cuidados se reconocen las cuatro tarjetas, con su columna de selección: ' + JSON.stringify(care.shape));

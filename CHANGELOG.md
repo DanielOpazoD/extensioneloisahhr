@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.48.235
+
+- Plan de tratamiento muestra más horas a la vez. Eloísa pide al servidor siete horas por página (`limit=7`, leído en la página el 27-11-2026); en la vista compacta la extensión pide las que caben en la ventana con la grilla angosta: 10 a 1280 px, 12 a 1440 px y hasta 14. Eloísa dibuja lo que recibe: sus páginas, sus flechas e «Ir a Hoy» siguen funcionando (comprobado en la página). Solo cambia el tamaño de página de las cuatro lecturas del Plan; nada más va distinto al servidor.
+- Ajustes de Centro HHR: «Horas por página en Plan de tratamiento», automática (según la ventana) o fija entre 7 y 14. Se aplica al abrir el Plan o al cambiar de página.
+
 ## 0.48.234
 
 - Plan de tratamiento pensado para leer el tiempo (pedido del dueño, 27-11-2026). Las horas son una grilla angosta: 80 px cada una, su hora en una línea («07:00 a. m.») y el día abreviado («Sáb 28/11»), con una línea fina donde empieza un día. La columna de horas mide lo que sus horas y la indicación toma el resto de la línea, así que su nombre y su posología se leen enteros.
