@@ -41,7 +41,8 @@ importScripts(
   'lab-viewer.js', 'offscreen-contract.js', 'offscreen-coordinator.js', 'syslab-login-window.js',
   'syslab-session-transport.js', 'syslab-pdf-filename.js', 'syslab-pdf-bundle.js', 'syslab-runtime.js',
   'exam-request-print.js', 'xlsx.full.min.js', 'report-parser.js', 'jspdf.umd.min.js', 'pdf-lib.min.js',
-  'prescription-pdf.js', 'epicrisis-pdf.js', 'exam-request-pdf.js', 'pdf-print.js', 'runtime-loader.js',
+  'prescription-pdf.js', 'epicrisis-pdf.js', 'exam-request-pdf.js', 'pdf-print.js',
+  'runtime-loader.js',
 );
 if (!self.HhrClinicalWriteRecoveryPolicy || !self.HhrClinicalWriteRuntime || typeof self.HhrClinicalWriteRuntime.create !== 'function') {
   throw new Error('No se pudo cargar el runtime de escrituras clínicas.');
