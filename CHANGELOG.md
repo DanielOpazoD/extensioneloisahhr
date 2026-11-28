@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.245
+
+- Sin cambios visibles. Se comprobó el estilo calculado de cada elemento en las 40 capturas del CI, más las medidas que esas capturas verifican: es el mismo antes y después, y las imágenes son iguales byte a byte. El CSS de la ronda (`hhr-ficha-round-layout.css`) pasa de 161 a 92 `!important` (en total, de 645 a 576). Para cada declaración se usó DevTools para ver qué regla gana en cada nodo, con y sin `!important`. Se quitaron las que ganan igual sin él. Quedan las que compiten con un `!important` de `hhr-ficha-themes.css`, `hhr-ficha-reading-labels.css` o del CSS que escribe la presentación, o con un estilo en línea; también las que ninguna ficha de prueba alcanza. En la página real, el código del Resumen de Eloísa no declara estilos en línea ni `!important` para estas propiedades.
+
 ## 0.48.244
 
 - En «Ver evoluciones → Scores», el lector construye únicamente el contenido de la vista activa. Ambas vistas comparten el historial que ya leyó el lector. Al volver a Evoluciones se conserva el filtro y el punto de lectura.
