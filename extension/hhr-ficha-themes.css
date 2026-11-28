@@ -109,7 +109,8 @@
     }
     [data-hhr-reading="vital-pressure-group"] + [data-hhr-reading="vital-time"] { grid-column:2; grid-row:2; }
     :is([data-hhr-reading="vital-label"],[data-hhr-reading="vital-pam"],[data-hhr-reading="vital-value"])
-      :is(.MuiTypography-root,h5,p,span) { font-size:inherit !important; line-height:inherit !important; margin:0 !important; }
+      /* Not the PAM the view rounds: it draws its own figure (see «PAM as a whole number»). */
+      :is(.MuiTypography-root,h5,p,span):not([data-hhr-vital-rounded]) { font-size:inherit !important; line-height:inherit !important; margin:0 !important; }
     /* Keep the native name in the accessibility tree. The adjacent MUI caption may carry a unit. */
     :is([data-hhr-reading="vital-label"],[data-hhr-reading="vital-label"] *)[data-hhr-vital-short] {
       font-size:0 !important;
@@ -217,8 +218,9 @@
       padding-inline:0 !important;
       > [data-hhr-reading="order-validator"] { padding-inline:var(--hhr-round-inset) !important; }
       /* The reading edge is paid by the room between an edge column and its neighbour, which keeps its own
-         7 px: the columns that are read keep the width they had with a narrower edge. */
-      :is(th,td):first-child:not(:is(dialog,[role=dialog],td) *) { padding-inline:var(--hhr-round-inset) 1px !important; }
+         7 px: the columns that are read keep the width they had with a narrower edge. Indicaciones libres
+         starts after the width of «Tiempo» instead (see the end of this file). */
+      :is(th,td):first-child:not(:is(dialog,[role=dialog],td,#freeIndicationEntrySection) *) { padding-inline:var(--hhr-round-inset) 1px !important; }
       :is(th,td):last-child:not(:is(dialog,[role=dialog],td) *) { padding-inline:1px var(--hhr-round-inset) !important; }
     }
     /* Procedimientos, Solicitud interconsulta, Solicitud de examen and Solicitudes de intervención quirúrgica
@@ -765,8 +767,7 @@
 /* Asked by the owner (27-11-2026): PAM as a whole number, the summary without «Gestión de Visitas», and
    Eloísa's green bar without the diagnosis, which the summary opens with. Eloísa's words stay in the page. */
 @media screen {
-  /* The ids outweigh the rule that gives the text of a measurement the size of its tile (it names #vitalSignsEntry). */
-  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-rounded]:not(#hhr-a):not(#hhr-b):not(#hhr-c) {
+  html[data-hhr-ficha-theme="compact"] [data-hhr-vital-rounded] {
     font-size:0 !important;
     &::after { content:attr(data-hhr-vital-rounded) / ""; font-size:.75rem; line-height:1.15; }
   }
@@ -866,8 +867,8 @@
     > :is([data-hhr-round="peer"],[data-hhr-round="print"]) { order:-1; }
     /* Inside the item of the note, the note takes the line; the date of discharge keeps its own. */
     > [data-hhr-round="note"] .MuiGrid-item:has(#observationEntrySection) { flex:0 0 100% !important; max-inline-size:100% !important; }
-    /* The name of a form and the label on the border of its field do not overlap. */
-    :is(#alertEntrySection,#shiftChangeEntrySection) [data-hhr-entry-prompt]:not(#hhr-a):not(#hhr-b) { row-gap:16px !important; }
+    /* The gap between the name of a form and its field in a narrow window is set with its grid, in
+       hhr-ficha-reading-labels.css. */
     /* The daily row does not repeat the byline the note below carries, as on the desk. */
     [data-hhr-update-repeat="note"] { position:absolute !important; inline-size:1px; block-size:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
     /* A date, a state or an action of a diagnosis is one word: it does not break; the diagnosis takes the rest. */
@@ -894,7 +895,6 @@
 @media screen {
   html[data-hhr-ficha-theme="compact"] {
     :is(#medicationEntrySection,#dilutionEntrySection) table td:first-child:has([data-hhr-reading^="time-symbol"]) { box-sizing:border-box; inline-size:3.75rem; }
-    /* Named twice for the weight of the rules that give every first cell the reading edge. */
-    #freeIndicationEntrySection#freeIndicationEntrySection table:not(:is(dialog,[role=dialog]) *) :is(th,td):first-child:not(#hhr-a) { padding-inline-start:calc(3.75rem + 7px) !important; }
+    #freeIndicationEntrySection table:not(:is(dialog,[role=dialog]) *) :is(th,td):first-child { padding-inline:calc(3.75rem + 7px) 1px !important; }
   }
 }

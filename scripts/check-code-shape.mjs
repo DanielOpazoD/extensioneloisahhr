@@ -1,5 +1,5 @@
-// A ratchet for what makes the code hard to read: lines wider than 160 characters and files longer than
-// 800 lines. Today's counts are kept in scripts/code-shape-baseline.json; a change may lower them, never
+// A ratchet for what makes the code hard to read: lines wider than 160 characters, files longer than
+// 800 lines and, in a stylesheet, `!important` and ids written only to outweigh another rule. Today's counts are kept in scripts/code-shape-baseline.json; a change may lower them, never
 // raise them (a long file may grow only while its wide lines go down), and a new file starts at zero.
 // When a change lowers a count, refresh the baseline with
 // `node scripts/check-code-shape.mjs --update`, so that the gain is kept.
@@ -14,7 +14,13 @@ const shape = {};
 for (const name of files) {
   const lines = (await readFile(new URL(name, dir), 'utf8')).split('\n');
   const wide = lines.filter(line => line.length > WIDE).length;
-  if (wide || lines.length > LONG) shape[name] = {wide, ...(lines.length > LONG ? {lines:lines.length} : {})};
+  // In a stylesheet, what fights the cascade: `!important`, and ids written only to outweigh another rule.
+  const text = lines.join('\n');
+  const important = name.endsWith('.css') ? (text.match(/!important/g) || []).length : 0;
+  const fakeIds = name.endsWith('.css') ? (text.match(/:not\(#hhr-[a-z]\)/g) || []).length : 0;
+  if (wide || lines.length > LONG || important || fakeIds) {
+    shape[name] = {wide, ...(lines.length > LONG ? {lines:lines.length} : {}), ...(important ? {important} : {}), ...(fakeIds ? {fakeIds} : {})};
+  }
 }
 
 if (process.argv.includes('--update')) {
@@ -29,7 +35,11 @@ for (const name of files) {
   if (now.wide > before.wide) worse.push(`${name}: ${now.wide} líneas de más de ${WIDE} caracteres (antes ${before.wide})`);
   // Splitting wide lines adds lines: a long file may grow when its wide lines went down in the same change.
   if ((now.lines || 0) > Math.max(before.lines || 0, LONG) && now.wide >= before.wide) worse.push(`${name}: ${now.lines} líneas (antes ${before.lines || 'menos de ' + LONG})`);
-  if (now.wide < before.wide || (now.lines || 0) < (before.lines || 0)) better.push(name);
+  for (const [key, words] of [['important', '!important'], ['fakeIds', 'ids ficticios (:not(#hhr-…))']]) {
+    if ((now[key] || 0) > (before[key] || 0)) worse.push(`${name}: ${now[key]} ${words} (antes ${before[key] || 0})`);
+  }
+  if (now.wide < before.wide || (now.lines || 0) < (before.lines || 0) || (now.important || 0) < (before.important || 0) ||
+      (now.fakeIds || 0) < (before.fakeIds || 0)) better.push(name);
 }
 if (worse.length) {
   console.error('La forma del código empeoró:\n' + worse.join('\n') + '\nParte la línea o el archivo; ver docs/arquitectura.md.');
