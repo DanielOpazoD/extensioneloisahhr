@@ -44,7 +44,7 @@ identidad ambigua y cambio de sesión o episodio con datos sintéticos.
 
 ## Carpetas de `extension/`
 
-Desde 0.48.242 cada archivo vive en la carpeta de su tema. La carpeta no cambia cómo se carga: el
+Desde 0.48.243 cada archivo vive en la carpeta de su tema. La carpeta no cambia cómo se carga: el
 manifiesto, `importScripts` del worker y los `<script src>` de las páginas nombran la ruta completa
 (`ficha/hhr-ficha-themes.css`) y siguen decidiendo dónde y en qué orden. [El guion del cambio](../scripts/move-extension-files.mjs)
 (`--plan` muestra el reparto) es el registro de qué archivo fue a cada carpeta; `--refs` reescribe las
@@ -53,11 +53,11 @@ referencias a los nombres antiguos y puede volver a correrse sobre una rama que 
 | Carpeta | Qué contiene |
 | --- | --- |
 | raíz | `manifest.json`, `background.js` (las rutas de `importScripts` son relativas a él), `vendor-lock.json` y las páginas HTML. Las páginas no se mueven porque se abren por su dirección: el popup, el documento offscreen, las ventanas de Syslab y Exalab, el editor de entrega y el acceso a Urgencias que HHR reconoce por `/urgency-login.html`. |
-| `ficha/` | Presentación compacta de la ficha: `hhr-ficha-*` (JS y CSS), `hhr-native-ficha-presentation.js`, el Historial, el Plan y las notas de evolución. |
+| `ficha/` | Presentación compacta de la ficha: `hhr-ficha-*` (JS y CSS), `ficha/hhr-native-ficha-presentation.js`, el Historial, el Plan y las notas de evolución. |
 | `listas/` | Listas de trabajo de Eloísa, el menú lateral (clima, nacimientos, accesos) y el regreso a la lista. |
-| `centro/` | Centro HHR: panel, recetas, laboratorio, imágenes, solicitudes, vista previa de documentos y `hhr-ui.js`. |
+| `centro/` | Centro HHR: panel, recetas, laboratorio, imágenes, solicitudes, vista previa de documentos y `centro/hhr-ui.js`. |
 | `clinico/` | Lecturas y escrituras clínicas (`clinical-*`), pautas, antecedentes y la autorización por episodio. |
-| `fichamedico/` | Lector de Ficha Médico (`fichamedico-*`) y su adaptador MAIN `inject-fichamedico.js`. |
+| `fichamedico/` | Lector de Ficha Médico (`fichamedico-*`) y su adaptador MAIN `fichamedico/inject-fichamedico.js`. |
 | `gestion-camas/` | Gestión de Camas (`gestion-camas-*`), CUDYR, su adaptador MAIN y el editor de pacientes. |
 | `censo/` | Captura coordinada del censo Rayen → HHR y su recuperación. |
 | `documentos/` | Epicrisis, informes, auditoría, impresión de PDF y el ZIP de auditoría. |
@@ -98,7 +98,7 @@ caracteres, 495 `!important` en el CSS, 275 comprobaciones que buscan texto en e
 | --- | --- | --- |
 | 1 | Orden de carga y forma del código en CI; CI en paralelo; esperas por condición | Hecho en este cambio |
 | 2 | `background.js` legible: sin líneas anchas, la autorización por episodio con nombre; el presupuesto de líneas sube a 1.650 porque el ancho ya lo vigila `check:shape` | Hecho en 0.48.238 (25 → 0 líneas anchas) |
-| 3 | `extension/` por tema, en un solo cambio con un guion que mueve los archivos y reescribe manifiesto, `importScripts`, páginas, pruebas, guiones y documentación | Hecho en 0.48.242: 267 archivos en 18 carpetas; en la raíz quedan el manifiesto, el worker, `vendor-lock.json` y las páginas ([mapa](#carpetas-de-extension)) |
-| 4 | CSS: sin ids ficticios para ganar peso; cada `!important` que sobre, quitado con su medida antes y después | 0.48.239: ids ficticios de 10 a 4; el CI no deja sumar `!important` (745) ni ids ficticios |
+| 3 | `extension/` por tema, en un solo cambio con un guion que mueve los archivos y reescribe manifiesto, `importScripts`, páginas, pruebas, guiones y documentación | Hecho en 0.48.243: 267 archivos en 18 carpetas; en la raíz quedan el manifiesto, el worker, `vendor-lock.json` y las páginas ([mapa](#carpetas-de-extension)) |
+| 4 | CSS: sin ids ficticios para ganar peso; cada `!important` que sobre, quitado con su medida antes y después | 0.48.239: ids ficticios de 10 a 4; el CI no deja sumar `!important` (745) ni ids ficticios. 0.48.242: Plan de tratamiento sin `!important` (745 → 645) |
 | 5 | Las comprobaciones que leen el código fuente pasan a probar comportamiento | Ninguna prueba busca texto en el código |
 | 6 | Utilidades repetidas (`normalize`, `plain`, `el`) en un módulo común | Una sola definición de cada una |

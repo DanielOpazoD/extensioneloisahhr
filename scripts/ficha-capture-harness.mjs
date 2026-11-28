@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 
 /** Reads one extension file from a git revision, or from the working tree with WORKTREE. A revision from
- * before the folders of 0.48.242 kept every file in the root of extension/: `ficha/x.css` is `x.css` there. */
+ * before the folders of 0.48.243 kept every file in the root of extension/: `ficha/x.css` is `x.css` there. */
 export const extensionSource = revision => filename => {
   if (revision === 'WORKTREE') return readFile('extension/' + filename, 'utf8');
   const show = name => execFileSync('git', ['show', revision + ':extension/' + name], {encoding:'utf8', stdio:['ignore', 'pipe', 'ignore']});

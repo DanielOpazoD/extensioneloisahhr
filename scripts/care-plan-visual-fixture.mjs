@@ -95,7 +95,7 @@ const card = ({title, filter, rows, select = false, chosen = false, days = null}
       <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader"><p class="MuiTypography-root MuiTypography-body1">Indicación</p>
         <div class="MuiStack-root pages"><button type="button" class="MuiButtonBase-root MuiButton-root MuiButton-text">Ir a Hoy</button>
           ${iconButton('ChevronLeftRoundedIcon', '', 'Small')}<p class="MuiTypography-root MuiTypography-body1">3 / 5</p>${iconButton('ChevronRightRoundedIcon', '', 'Small')}</div></th>
-      <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader" style="width:1000px"><div class="MuiStack-root days">${(days || planDays).map(([day, hours]) =>
+      <th class="MuiTableCell-root MuiTableCell-head MuiTableCell-stickyHeader hours-cell"><div class="MuiStack-root days">${(days || planDays).map(([day, hours]) =>
         `<div class="MuiBox-root day"><div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">${day}</span></div><div class="MuiStack-root hours">${hours.map(hour =>
           `<div class="MuiBox-root"><span class="MuiTypography-root MuiTypography-caption">${hour}</span></div>`).join('')}</div></div>`).join('')}</div></th></tr></thead>
     <tbody class="MuiTableBody-root">${rows.length ? rows.map(item => row(item, select)).join('') : emptyRow}</tbody>
@@ -142,6 +142,8 @@ export const carePlanPage = (cards = planCards, days = null) => `<!doctype html>
   .MuiDialog-paper .MuiInputBase-root{position:relative;display:flex;align-items:center;height:40px;font-size:16px}
   .MuiDialog-paper .MuiSelect-select{flex:1;padding:8.5px 32px 8.5px 14px;font-style:italic}.MuiDialog-paper .MuiOutlinedInput-notchedOutline{position:absolute;inset:-5px 0 0;margin:0;padding:0 8px;border:1px solid rgba(0,0,0,.23);border-radius:4px;pointer-events:none}
   .MuiDialog-paper legend{height:11px;padding:0;font-size:.75em;visibility:hidden}.MuiDialog-paper .MuiButton-contained{height:42px;padding:6px 16px;border:0;border-radius:6px;background:rgba(0,0,0,.12);color:rgba(0,0,0,.26);font-size:15px;text-transform:uppercase}
+  /* Eloísa gives the cell of hours 1000 px with sx (a class), not with a style of its own (read in its code 28-11-2026). */
+  .hours-cell{width:1000px}
   .slots{display:flex}.slots>.MuiStack-root{flex:none;align-items:center;justify-content:center;width:100px;min-height:49px}
   .slots>.MuiStack-root>.MuiBox-root{display:flex;align-items:center;justify-content:center;width:100px;height:49px;background:rgb(241,216,208);border-right:1px solid rgb(230,74,25)}
 </style><header class="banner">Ficha de hospitalizados <small>Plan de tratamiento · Episodio ficticio</small></header>

@@ -1,8 +1,12 @@
 # Cambios
 
-## 0.48.242
+## 0.48.243
 
 - Sin cambios visibles. Los archivos de `extension/` están en carpetas por tema (`ficha/`, `listas/`, `centro/`, `clinico/`, `fichamedico/`, `gestion-camas/`, `censo/`, `documentos/`, `entrega-enfermeria/`, `urgencia/`, `syslab/`, `exalab/`, `salud/`, `contenido/`, `contratos/`, `estado/`, `vendor/`) en vez de 267 archivos en una sola carpeta. En la raíz quedan el manifiesto, el worker, `vendor-lock.json` y las páginas, que se abren por su dirección. El manifiesto, `importScripts` y las páginas cargan los mismos archivos en el mismo orden; el paquete tiene los mismos 293 archivos, cambian solo sus rutas (y con ellas la huella). El reparto está en `docs/arquitectura.md` y lo hizo `scripts/move-extension-files.mjs`.
+
+## 0.48.242
+
+- Sin cambios visibles (el estilo calculado de cada elemento del Plan, también al apuntar, con foco, en la barra de selección, la ventana de planificación y su menú, es el mismo antes y después; las capturas del Plan son iguales píxel a píxel). El CSS del Plan de tratamiento (`hhr-ficha-care-plan.css`) deja de usar `!important`: 100 → 0 (745 → 645 en total). En la página real, las reglas de Eloísa para el Plan y sus ventanas son clases de emotion (`sx`) sin `!important` ni estilos en línea, y pesan menos que las de la vista. El rótulo del día («Sáb 28/11») ya no recibe la regla de los rótulos de hora, que le daba tamaño; dice él mismo su letra. La ficha de prueba del Plan da los 1000 px de la celda de horas con una clase, como Eloísa, y no con `style`.
 
 ## 0.48.241
 

@@ -15,7 +15,7 @@ try {
   for (const width of [1366,390]) {
     const page = await browser.newPage({viewport:{width,height:768},deviceScaleFactor:1});
     await page.setContent('<main>'+visualSummary+'</main>');
-    // Every file is in ficha/; a tag from before 0.48.242 kept it in the root, and the harness finds it there.
+    // Every file is in ficha/; a tag from before 0.48.243 kept it in the root, and the harness finds it there.
     if (await has('ficha/hhr-ficha-themes.css')) await page.addStyleTag({content:await source('ficha/hhr-ficha-themes.css')});
     const newer = await has('ficha/hhr-ficha-round-layout.js');
     const orders = await has('ficha/hhr-ficha-order-details.js');
