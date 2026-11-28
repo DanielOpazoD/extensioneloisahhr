@@ -8,7 +8,9 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 const WIDE = 160, LONG = 800;
 const dir = new URL('../extension/', import.meta.url);
 const baselineUrl = new URL('./code-shape-baseline.json', import.meta.url);
-const files = (await readdir(dir)).filter(name => /\.(js|css)$/.test(name)).sort();
+// Third-party libraries, minified and pinned in vendor-lock.json, are not code to read.
+const vendored = new Set(JSON.parse(await readFile(new URL('vendor-lock.json', dir), 'utf8')).vendors.map(vendor => vendor.file));
+const files = (await readdir(dir)).filter(name => /\.(js|css)$/.test(name) && !vendored.has(name)).sort();
 
 const shape = {};
 for (const name of files) {

@@ -74,10 +74,7 @@
   "wide": 1
  },
  "hhr-center-styles.js": {
-  "wide": 59
- },
- "hhr-center-workspace-styles.js": {
-  "wide": 6
+  "wide": 4
  },
  "hhr-connection-center-runtime.js": {
   "wide": 6
@@ -179,7 +176,7 @@
   "wide": 3
  },
  "hhr-lab-request-styles.js": {
-  "wide": 9
+  "wide": 1
  },
  "hhr-lab-selection-runtime.js": {
   "wide": 1
@@ -207,7 +204,7 @@
   "wide": 5
  },
  "hhr-ui.js": {
-  "wide": 17
+  "wide": 8
  },
  "hhr-worklist-print-column.js": {
   "wide": 1
@@ -217,9 +214,6 @@
  },
  "inject-gestioncamas.js": {
   "wide": 1
- },
- "jspdf.umd.min.js": {
-  "wide": 30
  },
  "lab-result-parser.js": {
   "wide": 3
@@ -237,9 +231,6 @@
  "nursing-handoff-editor.js": {
   "wide": 1
  },
- "pdf-lib.min.js": {
-  "wide": 2
- },
  "prescription-print.js": {
   "wide": 4,
   "lines": 1550
@@ -252,8 +243,5 @@
  },
  "worklist-patient-editor.js": {
   "wide": 2
- },
- "xlsx.full.min.js": {
-  "wide": 23
  }
 }
