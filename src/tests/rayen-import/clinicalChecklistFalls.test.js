@@ -52,7 +52,7 @@ describe('pautas de caídas de HHR', () => {
   ('$title conserva los cortes y la próxima valoración con $points puntos', ({ template, answers, points, risk, next }) => {
     const text = buildEvolutionText(template, answers);
     expect(text.split('\n').slice(0,3)).toEqual(['#EscalaCaidas', template.title, fecha + ' ' + hora]);
-    expect(parse(text)).toMatchObject({ points, risk, next: { date: next, time: hora } });
+    expect(parse(text)).toMatchObject({ points, risk, nextDate: next });
   });
 
   it('verifica los límites institucionales y los 75 años en la fecha de valoración', () => {
@@ -84,8 +84,8 @@ describe('pautas de caídas de HHR', () => {
     const rich = buildEvolutionText(pediatric, { ...pedsBase, observaciones: 'Control simulado.\nObservación de prueba.' })
       .split('\n').map(line => '<p>' + line + '</p>').join('\n');
     expect(parse(readable(rich))).toMatchObject({ scale: 'Caídas pediátricas', points: 1, maximum: 10 });
-    expect(parse(text, { archived: true }).next).toBeNull();
-    expect(parse(text, { crossedOut: true }).next).toBeNull();
+    expect(parse(text, { archived: true }).nextDate).toBeNull();
+    expect(parse(text, { crossedOut: true }).nextDate).toBeNull();
     for (const invalid of [
       '#EscalaCaidas', '#EscalaCaidas\nCaídas en adultos',
       'Narrativa clínica\n' + text, text + '\nPárrafo nuevo sin relación.',
@@ -96,11 +96,13 @@ describe('pautas de caídas de HHR', () => {
     ]) expect(parse(invalid)).toBeNull();
   });
 
-  it('usa días calendario para caídas, conservando la hora de Rapa Nui cuando cambia el desfase', () => {
-    const text = buildEvolutionText(adult, {
-      ...adultBase, edad: 'mayor-75', factores: ['neurologicas', 'conciencia'], farmacos: ['diureticos'],
-      fecha: '2026-09-05', hora: '20:30',
-    });
-    expect(parse(text).next).toEqual({ date: '2026-09-06', time: '20:30' });
+  it('da la misma fecha de reevaluación para distintas horas del mismo día', () => {
+    for (const time of ['00:15', '22:30']) {
+      const text = buildEvolutionText(adult, {
+        ...adultBase, edad: 'mayor-75', factores: ['neurologicas', 'conciencia'], farmacos: ['diureticos'],
+        fecha: '2026-09-04', hora: time,
+      });
+      expect(parse(text).nextDate).toBe('2026-09-05');
+    }
   });
 });

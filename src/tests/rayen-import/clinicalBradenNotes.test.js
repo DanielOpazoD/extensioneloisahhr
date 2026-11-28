@@ -34,7 +34,7 @@ describe('Scores de las evoluciones Braden', () => {
     const text = note(index, points, '2026-11-27', '16:00');
     expect(parse(text, { day: '30-11-2026', time: '12:00' })).toEqual({
       scale, points, maximum, risk, valuation: { date: '2026-11-27', time: '16:00' },
-      next: { date: nextDay, time: '16:00' },
+      nextDate: nextDay,
     });
   });
 
@@ -62,15 +62,16 @@ describe('Scores de las evoluciones Braden', () => {
 
   it('reconstruye las notas tachadas y archivadas sin agendar otra valoración', () => {
     const text = note(1, 22, '2026-11-27', '16:00');
-    expect(parse(text, { crossedOut: true })).toMatchObject({ risk: 'Bajo', next: null });
-    expect(parse(text, { archived: true })).toMatchObject({ risk: 'Bajo', next: null });
+    expect(parse(text, { crossedOut: true })).toMatchObject({ risk: 'Bajo', nextDate: null });
+    expect(parse(text, { archived: true })).toMatchObject({ risk: 'Bajo', nextDate: null });
   });
 
-  it('respeta el cambio de hora de Rapa Nui en intervalos horarios y días calendario', () => {
-    expect(parse(note(0, 6, '2026-09-05', '20:30')).next).toEqual({ date: '2026-09-06', time: '21:30' });
-    expect(parse(note(0, 14, '2026-04-04', '20:30')).next).toEqual({ date: '2026-04-07', time: '19:30' });
-    expect(parse(note(0, 18, '2026-09-04', '20:30')).next).toEqual({ date: '2026-09-11', time: '20:30' });
-    expect(parse(note(0, 6, '2026-04-04', '21:30')).next).toBeNull();
-    expect(parse(note(0, 18, '2026-08-29', '22:30')).next).toEqual({ date: '2026-09-05', time: '' });
+  it('calcula el día de la próxima valoración incluso durante un cambio de hora en Rapa Nui', () => {
+    for (const time of ['00:15', '20:30', '23:45']) {
+      expect(parse(note(0, 6, '2026-09-05', time)).nextDate).toBe('2026-09-06');
+    }
+    expect(parse(note(0, 14, '2026-04-04', '00:15')).nextDate).toBe('2026-04-07');
+    expect(parse(note(1, 7, '2026-04-04', '21:30')).nextDate).toBe('2026-04-05');
+    expect(parse(note(1, 22, '2026-08-29', '22:30')).nextDate).toBe('2026-09-05');
   });
 });

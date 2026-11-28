@@ -1,7 +1,7 @@
 // Factors and weights: the two HHR falls forms. Age and reassessment: HHR GCL 2.2 v2.0, p. 5.
 (() => {
   'use strict';
-  const { hospitalDateTimeNow, calendarDay, birthDayOf, completedYears, parseValuationStamp, nextValuation } =
+  const { hospitalDateTimeNow, calendarDay, birthDayOf, completedYears, parseValuationStamp, nextValuationDate } =
     globalThis.HhrClinicalAssessmentClock;
   const EVOLUTION_HEADING = '#EscalaCaidas';
   const ADULT = 'hhr-caidas-adulto';
@@ -150,7 +150,7 @@
     if (body.length > expected.length && !body[expected.length].startsWith(OBSERVATIONS + ' ')) return null;
     return {
       scale, valuation, points: score.points, maximum: score.maximum, risk: score.riskLabel,
-      next: note.crossedOut || note.archived ? null : nextValuation(valuation, score.cadence),
+      nextDate: note.crossedOut || note.archived ? null : nextValuationDate(valuation.date, score.cadence.days),
     };
   }
 

@@ -24,8 +24,8 @@
   const scoreColumns = ['Escala', 'Fecha de valoración', 'Puntaje', 'Riesgo', 'Próxima valoración'];
   const asTime = ({date, time}) => {
     const node = Object.assign(el('time'), {dateTime: date + (time ? 'T' + time : '')});
-    node.append(el('span', 'hhr-score-date', date.split('-').reverse().join('-')),
-      el('span', 'hhr-score-time-separator', ' · '), el('span', 'hhr-score-hour', time || 'hora por confirmar'));
+    node.append(el('span', 'hhr-score-date', date.split('-').reverse().join('-')));
+    if (time) node.append(el('span', 'hhr-score-time-separator', ' · '), el('span', 'hhr-score-hour', time));
     return node;
   };
 
@@ -73,8 +73,8 @@
       row.insertCell().textContent = score.points + ' / ' + score.maximum;
       row.insertCell().textContent = score.risk;
       const due = row.insertCell();
-      if (score.next) due.append(asTime(score.next));
-      else due.textContent = score.note.crossedOut || score.note.archived ? '—' : 'Hora por confirmar';
+      if (score.nextDate) due.append(asTime({date: score.nextDate}));
+      else due.textContent = '—';
       const detailCell = details.insertCell();
       detailCell.colSpan = scoreColumns.length;
       const author = [score.note.role, score.note.author].filter(Boolean).join(' · ');
