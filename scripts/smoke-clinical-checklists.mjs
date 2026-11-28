@@ -142,7 +142,8 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await worker.evaluate(async () => {
       globalThis.__checklistFetch = globalThis.fetch;
       globalThis.fetch = (input, init) => String(input).includes('/api/encounter/patientHeaderData/')
-        ? Promise.resolve(Response.json({ patID: 91, preferredIdentifierCode: globalThis.__checklistDocument || 'TEST-X', firstGivenName: 'Persona', firstFamilyName: 'Sintética', birthDate: '2000-01-01' }))
+        ? Promise.resolve(Response.json({ patID: 91, preferredIdentifierCode: globalThis.__checklistDocument || 'TEST-X',
+          firstGivenName: 'Persona', firstFamilyName: 'Sintética', birthDate: globalThis.__checklistBirthDate || '2000-01-01' }))
         : globalThis.__checklistFetch(input, init);
       await chrome.storage.local.set({ 'hhr-clinical-checklists-enabled': true });
     });
@@ -284,10 +285,63 @@ export async function verifyClinicalChecklists(context, original, worker) {
     await openChecklistAction(native, 'Braden');
     await modal.locator('.identity').filter({ hasText: 'TEST-Y' }).waitFor();
     await modal.getByText('0 de 6 dimensiones completas', { exact: true }).waitFor();
+    await modal.getByRole('button', { name: 'Cerrar', exact: true }).click();
+
+    await worker.evaluate(() => { globalThis.__checklistBirthDate = '1950-01-01'; });
+    await native.locator('textarea').fill('');
+    await openChecklistAction(native, 'Caídas en adultos');
+    await modal.getByRole('heading', { name: 'Caídas en adultos', exact: true }).waitFor();
+    await modal.getByLabel('Fecha de valoración').fill('2026-11-27');
+    await modal.getByText('Mayor de 75 años (3 pts)', { exact: true }).waitFor();
+    await modal.getByRole('checkbox', { name: /^Ningún tratamiento/ }).check();
+    await insert.click();
+    await modal.getByRole('status').filter({ hasText: 'Completa primero: Factores de riesgo' }).waitFor();
+    const noFactors = modal.getByRole('checkbox', { name: /^Ningún factor/ });
+    await noFactors.check();
+    await modal.getByText('Total: 3 / 30', { exact: true }).waitFor();
+    await modal.getByRole('checkbox', { name: /^Historia de caídas anteriores/ }).check();
+    assert.equal(await noFactors.isChecked(), false);
+    await modal.getByText('Total: 4 / 30', { exact: true }).waitFor();
+    await modal.getByText('Riesgo Medio', { exact: true }).waitFor();
+    await insert.press('Enter');
+    await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
+    const adultFalls = await native.locator('textarea').inputValue();
+    assert.match(adultFalls, /^#EscalaCaidas\nCaídas en adultos\n2026-11-27 /);
+    assert.match(adultFalls, /Puntaje: 4 \/ 30\nRiesgo de caídas según escala: Medio \(medio\)/);
+
+    await worker.evaluate(() => { globalThis.__checklistBirthDate = '2024-06-01'; });
+    await native.locator('textarea').fill('');
+    await openChecklistAction(native, 'Caídas pediátricas');
+    await modal.getByRole('heading', { name: 'Caídas pediátricas', exact: true }).waitFor();
+    await modal.getByLabel('Fecha de valoración').fill('2026-11-27');
+    await modal.getByRole('radio', { name: /^Lactante mayor o preescolar/ }).check();
+    for (const label of ['Antecedentes de caídas previas', 'Compromiso de conciencia']) {
+      await modal.getByRole('group', { name: label, exact: true }).getByRole('radio', { name: /^Sí/ }).check();
+    }
+    const history = modal.getByRole('group', { name: 'Antecedentes', exact: true });
+    const none = history.getByRole('checkbox', { name: /^Sin antecedentes/ });
+    const present = await history.getByRole('checkbox', { name: /^(?!Sin antecedentes)/ }).all();
+    for (const box of present) await box.check();
+    await modal.getByText('Total: 10 / 10', { exact: true }).waitFor();
+    await none.check();
+    assert.ok((await Promise.all(present.map(box => box.isChecked()))).every(selected => !selected));
+    await modal.getByText('Total: 5 / 10', { exact: true }).waitFor();
+    for (const box of present) await box.check();
+    assert.equal(await none.isChecked(), false);
+    await modal.getByLabel('Observaciones y medidas preventivas aplicadas').fill('Observación ficticia de la prueba.');
+    await modal.getByRole('button', { name: 'Copiar texto', exact: true }).click();
+    await modal.getByRole('status').filter({ hasText: 'Texto copiado' }).waitFor();
+    const pediatricFalls = await ficha.evaluate(() => navigator.clipboard.readText());
+    assert.match(pediatricFalls, /^#EscalaCaidas\nCaídas pediátricas\n2026-11-27 /);
+    assert.match(pediatricFalls, /Puntaje: 10 \/ 10\nRiesgo de caídas según escala: Alto \(alto\)/);
+    await insert.press('Enter');
+    await ficha.locator('dialog.hhr-checklist-dialog').waitFor({ state: 'detached' });
+    assert.equal(await native.locator('textarea').inputValue(), pediatricFalls);
   } finally {
     await worker.evaluate(async () => {
       if (globalThis.__checklistFetch) { globalThis.fetch = globalThis.__checklistFetch; delete globalThis.__checklistFetch; }
       delete globalThis.__checklistDocument;
+      delete globalThis.__checklistBirthDate;
       await chrome.storage.local.remove('hhr-clinical-checklists-enabled');
     });
     await ficha.evaluate(() => document.getElementById('observationEntrySection')?.remove());

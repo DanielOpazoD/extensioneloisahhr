@@ -134,7 +134,7 @@
       if (!sameChart(await chrome.tabs.get(sender.tab.id), encId)) {
         throw new Error('El episodio ya no está abierto en la pestaña de Eloísa.');
       }
-      if (!['templates', 'apply', 'verify', 'braden'].includes(request?.action)) {
+      if (!['templates', 'apply', 'verify', 'braden', 'assessmentIdentity'].includes(request?.action)) {
         throw new Error('Operación de pauta desconocida.');
       }
       const session = await resolveSession({ sender });
@@ -164,7 +164,7 @@
         if (!sameChart(await chrome.tabs.get(sender.tab.id), encId)) throw new Error('Cambió la ficha.');
         return { episode: encId, actor, document };
       }
-      if (request.action === 'braden') {
+      if (request.action === 'assessmentIdentity' || request.action === 'braden') {
         if (!sameChart(await chrome.tabs.get(sender.tab.id), encId)) throw new Error('Cambió la ficha.');
         return { episode: encId, actor, document, patientName, patientAge, patientBirthDate };
       }

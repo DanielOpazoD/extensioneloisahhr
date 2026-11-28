@@ -16,7 +16,7 @@ export async function fichaAssets(revision) {
   return {
     source, version:manifest.version,
     styles:entry.css.filter(name => name.startsWith('hhr-ficha-') || name === 'clinical-checklist.css'),
-    scripts:entry.js.filter(name => /^(hhr-ficha-|hhr-(history-date-navigation|native-ficha-presentation)\.js$|clinical-(braden-notes|checklist-braden(?:-templates)?)\.js$)/.test(name)),
+    scripts:entry.js.filter(name => /^(hhr-ficha-|hhr-(history-date-navigation|native-ficha-presentation)\.js$|clinical-(assessment-clock|braden-notes|checklist-(falls|braden(?:-templates)?))\.js$)/.test(name)),
   };
 }
 
