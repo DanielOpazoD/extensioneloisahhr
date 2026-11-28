@@ -204,8 +204,56 @@ try {
   await page.evaluate(() => { window.fichaFixture.authors.refresh('2'); });
   await reader.waitFor({state:'detached'});
   assert.equal(await page.locator('.hhr-evo-reader-note').count(), 0, 'Al cambiar de episodio no queda ninguna nota del anterior');
-  // An answer for another episode is never shown.
-  await page.evaluate(() => { window.fichaFixture.authors.refresh('1'); window.fichaNotes = null; });
+  // Hold A's report until B has already opened its own Scores in the same tab.
+  const notesA = notes[14].filter(note => ['41', '51'].includes(note.id));
+  const notesB = notes[14].filter(note => ['36', '55'].includes(note.id));
+  await page.evaluate(first => {
+    window.fichaNoteRequests = [];
+    window.fichaNoteResponses = [];
+    window.fichaNotes = {14: new Promise(resolve => { window.releaseFichaA = () => resolve(first); })};
+    window.fichaFixture.authors.refresh('1');
+  }, notesA);
+  await open.click();
+  await page.waitForFunction(() => window.fichaNoteRequests.length > 0);
+  assert.deepEqual(await page.evaluate(() => window.fichaNoteRequests), [['1', 14]]);
+  assert.deepEqual(await page.evaluate(() => window.fichaNoteResponses), [], 'A sigue esperando el historial');
+  await page.evaluate(second => {
+    window.fichaNotes = {14: second};
+    window.fichaFixture.authors.refresh('2');
+  }, notesB);
+  await reader.waitFor({state:'detached'});
+  await open.click();
+  await shown.first().waitFor();
+  await reader.getByRole('button', {name:'Scores', exact:true}).click();
+  await table.waitFor();
+  const secondScores = [['Caídas pediátricas', '14-04-2026 · 07:50', '4 / 10', 'Medio', '17-04-2026']];
+  assert.deepEqual(await cells(), secondScores);
+  assert.deepEqual(await page.evaluate(() => window.fichaNoteResponses), [['2', 14]]);
+
+  await page.evaluate(() => {
+    const isFromA = node => /Braden adulto|Evolución médica de prueba\./.test(node.textContent || '');
+    let contentFromA = false;
+    const observer = new MutationObserver(changes => {
+      for (const { type, target, addedNodes } of changes) {
+        if (type === 'characterData' ? isFromA(target) : Array.from(addedNodes).some(isFromA)) contentFromA = true;
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    window.stopObservingLateA = () => {
+      observer.disconnect();
+      return contentFromA;
+    };
+    window.releaseFichaA();
+  });
+  await page.waitForFunction(() => window.fichaNoteResponses.length >= 2);
+  await settle(page);
+  assert.deepEqual(await page.evaluate(() => window.fichaNoteRequests), [['1', 14], ['2', 14]]);
+  assert.deepEqual(await page.evaluate(() => window.fichaNoteResponses), [['2', 14], ['1', 14]]);
+  assert.equal(await page.evaluate(() => window.stopObservingLateA()), false, 'Durante la respuesta tardía solo se dibujó B');
+  assert.deepEqual(await cells(), secondScores, 'Al llegar el historial de A, Scores conserva las filas de B');
+  await scoresDialog.getByRole('button', {name:'Evoluciones', exact:true}).click();
+  assert.deepEqual(await shown.locator('p').allTextContents(), [notesB.find(note => note.id === '36').note]);
+  console.info('Cambio A → B comprobado. La respuesta de A llegó después y B conservó sus Scores y Evoluciones.');
   if (errors.length) throw Error(errors.join('\n'));
   await page.close();
 } finally {
