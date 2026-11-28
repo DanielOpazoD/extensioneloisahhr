@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.244
+
+- En «Ver evoluciones → Scores», el lector construye únicamente el contenido de la vista activa. Ambas vistas comparten el historial que ya leyó el lector. Al volver a Evoluciones se conserva el filtro y el punto de lectura.
+
 ## 0.48.243
 
 - Sin cambios visibles. Los archivos de `extension/` están en carpetas por tema (`ficha/`, `listas/`, `centro/`, `clinico/`, `fichamedico/`, `gestion-camas/`, `censo/`, `documentos/`, `entrega-enfermeria/`, `urgencia/`, `syslab/`, `exalab/`, `salud/`, `contenido/`, `contratos/`, `estado/`, `vendor/`) en vez de 267 archivos en una sola carpeta. En la raíz quedan el manifiesto, el worker, `vendor-lock.json` y las páginas, que se abren por su dirección. El manifiesto, `importScripts` y las páginas cargan los mismos archivos en el mismo orden; el paquete tiene los mismos 293 archivos, cambian solo sus rutas (y con ellas la huella). El reparto está en `docs/arquitectura.md` y lo hizo `scripts/move-extension-files.mjs`.

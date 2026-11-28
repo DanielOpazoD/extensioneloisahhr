@@ -102,15 +102,7 @@
       if (opener?.isConnected) opener.focus({ preventScroll: true });
       opener = null;
     };
-    function draw() {
-      if (!dialog) return;
-      const showingScores = chosenView === 'Scores';
-      heading.textContent = chosenView;
-      dialog.setAttribute('aria-label', chosenView + ' del episodio');
-      dialog.toggleAttribute('data-hhr-scores-view', showingScores);
-      for (const choice of viewButtons.children) choice.setAttribute('aria-pressed', String(choice.textContent === chosenView));
-      history.hidden = showingScores;
-      scope.textContent = (WINDOW_LABELS.get(days) || '') + ' · hora de Rapa Nui';
+    function drawEvolutions() {
       const roles = new Map();
       for (const note of notes) roles.set(roleOf(note), (roles.get(roleOf(note)) || 0) + 1);
       if (selected && !roles.has(selected)) selected = '';
@@ -138,10 +130,28 @@
         item.append(head, el('p', '', note.text));
         return item;
       }));
+      feed.hidden = !shown.length;
+    }
+    function draw() {
+      if (!dialog) return;
+      const showingScores = chosenView === 'Scores';
+      heading.textContent = chosenView;
+      dialog.setAttribute('aria-label', chosenView + ' del episodio');
+      dialog.toggleAttribute('data-hhr-scores-view', showingScores);
+      for (const choice of viewButtons.children) choice.setAttribute('aria-pressed', String(choice.textContent === chosenView));
+      history.hidden = showingScores;
+      scope.textContent = (WINDOW_LABELS.get(days) || '') + ' · hora de Rapa Nui';
       filters.hidden = showingScores;
-      feed.hidden = showingScores || !shown.length;
       scoreFeed.hidden = !showingScores || !scores.length;
-      scoreFeed.replaceChildren(...(showingScores && scores.length ? [scoresTable(scores)] : []));
+      if (showingScores) {
+        feed.hidden = true;
+        filters.replaceChildren();
+        feed.replaceChildren();
+        scoreFeed.replaceChildren(...(scores.length ? [scoresTable(scores)] : []));
+      } else {
+        scoreFeed.replaceChildren();
+        drawEvolutions();
+      }
       const hasResults = showingScores ? scores.length : notes.length;
       const subject = showingScores ? 'valoraciones' : 'evoluciones';
       const period = (WINDOW_LABELS.get(days) || '').toLowerCase();
