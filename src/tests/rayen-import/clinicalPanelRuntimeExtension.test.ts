@@ -361,17 +361,13 @@ describe('clinical panel read runtime', () => {
     expect(background).toContain(
       'const clinicalPanelRuntime = self.HhrClinicalPanelRuntime.create({'
     );
-    expect(background).toContain('resolveSession: () => resolveFichaClinicalSession()');
+    // How the route reads (the panel with the open ficha's session, the documents with the sender's tab) is
+    // checked on the running worker in workerRoutes.test.js, not in its source.
     expect(background).toContain("'fichamedico-clinical-client.js'");
     expect(background).toContain(
       'No se pudo cargar el cliente clínico de lectura de Ficha Médico.'
     );
     expect(background).toContain('timeoutMs: CLINICAL_PANEL_REQUEST_TIMEOUT_MS');
-    expect(background).toContain(
-      'const handleClinicalPanelRequest = async ({ encId, historyFrom, sender }) =>'
-    );
-    expect(background).toContain('clinicalPanelRuntime.handleRequest({ encId })');
-    expect(background).toContain('patientDocumentManagerRuntime.list({ encId, sender })');
     expect(background).toContain("'Tiempo de espera agotado consultando documentos.'");
     expect(background).not.toContain('FICHAMEDICO_MATCH');
     expect(background).not.toContain('const CLINICAL_PANEL_RESUMES');
