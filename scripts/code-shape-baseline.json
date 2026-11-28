@@ -124,9 +124,6 @@
   "wide": 6,
   "important": 48
  },
- "hhr-ficha-reading-labels.js": {
-  "wide": 9
- },
  "hhr-ficha-reading-surfaces.js": {
   "wide": 5
  },
@@ -182,7 +179,7 @@
   "wide": 1
  },
  "hhr-native-ficha-presentation.js": {
-  "wide": 12
+  "wide": 5
  },
  "hhr-native-worklist-presentation.js": {
   "wide": 4
