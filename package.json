@@ -24,6 +24,8 @@
   "scripts": {
     "test": "vitest run",
     "check:release": "node scripts/check-rayen-extension-release.mjs",
+    "check:load-order": "node scripts/check-load-order.mjs",
+    "check:shape": "node scripts/check-code-shape.mjs",
     "check:version": "node scripts/check-extension-version-advance.mjs",
     "test:runtime": "node scripts/smoke-rayen-extension-runtime.mjs && node scripts/smoke-exalab-connect-runtime.mjs",
     "test:dau": "node scripts/smoke-urgency-dau-login.mjs",

@@ -96,7 +96,9 @@ try {
   seen = await under(page);
   assert.ok(seen.settling && seen.opacity === 0 && !seen.marked, 'Sin transiciones, lo nuevo espera velado a la vista: ' + JSON.stringify(seen));
   await page.evaluate(() => window.present());
-  await page.waitForTimeout(260);
+  // The veil goes with the pass and the module fades in: wait for what is seen, not for a time.
+  await page.waitForFunction(() => !document.documentElement.hasAttribute('data-hhr-ficha-settling') &&
+    getComputedStyle(document.querySelector('main > :not(.MuiAppBar-root)')).opacity === '1', null, {timeout:2000});
   seen = await under(page);
   assert.ok(!seen.settling && seen.marked && seen.opacity === 1, 'Presentado el plan, el velo se va: ' + JSON.stringify(seen));
   await page.close();
@@ -105,7 +107,9 @@ try {
   page = await open(browser, {transitions:false});
   await page.evaluate(() => document.removeEventListener('fixture-refresh', window.fichaFixture.refresh));
   await page.click('#encounter-event-tab-care-plan');
-  await page.waitForTimeout(700);
+  // It lifts by itself within the cap of the script (450 ms) and the stylesheet's own delay (300 ms + 140 ms).
+  await page.waitForFunction(() => !document.documentElement.hasAttribute('data-hhr-ficha-settling') &&
+    getComputedStyle(document.querySelector('main > :not(.MuiAppBar-root)')).opacity === '1', null, {timeout:1500});
   seen = await under(page);
   assert.ok(!seen.settling && seen.opacity === 1, 'Sin la pasada de la vista, el velo se levanta solo: ' + JSON.stringify(seen));
   await page.close();

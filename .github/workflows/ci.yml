@@ -9,8 +9,11 @@ permissions:
 concurrency:
   group: extension-ci-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# Three jobs run side by side: the unit tests and the package, the extension running in Chromium, and the
+# captures of the compact views. `extension-ci` is the check main and the publication ask for: it passes
+# only when the three passed (a skipped job would otherwise count as passed).
 jobs:
-  extension-ci:
+  unit:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -30,10 +33,60 @@ jobs:
           CI_EXTENSION_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           CI_EXTENSION_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       - run: npm ci
+      - name: Check every object a file uses is loaded in its world
+        run: npm run check:load-order
+      - name: Check no line or file grew harder to read
+        run: npm run check:shape
       - run: npm test
       - run: npm run check:release
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: extension-candidate
+          path: dist/
+          if-no-files-found: error
+  runtime:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22.22.0
+          cache: npm
+      - run: npm ci
+      # The browser is kept between runs: only the system libraries are installed each time.
+      - name: Keep the test browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
       - run: npm run test:runtime
+      - run: npm run test:dau
+  captures:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22.22.0
+          cache: npm
+      - run: npm ci
+      # The browser is kept between runs: only the system libraries are installed each time.
+      - name: Keep the test browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
       - name: Verify keyboard and layout in the compact desktop summary
         run: node scripts/capture-medical-round.mjs WORKTREE "$RUNNER_TEMP/ficha-escritorio" lectura
       - name: Verify long admissions, bedside columns and full prescriptions
@@ -67,10 +120,14 @@ jobs:
         run: node scripts/capture-loading.mjs WORKTREE "$RUNNER_TEMP/ficha-carga"
       - name: Verify a change of module reads as one page
         run: node scripts/capture-transitions.mjs WORKTREE "$RUNNER_TEMP/ficha-transiciones"
-      - run: npm run test:dau
-      - run: npm run build
-      - uses: actions/upload-artifact@v7
-        with:
-          name: extension-candidate
-          path: dist/
-          if-no-files-found: error
+  extension-ci:
+    if: always()
+    needs: [unit, runtime, captures]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: The three jobs passed
+        run: |
+          echo "unit=${{ needs.unit.result }} runtime=${{ needs.runtime.result }} captures=${{ needs.captures.result }}"
+          test "${{ needs.unit.result }}" = success
+          test "${{ needs.runtime.result }}" = success
+          test "${{ needs.captures.result }}" = success

@@ -1,0 +1,235 @@
+{
+ "audit-documents-runtime.js": {
+  "wide": 1
+ },
+ "background.js": {
+  "wide": 25,
+  "lines": 1528
+ },
+ "capture-read-recovery.js": {
+  "wide": 1
+ },
+ "clinical-antecedents-detail.js": {
+  "wide": 1
+ },
+ "clinical-checklist-dialog.js": {
+  "wide": 0,
+  "lines": 818
+ },
+ "clinical-checklist.css": {
+  "wide": 9
+ },
+ "clinical-day-runtime.js": {
+  "wide": 4
+ },
+ "clinical-panel-history.js": {
+  "wide": 1
+ },
+ "content-exam-request-print.js": {
+  "wide": 4
+ },
+ "content-hhr-patient-documents.js": {
+  "wide": 5
+ },
+ "content-hhr-sync-bundle.js": {
+  "wide": 1
+ },
+ "content-prescription-print.js": {
+  "wide": 3,
+  "lines": 1002
+ },
+ "content-worklist-editor-destination.js": {
+  "wide": 1
+ },
+ "cudyr-capture-support.js": {
+  "wide": 1
+ },
+ "eloisa-patient-code-contract.js": {
+  "wide": 5
+ },
+ "exalab-connect.css": {
+  "wide": 2
+ },
+ "extension-status.css": {
+  "wide": 3
+ },
+ "fichamedico-census-runtime.js": {
+  "wide": 1
+ },
+ "fichamedico-normalization.js": {
+  "wide": 1
+ },
+ "fichamedico-patient-context.js": {
+  "wide": 5
+ },
+ "gestion-camas-connection-indicator.js": {
+  "wide": 8
+ },
+ "hhr-center-settings.js": {
+  "wide": 5
+ },
+ "hhr-center-shell-runtime.js": {
+  "wide": 1
+ },
+ "hhr-center-styles.js": {
+  "wide": 59
+ },
+ "hhr-center-workspace-styles.js": {
+  "wide": 6
+ },
+ "hhr-connection-center-runtime.js": {
+  "wide": 6
+ },
+ "hhr-discharge-actions-runtime.js": {
+  "wide": 1
+ },
+ "hhr-document-preview-runtime.js": {
+  "wide": 1
+ },
+ "hhr-ficha-care-plan.css": {
+  "wide": 8
+ },
+ "hhr-ficha-care-plan.js": {
+  "wide": 4
+ },
+ "hhr-ficha-evolution-authors.css": {
+  "wide": 3
+ },
+ "hhr-ficha-evolution-authors.js": {
+  "wide": 1
+ },
+ "hhr-ficha-history.css": {
+  "wide": 7
+ },
+ "hhr-ficha-loading.css": {
+  "wide": 3
+ },
+ "hhr-ficha-patient-switcher.css": {
+  "wide": 3
+ },
+ "hhr-ficha-patient-switcher.js": {
+  "wide": 3
+ },
+ "hhr-ficha-professional-name.js": {
+  "wide": 1
+ },
+ "hhr-ficha-reading-labels.css": {
+  "wide": 6
+ },
+ "hhr-ficha-reading-labels.js": {
+  "wide": 9
+ },
+ "hhr-ficha-reading-surfaces.js": {
+  "wide": 5
+ },
+ "hhr-ficha-round-layout.css": {
+  "wide": 10
+ },
+ "hhr-ficha-round-layout.js": {
+  "wide": 4
+ },
+ "hhr-ficha-summary-density.js": {
+  "wide": 2
+ },
+ "hhr-ficha-themes.css": {
+  "wide": 38,
+  "lines": 901
+ },
+ "hhr-ficha-tokens.css": {
+  "wide": 14
+ },
+ "hhr-ficha-views.css": {
+  "wide": 3
+ },
+ "hhr-ficha-vital-strip.js": {
+  "wide": 1
+ },
+ "hhr-history-date-navigation.js": {
+  "wide": 4
+ },
+ "hhr-imaging-center.js": {
+  "wide": 2
+ },
+ "hhr-imaging-request-view.js": {
+  "wide": 4
+ },
+ "hhr-lab-center.js": {
+  "wide": 8
+ },
+ "hhr-lab-request-patient.js": {
+  "wide": 3
+ },
+ "hhr-lab-request-styles.js": {
+  "wide": 9
+ },
+ "hhr-lab-selection-runtime.js": {
+  "wide": 1
+ },
+ "hhr-native-ficha-presentation.js": {
+  "wide": 12
+ },
+ "hhr-native-worklist-presentation.js": {
+  "wide": 4
+ },
+ "hhr-nursing-novelty.js": {
+  "wide": 1
+ },
+ "hhr-nursing-worklist.css": {
+  "wide": 2
+ },
+ "hhr-nursing-worklist.js": {
+  "wide": 1
+ },
+ "hhr-prescription-center.js": {
+  "wide": 5
+ },
+ "hhr-request-forms.js": {
+  "wide": 5
+ },
+ "hhr-ui.js": {
+  "wide": 17
+ },
+ "hhr-worklist-print-column.js": {
+  "wide": 1
+ },
+ "hospitalized-roster-runtime.js": {
+  "wide": 1
+ },
+ "inject-gestioncamas.js": {
+  "wide": 1
+ },
+ "jspdf.umd.min.js": {
+  "wide": 30
+ },
+ "lab-result-parser.js": {
+  "wide": 3
+ },
+ "message-contract.js": {
+  "wide": 6
+ },
+ "nursing-handoff-dialog.js": {
+  "wide": 1
+ },
+ "nursing-handoff-editor.js": {
+  "wide": 1
+ },
+ "pdf-lib.min.js": {
+  "wide": 2
+ },
+ "prescription-print.js": {
+  "wide": 4,
+  "lines": 1550
+ },
+ "rayen-sync-bundle-runtime.js": {
+  "wide": 1
+ },
+ "syslab-bridge.js": {
+  "wide": 2
+ },
+ "worklist-patient-editor.js": {
+  "wide": 2
+ },
+ "xlsx.full.min.js": {
+  "wide": 23
+ }
+}
