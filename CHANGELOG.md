@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.48.238
+
+- Sin cambios visibles. El worker (`background.js`) se lee mejor: ninguna línea pasa de 160 caracteres (antes 25 de hasta 457) y la autorización por episodio que se repetía en tres lecturas es una sola función con nombre. Las rutas, dependencias y mensajes son los mismos.
+
 ## 0.48.237
 
 - «Próxima valoración» en Scores muestra la fecha del turno de día. Para Braden, Braden Q y ambas pautas de caídas se suman 1, 3 o 7 días calendario a la fecha de valoración, según el riesgo.

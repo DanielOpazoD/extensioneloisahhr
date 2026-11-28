@@ -67,7 +67,7 @@ caracteres, 495 `!important` en el CSS, 275 comprobaciones que buscan texto en e
 | Etapa | Qué | Meta |
 | --- | --- | --- |
 | 1 | Orden de carga y forma del código en CI; CI en paralelo; esperas por condición | Hecho en este cambio |
-| 2 | `background.js` como raíz de composición legible: la tabla de rutas a su propio módulo, sin el presupuesto de líneas que empuja a escribir líneas de 300 caracteres | `background.js` sin líneas anchas |
+| 2 | `background.js` legible: sin líneas anchas, la autorización por episodio con nombre; el presupuesto de líneas sube a 1.650 porque el ancho ya lo vigila `check:shape` | Hecho en 0.48.238 (25 → 0 líneas anchas) |
 | 3 | `extension/` por dominio (`ficha/`, `listas/`, `centro/`, `recetas/`, `transporte/`, `contratos/`) | Ningún archivo en la raíz salvo el manifiesto y el worker |
 | 4 | CSS de la vista compacta por capas propias, sobre las marcas `data-hhr-*` y no sobre clases de MUI; sin ids ficticios para ganar peso | `!important` a la mitad |
 | 5 | Las comprobaciones que leen el código fuente pasan a probar comportamiento | Ninguna prueba busca texto en el código |
