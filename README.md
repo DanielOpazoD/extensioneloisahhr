@@ -4,7 +4,7 @@ Este repositorio es la fuente del código, las pruebas y las publicaciones de la
 El MacBook Air y el Mac mini deben trabajar en ramas de este mismo repositorio. HHR consume
 una revisión comprobada; su copia de la extensión es una dependencia, no otra línea de desarrollo.
 
-[Mapa de arquitectura y contratos clínicos](docs/arquitectura.md)
+[Mapa de arquitectura y contratos clínicos](docs/arquitectura.md) · [Mapa de Eloísa: qué está transformado y qué falta](docs/mapa-eloisa.md)
 
 [Descargar la extensión (.zip)](https://github.com/DanielOpazoD/extensioneloisahhr/releases/latest/download/eloisa-hhr.zip) · [Guía ilustrada para instalar y actualizar en Chrome](docs/instalacion/README.md)
 
