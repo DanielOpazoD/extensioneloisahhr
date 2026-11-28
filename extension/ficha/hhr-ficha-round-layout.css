@@ -1,24 +1,24 @@
 @media screen {
-  html[data-hhr-ficha-theme="compact"] [data-hhr-round="date"] { display:none !important; }
+  html[data-hhr-ficha-theme="compact"] [data-hhr-round="date"] { display:none; }
 
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
     reading-flow:flex-visual;
     > :has(~ [data-hhr-round="note"]):has(~ [data-hhr-round="handoff"]) { order:-3; }
-    [data-hhr-round="spacer"] { display:contents !important; }
+    [data-hhr-round="spacer"] { display:contents; }
     > :is([data-hhr-round="note"],[data-hhr-round="handoff"]) {
-      box-sizing:border-box; align-self:start !important; min-width:0;
-      width:auto !important; max-width:none !important; min-height:0 !important; padding-block-start:4px !important;
+      box-sizing:border-box; align-self:start; min-width:0;
+      width:auto; max-width:none; min-height:0; padding-block-start:4px !important;
     }
     /* The note takes the surplus width. A wrapped handoff can use its whole line. */
-    > [data-hhr-round="note"] { flex:100 1 min(100%,31rem) !important; order:-2; }
-    > [data-hhr-round="handoff"] { flex:1 1 min(100%,17rem) !important; order:-1; }
+    > [data-hhr-round="note"] { flex:100 1 min(100%,31rem); order:-2; }
+    > [data-hhr-round="handoff"] { flex:1 1 min(100%,17rem); order:-1; }
     :is(#observationEntrySection,#shiftChangeEntrySection),
     :is(#observationEntrySection,#shiftChangeEntrySection) > .MuiCard-root {
       box-sizing:border-box; min-width:0; height:auto !important; min-height:0 !important; margin-block:0 !important;
     }
     :is(#shiftChangeObservation,#evolution).MuiCard-root { border-radius:6px; box-shadow:none; }
     #shiftChangeObservation {
-      > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:6px var(--hhr-ficha-inset) !important; margin:0 !important; }
+      > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:6px var(--hhr-ficha-inset); margin:0; }
       > .MuiCardHeader-root .MuiCardHeader-title { font-size:.8125rem; font-weight:600; line-height:1.3; }
       :is(.MuiTextField-root,.MuiInputBase-root,input,textarea) { min-width:0; max-width:100%; }
     }
@@ -26,7 +26,7 @@
       border-inline-start:3px solid #31877c;
       > :is(.MuiCardHeader-root,.MuiCardContent-root,.MuiCardActions-root) { padding:6px var(--hhr-ficha-inset) !important; }
       > .MuiCardHeader-root .MuiCardHeader-title { color:var(--hhr-ficha-ink); font-size:var(--hhr-ficha-text-title); line-height:1.35; font-weight:600; }
-      [data-hhr-evolution-block] > .MuiTypography-caption { font-size:.8125rem; line-height:1.45 !important; overflow-wrap:anywhere; }
+      [data-hhr-evolution-block] > .MuiTypography-caption { font-size:.8125rem; line-height:1.45; overflow-wrap:anywhere; }
     }
   }
 }
@@ -35,17 +35,17 @@
 @media screen and (min-width:1100px) {
   /* A frame without a movable care pair still keeps its native flex siblings. */
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"] {
-    > [data-hhr-round="note"] { flex:2 1 60% !important; }
-    > [data-hhr-round="handoff"] { flex:1 1 30% !important; }
+    > [data-hhr-round="note"] { flex:2 1 60%; }
+    > [data-hhr-round="handoff"] { flex:1 1 30%; }
   }
   html[data-hhr-ficha-theme="compact"] [data-hhr-round="frame"]:is(:has(> :is([data-hhr-round="care"],[data-hhr-round="care-card"])),[data-hhr-round-columns]) {
-    display:grid !important;
+    display:grid;
     grid-template-columns:minmax(0,2fr) minmax(0,1fr);
     --hhr-round-row-gap:var(--hhr-ficha-block-gap);
-    align-items:start; column-gap:12px !important; row-gap:var(--hhr-round-row-gap) !important;
+    align-items:start; column-gap:12px !important; row-gap:var(--hhr-round-row-gap);
     reading-flow:grid-rows;
     > .MuiGrid-item {
-      grid-column:1 / -1; width:100% !important; max-width:100% !important; min-width:0;
+      grid-column:1 / -1; width:100%; max-width:100%; min-width:0;
     }
     > [data-hhr-round="note"] { grid-column:1; grid-row:span 2; }
     > [data-hhr-round="handoff"], > :is([data-hhr-round="care"],[data-hhr-round="care-card"]) { grid-column:2; order:-1; }
@@ -67,8 +67,8 @@
          content keeps the 32 px of the page on both sides. As a grid the gutter is not given back: the
          grid itself stays on the page edges, and so do the round, the cards under it and the section
          links above, with the same margin left and right. */
-      inline-size:100% !important; margin-inline:0 !important;
-      :is([data-hhr-round="before"],[data-hhr-round="peer"]) { padding-block-start:0 !important; padding-inline-start:0 !important; }
+      inline-size:100%; margin-inline:0;
+      :is([data-hhr-round="before"],[data-hhr-round="peer"]) { padding-block-start:0 !important; padding-inline-start:0; }
       /* One card style under the round: Eloísa's white surface without shadow, the corners of the view
          (8 px, denser than Eloísa's 12) and the same gap. */
       [data-hhr-round="peer"] > :is(section, .MuiCard-root),
@@ -112,7 +112,7 @@
         /* A legend on the page, not one more card: without a surface the group weighs less than what has records. */
         [data-hhr-reading="status-card"] { margin-block:0 !important; padding-block:1px !important; background:transparent !important; box-shadow:none !important; }
         :is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]) {
-          margin:0 !important; font-size:0 !important; line-height:1 !important;
+          margin:0 !important; font-size:0; line-height:1;
           &::after { color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
         }
         [data-hhr-reading="status-message"]::after { content:'Sin registros' / ''; }
@@ -121,7 +121,7 @@
       :is([data-hhr-round="bridge"],[data-hhr-round="inner"]) { display:contents !important; }
       :is([data-hhr-round="before"],[data-hhr-round="peer"]) {
         grid-column:span var(--hhr-round-span,12);
-        box-sizing:border-box; min-width:0; width:100% !important; max-width:100% !important;
+        box-sizing:border-box; min-width:0; width:100%; max-width:100%;
       }
       [data-hhr-round="before"] { order:-3; }
       --hhr-round-edge:#d6e2dd;
@@ -136,9 +136,9 @@
       --hhr-round-care:calc(var(--hhr-round-top) + 2);
       &:not(:has([data-hhr-round="vitals"])) { --hhr-round-care:calc(var(--hhr-round-top) + 1); }
       :is([data-hhr-round="note"],[data-hhr-round="vitals"],[data-hhr-round="handoff"],[data-hhr-round="alerts"],:is([data-hhr-round="care"],[data-hhr-round="care-card"]),[data-hhr-round="empty-request"]) {
-        grid-row:var(--hhr-round-top); order:-1; box-sizing:border-box; min-height:0 !important;
-        min-width:0; width:100% !important; max-width:100% !important;
-        align-self:start; height:auto !important; padding:0 !important; margin:var(--hhr-round-offset,0px) 0 0 !important;
+        grid-row:var(--hhr-round-top); order:-1; box-sizing:border-box; min-height:0;
+        min-width:0; width:100%; max-width:100% !important;
+        align-self:start; height:auto; padding:0 !important; margin:var(--hhr-round-offset,0px) 0 0 !important;
         section:is(#vitalSignsEntry,#alertEntrySection,#shiftChangeEntrySection,#observationEntrySection,[data-hhr-empty-request]), > section { margin-block:0 !important; padding:0 !important; }
         > section > .MuiCard-root { margin-block:0 !important; border-radius:0 !important; }
       }
@@ -161,11 +161,11 @@
       /* A shorter neighbour keeps its text at the middle of the line. Eloísa gives a section the height
          of its item: here it takes its own, so that it can be centred, also through a wrapper that
          only lends its children to the line. */
-      :is([data-hhr-round="care"],[data-hhr-round="empty-request"]) { display:flex !important; align-items:center; }
+      :is([data-hhr-round="care"],[data-hhr-round="empty-request"]) { display:flex; align-items:center; }
       [data-hhr-round="care"] > *,
       [data-hhr-round="empty-request"] [data-hhr-empty-request],
       [data-hhr-round="empty-request"][data-hhr-empty-request] > .MuiCard-root {
-        flex:1 1 auto; align-self:center; min-inline-size:0; block-size:auto !important;
+        flex:1 1 auto; align-self:center; min-inline-size:0; block-size:auto;
       }
       /* The line is a block of its own: its instructions take its corners and no rule opens it.
          Two instructions of different heights read on one middle line. */
@@ -218,34 +218,34 @@
            the group says its state once, before its first name. */
         [data-hhr-round="empty-request"],
         > [data-hhr-round="peer"]:has(> section > [data-hhr-reading="status-card"]:only-child, > [data-hhr-reading="status-card"]:only-child) {
-          order:1; grid-row:var(--hhr-round-signs); grid-column:7 / -1; align-self:start; justify-self:start; position:relative; overflow:visible !important;
-          inline-size:max-content !important; max-inline-size:100%; min-inline-size:0;
+          order:1; grid-row:var(--hhr-round-signs); grid-column:7 / -1; align-self:start; justify-self:start; position:relative; overflow:visible;
+          inline-size:max-content; max-inline-size:100%; min-inline-size:0;
           margin:var(--hhr-round-tile,1.25rem) 0 0 var(--hhr-round-tile-x,0px) !important;
           border-radius:0; background:transparent;
           /* Every name of the group stands on the page, whatever box Eloísa draws it in: a white card behind
              Examen físico and its state was seen on the page (27-11-2026). */
           &, section, .MuiPaper-root, .MuiCard-root, .MuiCardHeader-root, .MuiCardContent-root, [data-hhr-reading="status-card"] {
-            background:transparent !important; box-shadow:none !important; border-color:transparent !important;
+            background:transparent; box-shadow:none; border-color:transparent;
           }
           /* Beside the signs they belong to the round: the Tab key reaches them before the cards under it. */
           reading-order:0;
           [data-hhr-reading="status-card"], &[data-hhr-reading="status-card"] {
-            padding:1px 0 !important; column-gap:10px !important; flex-wrap:nowrap !important;
+            padding:1px 0 !important; column-gap:10px; flex-wrap:nowrap;
             /* A request names itself with a short word drawn after Eloísa's title, which keeps no size. */
             :is(.MuiCardHeader-title,h3):not([data-hhr-round="empty-request"] *) {
-              color:var(--hhr-ficha-ink-soft) !important; font:400 var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans) !important;
+              color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans) !important;
             }
             /* The filter of what is suspended follows its name. */
             > .MuiCardHeader-root > .MuiCardHeader-action:has([data-hhr-reading-toggle="suspended"]) { margin-inline-start:6px !important; }
             /* A section after the first one of its line is set apart by a dot. */
-            :is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"])::after { content:none !important; }
+            :is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"])::after { content:none; }
           }
           /* A section after the first of its group is its name alone: its state, still in the page, takes no room. */
           &[data-hhr-round-tile="item"] :is([data-hhr-reading="status-card"], [data-hhr-reading="status-card"] > :is(.MuiCardHeader-root,.MuiCardContent-root)),
-          &[data-hhr-round-tile="item"][data-hhr-reading="status-card"] { column-gap:0 !important; gap:0 !important; }
+          &[data-hhr-round-tile="item"][data-hhr-reading="status-card"] { column-gap:0 !important; gap:0; }
           &[data-hhr-round-tile="item"] :is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]) { inline-size:0; overflow:hidden; margin:0 !important; }
           &[data-hhr-round="empty-request"] [data-hhr-reading="empty-section-title"]::after {
-            color:var(--hhr-ficha-ink-soft) !important; font:400 var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans) !important;
+            color:var(--hhr-ficha-ink-soft); font:400 var(--hhr-ficha-text-body)/1.4 var(--hhr-ficha-sans) !important;
           }
           &[data-hhr-round-tile="item"]:not([data-hhr-round-wrap])::before {
             content:'·' / ''; position:absolute; inset-inline-start:-10px; inset-block-start:1px;
@@ -253,16 +253,16 @@
           }
           /* The first section of a group reads its state first, in a column the names of the group start after. */
           &[data-hhr-round-tile="lead"] :is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"]) {
-            &::after { content:'Sin registros' / '' !important; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
+            &::after { content:'Sin registros' / ''; color:var(--hhr-ficha-muted); font:400 var(--hhr-ficha-text-meta)/1.4 var(--hhr-ficha-sans); }
           }
           /* What holds the state goes first: the state itself, or the content of the card that holds it. */
           &[data-hhr-round-tile="lead"] [data-hhr-reading="status-card"] > :is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"],:has([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"])),
           &[data-hhr-round-tile="lead"][data-hhr-reading="status-card"] > :is([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"],:has([data-hhr-reading="status-message"],[data-hhr-reading="status-denied"])) {
             order:-1; inline-size:6rem; flex:none;
           }
-          &[data-hhr-round-tile="lead"][data-hhr-round-state="denied"] [data-hhr-reading="status-denied"]::after { content:'Sin permiso' / '' !important; }
+          &[data-hhr-round-tile="lead"][data-hhr-round-state="denied"] [data-hhr-reading="status-denied"]::after { content:'Sin permiso' / ''; }
         }
-        [data-hhr-round="empty-request"] { display:block !important; }
+        [data-hhr-round="empty-request"] { display:block; }
         /* In half the line the nine measurements read as five and four, never with one left alone on a third row. */
         @container hhr-round-signs (min-width:36rem) {
           [data-hhr-round="vitals"] #vitalSignsEntry [data-hhr-reading="vital-grid"]:has(> [data-hhr-reading="vital-tile"]:nth-child(9)) {
@@ -271,7 +271,7 @@
         }
         /* A request without records reads like its neighbours: its name, in the group without records. */
         [data-hhr-round="empty-request"] [data-hhr-reading="status-card"], [data-hhr-round="empty-request"][data-hhr-reading="status-card"] {
-          justify-content:flex-start !important; background:transparent !important;
+          justify-content:flex-start; background:transparent !important;
           [data-hhr-reading="empty-section-title"] { margin-block:0 !important; }
         }
         /* The filter of what is suspended is an icon right after the state of its section. */
@@ -308,13 +308,13 @@
          needs, up to some six alerts: a brief note does not cut the list in the middle of an alert. Beyond
          that the list scrolls inside, and their switches stay in view at the end. */
       [data-hhr-round="alerts"] {
-        block-size:var(--hhr-round-fill,auto) !important; min-block-size:clamp(9rem, var(--hhr-round-need,9rem), 21rem) !important;
+        block-size:var(--hhr-round-fill,auto); min-block-size:clamp(9rem, var(--hhr-round-need,9rem), 21rem);
         #alertEntrySection { block-size:100%; }
         /* Should Eloísa draw the list in another shape, the card scrolls as a whole: nothing spills over the signs. */
         #alertEntrySection > .MuiCard-root { box-sizing:border-box; block-size:100% !important; display:flex; flex-direction:column; overflow-y:auto; scrollbar-width:thin; }
         #alertEntrySection > .MuiCard-root > .MuiCardContent-root { flex:1 1 auto; min-block-size:0; display:flex; flex-direction:column; }
         #alertEntrySection > .MuiCard-root > .MuiCardContent-root > .MuiBox-root:first-child {
-          flex:1 1 auto; min-block-size:0; max-block-size:none !important; overflow-y:auto;
+          flex:1 1 auto; min-block-size:0; max-block-size:none; overflow-y:auto;
           scrollbar-width:thin; scrollbar-color:#809c95 transparent;
         }
       }
@@ -345,8 +345,8 @@
           > .MuiCardContent-root { padding:0 !important; }
           /* The diagnosis takes the room; its star, state, date, GES, Eno and notes take what they need, on one line. */
           td:not(:nth-child(2)) { inline-size:1%; white-space:nowrap; }
-          td .MuiFormControl-root, td .MuiInputBase-root { min-inline-size:0 !important; }
-          td [role="combobox"] { min-inline-size:7.5rem !important; box-sizing:border-box; }
+          td .MuiFormControl-root, td .MuiInputBase-root { min-inline-size:0; }
+          td [role="combobox"] { min-inline-size:7.5rem; box-sizing:border-box; }
           /* The card is named beside its table: the column of the same name does not repeat it. */
           thead th:nth-child(2) > * { font-size:0; }
           td > .MuiStack-root:has(> .MuiBox-root + .MuiTypography-root) { flex-flow:row wrap; align-items:baseline; gap:0 8px; }
@@ -369,10 +369,10 @@
         > [data-hhr-round="print"] {
           position:absolute; position-anchor:--hhr-round-print; z-index:1;
           inset-block-start:anchor(center); inset-inline-start:calc(anchor(end) + 14px); translate:0 -50%;
-          display:block !important; box-sizing:border-box; inline-size:max-content !important; max-inline-size:none !important;
-          min-block-size:0 !important; margin:0 !important; padding:0 !important;
+          display:block; box-sizing:border-box; inline-size:max-content; max-inline-size:none;
+          min-block-size:0; margin:0; padding:0 !important;
           > button {
-            box-sizing:border-box; inline-size:auto; block-size:26px; margin:0; padding:0 8px 0 6px !important;
+            box-sizing:border-box; inline-size:auto; block-size:26px; margin:0; padding:0 8px 0 6px;
             border-radius:var(--hhr-ficha-radius); background:transparent; color:var(--hhr-ficha-action); white-space:nowrap;
             &::after {
               content:'Imprimir indicaciones' / ''; margin-inline-start:5px;
@@ -387,8 +387,8 @@
       }
       /* The alert form follows its own messages even on a wide monitor. */
       [data-hhr-round="alerts"] #alertEntrySection > .MuiCard-root > .MuiCardContent-root {
-        margin:0 !important;
-        form, > .MuiStack-root:has([data-hhr-reading-toggle="alert"]) { margin-block:3px 0 !important; }
+        margin:0;
+        form, > .MuiStack-root:has([data-hhr-reading-toggle="alert"]) { margin-block:3px 0; }
       }
     }
     &:not([data-hhr-round-columns]) > :is([data-hhr-round="care"],[data-hhr-round="care-card"]):has(:is([data-hhr-round="care-row"],[data-hhr-round="care-card"])) {
@@ -396,8 +396,8 @@
     }
     :is([data-hhr-round="care"],[data-hhr-round="care-card"]) {
       padding-block-start:0 !important;
-      .MuiGrid-container { margin:0 !important; width:100% !important; gap:3px !important; }
-      .MuiGrid-item { width:auto !important; max-width:100% !important; flex:1 1 12rem !important; padding:0 !important; }
+      .MuiGrid-container { margin:0 !important; width:100%; gap:3px; }
+      .MuiGrid-item { width:auto; max-width:100% !important; flex:1 1 12rem; padding:0 !important; }
       :is(section,.MuiCard-root) { min-height:0 !important; height:auto !important; margin:0 !important; }
       .MuiCard-root { border-radius:5px; box-shadow:none; }
       .MuiCardHeader-root { padding:6px var(--hhr-ficha-inset) 0 !important; }
@@ -429,7 +429,7 @@
           display:grid; grid-template-columns:4.1rem minmax(0,1fr); align-items:baseline;
           column-gap:8px; padding:6px var(--hhr-ficha-inset); border-radius:0;
           &:is(.MuiGrid-item:last-child > section > *) { border-end-start-radius:5px; border-end-end-radius:5px; }
-          > .MuiCardHeader-root, .MuiCardHeader-content { display:contents !important; }
+          > .MuiCardHeader-root, .MuiCardHeader-content { display:contents; }
           .MuiCardHeader-action { display:none; }
           .MuiCardHeader-title { grid-area:1 / 1; color:var(--hhr-ficha-ink-soft); font-size:.75rem; font-weight:400; }
           .MuiCardHeader-subheader { grid-area:2 / 2; min-width:0; overflow-wrap:anywhere; }
@@ -456,7 +456,7 @@
           > .MuiCardContent-root { grid-area:1 / 2; min-width:0; padding:0 !important; overflow-wrap:anywhere; }
           .MuiCardContent-root :is(.MuiStack-root,.MuiBox-root):has(> [data-hhr-round="care-value"]) { display:block; }
           :is([data-hhr-round="care-value"],[data-hhr-round="care-observation"]) {
-            display:inline !important; font-size:.8125rem; line-height:1.35;
+            display:inline; font-size:.8125rem; line-height:1.35;
           }
           [data-hhr-round="care-value"] { font-weight:600; }
           /* The native sentence stays in the page for screen readers, search and print. */
@@ -468,14 +468,14 @@
           [data-hhr-round="care-value"] .MuiChip-label { white-space:normal; overflow-wrap:anywhere; }
           /* Typography children of a Stack are block elements, even for a single word. */
           :is([data-hhr-round="care-value"],[data-hhr-round="care-observation"]) > :is(.MuiTypography-root,p,span):not([data-hhr-round],.MuiChip-root) {
-            display:inline !important; margin:0 !important; padding:0; font:inherit;
+            display:inline; margin:0; padding:0; font:inherit;
           }
           /* Eloísa wraps the text of a value or of an observation in a Box. */
           :is([data-hhr-round="care-value"],[data-hhr-round="care-observation"]) > .MuiBox-root:has(> .MuiTypography-root:only-child) {
-            display:inline !important;
-            > .MuiTypography-root { display:inline !important; margin:0 !important; padding:0; font:inherit; }
+            display:inline;
+            > .MuiTypography-root { display:inline !important; margin:0; padding:0; font:inherit; }
           }
-          :is([data-hhr-round="care-label"],[data-hhr-round="care-placeholder"]) { display:none !important; }
+          :is([data-hhr-round="care-label"],[data-hhr-round="care-placeholder"]) { display:none; }
           [data-hhr-round="care-observation"]::before { content:' · ' / ''; color:var(--hhr-ficha-muted); }
         }
         :is([data-hhr-round="care-row"],[data-hhr-round="care-card"]) { border-block-start:1px solid #dce5e2; }
@@ -508,5 +508,5 @@
 /* «Sin datos» is a part of the desk: below it the empty Reposo reads in its own card, and its name of the
    view is not drawn. */
 @media screen and (max-width:1099.98px) {
-  [data-hhr-round-proxy] { display:none !important; }
+  [data-hhr-round-proxy] { display:none; }
 }

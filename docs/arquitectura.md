@@ -99,6 +99,6 @@ caracteres, 495 `!important` en el CSS, 275 comprobaciones que buscan texto en e
 | 1 | Orden de carga y forma del código en CI; CI en paralelo; esperas por condición | Hecho en este cambio |
 | 2 | `background.js` legible: sin líneas anchas, la autorización por episodio con nombre; el presupuesto de líneas sube a 1.650 porque el ancho ya lo vigila `check:shape` | Hecho en 0.48.238 (25 → 0 líneas anchas) |
 | 3 | `extension/` por tema, en un solo cambio con un guion que mueve los archivos y reescribe manifiesto, `importScripts`, páginas, pruebas, guiones y documentación | Hecho en 0.48.243: 267 archivos en 18 carpetas; en la raíz quedan el manifiesto, el worker, `vendor-lock.json` y las páginas ([mapa](#carpetas-de-extension)) |
-| 4 | CSS: sin ids ficticios para ganar peso; cada `!important` que sobre, quitado con su medida antes y después | 0.48.239: ids ficticios de 10 a 4; el CI no deja sumar `!important` (745) ni ids ficticios. 0.48.242: Plan de tratamiento sin `!important` (745 → 645) |
+| 4 | CSS: sin ids ficticios para ganar peso; cada `!important` que sobre, quitado con su medida antes y después | 0.48.239: ids ficticios de 10 a 4; el CI no deja sumar `!important` (745) ni ids ficticios. 0.48.242: Plan de tratamiento sin `!important` (745 → 645); 0.48.245: ronda 161 → 92 (645 → 576) |
 | 5 | Las comprobaciones que leen el código fuente pasan a probar comportamiento | Ninguna prueba busca texto en el código |
 | 6 | Utilidades repetidas (`normalize`, `plain`, `el`) en un módulo común | Una sola definición de cada una |
